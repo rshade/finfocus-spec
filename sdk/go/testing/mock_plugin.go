@@ -127,6 +127,16 @@ type MockPlugin struct {
 	ShouldErrorOnBudgets bool
 	MockBudgets          []*pbc.Budget
 
+	// ExpiresAtDuration configures the expires_at hint for generated cost results.
+	// When non-zero, each ActualCostResult will have expires_at set to
+	// time.Now().Add(ExpiresAtDuration).
+	// When zero (default), expires_at is not set (backward compatible).
+	ExpiresAtDuration time.Duration
+
+	// ProjectedCostExpiresAtDuration configures the expires_at hint for projected
+	// cost responses. Same semantics as ExpiresAtDuration.
+	ProjectedCostExpiresAtDuration time.Duration
+
 	// FallbackHint configuration for GetActualCost responses.
 	// Thread Safety: This field must be set before the plugin begins serving
 	// requests. Use SetFallbackHint() for configuration, which documents the
@@ -643,6 +653,12 @@ func (m *MockPlugin) GetActualCost(
 			UsageUnit:   "hour",
 			Source:      m.PluginName,
 		}
+
+		// Set expires_at caching hint if configured
+		if m.ExpiresAtDuration != 0 {
+			result.ExpiresAt = timestamppb.New(time.Now().Add(m.ExpiresAtDuration))
+		}
+
 		results = append(results, result)
 	}
 
@@ -824,6 +840,11 @@ func (m *MockPlugin) GetProjectedCost(
 	// Add impact metrics if configured
 	if len(m.SupportedMetrics) > 0 {
 		resp.ImpactMetrics = m.buildImpactMetrics(util)
+	}
+
+	// Set expires_at caching hint if configured
+	if m.ProjectedCostExpiresAtDuration != 0 {
+		resp.ExpiresAt = timestamppb.New(time.Now().Add(m.ProjectedCostExpiresAtDuration))
 	}
 
 	return resp, nil

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/rshade/finfocus-spec/sdk/go/currency"
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
@@ -1420,6 +1421,26 @@ func WithPredictionInterval(lower, upper, confidence float64) GetProjectedCostRe
 		resp.PredictionIntervalLower = &lower
 		resp.PredictionIntervalUpper = &upper
 		resp.ConfidenceLevel = &confidence
+	}
+}
+
+// WithProjectedCostExpiresAt returns a GetProjectedCostResponseOption that sets
+// the expires_at caching hint on the projected cost response.
+//
+// A zero time.Time results in a nil expires_at (no caching guidance).
+//
+// Usage:
+//
+//	resp := pluginsdk.NewGetProjectedCostResponse(
+//	    pluginsdk.WithProjectedCostExpiresAt(time.Now().Add(24 * time.Hour)),
+//	)
+func WithProjectedCostExpiresAt(expiresAt time.Time) GetProjectedCostResponseOption {
+	return func(resp *pbc.GetProjectedCostResponse) {
+		if expiresAt.IsZero() {
+			resp.ExpiresAt = nil
+			return
+		}
+		resp.ExpiresAt = timestamppb.New(expiresAt)
 	}
 }
 
