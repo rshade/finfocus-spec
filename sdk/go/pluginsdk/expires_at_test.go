@@ -70,7 +70,7 @@ func TestIsActualCostExpired(t *testing.T) {
 }
 
 func TestActualCostExpiresAt(t *testing.T) {
-	futureTime := time.Date(2026, 6, 15, 12, 0, 0, 0, time.UTC)
+	futureTime := time.Date(2030, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	tests := []struct {
 		name       string
@@ -144,6 +144,14 @@ func TestIsProjectedCostExpired(t *testing.T) {
 			now:      now,
 			expected: true,
 		},
+		{
+			name: "exact boundary",
+			resp: &pbc.GetProjectedCostResponse{
+				ExpiresAt: timestamppb.New(now),
+			},
+			now:      now,
+			expected: false, // Before is strict: now.Before(now) == false
+		},
 	}
 
 	for _, tt := range tests {
@@ -155,7 +163,7 @@ func TestIsProjectedCostExpired(t *testing.T) {
 }
 
 func TestProjectedCostExpiresAt(t *testing.T) {
-	futureTime := time.Date(2026, 6, 15, 12, 0, 0, 0, time.UTC)
+	futureTime := time.Date(2030, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	tests := []struct {
 		name       string
@@ -190,4 +198,90 @@ func TestProjectedCostExpiresAt(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestWithActualCostResultExpiresAt(t *testing.T) {
+	futureTime := time.Date(2030, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		name      string
+		result    *pbc.ActualCostResult
+		expiresAt time.Time
+		expectNil bool
+	}{
+		{
+			name:      "nil result is silent no-op",
+			result:    nil,
+			expiresAt: futureTime,
+			expectNil: true, // nil result cannot be inspected
+		},
+		{
+			name:      "zero time sets nil",
+			result:    &pbc.ActualCostResult{Cost: 10.0, Source: "test"},
+			expiresAt: time.Time{},
+			expectNil: true,
+		},
+		{
+			name:      "non-zero time sets timestamp",
+			result:    &pbc.ActualCostResult{Cost: 10.0, Source: "test"},
+			expiresAt: futureTime,
+			expectNil: false,
+		},
+		{
+			name: "overwrite existing timestamp",
+			result: &pbc.ActualCostResult{
+				Cost:      10.0,
+				Source:    "test",
+				ExpiresAt: timestamppb.New(time.Date(2029, 1, 1, 0, 0, 0, 0, time.UTC)),
+			},
+			expiresAt: futureTime,
+			expectNil: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.NotPanics(t, func() {
+				pluginsdk.ApplyActualCostResultOptions(tt.result,
+					pluginsdk.WithActualCostResultExpiresAt(tt.expiresAt),
+				)
+			})
+			if tt.result == nil {
+				return // cannot inspect nil result
+			}
+			if tt.expectNil {
+				require.Nil(t, tt.result.GetExpiresAt())
+			} else {
+				require.NotNil(t, tt.result.GetExpiresAt())
+				actualTime := tt.result.GetExpiresAt().AsTime()
+				require.True(t, actualTime.Equal(tt.expiresAt),
+					"expected %v, got %v", tt.expiresAt, actualTime)
+			}
+		})
+	}
+}
+
+// TestWithProjectedCostExpiresAt verifies that the WithProjectedCostExpiresAt
+// option function correctly sets and clears ExpiresAt on GetProjectedCostResponse.
+func TestWithProjectedCostExpiresAt(t *testing.T) {
+	futureTime := time.Date(2030, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	t.Run("sets non-zero time", func(t *testing.T) {
+		resp := pluginsdk.NewGetProjectedCostResponse(
+			pluginsdk.WithProjectedCostExpiresAt(futureTime),
+		)
+		require.NotNil(t, resp.GetExpiresAt(), "ExpiresAt should be set for non-zero time")
+		actualTime := resp.GetExpiresAt().AsTime()
+		diff := actualTime.Sub(futureTime).Abs()
+		require.LessOrEqual(t, diff, time.Millisecond,
+			"ExpiresAt should match input time (diff=%v)", diff)
+	})
+
+	t.Run("zero time sets nil", func(t *testing.T) {
+		resp := pluginsdk.NewGetProjectedCostResponse(
+			pluginsdk.WithProjectedCostExpiresAt(time.Time{}),
+		)
+		require.Nil(t, resp.GetExpiresAt(),
+			"ExpiresAt should be nil for zero time.Time")
+	})
 }

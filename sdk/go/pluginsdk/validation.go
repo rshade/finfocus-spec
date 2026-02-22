@@ -468,6 +468,13 @@ func ValidateGetProjectedCostResponse(resp *pbc.GetProjectedCostResponse) error 
 		return err
 	}
 
+	// Validate expires_at timestamp if set
+	if ts := resp.GetExpiresAt(); ts != nil {
+		if err := ts.CheckValid(); err != nil {
+			return fmt.Errorf("GetProjectedCostResponse: expires_at is invalid: %w", err)
+		}
+	}
+
 	return nil
 }
 

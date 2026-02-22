@@ -61,8 +61,11 @@
 | Function | Applies To | Description |
 |----------|-----------|-------------|
 | `WithProjectedCostExpiresAt(t time.Time)` | GetProjectedCostResponse | Sets expires_at on projected response |
+| `WithActualCostResultExpiresAt(t time.Time)` | ActualCostResult | Returns an ActualCostResultOption that sets expires_at |
+| `ApplyActualCostResultOptions(result, opts...)` | ActualCostResult | Applies functional options to an ActualCostResult |
 
-Note: `ActualCostResult.ExpiresAt` is set via direct proto field access (no wrapper needed).
+Note: `ActualCostResult.ExpiresAt` can be set via direct proto field access or via the
+functional option helpers above.
 
 ### Expiration Check Helpers (Go)
 

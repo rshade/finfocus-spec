@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
@@ -444,6 +445,25 @@ func TestValidateGetProjectedCostResponse(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "prediction_interval_upper")
 		assert.Contains(t, err.Error(), "Inf")
+	})
+
+	t.Run("invalid_expires_at_nanos", func(t *testing.T) {
+		resp := &pbc.GetProjectedCostResponse{
+			CostPerMonth: 36.50,
+			ExpiresAt:    &timestamppb.Timestamp{Seconds: 0, Nanos: -1},
+		}
+		err := pluginsdk.ValidateGetProjectedCostResponse(resp)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "expires_at is invalid")
+	})
+
+	t.Run("valid_expires_at", func(t *testing.T) {
+		resp := &pbc.GetProjectedCostResponse{
+			CostPerMonth: 36.50,
+			ExpiresAt:    timestamppb.Now(),
+		}
+		err := pluginsdk.ValidateGetProjectedCostResponse(resp)
+		assert.NoError(t, err)
 	})
 }
 

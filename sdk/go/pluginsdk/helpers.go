@@ -295,6 +295,11 @@ func ValidateActualCostResponse(resp *pbc.GetActualCostResponse) error {
 		if result.GetSource() == "" {
 			return fmt.Errorf("results[%d].source cannot be empty", i)
 		}
+		if ts := result.GetExpiresAt(); ts != nil {
+			if err := ts.CheckValid(); err != nil {
+				return fmt.Errorf("results[%d].expires_at is invalid: %w", i, err)
+			}
+		}
 	}
 
 	return nil
@@ -1459,6 +1464,13 @@ func WithProjectedCostExpiresAt(expiresAt time.Time) GetProjectedCostResponseOpt
 //	resp := pluginsdk.NewGetProjectedCostResponse(
 //	    pluginsdk.WithProjectedCostDetails(0.05, "USD", 36.50, "spot-instance"),
 //	    pluginsdk.WithPredictionInterval(30.0, 45.0, 0.95),  // 95% CI
+//	)
+//
+// Example with caching hint:
+//
+//	resp := pluginsdk.NewGetProjectedCostResponse(
+//	    pluginsdk.WithProjectedCostDetails(0.05, "USD", 36.50, "spot-instance"),
+//	    pluginsdk.WithProjectedCostExpiresAt(time.Now().Add(24 * time.Hour)),
 //	)
 func NewGetProjectedCostResponse(opts ...GetProjectedCostResponseOption) *pbc.GetProjectedCostResponse {
 	resp := &pbc.GetProjectedCostResponse{}

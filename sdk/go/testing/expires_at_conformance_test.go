@@ -10,7 +10,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 	plugintesting "github.com/rshade/finfocus-spec/sdk/go/testing"
 )
@@ -127,10 +126,10 @@ func TestExpiresAtActualCost_PastTimestamp(t *testing.T) {
 	}
 }
 
-// TestExpiresAtActualCost_PerResultIndependence verifies that each
+// TestExpiresAtActualCost_PerResultTimestampProximity verifies that each
 // ActualCostResult gets its own independent ExpiresAt timestamp, and that
 // timestamps generated in rapid succession are close together.
-func TestExpiresAtActualCost_PerResultIndependence(t *testing.T) {
+func TestExpiresAtActualCost_PerResultTimestampProximity(t *testing.T) {
 	plugin := plugintesting.NewMockPlugin()
 	plugin.ExpiresAtDuration = 6 * time.Hour
 
@@ -226,29 +225,4 @@ func TestExpiresAtProjectedCost_NilBackwardCompat(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, resp.GetExpiresAt(),
 		"projected cost response should have nil ExpiresAt for backward compatibility")
-}
-
-// TestExpiresAtProjectedCost_WithOptionBuilder verifies that the
-// WithProjectedCostExpiresAt option function correctly sets and clears
-// ExpiresAt on the GetProjectedCostResponse.
-func TestExpiresAtProjectedCost_WithOptionBuilder(t *testing.T) {
-	futureTime := time.Now().Add(12 * time.Hour).UTC().Truncate(time.Microsecond)
-
-	// Test setting a future expiration time
-	resp := pluginsdk.NewGetProjectedCostResponse(
-		pluginsdk.WithProjectedCostExpiresAt(futureTime),
-	)
-	require.NotNil(t, resp.GetExpiresAt(), "ExpiresAt should be set for non-zero time")
-
-	actualTime := resp.GetExpiresAt().AsTime()
-	diff := actualTime.Sub(futureTime).Abs()
-	require.LessOrEqual(t, diff, time.Millisecond,
-		"ExpiresAt should match input time (diff=%v)", diff)
-
-	// Test that zero time results in nil ExpiresAt
-	resp2 := pluginsdk.NewGetProjectedCostResponse(
-		pluginsdk.WithProjectedCostExpiresAt(time.Time{}),
-	)
-	require.Nil(t, resp2.GetExpiresAt(),
-		"ExpiresAt should be nil for zero time.Time")
 }

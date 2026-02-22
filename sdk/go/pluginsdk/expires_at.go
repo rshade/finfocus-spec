@@ -6,6 +6,8 @@ package pluginsdk
 import (
 	"time"
 
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
 
@@ -21,10 +23,14 @@ import (
 //	    // Re-fetch from plugin
 //	}
 func IsActualCostExpired(result *pbc.ActualCostResult, now time.Time) bool {
-	if result == nil || result.GetExpiresAt() == nil {
+	if result == nil {
 		return false
 	}
-	return result.GetExpiresAt().AsTime().Before(now)
+	ts := result.GetExpiresAt()
+	if ts == nil {
+		return false
+	}
+	return ts.AsTime().Before(now)
 }
 
 // ActualCostExpiresAt returns the expiration time for a cost result.
@@ -37,10 +43,14 @@ func IsActualCostExpired(result *pbc.ActualCostResult, now time.Time) bool {
 //	    cache.SetWithTTL(key, result, ttl)
 //	}
 func ActualCostExpiresAt(result *pbc.ActualCostResult) (time.Time, bool) {
-	if result == nil || result.GetExpiresAt() == nil {
+	if result == nil {
 		return time.Time{}, false
 	}
-	return result.GetExpiresAt().AsTime(), true
+	ts := result.GetExpiresAt()
+	if ts == nil {
+		return time.Time{}, false
+	}
+	return ts.AsTime(), true
 }
 
 // IsProjectedCostExpired returns true if the projected cost response has an
@@ -48,17 +58,65 @@ func ActualCostExpiresAt(result *pbc.ActualCostResult) (time.Time, bool) {
 //
 // Returns false if the response is nil or expires_at is nil/unset.
 func IsProjectedCostExpired(resp *pbc.GetProjectedCostResponse, now time.Time) bool {
-	if resp == nil || resp.GetExpiresAt() == nil {
+	if resp == nil {
 		return false
 	}
-	return resp.GetExpiresAt().AsTime().Before(now)
+	ts := resp.GetExpiresAt()
+	if ts == nil {
+		return false
+	}
+	return ts.AsTime().Before(now)
 }
 
 // ProjectedCostExpiresAt returns the expiration time for a projected cost response.
 // The second return value is false if the response is nil or expires_at is nil/unset.
 func ProjectedCostExpiresAt(resp *pbc.GetProjectedCostResponse) (time.Time, bool) {
-	if resp == nil || resp.GetExpiresAt() == nil {
+	if resp == nil {
 		return time.Time{}, false
 	}
-	return resp.GetExpiresAt().AsTime(), true
+	ts := resp.GetExpiresAt()
+	if ts == nil {
+		return time.Time{}, false
+	}
+	return ts.AsTime(), true
+}
+
+// ActualCostResultOption is a functional option for configuring ActualCostResult.
+type ActualCostResultOption func(*pbc.ActualCostResult)
+
+// WithActualCostResultExpiresAt returns an ActualCostResultOption that sets the
+// expires_at caching hint on an individual cost result.
+//
+// A zero time.Time results in a nil expires_at (no caching guidance).
+//
+// Usage:
+//
+//	pluginsdk.ApplyActualCostResultOptions(result,
+//	    pluginsdk.WithActualCostResultExpiresAt(time.Now().Add(6 * time.Hour)),
+//	)
+func WithActualCostResultExpiresAt(expiresAt time.Time) ActualCostResultOption {
+	return func(result *pbc.ActualCostResult) {
+		if expiresAt.IsZero() {
+			result.ExpiresAt = nil
+			return
+		}
+		result.ExpiresAt = timestamppb.New(expiresAt)
+	}
+}
+
+// ApplyActualCostResultOptions applies functional options to an ActualCostResult.
+//
+// Usage:
+//
+//	result := &pbc.ActualCostResult{Cost: 10.0, Source: "aws-ce"}
+//	pluginsdk.ApplyActualCostResultOptions(result,
+//	    pluginsdk.WithActualCostResultExpiresAt(time.Now().Add(6 * time.Hour)),
+//	)
+func ApplyActualCostResultOptions(result *pbc.ActualCostResult, opts ...ActualCostResultOption) {
+	if result == nil {
+		return
+	}
+	for _, opt := range opts {
+		opt(result)
+	}
 }

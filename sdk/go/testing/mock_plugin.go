@@ -79,6 +79,10 @@ const (
 // Concurrent modification of fields during RPC handling will result in data races.
 // Use separate MockPlugin instances for concurrent tests.
 //
+// Fields that must be set before Start() include: ShouldError* flags, *Delay durations,
+// FallbackHint, ExpiresAtDuration, ProjectedCostExpiresAtDuration, MockBudgets,
+// DryRun* fields, PricingCategory/SpotRiskScore fields, and RecommendationsConfig.
+//
 // The recommended pattern is:
 //
 //	plugin := NewMockPlugin()
@@ -131,10 +135,13 @@ type MockPlugin struct {
 	// When non-zero, each ActualCostResult will have expires_at set to
 	// time.Now().Add(ExpiresAtDuration).
 	// When zero (default), expires_at is not set (backward compatible).
+	// Negative values produce past timestamps (immediately-stale semantics),
+	// which is useful for testing cache expiration logic.
 	ExpiresAtDuration time.Duration
 
 	// ProjectedCostExpiresAtDuration configures the expires_at hint for projected
-	// cost responses. Same semantics as ExpiresAtDuration.
+	// cost responses. Same semantics as ExpiresAtDuration: zero means unset,
+	// positive means future expiration, negative means immediately stale.
 	ProjectedCostExpiresAtDuration time.Duration
 
 	// FallbackHint configuration for GetActualCost responses.

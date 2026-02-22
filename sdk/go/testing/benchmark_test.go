@@ -1256,9 +1256,11 @@ func BenchmarkExpiresAtHelpers(b *testing.B) {
 	resp := &pbc.GetProjectedCostResponse{
 		ExpiresAt: timestamppb.New(futureTime),
 	}
+	nilResult := &pbc.ActualCostResult{}
 
 	b.Run("IsActualCostExpired", func(b *testing.B) {
 		b.ReportAllocs()
+		b.ResetTimer()
 		for range b.N {
 			pluginsdk.IsActualCostExpired(result, now)
 		}
@@ -1266,6 +1268,7 @@ func BenchmarkExpiresAtHelpers(b *testing.B) {
 
 	b.Run("ActualCostExpiresAt", func(b *testing.B) {
 		b.ReportAllocs()
+		b.ResetTimer()
 		for range b.N {
 			pluginsdk.ActualCostExpiresAt(result)
 		}
@@ -1273,6 +1276,7 @@ func BenchmarkExpiresAtHelpers(b *testing.B) {
 
 	b.Run("IsProjectedCostExpired", func(b *testing.B) {
 		b.ReportAllocs()
+		b.ResetTimer()
 		for range b.N {
 			pluginsdk.IsProjectedCostExpired(resp, now)
 		}
@@ -1280,6 +1284,7 @@ func BenchmarkExpiresAtHelpers(b *testing.B) {
 
 	b.Run("ProjectedCostExpiresAt", func(b *testing.B) {
 		b.ReportAllocs()
+		b.ResetTimer()
 		for range b.N {
 			pluginsdk.ProjectedCostExpiresAt(resp)
 		}
@@ -1287,7 +1292,7 @@ func BenchmarkExpiresAtHelpers(b *testing.B) {
 
 	b.Run("IsActualCostExpired_Nil", func(b *testing.B) {
 		b.ReportAllocs()
-		nilResult := &pbc.ActualCostResult{}
+		b.ResetTimer()
 		for range b.N {
 			pluginsdk.IsActualCostExpired(nilResult, now)
 		}
@@ -1308,10 +1313,11 @@ func BenchmarkActualCostWithExpiresAt(b *testing.B) {
 	b.Run("WithoutExpiresAt", func(b *testing.B) {
 		plugin := plugintesting.NewMockPlugin()
 		harness := plugintesting.NewTestHarness(plugin)
-		harness.Start(&testing.T{})
+		harness.Start(b)
 		defer harness.Stop()
 
 		client := harness.Client()
+		b.ReportAllocs()
 		b.ResetTimer()
 		for range b.N {
 			_, err := client.GetActualCost(ctx, req)
@@ -1325,10 +1331,11 @@ func BenchmarkActualCostWithExpiresAt(b *testing.B) {
 		plugin := plugintesting.NewMockPlugin()
 		plugin.ExpiresAtDuration = 6 * time.Hour
 		harness := plugintesting.NewTestHarness(plugin)
-		harness.Start(&testing.T{})
+		harness.Start(b)
 		defer harness.Stop()
 
 		client := harness.Client()
+		b.ReportAllocs()
 		b.ResetTimer()
 		for range b.N {
 			_, err := client.GetActualCost(ctx, req)

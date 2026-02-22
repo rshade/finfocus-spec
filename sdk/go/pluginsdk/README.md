@@ -1314,7 +1314,10 @@ if pluginsdk.IsProjectedCostExpired(projResp, time.Now()) {
 // Get TTL for cache management
 if expiresAt, ok := pluginsdk.ActualCostExpiresAt(result); ok {
     ttl := time.Until(expiresAt)
-    cache.SetWithTTL(cacheKey, result, ttl)
+    if ttl > 0 {
+        cache.SetWithTTL(cacheKey, result, ttl)
+    }
+    // Past expires_at means data is already stale; skip caching
 }
 
 // Get projected cost expiration
@@ -1325,14 +1328,20 @@ if expiresAt, ok := pluginsdk.ProjectedCostExpiresAt(projResp); ok {
 
 ### Setting expires_at (Plugin Side)
 
-For actual cost results, set `ExpiresAt` directly on each result:
+For actual cost results, set `ExpiresAt` directly or use functional options:
 
 ```go
 import "google.golang.org/protobuf/types/known/timestamppb"
 
+// Option 1: Direct field assignment
 for _, r := range results {
     r.ExpiresAt = timestamppb.New(time.Now().Add(6 * time.Hour))
 }
+
+// Option 2: Functional options
+pluginsdk.ApplyActualCostResultOptions(result,
+    pluginsdk.WithActualCostResultExpiresAt(time.Now().Add(6 * time.Hour)),
+)
 ```
 
 For projected cost responses, use the `WithProjectedCostExpiresAt` option:

@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
@@ -1309,6 +1310,32 @@ func TestValidateActualCostResponse(t *testing.T) {
 					{Cost: 100.0, Source: "source-3"},
 				},
 				FallbackHint: pbc.FallbackHint_FALLBACK_HINT_NONE,
+			},
+			expectError: false,
+		},
+		{
+			name: "result with invalid expires_at nanos",
+			resp: &pbc.GetActualCostResponse{
+				Results: []*pbc.ActualCostResult{
+					{
+						Cost:      10.0,
+						Source:    "test",
+						ExpiresAt: &timestamppb.Timestamp{Seconds: 0, Nanos: -1},
+					},
+				},
+			},
+			expectError: true,
+		},
+		{
+			name: "result with valid expires_at",
+			resp: &pbc.GetActualCostResponse{
+				Results: []*pbc.ActualCostResult{
+					{
+						Cost:      10.0,
+						Source:    "test",
+						ExpiresAt: timestamppb.Now(),
+					},
+				},
 			},
 			expectError: false,
 		},

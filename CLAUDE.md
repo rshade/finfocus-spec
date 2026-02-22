@@ -873,8 +873,10 @@ See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable doc
 
 - 043-docs-drift-audit: Added Markdown documentation (no code changes) + N/A (documentation only)
 
+- 042-usage-profile-context: Added Go 1.25.6 (per go.mod) + Protocol Buffers v3, buf v1.32.1,
   google.golang.org/protobuf, google.golang.org/grpc, zerolog
 
+- `RecommendationCategory_RECOMMENDATION_CATEGORY_ANOMALY = 5`
   - `RecommendationActionType_RECOMMENDATION_ACTION_TYPE_INVESTIGATE = 12`
   - Enables cost anomaly recommendations alongside optimization recommendations
   - Test coverage: Comprehensive conformance tests in `sdk/go/testing/anomaly_conformance_test.go`
