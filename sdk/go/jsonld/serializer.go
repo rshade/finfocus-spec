@@ -93,7 +93,10 @@ func NewSerializer(opts ...SerializerOption) *Serializer {
 		if gen, ok := s.idGenerator.(ConfigurableIDGenerator); ok {
 			s.idGenerator = gen.WithUserIDField(s.options.UserIDField)
 		} else {
-			panic("IDGenerator does not support WithUserIDField configuration; implement ConfigurableIDGenerator interface")
+			panic(
+				"IDGenerator does not support WithUserIDField configuration; " +
+					"implement ConfigurableIDGenerator interface",
+			)
 		}
 	}
 

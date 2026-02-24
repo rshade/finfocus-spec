@@ -101,8 +101,8 @@ func TestOldClientNewServer(t *testing.T) {
 	// Server should treat this as "no growth" and return unchanged cost
 	// We use direct field access to get *float64 (pointer), GetGrowthRate() returns unwrapped float64
 	effectiveType, effectiveRate := pricing.ResolveGrowthParams(
-		oldClientRequest.GetGrowthType(), oldClientRequest.GrowthRate, //nolint:protogetter // need *float64
-		oldClientResource.GetGrowthType(), oldClientResource.GrowthRate, //nolint:protogetter // need *float64
+		oldClientRequest.GetGrowthType(), oldClientRequest.GrowthRate,
+		oldClientResource.GetGrowthType(), oldClientResource.GrowthRate,
 	)
 
 	if effectiveType != pbc.GrowthType_GROWTH_TYPE_NONE {

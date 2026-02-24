@@ -44,16 +44,11 @@ func CapabilityToLegacyName(capability pbc.PluginCapability) string {
 // CapabilitiesToLegacyMetadata converts capability enums to legacy metadata format.
 // Returns a map with "supports_xyz": "true" entries for each capability.
 // Capabilities without legacy equivalents are silently skipped.
+//
+// Deprecated: Use [CapabilitiesToLegacyMetadataWithWarnings] instead to get
+// visibility into unmapped capabilities. This function will be removed in v1.0.
 func CapabilitiesToLegacyMetadata(capabilities []pbc.PluginCapability) map[string]string {
-	if len(capabilities) == 0 {
-		return nil
-	}
-	metadata := make(map[string]string, len(capabilities))
-	for _, capability := range capabilities {
-		if name := CapabilityToLegacyName(capability); name != "" {
-			metadata[name] = capabilityTrue
-		}
-	}
+	metadata, _ := CapabilitiesToLegacyMetadataWithWarnings(capabilities)
 	return metadata
 }
 

@@ -35,7 +35,6 @@ func TestCapabilitiesToLegacyMetadata(t *testing.T) {
 	}
 
 	metadata := pluginsdk.CapabilitiesToLegacyMetadata(caps)
-
 	if metadata["supports_dry_run"] != "true" {
 		t.Errorf("expected supports_dry_run=true, got %q", metadata["supports_dry_run"])
 	}
@@ -44,6 +43,33 @@ func TestCapabilitiesToLegacyMetadata(t *testing.T) {
 	}
 	if len(metadata) != 2 {
 		t.Errorf("expected 2 metadata entries, got %d", len(metadata))
+	}
+}
+
+func TestCapabilitiesToLegacyMetadata_DelegatesCorrectly(t *testing.T) {
+	caps := []pbc.PluginCapability{
+		pbc.PluginCapability_PLUGIN_CAPABILITY_DRY_RUN,
+		pbc.PluginCapability_PLUGIN_CAPABILITY_RECOMMENDATIONS,
+		pbc.PluginCapability_PLUGIN_CAPABILITY_BUDGETS,
+		pbc.PluginCapability_PLUGIN_CAPABILITY_ACTUAL_COSTS,
+	}
+
+	silent := pluginsdk.CapabilitiesToLegacyMetadata(caps)
+	withWarnings, _ := pluginsdk.CapabilitiesToLegacyMetadataWithWarnings(caps)
+
+	if len(silent) != len(withWarnings) {
+		t.Fatalf(
+			"metadata length mismatch: silent=%d, withWarnings=%d",
+			len(silent), len(withWarnings),
+		)
+	}
+	for key, val := range withWarnings {
+		if silent[key] != val {
+			t.Errorf(
+				"metadata mismatch for key %q: silent=%q, withWarnings=%q",
+				key, silent[key], val,
+			)
+		}
 	}
 }
 
