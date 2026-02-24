@@ -71,7 +71,12 @@ type SerializerOption func(*Serializer)
 // NewSerializer creates a new JSON-LD serializer with default configuration.
 //
 // Panics if the Context configuration is invalid (e.g., invalid remote context URLs).
-// This ensures fail-fast behavior during initialization rather than runtime errors.
+// NewSerializer creates a Serializer initialized with a default Context, ID generator,
+// and default SerializerOptions, then applies the provided SerializerOption functions.
+// It validates the configured Context and panics on validation failure. If the
+// configured options include a UserIDField, NewSerializer attempts to apply that
+// setting to the ID generator via the ConfigurableIDGenerator interface and panics
+// if the generator does not support that interface.
 func NewSerializer(opts ...SerializerOption) *Serializer {
 	s := &Serializer{
 		context:     NewContext(),

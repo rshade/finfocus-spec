@@ -46,7 +46,12 @@ func CapabilityToLegacyName(capability pbc.PluginCapability) string {
 // Capabilities without legacy equivalents are silently skipped.
 //
 // Deprecated: Use [CapabilitiesToLegacyMetadataWithWarnings] instead to get
-// visibility into unmapped capabilities. This function will be removed in v1.0.
+// CapabilitiesToLegacyMetadata converts a slice of PluginCapability values into a legacy metadata map.
+//
+// For each capability that has a legacy name, the returned map contains an entry with that name set to "true".
+// Capabilities without a legacy mapping (including invalid enum values) are omitted from the map; any conversion
+// warnings are discarded. Deprecated: this helper will be removed in v1.0 — use CapabilitiesToLegacyMetadataWithWarnings
+// to obtain both the metadata and conversion warnings.
 func CapabilitiesToLegacyMetadata(capabilities []pbc.PluginCapability) map[string]string {
 	metadata, _ := CapabilitiesToLegacyMetadataWithWarnings(capabilities)
 	return metadata
