@@ -35,7 +35,6 @@ func TestCapabilitiesToLegacyMetadata(t *testing.T) {
 	}
 
 	metadata := pluginsdk.CapabilitiesToLegacyMetadata(caps)
-
 	if metadata["supports_dry_run"] != "true" {
 		t.Errorf("expected supports_dry_run=true, got %q", metadata["supports_dry_run"])
 	}
@@ -44,6 +43,55 @@ func TestCapabilitiesToLegacyMetadata(t *testing.T) {
 	}
 	if len(metadata) != 2 {
 		t.Errorf("expected 2 metadata entries, got %d", len(metadata))
+	}
+}
+
+func TestCapabilitiesToLegacyMetadata_DelegatesCorrectly(t *testing.T) {
+	// Both helpers return nil for nil/empty input (backward compatible).
+	silentNil := pluginsdk.CapabilitiesToLegacyMetadata(nil)
+	withWarningsNil, warningsNil := pluginsdk.CapabilitiesToLegacyMetadataWithWarnings(nil)
+	if silentNil != nil || withWarningsNil != nil || warningsNil != nil {
+		t.Fatalf(
+			"expected nil from both helpers for nil input: "+
+				"silent=%v, withWarnings=%v, warnings=%v",
+			silentNil, withWarningsNil, warningsNil,
+		)
+	}
+
+	caps := []pbc.PluginCapability{
+		pbc.PluginCapability_PLUGIN_CAPABILITY_DRY_RUN,
+		pbc.PluginCapability_PLUGIN_CAPABILITY_RECOMMENDATIONS,
+		pbc.PluginCapability_PLUGIN_CAPABILITY_BUDGETS,
+		pbc.PluginCapability_PLUGIN_CAPABILITY_ACTUAL_COSTS,
+	}
+
+	silent := pluginsdk.CapabilitiesToLegacyMetadata(caps)
+	withWarnings, _ := pluginsdk.CapabilitiesToLegacyMetadataWithWarnings(caps)
+	if silent == nil || withWarnings == nil {
+		t.Fatal("unexpected nil maps")
+	}
+
+	if len(silent) != len(withWarnings) {
+		t.Fatalf(
+			"metadata length mismatch: silent=%d, withWarnings=%d",
+			len(silent), len(withWarnings),
+		)
+	}
+	for key, val := range withWarnings {
+		if silent[key] != val {
+			t.Errorf(
+				"metadata mismatch for key %q: silent=%q, withWarnings=%q",
+				key, silent[key], val,
+			)
+		}
+	}
+	for key, val := range silent {
+		if withWarnings[key] != val {
+			t.Errorf(
+				"metadata mismatch for key %q: withWarnings=%q, silent=%q",
+				key, withWarnings[key], val,
+			)
+		}
 	}
 }
 

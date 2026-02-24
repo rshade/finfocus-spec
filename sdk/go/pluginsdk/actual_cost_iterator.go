@@ -30,11 +30,23 @@ type ActualCostFetchFunc func(ctx context.Context, pageToken string, pageSize in
 // for consuming paginated GetActualCost responses. It lazily fetches pages
 // on demand and yields one ActualCostResult at a time.
 //
-// ActualCostIterator is NOT safe for concurrent use from multiple goroutines
-// (same contract as sql.Rows). The following mutable fields are updated on
-// each call to Next(): current, index, pageToken, totalCount, done, err.
+// # Concurrency Safety
 //
-// Example usage:
+// ActualCostIterator is NOT safe for concurrent use from multiple goroutines
+// (same contract as [database/sql.Rows]). The methods [ActualCostIterator.Next],
+// [ActualCostIterator.Record], [ActualCostIterator.TotalCount], and
+// [ActualCostIterator.Err] all access mutable state — calling any of these
+// concurrently with Next is a data race. If multi-goroutine access is needed,
+// callers must provide their own synchronization (e.g., a sync.Mutex).
+//
+// To verify race-freedom, run the test suite with the race detector:
+//
+//	# From the repository root:
+//	go test -race ./sdk/go/pluginsdk/
+//
+// # Example Usage
+//
+// The recommended pattern is a single-goroutine iteration loop:
 //
 //	iter := pluginsdk.NewActualCostIterator(ctx,
 //	    func(ctx context.Context, pageToken string, pageSize int32) (*pbc.GetActualCostResponse, error) {
@@ -172,7 +184,10 @@ func (it *ActualCostIterator) Next() bool {
 	if ctxErr := it.ctx.Err(); ctxErr != nil {
 		it.err = ctxErr
 	} else {
-		it.err = fmt.Errorf("pagination safety: exceeded %d consecutive empty pages with continuation tokens", maxEmptyPages)
+		it.err = fmt.Errorf(
+			"pagination safety: exceeded %d consecutive empty pages with continuation tokens",
+			maxEmptyPages,
+		)
 	}
 	return false
 }
@@ -192,6 +207,8 @@ func (it *ActualCostIterator) Err() error {
 }
 
 // TotalCount returns the total_count from the most recent response.
+// The value can change between Next() calls if the backend's dataset changes
+// during pagination; read it after iteration completes for a stable final value.
 // Returns 0 if no pages have been fetched or if the server doesn't report total count.
 func (it *ActualCostIterator) TotalCount() int32 {
 	return it.totalCount

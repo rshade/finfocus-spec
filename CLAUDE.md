@@ -126,6 +126,8 @@ info := pluginsdk.NewPluginInfo("my-plugin", "v1.0.0",
 **Backward Compatibility**:
 The SDK automatically populates both the modern `capabilities` enum list and the legacy `metadata`
 map (e.g., `"supports_dry_run": "true"`) to ensure compatibility with older hosts.
+When converting capability enums to legacy metadata manually, prefer
+`CapabilitiesToLegacyMetadataWithWarnings`; `CapabilitiesToLegacyMetadata` is deprecated.
 
 **GetPluginInfo Configuration Patterns:**
 

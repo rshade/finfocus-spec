@@ -68,10 +68,13 @@ type Serializer struct {
 // SerializerOption is a functional option for configuring the Serializer.
 type SerializerOption func(*Serializer)
 
-// NewSerializer creates a new JSON-LD serializer with default configuration.
+// NewSerializer creates a Serializer with a default Context, ID generator, and
+// SerializerOptions, then applies the provided SerializerOption functions.
 //
-// Panics if the Context configuration is invalid (e.g., invalid remote context URLs).
-// This ensures fail-fast behavior during initialization rather than runtime errors.
+// It validates the configured Context and panics on validation failure (for
+// example, invalid remote context URLs). If a UserIDField is configured, it
+// applies that setting to the ID generator via ConfigurableIDGenerator and
+// panics if the generator does not support that interface.
 func NewSerializer(opts ...SerializerOption) *Serializer {
 	s := &Serializer{
 		context:     NewContext(),
@@ -93,7 +96,10 @@ func NewSerializer(opts ...SerializerOption) *Serializer {
 		if gen, ok := s.idGenerator.(ConfigurableIDGenerator); ok {
 			s.idGenerator = gen.WithUserIDField(s.options.UserIDField)
 		} else {
-			panic("IDGenerator does not support WithUserIDField configuration; implement ConfigurableIDGenerator interface")
+			panic(
+				"IDGenerator does not support WithUserIDField configuration; " +
+					"implement ConfigurableIDGenerator interface",
+			)
 		}
 	}
 

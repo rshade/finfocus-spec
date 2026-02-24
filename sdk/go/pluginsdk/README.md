@@ -1426,10 +1426,76 @@ if err := iter.Err(); err != nil {
 fmt.Printf("Total records: %d\n", iter.TotalCount())
 ```
 
+`TotalCount()` reflects the most recent page response; for a stable final value,
+read it after the iteration loop completes.
+
 ### Response Options
 
 - `WithNextPageToken(token)` - Sets the continuation token on the response
 - `WithTotalCount(count)` - Sets the total record count on the response
+
+### Token Opacity
+
+Page tokens (`page_token` / `NextPageToken`) are **opaque** values. Clients MUST NOT
+parse, construct, modify, or persist tokens across sessions. The internal token format
+may change between SDK versions without notice.
+
+The correct usage pattern is pass-through: take the `NextPageToken` from a response and
+pass it unchanged as the `PageToken` in the next request. Submitting an invalid or
+malformed token returns an `InvalidArgument` gRPC error.
+
+```go
+// Correct: pass token through unchanged
+nextReq.PageToken = resp.GetNextPageToken()
+
+// Incorrect: never decode, construct, or modify tokens
+// decoded, _ := base64.StdEncoding.DecodeString(resp.GetNextPageToken()) // DON'T
+// offset, _ := strconv.Atoi(string(decoded)) // DON'T
+```
+
+### Edge Cases and Safety
+
+| Scenario | Behavior |
+|---|---|
+| `page_size=0` AND `page_token=""` | All results returned (backward compatibility with legacy callers) |
+| `page_size=0` AND `page_token!=""` | Uses `DefaultPageSize` (50) from the provided token offset |
+| `page_size > MaxPageSize` (1000) | Clamped to `MaxPageSize`; a warning is logged |
+| Empty page with continuation token | Iterator skips and fetches next page (up to 10 consecutive empty pages) |
+| 10+ consecutive empty pages | Iterator stops with an error to prevent infinite loops |
+| Data changes mid-iteration | Results may contain duplicates or gaps; pagination is not transactional |
+| Out-of-bounds page token offset | Returns empty results with no `NextPageToken` (graceful termination) |
+| Context cancellation during fetch | Iterator stops and returns the context error via `Err()` |
+
+### Migration Guide
+
+To add pagination support to an existing plugin:
+
+1. **Wrap results** with `PaginateActualCosts()` in your `GetActualCost` handler:
+
+   ```go
+   page, nextToken, totalCount, err := pluginsdk.PaginateActualCosts(
+       allResults, req.PageSize, req.PageToken,
+   )
+   ```
+
+2. **Return pagination fields** in the response:
+
+   ```go
+   return pluginsdk.NewActualCostResponse(
+       pluginsdk.WithResults(page),
+       pluginsdk.WithNextPageToken(nextToken),
+       pluginsdk.WithTotalCount(totalCount),
+   ), nil
+   ```
+
+3. **No changes needed for existing callers** — when both `page_size=0` and
+   `page_token=""` (proto3 defaults), all results are returned as before.
+
+4. **Validate with the conformance suite**:
+
+   ```bash
+   go test -v -run TestActualCost ./sdk/go/pluginsdk/
+   ```
 
 ## FOCUS 1.2 Cost Records
 
