@@ -1282,6 +1282,85 @@ Available validation functions:
 - `ValidateResourceRecommendationInfo(res)` - Validates resource info fields
 - `ValidateRecommendationImpact(impact)` - Validates impact with ISO 4217 currency
 
+## Caching Hint Helpers (expires_at)
+
+The SDK provides helper functions for checking whether cost data has expired,
+enabling callers to manage local caches based on plugin-provided `expires_at` hints.
+
+### Checking Expiration
+
+```go
+import "github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
+
+// Check if a cost result has expired
+for _, result := range resp.Results {
+    if pluginsdk.IsActualCostExpired(result, time.Now()) {
+        // Data is stale, re-fetch from plugin
+        continue
+    }
+    // Data is fresh, use cached version
+    processResult(result)
+}
+
+// Check projected cost expiration
+if pluginsdk.IsProjectedCostExpired(projResp, time.Now()) {
+    // Pricing data is stale, re-fetch
+}
+```
+
+### Extracting Expiration Time
+
+```go
+// Get TTL for cache management
+if expiresAt, ok := pluginsdk.ActualCostExpiresAt(result); ok {
+    ttl := time.Until(expiresAt)
+    if ttl > 0 {
+        cache.SetWithTTL(cacheKey, result, ttl)
+    }
+    // Past expires_at means data is already stale; skip caching
+}
+
+// Get projected cost expiration
+if expiresAt, ok := pluginsdk.ProjectedCostExpiresAt(projResp); ok {
+    log.Info().Time("expires_at", expiresAt).Msg("pricing valid until")
+}
+```
+
+### Setting expires_at (Plugin Side)
+
+For actual cost results, set `ExpiresAt` directly or use functional options:
+
+```go
+import "google.golang.org/protobuf/types/known/timestamppb"
+
+// Option 1: Direct field assignment
+for _, r := range results {
+    r.ExpiresAt = timestamppb.New(time.Now().Add(6 * time.Hour))
+}
+
+// Option 2: Functional options
+pluginsdk.ApplyActualCostResultOptions(result,
+    pluginsdk.WithActualCostResultExpiresAt(time.Now().Add(6 * time.Hour)),
+)
+```
+
+For projected cost responses, use the `WithProjectedCostExpiresAt` option:
+
+```go
+resp := pluginsdk.NewGetProjectedCostResponse(
+    pluginsdk.WithProjectedCostExpiresAt(endOfBillingCycle()),
+)
+```
+
+### Behavior Summary
+
+| Input | `IsExpired` returns | `ExpiresAt` returns |
+|-------|---------------------|---------------------|
+| nil result/response | `false` | `zero, false` |
+| nil expires_at | `false` | `zero, false` |
+| Future timestamp | `false` | `time, true` |
+| Past timestamp | `true` | `time, true` |
+
 ## Pagination Helpers
 
 The SDK provides pagination helpers for both `GetRecommendations` and `GetActualCost` RPCs.

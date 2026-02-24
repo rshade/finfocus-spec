@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 	plugintesting "github.com/rshade/finfocus-spec/sdk/go/testing"
@@ -1237,6 +1239,108 @@ func BenchmarkGetActualCostPaginated(b *testing.B) {
 			}
 			if totalRecords != 1000 {
 				b.Fatalf("expected 1000 records, got %d", totalRecords)
+			}
+		}
+	})
+}
+
+// BenchmarkExpiresAtHelpers benchmarks the four expiration check helper functions.
+// Target: < 10 ns/op, 0 allocs/op.
+func BenchmarkExpiresAtHelpers(b *testing.B) {
+	now := time.Now()
+	futureTime := now.Add(6 * time.Hour)
+
+	result := &pbc.ActualCostResult{
+		ExpiresAt: timestamppb.New(futureTime),
+	}
+	resp := &pbc.GetProjectedCostResponse{
+		ExpiresAt: timestamppb.New(futureTime),
+	}
+	nilResult := &pbc.ActualCostResult{}
+
+	b.Run("IsActualCostExpired", func(b *testing.B) {
+		b.ReportAllocs()
+		b.ResetTimer()
+		for range b.N {
+			pluginsdk.IsActualCostExpired(result, now)
+		}
+	})
+
+	b.Run("ActualCostExpiresAt", func(b *testing.B) {
+		b.ReportAllocs()
+		b.ResetTimer()
+		for range b.N {
+			pluginsdk.ActualCostExpiresAt(result)
+		}
+	})
+
+	b.Run("IsProjectedCostExpired", func(b *testing.B) {
+		b.ReportAllocs()
+		b.ResetTimer()
+		for range b.N {
+			pluginsdk.IsProjectedCostExpired(resp, now)
+		}
+	})
+
+	b.Run("ProjectedCostExpiresAt", func(b *testing.B) {
+		b.ReportAllocs()
+		b.ResetTimer()
+		for range b.N {
+			pluginsdk.ProjectedCostExpiresAt(resp)
+		}
+	})
+
+	b.Run("IsActualCostExpired_Nil", func(b *testing.B) {
+		b.ReportAllocs()
+		b.ResetTimer()
+		for range b.N {
+			pluginsdk.IsActualCostExpired(nilResult, now)
+		}
+	})
+}
+
+// BenchmarkActualCostWithExpiresAt measures GetActualCost RPC overhead
+// when expires_at is set vs not set.
+func BenchmarkActualCostWithExpiresAt(b *testing.B) {
+	start, end := plugintesting.CreateTimeRange(5)
+	req := &pbc.GetActualCostRequest{
+		Start:      start,
+		End:        end,
+		ResourceId: "test-resource",
+	}
+	ctx := context.Background()
+
+	b.Run("WithoutExpiresAt", func(b *testing.B) {
+		plugin := plugintesting.NewMockPlugin()
+		harness := plugintesting.NewTestHarness(plugin)
+		harness.Start(b)
+		defer harness.Stop()
+
+		client := harness.Client()
+		b.ReportAllocs()
+		b.ResetTimer()
+		for range b.N {
+			_, err := client.GetActualCost(ctx, req)
+			if err != nil {
+				b.Fatalf("GetActualCost() failed: %v", err)
+			}
+		}
+	})
+
+	b.Run("WithExpiresAt", func(b *testing.B) {
+		plugin := plugintesting.NewMockPlugin()
+		plugin.ExpiresAtDuration = 6 * time.Hour
+		harness := plugintesting.NewTestHarness(plugin)
+		harness.Start(b)
+		defer harness.Stop()
+
+		client := harness.Client()
+		b.ReportAllocs()
+		b.ResetTimer()
+		for range b.N {
+			_, err := client.GetActualCost(ctx, req)
+			if err != nil {
+				b.Fatalf("GetActualCost() failed: %v", err)
 			}
 		}
 	})

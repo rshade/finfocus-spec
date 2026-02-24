@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/rshade/finfocus-spec/sdk/go/currency"
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
@@ -293,6 +294,11 @@ func ValidateActualCostResponse(resp *pbc.GetActualCostResponse) error {
 		}
 		if result.GetSource() == "" {
 			return fmt.Errorf("results[%d].source cannot be empty", i)
+		}
+		if ts := result.GetExpiresAt(); ts != nil {
+			if err := ts.CheckValid(); err != nil {
+				return fmt.Errorf("results[%d].expires_at is invalid: %w", i, err)
+			}
 		}
 	}
 
@@ -1423,6 +1429,26 @@ func WithPredictionInterval(lower, upper, confidence float64) GetProjectedCostRe
 	}
 }
 
+// WithProjectedCostExpiresAt returns a GetProjectedCostResponseOption that sets
+// the expires_at caching hint on the projected cost response.
+//
+// A zero time.Time results in a nil expires_at (no caching guidance).
+//
+// Usage:
+//
+//	resp := pluginsdk.NewGetProjectedCostResponse(
+//	    pluginsdk.WithProjectedCostExpiresAt(time.Now().Add(24 * time.Hour)),
+//	)
+func WithProjectedCostExpiresAt(expiresAt time.Time) GetProjectedCostResponseOption {
+	return func(resp *pbc.GetProjectedCostResponse) {
+		if expiresAt.IsZero() {
+			resp.ExpiresAt = nil
+			return
+		}
+		resp.ExpiresAt = timestamppb.New(expiresAt)
+	}
+}
+
 // NewGetProjectedCostResponse creates a GetProjectedCostResponse with functional options.
 //
 // Example:
@@ -1438,6 +1464,13 @@ func WithPredictionInterval(lower, upper, confidence float64) GetProjectedCostRe
 //	resp := pluginsdk.NewGetProjectedCostResponse(
 //	    pluginsdk.WithProjectedCostDetails(0.05, "USD", 36.50, "spot-instance"),
 //	    pluginsdk.WithPredictionInterval(30.0, 45.0, 0.95),  // 95% CI
+//	)
+//
+// Example with caching hint:
+//
+//	resp := pluginsdk.NewGetProjectedCostResponse(
+//	    pluginsdk.WithProjectedCostDetails(0.05, "USD", 36.50, "spot-instance"),
+//	    pluginsdk.WithProjectedCostExpiresAt(time.Now().Add(24 * time.Hour)),
 //	)
 func NewGetProjectedCostResponse(opts ...GetProjectedCostResponseOption) *pbc.GetProjectedCostResponse {
 	resp := &pbc.GetProjectedCostResponse{}

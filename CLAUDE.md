@@ -784,6 +784,11 @@ parallel subtests complete.
 
 - Go 1.25.7 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
   google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1
+  (045-caching-hint-expires-at)
+- N/A (stateless proto field addition, no persistence) (045-caching-hint-expires-at)
+
+- Go 1.25.7 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
+  google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1
   (044-actual-cost-pagination)
 - N/A (stateless pagination with offset-based tokens) (044-actual-cost-pagination)
 
@@ -859,6 +864,9 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+
+- 045-caching-hint-expires-at: Added Go 1.25.7 (per go.mod) + Protocol Buffers v3,
+  TypeScript (SDK) + google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1
 
 - 044-actual-cost-pagination: Added Go 1.25.6 (per go.mod) + Protocol Buffers v3,
   TypeScript (SDK) + google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1

@@ -446,6 +446,24 @@ message GetProjectedCostResponse {
   // as 0.95 (95% confidence). The SDK validates but does not populate this default.
   // When set without prediction intervals, the value is ignored.
   optional double confidence_level = 12;
+
+  // expires_at is a caching hint indicating when this projected cost data
+  // should be considered stale. Callers MAY use this to manage local caches
+  // and avoid re-requesting projections before the expiration time.
+  //
+  // Semantics:
+  //   - nil/unset: No caching guidance. Caller should re-fetch on each request.
+  //   - Past timestamp: Data is immediately stale (equivalent to no hint).
+  //   - Future timestamp: Data is valid until this time.
+  //
+  // This field is advisory. Callers MAY apply their own maximum TTL policy
+  // regardless of the value set by the plugin.
+  //
+  // Use cases:
+  //   - Pricing cycle boundaries: Set to end of billing cycle (e.g., month-end)
+  //   - Stable pricing: Set far future for resources with fixed pricing
+  //   - Volatile pricing: Leave unset or set short TTL
+  google.protobuf.Timestamp expires_at = 13;
 }
 
 // GetPricingSpecRequest contains the resource descriptor for pricing specification.
@@ -615,6 +633,23 @@ message ActualCostResult {
   FocusCostRecord focus_record = 6;
   // impact_metrics contains sustainability metrics (Carbon, Energy, etc.)
   repeated ImpactMetric impact_metrics = 7;
+  // expires_at is a caching hint indicating when this cost data should be
+  // considered stale. Callers MAY use this to manage local caches and avoid
+  // re-requesting data before the expiration time.
+  //
+  // Semantics:
+  //   - nil/unset: No caching guidance. Caller should re-fetch on each request.
+  //   - Past timestamp: Data is immediately stale (equivalent to no hint).
+  //   - Future timestamp: Data is valid until this time.
+  //
+  // This field is advisory. Callers MAY apply their own maximum TTL policy
+  // regardless of the value set by the plugin.
+  //
+  // Use cases:
+  //   - Rate-limited APIs: Set 6-12 hours to prevent excessive upstream calls
+  //   - Billing cycle alignment: Set to end of current billing period
+  //   - Real-time sources: Leave unset (no caching)
+  google.protobuf.Timestamp expires_at = 8;
 }
 
 // UsageMetricHint provides guidance on usage metrics for cost calculation.
