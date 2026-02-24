@@ -54,7 +54,7 @@
     "commitlint:last": "commitlint --from HEAD~1"
   },
   "dependencies": {
-    "ajv": "^8.17.1",
+    "ajv": "^8.18.0",
     "ajv-cli": "^5.0.0",
     "ajv-draft-04": "^1.0.0",
     "ajv-formats": "^3.0.1"
