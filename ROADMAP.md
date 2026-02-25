@@ -14,27 +14,24 @@ centered around the FinOps Foundation's FOCUS standard.
 - [ ] **Enforce Token Opacity in Proto Comments**
   ([#363](https://github.com/rshade/finfocus-spec/issues/363)) -
   Add explicit warning that `page_token` is opaque; clients MUST NOT parse or construct tokens.
-- [ ] **Upper Bound Check for DecodePageToken**
-  ([#364](https://github.com/rshade/finfocus-spec/issues/364)) -
-  Add `math.MaxInt32` guard to prevent malicious large-offset tokens.
 - [ ] **Warn on TotalCount Change Mid-Iteration**
   ([#365](https://github.com/rshade/finfocus-spec/issues/365)) -
   Log zerolog warning when `total_count` changes between pages during iteration.
 - [ ] **Iterator Concurrency Safety Documentation**
   ([#366](https://github.com/rshade/finfocus-spec/issues/366)) -
   Expand `ActualCostIterator` docs with read-while-write hazard warnings.
-- [ ] **Missing Pagination Edge Case Tests**
-  ([#367](https://github.com/rshade/finfocus-spec/issues/367)) -
-  Add tests for inconsistent `total_count`, concurrent access, and `int32` overflow.
-- [ ] **TypeScript Null Response Guard**
-  ([#368](https://github.com/rshade/finfocus-spec/issues/368)) -
-  Add null/undefined response guard in TypeScript `actualCostIterator`.
-- [ ] **Log Warning on Page Size Clamping**
-  ([#369](https://github.com/rshade/finfocus-spec/issues/369)) -
-  Log warning when `page_size` is clamped to `MaxPageSize` for observability.
 - [ ] **Expand Pagination SDK Documentation**
   ([#371](https://github.com/rshade/finfocus-spec/issues/371)) -
   Add token opacity guidance, migration guide, and edge case handling to SDK README.
+
+### GetProjectedCost Enrichment
+
+- [ ] **Plugin Contract for GetProjectedCost**
+  ([#377](https://github.com/rshade/finfocus-spec/issues/377)) -
+  Document plugin contract for sparse/old-state property handling in projected cost responses.
+- [ ] **Metadata Map for Confidence Signals**
+  ([#381](https://github.com/rshade/finfocus-spec/issues/381)) -
+  Add metadata map to GetProjectedCostResponse for property confidence signals.
 
 ### SDK Enhancements
 
@@ -57,7 +54,7 @@ centered around the FinOps Foundation's FOCUS standard.
   Automated tracking and updating of core proto and SDK dependencies.
 - [ ] **Upgrade golangci-lint**
   ([#350](https://github.com/rshade/finfocus-spec/issues/350)) -
-  Upgrade from v2.6.2 to v2.8.0.
+  Upgrade from v2.6.2 to v2.9.0.
 
 ---
 
@@ -87,6 +84,9 @@ centered around the FinOps Foundation's FOCUS standard.
   Closed Jan 2026.
 - [x] **Validation Bypass Protocol** ([#216](https://github.com/rshade/finfocus-spec/issues/216)) -
   Added `BypassReason` and `OverrideMetadata` to `ValidationResult` for governance auditing.
+- [x] **Currency Library Evaluation**
+  ([#358](https://github.com/rshade/finfocus-spec/issues/358)) -
+  Evaluated external currency libraries (x/text/currency, bojanz/currency). Feb 2026.
 
 ### Proposed for Discussion (Discovery)
 
@@ -126,6 +126,9 @@ centered around the FinOps Foundation's FOCUS standard.
   Added `PricingTier` enum and `SpotRisk` enum for interruption probability.
 - [x] **Usage Profiles** ([#218](https://github.com/rshade/finfocus-spec/issues/218)) -
   Added `UsageProfile` context for environment-aware recommendations.
+- [x] **Caching Hint (expires_at)**
+  ([#380](https://github.com/rshade/finfocus-spec/issues/380)) -
+  Added `expires_at` caching hint to cost results for cache freshness signaling.
 
 #### SDK & Tooling
 
@@ -212,6 +215,12 @@ centered around the FinOps Foundation's FOCUS standard.
   [#347](https://github.com/rshade/finfocus-spec/issues/347),
   [#348](https://github.com/rshade/finfocus-spec/issues/348)) -
   Comprehensive audit of SDK READMEs and root README for documentation accuracy.
+- [x] **Pagination Hardening**
+  ([#364](https://github.com/rshade/finfocus-spec/issues/364),
+  [#367](https://github.com/rshade/finfocus-spec/issues/367),
+  [#368](https://github.com/rshade/finfocus-spec/issues/368),
+  [#369](https://github.com/rshade/finfocus-spec/issues/369)) -
+  Upper bound token checks, edge case tests, TypeScript null guards, and page size clamping warnings.
 
 ### Pre-2026
 
