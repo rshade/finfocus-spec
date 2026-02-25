@@ -193,8 +193,8 @@ const (
 
 	// optionalCapabilities is the number of capabilities from optional
 	// interfaces: RecommendationsProvider, BudgetsProvider, DismissProvider,
-	// DryRunHandler.
-	optionalCapabilities = 4
+	// DryRunHandler, BatchCostHandler.
+	optionalCapabilities = 5
 
 	// maxCapabilities is the total maximum number of capabilities a plugin
 	// can have. Used for pre-allocation to minimize allocations during
@@ -214,7 +214,7 @@ const (
 
 	// maxValidCapability is the maximum valid PluginCapability enum value.
 	// This should be updated when new capabilities are added to the proto definition.
-	maxValidCapability = pbc.PluginCapability_PLUGIN_CAPABILITY_DISMISS_RECOMMENDATIONS // 11
+	maxValidCapability = pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST // 12
 )
 
 // IsValidCapability checks if a PluginCapability enum value is within the valid range.
@@ -232,7 +232,7 @@ func IsValidCapability(capability pbc.PluginCapability) bool {
 }
 
 // inferCapabilities determines plugin capabilities by checking implemented interfaces.
-// The slice is pre-allocated with capacity maxCapabilities (4 base + 4 optional) to minimize allocations.
+// The slice is pre-allocated with capacity maxCapabilities (4 base + 5 optional) to minimize allocations.
 // Returns a slice of capabilities supported by the plugin, or nil if plugin is nil.
 //
 // The base Plugin interface methods (GetProjectedCost, GetActualCost, etc.) are
@@ -268,7 +268,7 @@ func inferCapabilities(plugin Plugin) []pbc.PluginCapability {
 		return nil
 	}
 
-	// Pre-allocate for common case (4 base + 4 optional = maxCapabilities)
+	// Pre-allocate for common case (4 base + 5 optional = maxCapabilities)
 	// This reduces allocations from ~2-3 (slice growth) to 1 (initial make)
 	capabilities := make([]pbc.PluginCapability, 0, maxCapabilities)
 
@@ -292,6 +292,9 @@ func inferCapabilities(plugin Plugin) []pbc.PluginCapability {
 	}
 	if _, ok := plugin.(DryRunHandler); ok {
 		capabilities = append(capabilities, pbc.PluginCapability_PLUGIN_CAPABILITY_DRY_RUN)
+	}
+	if _, ok := plugin.(BatchCostHandler); ok {
+		capabilities = append(capabilities, pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST)
 	}
 
 	return capabilities

@@ -22,6 +22,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 	"github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1/pbcconnect"
@@ -211,6 +212,15 @@ type PluginInfoProvider interface {
 		*pbc.GetPluginInfoResponse, error)
 }
 
+// BatchCostHandler is an optional interface that plugins can implement
+// for optimized batch processing. Plugins that do not implement this
+// interface are served via SDK fallback processing.
+type BatchCostHandler interface {
+	// BatchCost queries cost data for multiple resources in a single request.
+	BatchCost(ctx context.Context, req *pbc.BatchCostRequest) (
+		*pbc.BatchCostResponse, error)
+}
+
 // RegistryLookup defines the interface for looking up plugins by provider and region.
 // This is used to validate incoming Supports requests against registered plugins.
 type RegistryLookup interface {
@@ -249,6 +259,14 @@ type Server struct {
 	// globalCapabilities are the capabilities inferred from the plugin interface
 	// or explicitly configured. Populated at server initialization.
 	globalCapabilities []pbc.PluginCapability
+
+	// maxBatchSize is the configured per-plugin batch size limit.
+	// Defaults to DefaultMaxBatchSize when not configured.
+	maxBatchSize int32
+
+	// batchWorkers controls fallback concurrency when the plugin does not
+	// implement BatchCostHandler. Defaults to DefaultBatchWorkers.
+	batchWorkers int
 }
 
 // NewServer creates a Server that exposes the provided Plugin over gRPC.
@@ -261,6 +279,8 @@ func NewServer(plugin Plugin) *Server {
 		registry:           &DefaultRegistryLookup{},
 		logger:             newDefaultLogger(),
 		globalCapabilities: inferCapabilities(plugin),
+		maxBatchSize:       DefaultMaxBatchSize,
+		batchWorkers:       DefaultBatchWorkers,
 	}
 }
 
@@ -303,6 +323,8 @@ func NewServerWithOptions(plugin Plugin, registry RegistryLookup, logger *zerolo
 		logger:             log,
 		pluginInfo:         info, // Thread-safe: set during construction before requests accepted
 		globalCapabilities: caps,
+		maxBatchSize:       DefaultMaxBatchSize,
+		batchWorkers:       DefaultBatchWorkers,
 	}
 }
 
@@ -444,6 +466,10 @@ func (s *Server) handleConfiguredPluginInfo() (*pbc.GetPluginInfoResponse, error
 		for key, val := range legacyMeta {
 			metadata[key] = val
 		}
+
+		if containsCapability(capabilities, pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST) {
+			metadata["max_batch_size"] = strconv.Itoa(int(s.maxBatchSize))
+		}
 	}
 
 	return &pbc.GetPluginInfoResponse{
@@ -454,6 +480,15 @@ func (s *Server) handleConfiguredPluginInfo() (*pbc.GetPluginInfoResponse, error
 		Metadata:     metadata,
 		Capabilities: capabilities,
 	}, nil
+}
+
+func containsCapability(capabilities []pbc.PluginCapability, target pbc.PluginCapability) bool {
+	for _, capability := range capabilities {
+		if capability == target {
+			return true
+		}
+	}
+	return false
 }
 
 // GetProjectedCost implements the gRPC GetProjectedCost method.
@@ -737,6 +772,44 @@ func (s *Server) DismissRecommendation(
 	return resp, nil
 }
 
+// BatchCost implements the gRPC BatchCost method.
+// It validates requests, dispatches to custom handler when available,
+// and falls back to bounded parallel processing otherwise.
+func (s *Server) BatchCost(
+	ctx context.Context,
+	req *pbc.BatchCostRequest,
+) (*pbc.BatchCostResponse, error) {
+	emptyResp, err := ValidateBatchCostRequest(req, s.maxBatchSize)
+	if err != nil {
+		return nil, err
+	}
+	if emptyResp != nil {
+		return emptyResp, nil
+	}
+
+	normalizedReq, ok := proto.Clone(req).(*pbc.BatchCostRequest)
+	if !ok {
+		return nil, status.Error(codes.Internal, "failed to clone batch request")
+	}
+	normalizedReq.QueryType = NormalizeCostQueryType(req.GetQueryType())
+
+	if handler, hasCustomHandler := s.plugin.(BatchCostHandler); hasCustomHandler {
+		resp, batchErr := handler.BatchCost(ctx, normalizedReq)
+		if batchErr != nil {
+			return nil, batchErr
+		}
+		if resp == nil {
+			return nil, status.Error(codes.Internal, "plugin returned nil BatchCost response")
+		}
+		if resp.GetMaxBatchSize() <= 0 {
+			resp.MaxBatchSize = s.maxBatchSize
+		}
+		return resp, nil
+	}
+
+	return batchCostFallback(ctx, s.plugin, normalizedReq, s.maxBatchSize, s.batchWorkers), nil
+}
+
 // ServeConfig holds configuration for serving a plugin.
 type ServeConfig struct {
 	// Plugin is the implementation of the cost source service.
@@ -771,6 +844,15 @@ type ServeConfig struct {
 
 	// Timeouts configures HTTP server timeouts.
 	Timeouts *ServerTimeouts
+
+	// MaxBatchSize is the per-plugin batch size limit for BatchCost RPC.
+	// Values <= 0 default to DefaultMaxBatchSize. Values > MaxBatchSize are clamped.
+	MaxBatchSize int
+
+	// BatchWorkers controls fallback concurrency for BatchCost when the plugin
+	// does not implement BatchCostHandler.
+	// Values <= 0 default to DefaultBatchWorkers.
+	BatchWorkers int
 }
 
 // resolvePort determines the port to use with the following priority:
@@ -912,6 +994,8 @@ func Serve(ctx context.Context, config ServeConfig) error {
 
 	// Create the core server that wraps the plugin (pluginInfo set at construction)
 	server := NewServerWithOptions(config.Plugin, config.Registry, config.Logger, config.PluginInfo)
+	server.maxBatchSize = resolveBatchSize(config.MaxBatchSize)
+	server.batchWorkers = resolveBatchWorkers(config.BatchWorkers)
 
 	// Choose serving mode based on WebConfig
 	if config.Web.Enabled {

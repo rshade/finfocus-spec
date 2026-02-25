@@ -29,6 +29,7 @@ go.work.sum
 
 # env file
 .env
+.env*
 
 # Local binary directory for project tools
 bin/
@@ -49,9 +50,11 @@ CodeRabbitPromptGrok.md
 Thumbs.db
 *.tmp
 *.swp
+.vscode/
+.idea/
+vendor/
 # Node.js / TypeScript
 dist/
 build/
 coverage/
 junit.xml
-

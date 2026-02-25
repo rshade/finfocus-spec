@@ -26,6 +26,7 @@ var legacyCapabilityNames = map[pbc.PluginCapability]string{
 	pbc.PluginCapability_PLUGIN_CAPABILITY_DRY_RUN:                 "supports_dry_run",
 	pbc.PluginCapability_PLUGIN_CAPABILITY_BUDGETS:                 "supports_budgets",
 	pbc.PluginCapability_PLUGIN_CAPABILITY_DISMISS_RECOMMENDATIONS: "supports_dismiss_recommendations",
+	pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST:              "supports_batch_cost",
 	pbc.PluginCapability_PLUGIN_CAPABILITY_PROJECTED_COSTS:         "supports_projected_costs",
 	pbc.PluginCapability_PLUGIN_CAPABILITY_ACTUAL_COSTS:            "supports_actual_costs",
 	pbc.PluginCapability_PLUGIN_CAPABILITY_PRICING_SPEC:            "supports_pricing_spec",

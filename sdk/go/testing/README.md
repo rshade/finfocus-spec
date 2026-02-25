@@ -224,6 +224,36 @@ plugin.NameDelay = 100 * time.Millisecond
 - `ConfigurableErrorMockPlugin()`: For error testing
 - `SlowMockPlugin()`: For timeout/performance testing
 
+### Batch Cost Testing
+
+`MockPlugin` includes batch RPC controls for conformance and integration tests:
+
+- `ShouldErrorOnBatchCost`: force top-level BatchCost RPC failure
+- `BatchCostDelay`: add latency to simulate slower backends
+- `UnsupportedBatchResourceTypes`: per-resource partial failure injection (`resource_type_unsupported=true`)
+
+Example:
+
+```go
+plugin := plugintesting.NewMockPlugin()
+plugin.UnsupportedBatchResourceTypes["unsupported_resource"] = true
+
+resp, err := harness.Client().BatchCost(ctx, &pbc.BatchCostRequest{
+    QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+    Resources: []*pbc.ResourceDescriptor{
+        plugintesting.CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1"),
+        plugintesting.CreateResourceDescriptor("aws", "unsupported_resource", "", "us-east-1"),
+    },
+})
+```
+
+Batch conformance coverage includes:
+
+- Query type behavior (`ESTIMATE`, `ACTUAL`, `PROJECTED`, `UNSPECIFIED`)
+- Positional ordering (`results[i]` matches `resources[i]`)
+- Partial failure semantics (mixed success/error in one response)
+- Fallback path behavior for plugins without `BatchCostHandler`
+
 ### Validation Functions
 
 The framework provides comprehensive response validation:

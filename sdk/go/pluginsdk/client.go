@@ -326,6 +326,19 @@ func (c *Client) EstimateCost(ctx context.Context, req *pbc.EstimateCostRequest)
 	return resp.Msg, nil
 }
 
+// BatchCost queries cost data for multiple resources in a single request.
+func (c *Client) BatchCost(ctx context.Context, req *pbc.BatchCostRequest) (*pbc.BatchCostResponse, error) {
+	if req == nil {
+		return nil, errors.New("request cannot be nil")
+	}
+
+	resp, err := c.inner.BatchCost(ctx, connect.NewRequest(req))
+	if err != nil {
+		return nil, wrapRPCError(ctx, "BatchCost", err)
+	}
+	return resp.Msg, nil
+}
+
 // GetActualCost retrieves historical cost data for a specific resource.
 func (c *Client) GetActualCost(ctx context.Context, req *pbc.GetActualCostRequest) (*pbc.GetActualCostResponse, error) {
 	if req == nil {

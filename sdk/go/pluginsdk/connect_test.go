@@ -93,6 +93,28 @@ func TestConnectHandler_EstimateCost(t *testing.T) {
 	assert.Equal(t, "USD", resp.Msg.GetCurrency())
 }
 
+func TestConnectHandler_BatchCostFallback(t *testing.T) {
+	plugin := &connectTestPlugin{name: "test-plugin"}
+	server := pluginsdk.NewServer(plugin)
+	handler := pluginsdk.NewConnectHandler(server)
+
+	ctx := context.Background()
+	req := connect.NewRequest(&pbc.BatchCostRequest{
+		QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+		Resources: []*pbc.ResourceDescriptor{
+			{
+				Provider:     "aws",
+				ResourceType: "ec2",
+			},
+		},
+	})
+
+	resp, err := handler.BatchCost(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Msg.GetResults(), 1)
+	assert.NotNil(t, resp.Msg.GetResults()[0].GetCostData().GetEstimate())
+}
+
 func TestServeConnect_WithHealthEndpoint(t *testing.T) {
 	// Create a listener on a random port
 	listener, err := net.Listen("tcp", "127.0.0.1:0")

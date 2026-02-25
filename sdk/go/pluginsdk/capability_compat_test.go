@@ -15,6 +15,7 @@ func TestCapabilityToLegacyName(t *testing.T) {
 	}{
 		{"DryRun", pbc.PluginCapability_PLUGIN_CAPABILITY_DRY_RUN, "supports_dry_run"},
 		{"Recommendations", pbc.PluginCapability_PLUGIN_CAPABILITY_RECOMMENDATIONS, "supports_recommendations"},
+		{"BatchCost", pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST, "supports_batch_cost"},
 		{"Unspecified", pbc.PluginCapability_PLUGIN_CAPABILITY_UNSPECIFIED, ""},
 	}
 

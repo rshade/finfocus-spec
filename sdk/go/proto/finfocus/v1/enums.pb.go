@@ -710,6 +710,8 @@ const (
 	PluginCapability_PLUGIN_CAPABILITY_ESTIMATE_COST PluginCapability = 10
 	// Plugin implements DismissRecommendation RPC
 	PluginCapability_PLUGIN_CAPABILITY_DISMISS_RECOMMENDATIONS PluginCapability = 11
+	// Plugin implements BatchCost RPC for efficient multi-resource cost queries
+	PluginCapability_PLUGIN_CAPABILITY_BATCH_COST PluginCapability = 12
 )
 
 // Enum value maps for PluginCapability.
@@ -727,6 +729,7 @@ var (
 		9:  "PLUGIN_CAPABILITY_PRICING_SPEC",
 		10: "PLUGIN_CAPABILITY_ESTIMATE_COST",
 		11: "PLUGIN_CAPABILITY_DISMISS_RECOMMENDATIONS",
+		12: "PLUGIN_CAPABILITY_BATCH_COST",
 	}
 	PluginCapability_value = map[string]int32{
 		"PLUGIN_CAPABILITY_UNSPECIFIED":             0,
@@ -741,6 +744,7 @@ var (
 		"PLUGIN_CAPABILITY_PRICING_SPEC":            9,
 		"PLUGIN_CAPABILITY_ESTIMATE_COST":           10,
 		"PLUGIN_CAPABILITY_DISMISS_RECOMMENDATIONS": 11,
+		"PLUGIN_CAPABILITY_BATCH_COST":              12,
 	}
 )
 
@@ -859,6 +863,65 @@ func (UsageProfile) EnumDescriptor() ([]byte, []int) {
 	return file_finfocus_v1_enums_proto_rawDescGZIP(), []int{12}
 }
 
+// CostQueryType specifies which cost operation to perform in a batch query.
+// Used by BatchCostRequest to select the underlying cost RPC for all resources.
+type CostQueryType int32
+
+const (
+	// Default value; treated as ESTIMATE for backward compatibility.
+	CostQueryType_COST_QUERY_TYPE_UNSPECIFIED CostQueryType = 0
+	// Use EstimateCost logic for each resource (pre-deployment estimates).
+	CostQueryType_COST_QUERY_TYPE_ESTIMATE CostQueryType = 1
+	// Use GetActualCost logic for each resource (historical cost data).
+	// Requires start/end timestamps in BatchCostRequest.
+	CostQueryType_COST_QUERY_TYPE_ACTUAL CostQueryType = 2
+	// Use GetProjectedCost logic for each resource (cost projections).
+	CostQueryType_COST_QUERY_TYPE_PROJECTED CostQueryType = 3
+)
+
+// Enum value maps for CostQueryType.
+var (
+	CostQueryType_name = map[int32]string{
+		0: "COST_QUERY_TYPE_UNSPECIFIED",
+		1: "COST_QUERY_TYPE_ESTIMATE",
+		2: "COST_QUERY_TYPE_ACTUAL",
+		3: "COST_QUERY_TYPE_PROJECTED",
+	}
+	CostQueryType_value = map[string]int32{
+		"COST_QUERY_TYPE_UNSPECIFIED": 0,
+		"COST_QUERY_TYPE_ESTIMATE":    1,
+		"COST_QUERY_TYPE_ACTUAL":      2,
+		"COST_QUERY_TYPE_PROJECTED":   3,
+	}
+)
+
+func (x CostQueryType) Enum() *CostQueryType {
+	p := new(CostQueryType)
+	*p = x
+	return p
+}
+
+func (x CostQueryType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (CostQueryType) Descriptor() protoreflect.EnumDescriptor {
+	return file_finfocus_v1_enums_proto_enumTypes[13].Descriptor()
+}
+
+func (CostQueryType) Type() protoreflect.EnumType {
+	return &file_finfocus_v1_enums_proto_enumTypes[13]
+}
+
+func (x CostQueryType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use CostQueryType.Descriptor instead.
+func (CostQueryType) EnumDescriptor() ([]byte, []int) {
+	return file_finfocus_v1_enums_proto_rawDescGZIP(), []int{13}
+}
+
 var File_finfocus_v1_enums_proto protoreflect.FileDescriptor
 
 const file_finfocus_v1_enums_proto_rawDesc = "" +
@@ -930,7 +993,7 @@ const file_finfocus_v1_enums_proto_rawDesc = "" +
 	"'RECOMMENDATION_REASON_UNDER_PROVISIONED\x10\x02\x12\x1e\n" +
 	"\x1aRECOMMENDATION_REASON_IDLE\x10\x03\x12#\n" +
 	"\x1fRECOMMENDATION_REASON_REDUNDANT\x10\x04\x12-\n" +
-	")RECOMMENDATION_REASON_OBSOLETE_GENERATION\x10\x05*\xb6\x03\n" +
+	")RECOMMENDATION_REASON_OBSOLETE_GENERATION\x10\x05*\xd8\x03\n" +
 	"\x10PluginCapability\x12!\n" +
 	"\x1dPLUGIN_CAPABILITY_UNSPECIFIED\x10\x00\x12%\n" +
 	"!PLUGIN_CAPABILITY_PROJECTED_COSTS\x10\x01\x12\"\n" +
@@ -944,12 +1007,18 @@ const file_finfocus_v1_enums_proto_rawDesc = "" +
 	"\x1ePLUGIN_CAPABILITY_PRICING_SPEC\x10\t\x12#\n" +
 	"\x1fPLUGIN_CAPABILITY_ESTIMATE_COST\x10\n" +
 	"\x12-\n" +
-	")PLUGIN_CAPABILITY_DISMISS_RECOMMENDATIONS\x10\v*u\n" +
+	")PLUGIN_CAPABILITY_DISMISS_RECOMMENDATIONS\x10\v\x12 \n" +
+	"\x1cPLUGIN_CAPABILITY_BATCH_COST\x10\f*u\n" +
 	"\fUsageProfile\x12\x1d\n" +
 	"\x19USAGE_PROFILE_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12USAGE_PROFILE_PROD\x10\x01\x12\x15\n" +
 	"\x11USAGE_PROFILE_DEV\x10\x02\x12\x17\n" +
-	"\x13USAGE_PROFILE_BURST\x10\x03B\xa8\x01\n" +
+	"\x13USAGE_PROFILE_BURST\x10\x03*\x89\x01\n" +
+	"\rCostQueryType\x12\x1f\n" +
+	"\x1bCOST_QUERY_TYPE_UNSPECIFIED\x10\x00\x12\x1c\n" +
+	"\x18COST_QUERY_TYPE_ESTIMATE\x10\x01\x12\x1a\n" +
+	"\x16COST_QUERY_TYPE_ACTUAL\x10\x02\x12\x1d\n" +
+	"\x19COST_QUERY_TYPE_PROJECTED\x10\x03B\xa8\x01\n" +
 	"\x0fcom.finfocus.v1B\n" +
 	"EnumsProtoP\x01Z<github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1;pbc\xa2\x02\x03FXX\xaa\x02\vFinfocus.V1\xca\x02\vFinfocus\\V1\xe2\x02\x17Finfocus\\V1\\GPBMetadata\xea\x02\fFinfocus::V1b\x06proto3"
 
@@ -965,7 +1034,7 @@ func file_finfocus_v1_enums_proto_rawDescGZIP() []byte {
 	return file_finfocus_v1_enums_proto_rawDescData
 }
 
-var file_finfocus_v1_enums_proto_enumTypes = make([]protoimpl.EnumInfo, 13)
+var file_finfocus_v1_enums_proto_enumTypes = make([]protoimpl.EnumInfo, 14)
 var file_finfocus_v1_enums_proto_goTypes = []any{
 	(FocusServiceCategory)(0),            // 0: finfocus.v1.FocusServiceCategory
 	(FocusChargeCategory)(0),             // 1: finfocus.v1.FocusChargeCategory
@@ -980,6 +1049,7 @@ var file_finfocus_v1_enums_proto_goTypes = []any{
 	(RecommendationReason)(0),            // 10: finfocus.v1.RecommendationReason
 	(PluginCapability)(0),                // 11: finfocus.v1.PluginCapability
 	(UsageProfile)(0),                    // 12: finfocus.v1.UsageProfile
+	(CostQueryType)(0),                   // 13: finfocus.v1.CostQueryType
 }
 var file_finfocus_v1_enums_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -999,7 +1069,7 @@ func file_finfocus_v1_enums_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_finfocus_v1_enums_proto_rawDesc), len(file_finfocus_v1_enums_proto_rawDesc)),
-			NumEnums:      13,
+			NumEnums:      14,
 			NumMessages:   0,
 			NumExtensions: 0,
 			NumServices:   0,

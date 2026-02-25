@@ -66,9 +66,11 @@ const (
 
 	// Mock impact metric base values at 100% utilization.
 	// These are arbitrary values for testing purposes only.
-	mockCarbonPerHour = 100.0 // gCO2e per hour at 100% utilization
-	mockEnergyPerHour = 1.0   // kWh per hour at 100% utilization
-	mockWaterPerHour  = 5.0   // L per hour at 100% utilization
+	mockCarbonPerHour      = 100.0 // gCO2e per hour at 100% utilization
+	mockEnergyPerHour      = 1.0   // kWh per hour at 100% utilization
+	mockWaterPerHour       = 5.0   // L per hour at 100% utilization
+	defaultMockBatchSize   = 100
+	defaultInternalErrCode = 13
 )
 
 // MockPlugin provides a configurable mock implementation of CostSourceServiceServer.
@@ -106,6 +108,7 @@ type MockPlugin struct {
 	ShouldErrorOnProjectedCost bool
 	ShouldErrorOnPricingSpec   bool
 	ShouldErrorOnEstimateCost  bool
+	ShouldErrorOnBatchCost     bool
 
 	// Response delays for testing timeouts
 	NameDelay          time.Duration
@@ -114,6 +117,13 @@ type MockPlugin struct {
 	ProjectedCostDelay time.Duration
 	PricingSpecDelay   time.Duration
 	EstimateCostDelay  time.Duration
+	BatchCostDelay     time.Duration
+
+	// Batch behavior configuration
+	// UnsupportedBatchResourceTypes configures per-resource errors for batch processing.
+	// Keys are resource_type values that should return ResourceError with
+	// resource_type_unsupported=true.
+	UnsupportedBatchResourceTypes map[string]bool
 
 	// Data generation configuration
 	actualCostDataPoints atomic.Int64
@@ -188,8 +198,9 @@ func NewMockPlugin() *MockPlugin {
 			"gcp":        {computeEngineResourceType, cloudStorageResourceType, cloudFunctionsResourceType, "compute"},
 			"kubernetes": {namespaceResourceType, "pod", "service"},
 		},
-		BaseHourlyRate: defaultBaseRate,
-		Currency:       "USD",
+		BaseHourlyRate:                defaultBaseRate,
+		Currency:                      "USD",
+		UnsupportedBatchResourceTypes: make(map[string]bool),
 		// Pre-populate with sample recommendations for filtering tests
 		RecommendationsConfig: RecommendationsConfig{
 			Recommendations: GenerateSampleRecommendations(defaultRecommendationCount),
@@ -463,6 +474,237 @@ func (m *MockPlugin) DryRun(
 		ConfigurationValid:    m.DryRunConfigValid,
 		ConfigurationErrors:   m.DryRunConfigErrors,
 	}, nil
+}
+
+// BatchCost returns per-resource batch cost results with partial failure semantics.
+//
+//nolint:gocognit,funlen // Branching/length are intentional for query routing and per-resource partial failures.
+func (m *MockPlugin) BatchCost(
+	ctx context.Context,
+	req *pbc.BatchCostRequest,
+) (*pbc.BatchCostResponse, error) {
+	if m.BatchCostDelay > 0 {
+		time.Sleep(m.BatchCostDelay)
+	}
+
+	if m.ShouldErrorOnBatchCost {
+		return nil, status.Error(codes.Internal, "mock error: batch cost operation failed")
+	}
+
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "batch request is required")
+	}
+
+	queryType := req.GetQueryType()
+	if queryType == pbc.CostQueryType_COST_QUERY_TYPE_UNSPECIFIED {
+		queryType = pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE
+	}
+
+	resources := req.GetResources()
+	results := make([]*pbc.ResourceCostResult, len(resources))
+	for index, resource := range resources {
+		switch {
+		case resource == nil:
+			results[index] = &pbc.ResourceCostResult{
+				Resource: nil,
+				Result: &pbc.ResourceCostResult_Error{
+					Error: &pbc.ResourceError{
+						Code:    batchGRPCCodeToInt32(codes.InvalidArgument),
+						Message: "resource descriptor is required",
+					},
+				},
+			}
+			continue
+		case m.UnsupportedBatchResourceTypes[resource.GetResourceType()]:
+			results[index] = &pbc.ResourceCostResult{
+				Resource: resource,
+				Result: &pbc.ResourceCostResult_Error{
+					Error: &pbc.ResourceError{
+						Code: batchGRPCCodeToInt32(codes.Unimplemented),
+						Message: fmt.Sprintf(
+							"resource type %q is not supported",
+							resource.GetResourceType(),
+						),
+						ResourceTypeUnsupported: true,
+					},
+				},
+			}
+			continue
+		case req.GetDryRun():
+			dryRunResp, err := m.DryRun(ctx, &pbc.DryRunRequest{Resource: resource})
+			if err != nil {
+				results[index] = &pbc.ResourceCostResult{
+					Resource: resource,
+					Result: &pbc.ResourceCostResult_Error{
+						Error: batchResourceErrorFromErr(err),
+					},
+				}
+				continue
+			}
+
+			results[index] = &pbc.ResourceCostResult{
+				Resource: resource,
+				Result: &pbc.ResourceCostResult_CostData{
+					CostData: &pbc.CostData{
+						Data: &pbc.CostData_DryRunResult{
+							DryRunResult: dryRunResp,
+						},
+					},
+				},
+			}
+			continue
+		}
+
+		switch queryType {
+		case pbc.CostQueryType_COST_QUERY_TYPE_ACTUAL:
+			actualResp, err := m.GetActualCost(ctx, &pbc.GetActualCostRequest{
+				ResourceId: defaultBatchResourceID(resource),
+				Start:      req.GetStart(),
+				End:        req.GetEnd(),
+				Tags:       resource.GetTags(),
+				Arn:        resource.GetArn(),
+			})
+			if err != nil {
+				results[index] = &pbc.ResourceCostResult{
+					Resource: resource,
+					Result: &pbc.ResourceCostResult_Error{
+						Error: batchResourceErrorFromErr(err),
+					},
+				}
+				continue
+			}
+
+			results[index] = &pbc.ResourceCostResult{
+				Resource: resource,
+				Result: &pbc.ResourceCostResult_CostData{
+					CostData: &pbc.CostData{
+						Data: &pbc.CostData_ActualCost{
+							ActualCost: &pbc.ActualCostData{
+								Results:       actualResp.GetResults(),
+								FallbackHint:  actualResp.GetFallbackHint(),
+								NextPageToken: actualResp.GetNextPageToken(),
+								TotalCount:    actualResp.GetTotalCount(),
+							},
+						},
+					},
+				},
+			}
+		case pbc.CostQueryType_COST_QUERY_TYPE_PROJECTED:
+			projectedResp, err := m.GetProjectedCost(ctx, &pbc.GetProjectedCostRequest{
+				Resource: resource,
+			})
+			if err != nil {
+				results[index] = &pbc.ResourceCostResult{
+					Resource: resource,
+					Result: &pbc.ResourceCostResult_Error{
+						Error: batchResourceErrorFromErr(err),
+					},
+				}
+				continue
+			}
+
+			results[index] = &pbc.ResourceCostResult{
+				Resource: resource,
+				Result: &pbc.ResourceCostResult_CostData{
+					CostData: &pbc.CostData{
+						Data: &pbc.CostData_ProjectedCost{
+							ProjectedCost: projectedResp,
+						},
+					},
+				},
+			}
+		case pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+			pbc.CostQueryType_COST_QUERY_TYPE_UNSPECIFIED:
+			estimateResp, err := m.EstimateCost(ctx, &pbc.EstimateCostRequest{
+				ResourceType: batchEstimateResourceType(resource),
+			})
+			if err != nil {
+				results[index] = &pbc.ResourceCostResult{
+					Resource: resource,
+					Result: &pbc.ResourceCostResult_Error{
+						Error: batchResourceErrorFromErr(err),
+					},
+				}
+				continue
+			}
+
+			results[index] = &pbc.ResourceCostResult{
+				Resource: resource,
+				Result: &pbc.ResourceCostResult_CostData{
+					CostData: &pbc.CostData{
+						Data: &pbc.CostData_Estimate{
+							Estimate: estimateResp,
+						},
+					},
+				},
+			}
+		default:
+			results[index] = &pbc.ResourceCostResult{
+				Resource: resource,
+				Result: &pbc.ResourceCostResult_Error{
+					Error: &pbc.ResourceError{
+						Code:    batchGRPCCodeToInt32(codes.InvalidArgument),
+						Message: "invalid query type",
+					},
+				},
+			}
+		}
+	}
+
+	return &pbc.BatchCostResponse{
+		Results:      results,
+		MaxBatchSize: defaultMockBatchSize,
+	}, nil
+}
+
+func batchEstimateResourceType(resource *pbc.ResourceDescriptor) string {
+	provider := strings.ToLower(resource.GetProvider())
+	if provider == "" {
+		provider = "custom"
+	}
+
+	resourceType := resource.GetResourceType()
+	if resourceType == "" {
+		return ""
+	}
+
+	return fmt.Sprintf("%s:%s/%s:Resource", provider, resourceType, resourceType)
+}
+
+func defaultBatchResourceID(resource *pbc.ResourceDescriptor) string {
+	if resource.GetId() != "" {
+		return resource.GetId()
+	}
+	if resource.GetArn() != "" {
+		return resource.GetArn()
+	}
+	if resource.GetResourceType() != "" {
+		return resource.GetResourceType()
+	}
+	return "unknown-resource"
+}
+
+func batchResourceErrorFromErr(err error) *pbc.ResourceError {
+	st, ok := status.FromError(err)
+	if !ok {
+		return &pbc.ResourceError{
+			Code:    batchGRPCCodeToInt32(codes.Internal),
+			Message: err.Error(),
+		}
+	}
+
+	return &pbc.ResourceError{
+		Code:    batchGRPCCodeToInt32(st.Code()),
+		Message: st.Message(),
+	}
+}
+
+func batchGRPCCodeToInt32(code codes.Code) int32 {
+	codeValue := int64(code)
+	if codeValue < 0 || codeValue > math.MaxInt32 {
+		return defaultInternalErrCode
+	}
+	return int32(codeValue)
 }
 
 // generateDefaultFieldMappings creates default field mappings for all FOCUS fields.

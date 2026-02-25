@@ -183,6 +183,8 @@ enum PluginCapability {
   PLUGIN_CAPABILITY_ESTIMATE_COST = 10;
   // Plugin implements DismissRecommendation RPC
   PLUGIN_CAPABILITY_DISMISS_RECOMMENDATIONS = 11;
+  // Plugin implements BatchCost RPC for efficient multi-resource cost queries
+  PLUGIN_CAPABILITY_BATCH_COST = 12;
 }
 
 // UsageProfile represents the intended workload context for cost estimation.
@@ -229,4 +231,18 @@ enum UsageProfile {
   //   - Elevated data transfer/network costs
   //   - Batch processing or load testing scenarios
   USAGE_PROFILE_BURST = 3;
+}
+
+// CostQueryType specifies which cost operation to perform in a batch query.
+// Used by BatchCostRequest to select the underlying cost RPC for all resources.
+enum CostQueryType {
+  // Default value; treated as ESTIMATE for backward compatibility.
+  COST_QUERY_TYPE_UNSPECIFIED = 0;
+  // Use EstimateCost logic for each resource (pre-deployment estimates).
+  COST_QUERY_TYPE_ESTIMATE = 1;
+  // Use GetActualCost logic for each resource (historical cost data).
+  // Requires start/end timestamps in BatchCostRequest.
+  COST_QUERY_TYPE_ACTUAL = 2;
+  // Use GetProjectedCost logic for each resource (cost projections).
+  COST_QUERY_TYPE_PROJECTED = 3;
 }

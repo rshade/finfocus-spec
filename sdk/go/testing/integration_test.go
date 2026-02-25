@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -3823,4 +3824,70 @@ func TestBackwardCompat_LegacyHostNoPaginationParams(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, resp.GetResults(), 30, "all 30 records should be returned")
 	require.Empty(t, resp.GetNextPageToken(), "no next token when all records returned")
+}
+
+func TestBatchCostIntegration(t *testing.T) {
+	plugin := plugintesting.NewMockPlugin()
+	harness := plugintesting.NewTestHarness(plugin)
+	harness.Start(t)
+	defer harness.Stop()
+
+	client := harness.Client()
+	ctx := context.Background()
+	start, end := plugintesting.CreateTimeRange(plugintesting.HoursPerDay)
+
+	t.Run("BatchEstimateWithMixedProviders", func(t *testing.T) {
+		resp, err := client.BatchCost(ctx, &pbc.BatchCostRequest{
+			QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+			Resources: []*pbc.ResourceDescriptor{
+				plugintesting.CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1"),
+				plugintesting.CreateResourceDescriptor("azure", "vm", "Standard_B1s", "eastus"),
+				plugintesting.CreateResourceDescriptor("gcp", "compute_engine", "e2-micro", "us-central1"),
+				plugintesting.CreateResourceDescriptor("kubernetes", "namespace", "", ""),
+				plugintesting.CreateResourceDescriptor("aws", "rds", "db.t3.micro", "us-east-1"),
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, resp.GetResults(), 5)
+		for _, result := range resp.GetResults() {
+			require.NotNil(t, result.GetCostData())
+			assert.NotNil(t, result.GetCostData().GetEstimate())
+		}
+	})
+
+	t.Run("BatchActualCostIncludesActualCostData", func(t *testing.T) {
+		resp, err := client.BatchCost(ctx, &pbc.BatchCostRequest{
+			QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ACTUAL,
+			Start:     start,
+			End:       end,
+			Resources: []*pbc.ResourceDescriptor{
+				plugintesting.CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1"),
+				plugintesting.CreateResourceDescriptor("aws", "s3", "", "us-east-1"),
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, resp.GetResults(), 2)
+		for _, result := range resp.GetResults() {
+			require.NotNil(t, result.GetCostData())
+			actual := result.GetCostData().GetActualCost()
+			require.NotNil(t, actual)
+			assert.NotEmpty(t, actual.GetResults())
+		}
+	})
+
+	t.Run("BatchProjectedCostIncludesProjectedCostData", func(t *testing.T) {
+		resp, err := client.BatchCost(ctx, &pbc.BatchCostRequest{
+			QueryType: pbc.CostQueryType_COST_QUERY_TYPE_PROJECTED,
+			Resources: []*pbc.ResourceDescriptor{
+				plugintesting.CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1"),
+				plugintesting.CreateResourceDescriptor("gcp", "compute_engine", "e2-micro", "us-central1"),
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, resp.GetResults(), 2)
+		for _, result := range resp.GetResults() {
+			require.NotNil(t, result.GetCostData())
+			assert.NotNil(t, result.GetCostData().GetProjectedCost())
+		}
+	})
 }

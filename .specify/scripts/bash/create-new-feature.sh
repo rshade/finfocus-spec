@@ -84,13 +84,11 @@ find_repo_root() {
 get_highest_from_specs() {
     local specs_dir="$1"
     local highest=0
-
+    
     if [ -d "$specs_dir" ]; then
         for dir in "$specs_dir"/*; do
             [ -d "$dir" ] || continue
             dirname=$(basename "$dir")
-            # Skip hidden directories
-            [[ "$dirname" == .* ]] && continue
             number=$(echo "$dirname" | grep -o '^[0-9]\+' || echo "0")
             number=$((10#$number))
             if [ "$number" -gt "$highest" ]; then
@@ -98,45 +96,8 @@ get_highest_from_specs() {
             fi
         done
     fi
-
+    
     echo "$highest"
-}
-
-# Function to check if a number is already in use (specs or branches)
-is_number_in_use() {
-    local num="$1"
-    local specs_dir="$2"
-    local formatted_num=$(printf "%03d" "$num")
-
-    # Check specs directory
-    if [ -d "$specs_dir" ]; then
-        for dir in "$specs_dir"/"$formatted_num"-*; do
-            [ -d "$dir" ] && return 0
-        done
-    fi
-
-    # Check git branches (local and remote)
-    if git rev-parse --git-dir >/dev/null 2>&1; then
-        if git branch -a 2>/dev/null | grep -qE "(^|\s)$formatted_num-"; then
-            return 0
-        fi
-    fi
-
-    return 1
-}
-
-# Function to find the next available number (handles gaps and duplicates)
-get_next_available_number() {
-    local specs_dir="$1"
-    local start_num="$2"
-    local candidate=$start_num
-
-    # Keep incrementing until we find an unused number
-    while is_number_in_use "$candidate" "$specs_dir"; do
-        candidate=$((candidate + 1))
-    done
-
-    echo "$candidate"
 }
 
 # Function to get highest number from git branches
@@ -167,32 +128,23 @@ get_highest_from_branches() {
 
 # Function to check existing branches (local and remote) and return next available number
 check_existing_branches() {
-    local short_name="$1"
-    local specs_dir="$2"
-    
+    local specs_dir="$1"
+
     # Fetch all remotes to get latest branch info (suppress errors if no remotes)
     git fetch --all --prune 2>/dev/null || true
-    
-    # Find all branches matching the pattern using git ls-remote (more reliable)
-    local remote_branches=$(git ls-remote --heads origin 2>/dev/null | grep -E "refs/heads/[0-9]+-${short_name}$" | sed 's/.*\/\([0-9]*\)-.*/\1/' | sort -n)
-    
-    # Also check local branches
-    local local_branches=$(git branch 2>/dev/null | grep -E "^[* ]*[0-9]+-${short_name}$" | sed 's/^[* ]*//' | sed 's/-.*//' | sort -n)
-    
-    # Check specs directory as well
-    local spec_dirs=""
-    if [ -d "$specs_dir" ]; then
-        spec_dirs=$(find "$specs_dir" -maxdepth 1 -type d -name "[0-9]*-${short_name}" 2>/dev/null | xargs -n1 basename 2>/dev/null | sed 's/-.*//' | sort -n)
+
+    # Get highest number from ALL branches (not just matching short name)
+    local highest_branch=$(get_highest_from_branches)
+
+    # Get highest number from ALL specs (not just matching short name)
+    local highest_spec=$(get_highest_from_specs "$specs_dir")
+
+    # Take the maximum of both
+    local max_num=$highest_branch
+    if [ "$highest_spec" -gt "$max_num" ]; then
+        max_num=$highest_spec
     fi
-    
-    # Combine all sources and get the highest number
-    local max_num=0
-    for num in $remote_branches $local_branches $spec_dirs; do
-        if [ "$num" -gt "$max_num" ]; then
-            max_num=$num
-        fi
-    done
-    
+
     # Return next number
     echo $((max_num + 1))
 }
@@ -284,30 +236,18 @@ fi
 
 # Determine branch number
 if [ -z "$BRANCH_NUMBER" ]; then
-    # Fetch latest remote branches to ensure we have current state
     if [ "$HAS_GIT" = true ]; then
-        git fetch --all --prune 2>/dev/null || true
-    fi
-
-    # Get highest number from ALL sources (not just matching feature name)
-    highest_specs=$(get_highest_from_specs "$SPECS_DIR")
-    highest_branches=0
-    if [ "$HAS_GIT" = true ]; then
-        highest_branches=$(get_highest_from_branches)
-    fi
-
-    # Use the maximum of both sources as starting point
-    if [ "$highest_branches" -gt "$highest_specs" ]; then
-        start_num=$((highest_branches + 1))
+        # Check existing branches on remotes
+        BRANCH_NUMBER=$(check_existing_branches "$SPECS_DIR")
     else
-        start_num=$((highest_specs + 1))
+        # Fall back to local directory check
+        HIGHEST=$(get_highest_from_specs "$SPECS_DIR")
+        BRANCH_NUMBER=$((HIGHEST + 1))
     fi
-
-    # Verify the number is actually available (handles edge cases with duplicates)
-    BRANCH_NUMBER=$(get_next_available_number "$SPECS_DIR" "$start_num")
 fi
 
-FEATURE_NUM=$(printf "%03d" "$BRANCH_NUMBER")
+# Force base-10 interpretation to prevent octal conversion (e.g., 010 → 8 in octal, but should be 10 in decimal)
+FEATURE_NUM=$(printf "%03d" "$((10#$BRANCH_NUMBER))")
 BRANCH_NAME="${FEATURE_NUM}-${BRANCH_SUFFIX}"
 
 # GitHub enforces a 244-byte limit on branch names
