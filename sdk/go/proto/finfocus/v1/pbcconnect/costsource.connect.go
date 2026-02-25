@@ -231,7 +231,9 @@ type CostSourceServiceClient interface {
 // connect.WithGRPC() or connect.WithGRPCWeb() options.
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
+// NewCostSourceServiceClient creates a CostSourceServiceClient that connects to the finfocus.v1.CostSourceService at the provided baseURL.
+// The httpClient is used for transport; baseURL is the service endpoint and may include a scheme and path. A trailing '/' on baseURL is ignored.
+// Any provided ClientOption values are applied to each per-RPC client created for the service.
 func NewCostSourceServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) CostSourceServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	costSourceServiceMethods := v1.File_finfocus_v1_costsource_proto.Services().ByName("CostSourceService").Methods()
@@ -535,7 +537,14 @@ type CostSourceServiceHandler interface {
 // the path on which to mount the handler and the handler itself.
 //
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
+// NewCostSourceServiceHandler creates the route prefix and HTTP handler that dispatches
+// incoming requests for the CostSourceService to the provided CostSourceServiceHandler.
+//
+// It returns the route prefix "/finfocus.v1.CostSourceService/" and an http.Handler that
+// maps each RPC path (Name, Supports, GetActualCost, GetProjectedCost, GetPricingSpec,
+// EstimateCost, GetRecommendations, DismissRecommendation, GetBudgets, GetPluginInfo,
+// DryRun, BatchCost) to a per-RPC unary handler wired with the service's schema and the
+// provided connect.HandlerOption values; requests for unknown paths receive a 404 response.
 func NewCostSourceServiceHandler(svc CostSourceServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	costSourceServiceMethods := v1.File_finfocus_v1_costsource_proto.Services().ByName("CostSourceService").Methods()
 	costSourceServiceNameHandler := connect.NewUnaryHandler(

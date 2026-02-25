@@ -226,7 +226,9 @@ const (
 //
 //	if pluginsdk.IsValidCapability(cap) {
 //	    // Process valid capability
-//	}
+// IsValidCapability reports whether a PluginCapability value lies between the
+// minimum and maximum supported capability constants (inclusive).
+// PLUGIN_CAPABILITY_UNSPECIFIED (0) is considered invalid.
 func IsValidCapability(capability pbc.PluginCapability) bool {
 	return capability >= minValidCapability && capability <= maxValidCapability
 }
@@ -260,7 +262,17 @@ func IsValidCapability(capability pbc.PluginCapability) bool {
 //
 // Production code using NewServer/NewServerWithOptions should ensure plugins are
 // non-nil before construction. The server constructors could be enhanced to return
-// errors for nil plugins if stricter validation is desired in the future.
+// inferCapabilities returns the PluginCapability values supported by the given plugin.
+// If plugin is nil, nil is returned.
+// The returned slice always includes the base capabilities:
+// PLUGIN_CAPABILITY_PROJECTED_COSTS, PLUGIN_CAPABILITY_ACTUAL_COSTS,
+// PLUGIN_CAPABILITY_PRICING_SPEC, and PLUGIN_CAPABILITY_ESTIMATE_COST.
+// Additional capabilities are appended when the plugin implements the corresponding interfaces:
+// RecommendationsProvider -> PLUGIN_CAPABILITY_RECOMMENDATIONS,
+// BudgetsProvider -> PLUGIN_CAPABILITY_BUDGETS,
+// DismissProvider -> PLUGIN_CAPABILITY_DISMISS_RECOMMENDATIONS,
+// DryRunHandler -> PLUGIN_CAPABILITY_DRY_RUN,
+// BatchCostHandler -> PLUGIN_CAPABILITY_BATCH_COST.
 func inferCapabilities(plugin Plugin) []pbc.PluginCapability {
 	// Defensive nil check to prevent panic on type assertions.
 	// See function documentation for rationale on handling nil plugins gracefully.

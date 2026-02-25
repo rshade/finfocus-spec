@@ -187,7 +187,8 @@ type MockPlugin struct {
 	SpotRiskScoreByResourceType      map[string]float64                  // Per-resource-type risk score overrides
 }
 
-// NewMockPlugin creates a new mock plugin with default configuration.
+// NewMockPlugin creates a preconfigured MockPlugin populated with sensible defaults for testing.
+// The default configuration includes supported providers and resource types, a base hourly rate and currency, initialized batch settings, sample recommendations, default plugin/spec versions, valid dry-run configuration, and default pricing category and spot interruption risk overrides.
 func NewMockPlugin() *MockPlugin {
 	p := &MockPlugin{
 		PluginName:         "mock-test-plugin",
@@ -657,6 +658,9 @@ func (m *MockPlugin) BatchCost(
 	}, nil
 }
 
+// batchEstimateResourceType builds a canonical estimate resource type string for a ResourceDescriptor
+// in the form "provider:resourceType/resource:Resource". If the provider is empty it uses "custom".
+// If the resource type is empty it returns an empty string.
 func batchEstimateResourceType(resource *pbc.ResourceDescriptor) string {
 	provider := strings.ToLower(resource.GetProvider())
 	if provider == "" {
@@ -671,6 +675,8 @@ func batchEstimateResourceType(resource *pbc.ResourceDescriptor) string {
 	return fmt.Sprintf("%s:%s/%s:Resource", provider, resourceType, resourceType)
 }
 
+// defaultBatchResourceID returns the first available identifier for the given resource descriptor.
+// It prefers Id, then Arn, then ResourceType, and falls back to "unknown-resource" when none are present.
 func defaultBatchResourceID(resource *pbc.ResourceDescriptor) string {
 	if resource.GetId() != "" {
 		return resource.GetId()
@@ -684,6 +690,9 @@ func defaultBatchResourceID(resource *pbc.ResourceDescriptor) string {
 	return "unknown-resource"
 }
 
+// batchResourceErrorFromErr converts an error into a pbc.ResourceError suitable for batch responses.
+// If the error is a gRPC status error its code and message are used; otherwise the error is reported
+// with an Internal code and the error string. The gRPC code is mapped to int32 via batchGRPCCodeToInt32.
 func batchResourceErrorFromErr(err error) *pbc.ResourceError {
 	st, ok := status.FromError(err)
 	if !ok {
@@ -699,6 +708,8 @@ func batchResourceErrorFromErr(err error) *pbc.ResourceError {
 	}
 }
 
+// batchGRPCCodeToInt32 converts a gRPC `codes.Code` value to an `int32` suitable for protobuf fields.
+// If the code is negative or exceeds `math.MaxInt32`, `defaultInternalErrCode` is returned to avoid overflow.
 func batchGRPCCodeToInt32(code codes.Code) int32 {
 	codeValue := int64(code)
 	if codeValue < 0 || codeValue > math.MaxInt32 {
@@ -708,7 +719,8 @@ func batchGRPCCodeToInt32(code codes.Code) int32 {
 }
 
 // generateDefaultFieldMappings creates default field mappings for all FOCUS fields.
-// This is used when no custom field mappings are configured.
+// generateDefaultFieldMappings returns a slice of FieldMapping entries for the canonical FOCUS fields,
+// each marked as FIELD_SUPPORT_STATUS_SUPPORTED. This is used when no custom field mappings are configured.
 func generateDefaultFieldMappings() []*pbc.FieldMapping {
 	// FOCUS 1.2/1.3 field names matching FocusCostRecord
 	fieldNames := []string{

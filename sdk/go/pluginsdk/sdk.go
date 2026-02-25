@@ -272,7 +272,11 @@ type Server struct {
 // NewServer creates a Server that exposes the provided Plugin over gRPC.
 // Uses DefaultRegistryLookup which returns empty for all lookups, causing
 // Supports() calls to return InvalidArgument. Use NewServerWithRegistry
-// to provide a real registry for production use.
+// NewServer creates a Server that wraps the provided Plugin and initializes sensible defaults.
+//
+// The returned Server uses a DefaultRegistryLookup for provider resolution, a package-default logger,
+// and infers global capabilities from the plugin. Batch-related defaults are applied: maxBatchSize is
+// set to DefaultMaxBatchSize and batchWorkers to DefaultBatchWorkers.
 func NewServer(plugin Plugin) *Server {
 	return &Server{
 		plugin:             plugin,
@@ -297,7 +301,7 @@ func NewServerWithRegistry(plugin Plugin, registry RegistryLookup) *Server {
 // If info is nil, GetPluginInfo will return Unimplemented (legacy plugin behavior).
 //
 // Thread Safety: pluginInfo is set during construction before the server accepts
-// requests. The happens-before relationship ensures safe concurrent access.
+// construction (safe for concurrent use once returned).
 func NewServerWithOptions(plugin Plugin, registry RegistryLookup, logger *zerolog.Logger, info *PluginInfo) *Server {
 	if registry == nil {
 		registry = &DefaultRegistryLookup{}
@@ -482,6 +486,7 @@ func (s *Server) handleConfiguredPluginInfo() (*pbc.GetPluginInfoResponse, error
 	}, nil
 }
 
+// containsCapability reports whether target is present in capabilities.
 func containsCapability(capabilities []pbc.PluginCapability, target pbc.PluginCapability) bool {
 	for _, capability := range capabilities {
 		if capability == target {
@@ -954,7 +959,12 @@ func validateCORSConfig(web WebConfig) error {
 // and falls back to an ephemeral port when none is provided. The function registers the plugin's service, begins
 // serving on the selected port, and performs a graceful stop when the context is cancelled.
 //
-// Returns an error if the listener cannot be created or if the server fails to serve.
+// Serve starts a network server for the provided plugin according to the ServeConfig.
+// It validates PluginInfo and CORS early, announces the chosen port on stdout, constructs
+// the server instance, and selects either gRPC or Connect (gRPC-Web + Connect) serving
+// mode based on the Web configuration.
+// It returns an error if configuration validation fails, a listener cannot be created or
+// announced, or if the server fails while serving (including context cancellation).
 func Serve(ctx context.Context, config ServeConfig) error {
 	// Validate PluginInfo early (before acquiring resources like listeners)
 	// This prevents resource leaks if validation fails (T020)

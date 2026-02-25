@@ -51,7 +51,7 @@ var allCostQueryTypes = []pbc.CostQueryType{
 	pbc.CostQueryType_COST_QUERY_TYPE_PROJECTED,
 }
 
-// IsValidCostQueryType returns true if queryType is a known CostQueryType enum value.
+// IsValidCostQueryType reports whether queryType is one of the recognized pbc.CostQueryType values.
 func IsValidCostQueryType(queryType pbc.CostQueryType) bool {
 	for _, valid := range allCostQueryTypes {
 		if queryType == valid {
@@ -62,7 +62,8 @@ func IsValidCostQueryType(queryType pbc.CostQueryType) bool {
 }
 
 // NormalizeCostQueryType normalizes query type values for backward compatibility.
-// UNSPECIFIED is treated as ESTIMATE.
+// NormalizeCostQueryType maps an UNSPECIFIED CostQueryType to COST_QUERY_TYPE_ESTIMATE.
+// It returns the provided queryType unchanged for all other values.
 func NormalizeCostQueryType(queryType pbc.CostQueryType) pbc.CostQueryType {
 	if queryType == pbc.CostQueryType_COST_QUERY_TYPE_UNSPECIFIED {
 		return pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE
@@ -75,7 +76,22 @@ func NormalizeCostQueryType(queryType pbc.CostQueryType) pbc.CostQueryType {
 // Returns:
 //   - (*BatchCostResponse, nil): for valid empty batch requests
 //   - (nil, nil): for valid non-empty requests
-//   - (nil, error): for invalid requests
+// ValidateBatchCostRequest validates a BatchCostRequest and either returns an eager empty
+// BatchCostResponse for an empty resource list, an error for invalid requests, or (nil, nil)
+// to indicate a valid non-empty request that should be processed further.
+//
+// Validation rules:
+// - req must be non-nil.
+// - If maxBatchSize <= 0, DefaultMaxBatchSize is applied.
+// - If the resource list is empty, returns a BatchCostResponse with Results=[] and MaxBatchSize set.
+// - The number of resources must not exceed maxBatchSize.
+// - query_type must be a valid CostQueryType.
+// - If the normalized query type is not ACTUAL, returns (nil, nil) to signal no further eager validation here.
+// - For ACTUAL queries, both start and end must be present and start must be strictly before end.
+//
+// Return values:
+// - (*pbc.BatchCostResponse, nil): when an eager empty response is produced for an empty resource list.
+// - (nil, error): when the request is invalid.
 func ValidateBatchCostRequest(req *pbc.BatchCostRequest, maxBatchSize int32) (*pbc.BatchCostResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is required")
@@ -129,21 +145,22 @@ func ValidateBatchCostRequest(req *pbc.BatchCostRequest, maxBatchSize int32) (*p
 // BatchCostResponseOption is a functional option for BatchCostResponse.
 type BatchCostResponseOption func(*pbc.BatchCostResponse)
 
-// WithBatchResults sets response results.
+// WithBatchResults returns a BatchCostResponseOption that sets the Results field of a BatchCostResponse to the provided slice.
 func WithBatchResults(results []*pbc.ResourceCostResult) BatchCostResponseOption {
 	return func(resp *pbc.BatchCostResponse) {
 		resp.Results = results
 	}
 }
 
-// WithMaxBatchSize sets response max_batch_size.
+// WithMaxBatchSize returns a BatchCostResponseOption that sets the MaxBatchSize field on a BatchCostResponse to the provided value.
 func WithMaxBatchSize(maxBatchSize int32) BatchCostResponseOption {
 	return func(resp *pbc.BatchCostResponse) {
 		resp.MaxBatchSize = maxBatchSize
 	}
 }
 
-// NewBatchCostResponse creates a BatchCostResponse using functional options.
+// NewBatchCostResponse creates a BatchCostResponse and applies the provided functional options.
+// Options are applied in the order they are passed; if none are provided an empty response is returned.
 func NewBatchCostResponse(opts ...BatchCostResponseOption) *pbc.BatchCostResponse {
 	resp := &pbc.BatchCostResponse{}
 	for _, opt := range opts {
@@ -152,7 +169,9 @@ func NewBatchCostResponse(opts ...BatchCostResponseOption) *pbc.BatchCostRespons
 	return resp
 }
 
-// NewResourceError constructs a ResourceError from a gRPC status code and message.
+// NewResourceError constructs a pbc.ResourceError with the provided gRPC status code, message, and
+// resource-type unsupported flag. If message is empty, the code's string representation is used
+// for the Message field. The Code field is stored as an int32 suitable for the protobuf representation.
 func NewResourceError(code codes.Code, message string, resourceTypeUnsupported bool) *pbc.ResourceError {
 	if message == "" {
 		message = code.String()
@@ -164,6 +183,8 @@ func NewResourceError(code codes.Code, message string, resourceTypeUnsupported b
 	}
 }
 
+// grpcCodeToInt32 converts a gRPC codes.Code to its int32 numeric value for use in protobuf fields.
+// If the code's numeric value is outside the int32 range, it returns the numeric value for codes.Internal.
 func grpcCodeToInt32(code codes.Code) int32 {
 	codeValue := int64(code)
 	if codeValue < 0 || codeValue > math.MaxInt32 {
@@ -172,6 +193,7 @@ func grpcCodeToInt32(code codes.Code) int32 {
 	return int32(codeValue)
 }
 
+// error's message.
 func resourceErrorFromGRPCError(err error) *pbc.ResourceError {
 	if err == nil {
 		return NewResourceError(codes.Unknown, "unknown error", false)
@@ -190,6 +212,9 @@ func resourceErrorFromGRPCError(err error) *pbc.ResourceError {
 	return NewResourceError(grpcStatus.Code(), grpcStatus.Message(), false)
 }
 
+// resourceErrorUnsupported constructs a ResourceError indicating the specified resource type is not supported.
+// If resourceType is non-empty the message includes the quoted type. The returned error uses the gRPC
+// Unimplemented code and sets the resource type unsupported flag to true.
 func resourceErrorUnsupported(resourceType string) *pbc.ResourceError {
 	message := "resource type is not supported"
 	if resourceType != "" {
@@ -198,6 +223,10 @@ func resourceErrorUnsupported(resourceType string) *pbc.ResourceError {
 	return NewResourceError(codes.Unimplemented, message, true)
 }
 
+// resolveBatchSize returns the configured batch size adjusted to the package limits.
+// If configured is less than or equal to zero, DefaultMaxBatchSize is returned.
+// If configured is greater than MaxBatchSize, MaxBatchSize is returned.
+// Otherwise the configured value is returned as an int32.
 func resolveBatchSize(configured int) int32 {
 	switch {
 	case configured <= 0:
@@ -209,6 +238,10 @@ func resolveBatchSize(configured int) int32 {
 	}
 }
 
+// resolveBatchWorkers returns the number of workers to use for batching.
+// If configured is <= 0 it returns DefaultBatchWorkers. Values below MinBatchWorkers
+// are raised to MinBatchWorkers and values above MaxBatchWorkers are lowered to
+// MaxBatchWorkers; otherwise the configured value is returned.
 func resolveBatchWorkers(configured int) int {
 	switch {
 	case configured <= 0:
@@ -222,6 +255,11 @@ func resolveBatchWorkers(configured int) int {
 	}
 }
 
+// batchCostFallback processes each resource in req in parallel (bounded by workers),
+// invoking batchCostForResource for each and collecting per-resource results into a
+// BatchCostResponse. It respects ctx cancellation for individual work items by
+// recording a ResourceError when the context is done and always returns a response
+// populated with the per-resource results and the provided maxBatchSize.
 func batchCostFallback(
 	ctx context.Context,
 	plugin Plugin,
@@ -264,6 +302,11 @@ func batchCostFallback(
 	)
 }
 
+// batchCostForResource determines cost information for a single resource according to the requested
+// CostQueryType and returns a ResourceCostResult containing either cost data or a ResourceError.
+// It returns an InvalidArgument error result if the resource is nil or the query type is invalid.
+// If the request requests a dry run, a dry-run result is returned. Query types are handled as:
+// ACTUAL -> actual cost data; PROJECTED -> projected cost data; ESTIMATE or UNSPECIFIED -> estimate data.
 func batchCostForResource(
 	ctx context.Context,
 	plugin Plugin,
@@ -300,6 +343,11 @@ func batchCostForResource(
 	}
 }
 
+// batchEstimateCostForResource calls the plugin's EstimateCost for the given resource type and returns a ResourceCostResult.
+//
+// On success the result contains CostData with the Estimate returned by the plugin. If the plugin returns an error the result
+// contains a ResourceError derived from that gRPC error. If the plugin returns a nil response the result contains an Internal
+// ResourceError with the message "EstimateCost returned nil response".
 func batchEstimateCostForResource(
 	ctx context.Context,
 	plugin Plugin,
@@ -325,6 +373,10 @@ func batchEstimateCostForResource(
 	})
 }
 
+// batchProjectedCostForResource requests projected cost for the provided resource from the plugin
+// and returns a ResourceCostResult containing either the ProjectedCost data or a ResourceError.
+// If the plugin returns an error it is converted to a ResourceError via resourceErrorFromGRPCError;
+// a nil response is treated as an internal error.
 func batchProjectedCostForResource(
 	ctx context.Context,
 	plugin Plugin,
@@ -350,6 +402,12 @@ func batchProjectedCostForResource(
 	})
 }
 
+// batchActualCostForResource retrieves actual cost data for the given resource by calling the plugin's GetActualCost
+// and returns a ResourceCostResult containing ActualCost on success.
+//
+// On plugin errors the result contains a ResourceError derived from the gRPC/error context; if the plugin returns a nil
+// response the result contains an internal ResourceError indicating the nil response. The returned ResourceCostResult
+// always includes a clone of the provided resource descriptor.
 func batchActualCostForResource(
 	ctx context.Context,
 	plugin Plugin,
@@ -385,6 +443,9 @@ func batchActualCostForResource(
 	})
 }
 
+// batchDryRunForResource produces a ResourceCostResult containing dry-run information for the given resource.
+// If the plugin implements DryRunHandler, it invokes HandleDryRun and returns the handler's DryRunResult; if the handler returns an error or a nil response, the result contains a corresponding ResourceError.
+// If the plugin does not implement DryRunHandler, the result indicates all fields are unsupported, resourceTypeSupported is false, and configurationValid is true.
 func batchDryRunForResource(plugin Plugin, resource *pbc.ResourceDescriptor) *pbc.ResourceCostResult {
 	handler, ok := plugin.(DryRunHandler)
 	if !ok {
@@ -424,6 +485,8 @@ func batchDryRunForResource(plugin Plugin, resource *pbc.ResourceDescriptor) *pb
 	})
 }
 
+// defaultActualResourceID returns a best-effort identifier for the given resource descriptor,
+// preferring Id, then Arn, then ResourceType, and falling back to "unknown-resource" if none are set.
 func defaultActualResourceID(resource *pbc.ResourceDescriptor) string {
 	if resource.GetId() != "" {
 		return resource.GetId()
@@ -437,6 +500,7 @@ func defaultActualResourceID(resource *pbc.ResourceDescriptor) string {
 	return "unknown-resource"
 }
 
+// copyStringMap returns a shallow copy of in, or nil if in is nil or has no entries.
 func copyStringMap(in map[string]string) map[string]string {
 	if len(in) == 0 {
 		return nil
@@ -448,6 +512,8 @@ func copyStringMap(in map[string]string) map[string]string {
 	return out
 }
 
+// descriptorClone returns a deep copy of the given ResourceDescriptor.
+// If resource is nil, descriptorClone returns nil.
 func descriptorClone(resource *pbc.ResourceDescriptor) *pbc.ResourceDescriptor {
 	if resource == nil {
 		return nil
@@ -457,6 +523,8 @@ func descriptorClone(resource *pbc.ResourceDescriptor) *pbc.ResourceDescriptor {
 	return proto.Clone(resource).(*pbc.ResourceDescriptor)
 }
 
+// newResourceDataResult creates a ResourceCostResult that contains a deep-cloned ResourceDescriptor and the given CostData.
+// The input descriptor is cloned to avoid mutating the original; the CostData is stored in the Result field.
 func newResourceDataResult(resource *pbc.ResourceDescriptor, data *pbc.CostData) *pbc.ResourceCostResult {
 	return &pbc.ResourceCostResult{
 		Resource: descriptorClone(resource),
@@ -466,6 +534,7 @@ func newResourceDataResult(resource *pbc.ResourceDescriptor, data *pbc.CostData)
 	}
 }
 
+// provided ResourceDescriptor and the given ResourceError as the result.
 func newResourceErrorResult(resource *pbc.ResourceDescriptor, resultErr *pbc.ResourceError) *pbc.ResourceCostResult {
 	return &pbc.ResourceCostResult{
 		Resource: descriptorClone(resource),
