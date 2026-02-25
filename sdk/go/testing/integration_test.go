@@ -3850,6 +3850,7 @@ func TestBatchCostIntegration(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, resp.GetResults(), 5)
 		for _, result := range resp.GetResults() {
+			assert.Nil(t, result.GetError())
 			require.NotNil(t, result.GetCostData())
 			assert.NotNil(t, result.GetCostData().GetEstimate())
 		}
@@ -3868,6 +3869,7 @@ func TestBatchCostIntegration(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, resp.GetResults(), 2)
 		for _, result := range resp.GetResults() {
+			assert.Nil(t, result.GetError())
 			require.NotNil(t, result.GetCostData())
 			actual := result.GetCostData().GetActualCost()
 			require.NotNil(t, actual)
@@ -3886,8 +3888,38 @@ func TestBatchCostIntegration(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, resp.GetResults(), 2)
 		for _, result := range resp.GetResults() {
+			assert.Nil(t, result.GetError())
 			require.NotNil(t, result.GetCostData())
 			assert.NotNil(t, result.GetCostData().GetProjectedCost())
 		}
+	})
+
+	t.Run("BatchEstimateWithPartialFailures", func(t *testing.T) {
+		plugin.UnsupportedBatchResourceTypes["unsupported_widget"] = true
+		defer delete(plugin.UnsupportedBatchResourceTypes, "unsupported_widget")
+
+		resp, err := client.BatchCost(ctx, &pbc.BatchCostRequest{
+			QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+			Resources: []*pbc.ResourceDescriptor{
+				plugintesting.CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1"),
+				plugintesting.CreateResourceDescriptor("aws", "unsupported_widget", "", "us-east-1"),
+				plugintesting.CreateResourceDescriptor("gcp", "compute_engine", "e2-micro", "us-central1"),
+			},
+		})
+		require.NoError(t, err, "partial failures must not cause top-level error")
+		require.Len(t, resp.GetResults(), 3)
+
+		// First resource: success
+		assert.NotNil(t, resp.GetResults()[0].GetCostData().GetEstimate())
+		assert.Nil(t, resp.GetResults()[0].GetError())
+
+		// Second resource: unsupported → error
+		assert.NotNil(t, resp.GetResults()[1].GetError())
+		assert.True(t, resp.GetResults()[1].GetError().GetResourceTypeUnsupported())
+		assert.Equal(t, int32(codes.Unimplemented), resp.GetResults()[1].GetError().GetCode())
+
+		// Third resource: success
+		assert.NotNil(t, resp.GetResults()[2].GetCostData().GetEstimate())
+		assert.Nil(t, resp.GetResults()[2].GetError())
 	})
 }

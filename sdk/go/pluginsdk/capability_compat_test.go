@@ -33,6 +33,7 @@ func TestCapabilitiesToLegacyMetadata(t *testing.T) {
 	caps := []pbc.PluginCapability{
 		pbc.PluginCapability_PLUGIN_CAPABILITY_DRY_RUN,
 		pbc.PluginCapability_PLUGIN_CAPABILITY_RECOMMENDATIONS,
+		pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST,
 	}
 
 	metadata := pluginsdk.CapabilitiesToLegacyMetadata(caps)
@@ -42,8 +43,11 @@ func TestCapabilitiesToLegacyMetadata(t *testing.T) {
 	if metadata["supports_recommendations"] != "true" {
 		t.Errorf("expected supports_recommendations=true, got %q", metadata["supports_recommendations"])
 	}
-	if len(metadata) != 2 {
-		t.Errorf("expected 2 metadata entries, got %d", len(metadata))
+	if metadata["supports_batch_cost"] != "true" {
+		t.Errorf("expected supports_batch_cost=true, got %q", metadata["supports_batch_cost"])
+	}
+	if len(metadata) != 3 {
+		t.Errorf("expected 3 metadata entries, got %d", len(metadata))
 	}
 }
 

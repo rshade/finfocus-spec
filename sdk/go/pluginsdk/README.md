@@ -170,7 +170,8 @@ type ServeConfig struct {
 
     // Optional: Fallback worker count for BatchCost when plugin does not
     // implement BatchCostHandler.
-    // Defaults to 10; clamped to [1, 50].
+    // Defaults to 10. Non-positive values (<= 0) reset to 10.
+    // Positive values above 50 are clamped to 50.
     BatchWorkers int
 }
 ```
@@ -660,7 +661,7 @@ Simply implement the standard interfaces:
 
 ```go
 // Example: Implementing DryRunHandler
-func (p *MyPlugin) HandleDryRun(req *pbc.DryRunRequest) (*pbc.DryRunResponse, error) {
+func (p *MyPlugin) HandleDryRun(ctx context.Context, req *pbc.DryRunRequest) (*pbc.DryRunResponse, error) {
     // ...
     return &pbc.DryRunResponse{}, nil
 }

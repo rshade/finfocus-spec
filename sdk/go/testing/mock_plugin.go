@@ -187,7 +187,8 @@ type MockPlugin struct {
 	SpotRiskScoreByResourceType      map[string]float64                  // Per-resource-type risk score overrides
 }
 
-// NewMockPlugin creates a new mock plugin with default configuration.
+// NewMockPlugin creates a preconfigured MockPlugin populated with sensible defaults for testing.
+// The default configuration includes supported providers and resource types, a base hourly rate and currency, initialized batch settings, sample recommendations, default plugin/spec versions, valid dry-run configuration, and default pricing category and spot interruption risk overrides.
 func NewMockPlugin() *MockPlugin {
 	p := &MockPlugin{
 		PluginName:         "mock-test-plugin",
@@ -495,12 +496,34 @@ func (m *MockPlugin) BatchCost(
 		return nil, status.Error(codes.InvalidArgument, "batch request is required")
 	}
 
+	resources := req.GetResources()
+	if len(resources) == 0 {
+		return &pbc.BatchCostResponse{
+			Results:      []*pbc.ResourceCostResult{},
+			MaxBatchSize: defaultMockBatchSize,
+		}, nil
+	}
+
+	if int64(len(resources)) > int64(defaultMockBatchSize) {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"batch size %d exceeds max_batch_size %d", len(resources), defaultMockBatchSize)
+	}
+
 	queryType := req.GetQueryType()
 	if queryType == pbc.CostQueryType_COST_QUERY_TYPE_UNSPECIFIED {
 		queryType = pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE
 	}
 
-	resources := req.GetResources()
+	if queryType == pbc.CostQueryType_COST_QUERY_TYPE_ACTUAL {
+		start := req.GetStart()
+		end := req.GetEnd()
+		if start == nil || end == nil {
+			return nil, status.Error(codes.InvalidArgument, "start and end are required for ACTUAL query type")
+		}
+		if !start.AsTime().Before(end.AsTime()) {
+			return nil, status.Error(codes.InvalidArgument, "start must be before end for ACTUAL query type")
+		}
+	}
 	results := make([]*pbc.ResourceCostResult, len(resources))
 	for index, resource := range resources {
 		switch {
@@ -573,6 +596,16 @@ func (m *MockPlugin) BatchCost(
 				}
 				continue
 			}
+			if actualResp == nil {
+				results[index] = &pbc.ResourceCostResult{
+					Resource: resource,
+					Result: &pbc.ResourceCostResult_Error{
+						Error: batchResourceErrorFromErr(
+							errors.New("GetActualCost returned nil response")),
+					},
+				}
+				continue
+			}
 
 			results[index] = &pbc.ResourceCostResult{
 				Resource: resource,
@@ -602,6 +635,16 @@ func (m *MockPlugin) BatchCost(
 				}
 				continue
 			}
+			if projectedResp == nil {
+				results[index] = &pbc.ResourceCostResult{
+					Resource: resource,
+					Result: &pbc.ResourceCostResult_Error{
+						Error: batchResourceErrorFromErr(
+							errors.New("GetProjectedCost returned nil response")),
+					},
+				}
+				continue
+			}
 
 			results[index] = &pbc.ResourceCostResult{
 				Resource: resource,
@@ -623,6 +666,16 @@ func (m *MockPlugin) BatchCost(
 					Resource: resource,
 					Result: &pbc.ResourceCostResult_Error{
 						Error: batchResourceErrorFromErr(err),
+					},
+				}
+				continue
+			}
+			if estimateResp == nil {
+				results[index] = &pbc.ResourceCostResult{
+					Resource: resource,
+					Result: &pbc.ResourceCostResult_Error{
+						Error: batchResourceErrorFromErr(
+							errors.New("EstimateCost returned nil response")),
 					},
 				}
 				continue
@@ -657,6 +710,9 @@ func (m *MockPlugin) BatchCost(
 	}, nil
 }
 
+// batchEstimateResourceType builds a canonical estimate resource type string for a ResourceDescriptor
+// in the form "provider:resourceType/resource:Resource". If the provider is empty it uses "custom".
+// If the resource type is empty it returns an empty string.
 func batchEstimateResourceType(resource *pbc.ResourceDescriptor) string {
 	provider := strings.ToLower(resource.GetProvider())
 	if provider == "" {
@@ -671,6 +727,8 @@ func batchEstimateResourceType(resource *pbc.ResourceDescriptor) string {
 	return fmt.Sprintf("%s:%s/%s:Resource", provider, resourceType, resourceType)
 }
 
+// defaultBatchResourceID returns the first available identifier for the given resource descriptor.
+// It prefers Id, then Arn, then ResourceType, and falls back to "unknown-resource" when none are present.
 func defaultBatchResourceID(resource *pbc.ResourceDescriptor) string {
 	if resource.GetId() != "" {
 		return resource.GetId()
@@ -684,6 +742,9 @@ func defaultBatchResourceID(resource *pbc.ResourceDescriptor) string {
 	return "unknown-resource"
 }
 
+// batchResourceErrorFromErr converts an error into a pbc.ResourceError suitable for batch responses.
+// If the error is a gRPC status error its code and message are used; otherwise the error is reported
+// with an Internal code and the error string. The gRPC code is mapped to int32 via batchGRPCCodeToInt32.
 func batchResourceErrorFromErr(err error) *pbc.ResourceError {
 	st, ok := status.FromError(err)
 	if !ok {
@@ -699,16 +760,20 @@ func batchResourceErrorFromErr(err error) *pbc.ResourceError {
 	}
 }
 
+// batchGRPCCodeToInt32 converts a gRPC `codes.Code` value (uint32) to an `int32` suitable for protobuf fields.
+// If the code exceeds `math.MaxInt32`, `defaultInternalErrCode` is returned to avoid overflow.
 func batchGRPCCodeToInt32(code codes.Code) int32 {
 	codeValue := int64(code)
-	if codeValue < 0 || codeValue > math.MaxInt32 {
+	if codeValue > math.MaxInt32 {
 		return defaultInternalErrCode
 	}
+	//nolint:gosec // Overflow impossible: codeValue is in [0, math.MaxInt32] after the bounds check above.
 	return int32(codeValue)
 }
 
 // generateDefaultFieldMappings creates default field mappings for all FOCUS fields.
-// This is used when no custom field mappings are configured.
+// generateDefaultFieldMappings returns a slice of FieldMapping entries for the canonical FOCUS fields,
+// each marked as FIELD_SUPPORT_STATUS_SUPPORTED. This is used when no custom field mappings are configured.
 func generateDefaultFieldMappings() []*pbc.FieldMapping {
 	// FOCUS 1.2/1.3 field names matching FocusCostRecord
 	fieldNames := []string{

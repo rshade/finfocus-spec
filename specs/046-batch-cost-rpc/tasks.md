@@ -139,13 +139,13 @@ resources returns cost data for 80% and errors for 20%.
 
 ---
 
-## Phase 5: User Story 3 - Plugin Fallback to Sequential Processing (P2)
+## Phase 5: User Story 3 - Plugin Automatic Batch Fallback (P2)
 
 **Goal**: Plugins without a custom `BatchCostHandler` can serve batch requests via
-the SDK's automatic concurrent fallback.
+the SDK's automatic concurrent fallback with bounded parallelism.
 
 **Independent Test**: Implement a plugin without `BatchCostHandler` and verify batch
-requests are served correctly via automatic sequential fallback.
+requests are served correctly via automatic concurrent fallback.
 
 ### Implementation for User Story 3
 
@@ -284,6 +284,17 @@ resource types.
 - [x] T047 Run `make validate` to verify tests, linting, and npm validations pass
 - [x] T048 Verify backward compatibility: run existing test suite without modifications
   to confirm all pre-existing tests still pass (SC-005)
+- [x] T049 [P] Add pagination-within-batch conformance test in
+  `sdk/go/testing/batch_conformance_test.go`: test batch actual cost where a resource
+  returns `next_page_token` and `total_count` in `ActualCostData`, verify pagination
+  fields are preserved through batch response, verify host can use token for follow-up
+  (edge case from spec: "Each resource's cost data within the batch may be paginated
+  independently")
+- [x] T050 [P] Add structured zerolog logging for batch operations in
+  `sdk/go/pluginsdk/batch.go`: log batch request receipt (resource count, query type,
+  dry_run flag) at Info level, log per-resource errors at Warn level, log batch
+  completion with timing at Info level, follow existing logging patterns from
+  `sdk/go/pluginsdk/logging.go` (Constitution IX - Observability)
 
 **Checkpoint**: All benchmarks pass, documentation updated, full validation green.
 

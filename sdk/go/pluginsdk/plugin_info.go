@@ -217,50 +217,21 @@ const (
 	maxValidCapability = pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST // 12
 )
 
-// IsValidCapability checks if a PluginCapability enum value is within the valid range.
-// PLUGIN_CAPABILITY_UNSPECIFIED (0) is not considered valid as it's the protobuf default.
-// This function is used to filter out invalid enum values that may be passed through
-// configuration or from untrusted sources.
-//
-// Example:
-//
-//	if pluginsdk.IsValidCapability(cap) {
-//	    // Process valid capability
-//	}
+// IsValidCapability reports whether a PluginCapability value is within the
+// inclusive range of supported capability constants. PLUGIN_CAPABILITY_UNSPECIFIED
+// (0) is treated as invalid because it is the protobuf default and does not
+// represent a real capability.
 func IsValidCapability(capability pbc.PluginCapability) bool {
 	return capability >= minValidCapability && capability <= maxValidCapability
 }
 
-// inferCapabilities determines plugin capabilities by checking implemented interfaces.
-// The slice is pre-allocated with capacity maxCapabilities (4 base + 5 optional) to minimize allocations.
-// Returns a slice of capabilities supported by the plugin, or nil if plugin is nil.
-//
-// The base Plugin interface methods (GetProjectedCost, GetActualCost, etc.) are
-// always assumed to be implemented since they are required by the interface.
-// Only optional interfaces are checked via type assertion.
-//
-// Nil Plugin Handling:
-//
-// This function defensively handles nil plugin input to prevent panics during:
-//   - Unit tests where nil mocks may be passed for isolated capability testing
-//   - Error recovery scenarios in server constructors where plugin creation failed
-//   - Lazy initialization patterns where plugin may be temporarily unset
-//   - Edge cases in test harnesses that need to verify nil-safety
-//
-// Callers should validate plugin is non-nil before calling constructors in production.
-// A nil plugin results in an empty capability set (returns nil slice).
-//
-// Design Note:
-//
-// While a nil plugin is typically a programming error, this function chooses to
-// return nil gracefully rather than panic. The rationale is:
-//   - Type assertions on nil interface values panic in Go
-//   - Callers may not always control the plugin lifecycle
-//   - Fail-safe behavior is preferable for infrastructure code
-//
-// Production code using NewServer/NewServerWithOptions should ensure plugins are
-// non-nil before construction. The server constructors could be enhanced to return
-// errors for nil plugins if stricter validation is desired in the future.
+// inferCapabilities returns the PluginCapability values supported by the given
+// plugin. If plugin is nil, nil is returned to avoid panicking on type
+// assertions. The returned slice always includes the four base capabilities
+// (PROJECTED_COSTS, ACTUAL_COSTS, PRICING_SPEC, ESTIMATE_COST) and appends
+// additional entries when the plugin implements optional interfaces such as
+// RecommendationsProvider, BudgetsProvider, DismissProvider, DryRunHandler,
+// or BatchCostHandler.
 func inferCapabilities(plugin Plugin) []pbc.PluginCapability {
 	// Defensive nil check to prevent panic on type assertions.
 	// See function documentation for rationale on handling nil plugins gracefully.

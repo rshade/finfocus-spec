@@ -13,7 +13,7 @@ const capabilityTrue = "true"
 // Exhaustive Nolint Rationale:
 // This map intentionally excludes PLUGIN_CAPABILITY_UNSPECIFIED (value 0) because
 // it is the protobuf default sentinel value, not a real capability. All other
-// PluginCapability values (1-11) MUST be included in this map.
+// PluginCapability values (1-12) MUST be included in this map.
 //
 // When adding new capabilities to the proto definition:
 // 1. Add a corresponding entry to this map with a "supports_" prefix

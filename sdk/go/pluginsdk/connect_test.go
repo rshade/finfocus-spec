@@ -14,6 +14,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
 
 	"github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
@@ -112,7 +113,54 @@ func TestConnectHandler_BatchCostFallback(t *testing.T) {
 	resp, err := handler.BatchCost(ctx, req)
 	require.NoError(t, err)
 	require.Len(t, resp.Msg.GetResults(), 1)
+	assert.Nil(t, resp.Msg.GetResults()[0].GetError())
 	assert.NotNil(t, resp.Msg.GetResults()[0].GetCostData().GetEstimate())
+}
+
+func TestConnectHandler_BatchCostCancelledContext(t *testing.T) {
+	plugin := &blockingEstimatePlugin{}
+	server := pluginsdk.NewServer(plugin)
+	handler := pluginsdk.NewConnectHandler(server)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // cancel immediately
+
+	req := connect.NewRequest(&pbc.BatchCostRequest{
+		QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+		Resources: []*pbc.ResourceDescriptor{
+			{Provider: "aws", ResourceType: "ec2"},
+		},
+	})
+
+	resp, err := handler.BatchCost(ctx, req)
+	if err != nil {
+		require.Equal(t, connect.CodeCanceled, connect.CodeOf(err),
+			"expected context cancellation error, got: %v", err)
+		return
+	}
+	require.Len(t, resp.Msg.GetResults(), 1)
+	result := resp.Msg.GetResults()[0]
+	require.NotNil(t, result.GetError(), "per-resource error expected when context is cancelled")
+	assert.Equal(t, int32(codes.Canceled), result.GetError().GetCode(),
+		"per-resource error should be cancellation")
+}
+
+// blockingEstimatePlugin blocks in EstimateCost until context is cancelled, ensuring
+// context cancellation is observable in batch fallback tests.
+type blockingEstimatePlugin struct {
+	connectTestPlugin
+}
+
+func (p *blockingEstimatePlugin) EstimateCost(
+	ctx context.Context,
+	_ *pbc.EstimateCostRequest,
+) (*pbc.EstimateCostResponse, error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case <-time.After(5 * time.Second):
+		return &pbc.EstimateCostResponse{CostMonthly: 100, Currency: "USD"}, nil
+	}
 }
 
 func TestServeConnect_WithHealthEndpoint(t *testing.T) {

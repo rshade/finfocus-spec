@@ -25,6 +25,8 @@
 package pluginsdk
 
 import (
+	"context"
+
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
 
@@ -291,7 +293,7 @@ type DryRunHandler interface {
 	//   - Not make any external API calls (response time < 100ms)
 	//   - Validate configuration and report errors if invalid
 	//   - Return resource_type_supported=false for unsupported resources
-	HandleDryRun(req *pbc.DryRunRequest) (*pbc.DryRunResponse, error)
+	HandleDryRun(ctx context.Context, req *pbc.DryRunRequest) (*pbc.DryRunResponse, error)
 }
 
 // ConfigValidator is an optional interface for plugins to validate their

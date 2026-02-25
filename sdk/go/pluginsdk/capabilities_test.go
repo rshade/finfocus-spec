@@ -3,6 +3,7 @@ package pluginsdk
 
 import (
 	"context"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -72,6 +73,7 @@ func (m *mockCapabilityPlugin) DismissRecommendation(
 
 // Implement DryRunHandler.
 func (m *mockCapabilityPlugin) HandleDryRun(
+	_ context.Context,
 	_ *pbc.DryRunRequest,
 ) (*pbc.DryRunResponse, error) {
 	return &pbc.DryRunResponse{}, nil
@@ -112,5 +114,5 @@ func TestGetPluginInfo_AutoDiscovery(t *testing.T) {
 	assert.Equal(t, "true", meta["supports_dismiss_recommendations"])
 	assert.Equal(t, "true", meta["supports_dry_run"])
 	assert.Equal(t, "true", meta["supports_batch_cost"])
-	assert.Equal(t, "100", meta["max_batch_size"])
+	assert.Equal(t, strconv.Itoa(DefaultMaxBatchSize), meta["max_batch_size"])
 }

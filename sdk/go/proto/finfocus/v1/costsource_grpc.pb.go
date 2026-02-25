@@ -176,6 +176,9 @@ type CostSourceServiceClient interface {
 	// field. Returns per-resource results with partial failure semantics -
 	// individual resource failures do not cause the entire batch to fail.
 	//
+	// An empty resource list is valid and returns an empty results slice with
+	// max_batch_size populated — no processing is performed.
+	//
 	// This is an optional RPC. Plugins that do not implement BatchCostHandler
 	// may be served via SDK fallback behavior.
 	//
@@ -453,6 +456,9 @@ type CostSourceServiceServer interface {
 	// Supports estimate, actual, and projected cost queries via the query_type
 	// field. Returns per-resource results with partial failure semantics -
 	// individual resource failures do not cause the entire batch to fail.
+	//
+	// An empty resource list is valid and returns an empty results slice with
+	// max_batch_size populated — no processing is performed.
 	//
 	// This is an optional RPC. Plugins that do not implement BatchCostHandler
 	// may be served via SDK fallback behavior.

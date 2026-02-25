@@ -2,12 +2,14 @@
 package pluginsdk
 
 import (
+	"bytes"
 	"context"
 	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -119,7 +121,7 @@ func TestServerBatchCostEnforcesDefaultMaxBatchSize(t *testing.T) {
 	plugin := &batchServerTestPlugin{}
 	server := NewServer(plugin)
 
-	resources := make([]*pbc.ResourceDescriptor, 101)
+	resources := make([]*pbc.ResourceDescriptor, DefaultMaxBatchSize+1)
 	for i := range resources {
 		resources[i] = &pbc.ResourceDescriptor{
 			Provider:     "aws",
@@ -222,6 +224,36 @@ func TestServerBatchCostCustomHandlerPreferred(t *testing.T) {
 	require.Len(t, resp.GetResults(), 1)
 	assert.Equal(t, int64(1), plugin.batchCalls.Load())
 	assert.Equal(t, int64(0), plugin.estimateCalls.Load())
+}
+
+func TestServerBatchCostStructuredLogging(t *testing.T) {
+	var logBuffer bytes.Buffer
+	logger := zerolog.New(&logBuffer).With().Timestamp().Logger()
+
+	plugin := &batchServerTestPlugin{}
+	server := NewServerWithOptions(plugin, nil, &logger, nil)
+
+	_, err := server.BatchCost(context.Background(), &pbc.BatchCostRequest{
+		QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+		Resources: []*pbc.ResourceDescriptor{
+			{Provider: "aws", ResourceType: "ec2", Id: "resource-success"},
+			{Provider: "aws", ResourceType: "unsupported-ec2", Id: "resource-error"},
+		},
+	})
+	require.NoError(t, err)
+
+	logOutput := logBuffer.String()
+	assert.Contains(t, logOutput, "BatchCost request received")
+	assert.Contains(t, logOutput, "\"resource_count\":2")
+	assert.Contains(t, logOutput, "\"query_type\":\"COST_QUERY_TYPE_ESTIMATE\"")
+	assert.Contains(t, logOutput, "\"dry_run\":false")
+	assert.Contains(t, logOutput, "BatchCost resource failed")
+	assert.Contains(t, logOutput, "\"error_code\":5")
+	assert.Contains(t, logOutput, "\"resource_id\":\"resource-error\"")
+	assert.Contains(t, logOutput, "BatchCost completed")
+	assert.Contains(t, logOutput, "\"result_count\":2")
+	assert.Contains(t, logOutput, "\"error_count\":1")
+	assert.Contains(t, logOutput, "\"duration_ms\":")
 }
 
 type batchServerTestPlugin struct {

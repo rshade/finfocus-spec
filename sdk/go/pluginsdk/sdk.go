@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -269,10 +270,11 @@ type Server struct {
 	batchWorkers int
 }
 
-// NewServer creates a Server that exposes the provided Plugin over gRPC.
-// Uses DefaultRegistryLookup which returns empty for all lookups, causing
-// Supports() calls to return InvalidArgument. Use NewServerWithRegistry
-// to provide a real registry for production use.
+// NewServer creates a Server that wraps the provided Plugin and initializes sensible defaults.
+//
+// The returned Server uses a DefaultRegistryLookup for provider resolution, a package-default logger,
+// and infers global capabilities from the plugin. Batch-related defaults are applied: maxBatchSize is
+// set to DefaultMaxBatchSize and batchWorkers to DefaultBatchWorkers.
 func NewServer(plugin Plugin) *Server {
 	return &Server{
 		plugin:             plugin,
@@ -297,7 +299,7 @@ func NewServerWithRegistry(plugin Plugin, registry RegistryLookup) *Server {
 // If info is nil, GetPluginInfo will return Unimplemented (legacy plugin behavior).
 //
 // Thread Safety: pluginInfo is set during construction before the server accepts
-// requests. The happens-before relationship ensures safe concurrent access.
+// connections, so it is safe for concurrent use once returned.
 func NewServerWithOptions(plugin Plugin, registry RegistryLookup, logger *zerolog.Logger, info *PluginInfo) *Server {
 	if registry == nil {
 		registry = &DefaultRegistryLookup{}
@@ -328,9 +330,9 @@ func NewServerWithOptions(plugin Plugin, registry RegistryLookup, logger *zerolo
 	}
 }
 
-// GetGlobalCapabilities returns the capabilities supported by this server.
+// GetGlobalCapabilities returns a copy of the capabilities supported by this server.
 func (s *Server) GetGlobalCapabilities() []pbc.PluginCapability {
-	return s.globalCapabilities
+	return append([]pbc.PluginCapability{}, s.globalCapabilities...)
 }
 
 // Name implements the gRPC Name method.
@@ -339,14 +341,13 @@ func (s *Server) Name(_ context.Context, _ *pbc.NameRequest) (*pbc.NameResponse,
 }
 
 // GetPluginInfo implements the gRPC GetPluginInfo method.
-// Returns plugin metadata including name, version, spec version, providers, and optional metadata.
+// It retrieves metadata and capabilities from the plugin, with support for
+// auto-discovery and backward compatibility.
 //
 // Priority order for response:
-// 1. If the plugin implements PluginInfoProvider, delegate to it
-// 2. If PluginInfo was configured via ServeConfig, return it
-// 3. Return Unimplemented error (enables graceful degradation for legacy plugins).
-//
-// Error Handling for Consumers:
+//  1. If the plugin implements PluginInfoProvider, delegate to it
+//  2. If PluginInfo was configured via ServeConfig, return it
+//  3. Return Unimplemented error (enables graceful degradation for legacy plugins)
 //
 // When calling GetPluginInfo on potentially legacy plugins, consumers should handle
 // the Unimplemented error gracefully:
@@ -355,20 +356,10 @@ func (s *Server) Name(_ context.Context, _ *pbc.NameRequest) (*pbc.NameResponse,
 //	if err != nil {
 //	    if status.Code(err) == codes.Unimplemented {
 //	        // Legacy plugin - use fallback values
-//	        log.Info("Plugin does not implement GetPluginInfo")
 //	        return &PluginMetadata{Name: "unknown", Version: "unknown"}
 //	    }
 //	    return nil, fmt.Errorf("GetPluginInfo failed: %w", err)
 //	}
-//	return &PluginMetadata{
-//	    Name:        resp.GetName(),
-//	    Version:     resp.GetVersion(),
-//	    SpecVersion: resp.GetSpecVersion(),
-//	}, nil
-
-// GetPluginInfo implements the gRPC GetPluginInfo method.
-// It retrieves metadata and capabilities from the plugin, with support for
-// auto-discovery and backward compatibility.
 func (s *Server) GetPluginInfo(
 	ctx context.Context,
 	req *pbc.GetPluginInfoRequest,
@@ -421,6 +412,17 @@ func (s *Server) handleProviderPluginInfo(
 	if specErr := ValidateSpecVersion(resp.GetSpecVersion()); specErr != nil {
 		s.logger.Error().Err(specErr).Msg("GetPluginInfo returned invalid spec_version")
 		return nil, status.Error(codes.Internal, "plugin reported an invalid specification version")
+	}
+
+	// Enrich response with server-side batch metadata when the plugin supports batch cost.
+	// Create a new map to avoid mutating the plugin-returned response in place.
+	if containsCapability(resp.GetCapabilities(), pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST) {
+		meta := make(map[string]string, len(resp.GetMetadata())+1)
+		for k, v := range resp.GetMetadata() {
+			meta[k] = v
+		}
+		meta["max_batch_size"] = strconv.Itoa(int(s.maxBatchSize))
+		resp.Metadata = meta
 	}
 
 	return resp, nil
@@ -482,13 +484,9 @@ func (s *Server) handleConfiguredPluginInfo() (*pbc.GetPluginInfoResponse, error
 	}, nil
 }
 
+// containsCapability reports whether target is present in capabilities.
 func containsCapability(capabilities []pbc.PluginCapability, target pbc.PluginCapability) bool {
-	for _, capability := range capabilities {
-		if capability == target {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(capabilities, target)
 }
 
 // GetProjectedCost implements the gRPC GetProjectedCost method.
@@ -779,16 +777,23 @@ func (s *Server) BatchCost(
 	ctx context.Context,
 	req *pbc.BatchCostRequest,
 ) (*pbc.BatchCostResponse, error) {
+	startedAt := logBatchCostRequest(s.logger, req)
+
 	emptyResp, err := ValidateBatchCostRequest(req, s.maxBatchSize)
 	if err != nil {
 		return nil, err
 	}
 	if emptyResp != nil {
+		errorCount := logBatchCostResourceErrors(s.logger, emptyResp.GetResults())
+		logBatchCostCompletion(s.logger, startedAt, emptyResp, errorCount)
 		return emptyResp, nil
 	}
 
 	normalizedReq, ok := proto.Clone(req).(*pbc.BatchCostRequest)
 	if !ok {
+		s.logger.Error().
+			Int32("query_type", int32(req.GetQueryType())).
+			Msg("proto.Clone returned unexpected type for BatchCostRequest")
 		return nil, status.Error(codes.Internal, "failed to clone batch request")
 	}
 	normalizedReq.QueryType = NormalizeCostQueryType(req.GetQueryType())
@@ -796,7 +801,8 @@ func (s *Server) BatchCost(
 	if handler, hasCustomHandler := s.plugin.(BatchCostHandler); hasCustomHandler {
 		resp, batchErr := handler.BatchCost(ctx, normalizedReq)
 		if batchErr != nil {
-			return nil, batchErr
+			s.logger.Error().Err(batchErr).Msg("BatchCost handler error")
+			return nil, status.Error(codes.Internal, "plugin failed to execute BatchCost")
 		}
 		if resp == nil {
 			return nil, status.Error(codes.Internal, "plugin returned nil BatchCost response")
@@ -804,10 +810,16 @@ func (s *Server) BatchCost(
 		if resp.GetMaxBatchSize() <= 0 {
 			resp.MaxBatchSize = s.maxBatchSize
 		}
+
+		errorCount := logBatchCostResourceErrors(s.logger, resp.GetResults())
+		logBatchCostCompletion(s.logger, startedAt, resp, errorCount)
 		return resp, nil
 	}
 
-	return batchCostFallback(ctx, s.plugin, normalizedReq, s.maxBatchSize, s.batchWorkers), nil
+	resp := batchCostFallback(ctx, s.plugin, normalizedReq, s.maxBatchSize, s.batchWorkers)
+	errorCount := logBatchCostResourceErrors(s.logger, resp.GetResults())
+	logBatchCostCompletion(s.logger, startedAt, resp, errorCount)
+	return resp, nil
 }
 
 // ServeConfig holds configuration for serving a plugin.
@@ -944,17 +956,20 @@ func validateCORSConfig(web WebConfig) error {
 	return nil
 }
 
-// Serve starts the server for the provided plugin and prints the chosen port as PORT=<port> to stdout.
+// Serve starts a network server for the provided plugin according to the ServeConfig.
+//
+// It validates PluginInfo and CORS configuration early, announces the chosen port on stdout,
+// constructs the server instance, and selects either gRPC or Connect (gRPC-Web + Connect)
+// serving mode based on the Web configuration.
 //
 // When config.Web.Enabled is false (default), it starts a standard gRPC server.
 // When config.Web.Enabled is true, it starts a connect-go server that supports
 // gRPC, gRPC-Web, and Connect protocols simultaneously on the same port.
 //
-// It uses config.Port when > 0; if config.Port is 0 it reads the FINFOCUS_PLUGIN_PORT environment variable
-// and falls back to an ephemeral port when none is provided. The function registers the plugin's service, begins
-// serving on the selected port, and performs a graceful stop when the context is cancelled.
-//
-// Returns an error if the listener cannot be created or if the server fails to serve.
+// It uses config.Port when > 0; if config.Port is 0 it reads the FINFOCUS_PLUGIN_PORT
+// environment variable and falls back to an ephemeral port when none is provided.
+// It returns an error if configuration validation fails, a listener cannot be created
+// or announced, or if the server fails while serving (including context cancellation).
 func Serve(ctx context.Context, config ServeConfig) error {
 	// Validate PluginInfo early (before acquiring resources like listeners)
 	// This prevents resource leaks if validation fails (T020)

@@ -62,11 +62,11 @@ while unsupported ones return structured error information.
 
 ---
 
-### User Story 3 - Plugin Fallback to Sequential Processing (Priority: P2)
+### User Story 3 - Plugin Automatic Batch Fallback (Priority: P2)
 
 As a plugin developer, I want the option to either implement optimized batch processing
-or have the SDK automatically fall back to sequential processing so that I can adopt the
-batch RPC without rewriting my plugin logic.
+or have the SDK automatically fall back to concurrent processing with bounded parallelism
+so that I can adopt the batch RPC without rewriting my plugin logic.
 
 **Why this priority**: Lowering the adoption barrier ensures plugins can immediately
 support batch requests. Optimized implementations can be added incrementally.
@@ -146,6 +146,9 @@ without actual cost data.
   an appropriate error indicating the limit was exceeded.
 - What happens when the query type is UNSPECIFIED? Defaults to estimate cost, matching
   the most common use case for batch operations.
+- What happens when `dry_run=true` AND `query_type=ACTUAL` with time range parameters?
+  Time range validation is skipped because dry-run does not perform actual cost retrieval;
+  the query type is used only to determine which fields to map.
 
 ## Requirements *(mandatory)*
 
@@ -211,7 +214,8 @@ without actual cost data.
 - **SC-005**: All existing plugin implementations continue to function without
   modification after the batch RPC is added.
 - **SC-006**: Batch requests with the dry-run flag return field mapping information for
-  each resource type within the same latency expectations as individual dry-run requests.
+  each resource type within <100ms p99 latency per resource (matching the individual
+  DryRun RPC requirement from spec 032-plugin-dry-run).
 
 ## Clarifications
 

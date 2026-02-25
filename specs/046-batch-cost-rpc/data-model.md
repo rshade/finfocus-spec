@@ -64,7 +64,8 @@ ResourceError
 - When `len(resources) == 0`, return empty response (not an error)
 - When `query_type == ACTUAL`: `start` and `end` are required, `start < end`
 - When `query_type != ACTUAL`: `start` and `end` are ignored if present
-- When `dry_run == true`: `query_type` is still used to determine which fields to map
+- When `dry_run == true`: `query_type` is still used to determine which fields to map;
+  `start`/`end` validation is skipped (no actual cost retrieval occurs)
 
 ### BatchCostResponse (New Message)
 

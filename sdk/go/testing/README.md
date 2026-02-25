@@ -238,6 +238,11 @@ Example:
 plugin := plugintesting.NewMockPlugin()
 plugin.UnsupportedBatchResourceTypes["unsupported_resource"] = true
 
+harness := plugintesting.NewTestHarness(plugin)
+harness.Start(t)
+defer harness.Stop()
+
+ctx := context.Background()
 resp, err := harness.Client().BatchCost(ctx, &pbc.BatchCostRequest{
     QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
     Resources: []*pbc.ResourceDescriptor{
@@ -245,11 +250,13 @@ resp, err := harness.Client().BatchCost(ctx, &pbc.BatchCostRequest{
         plugintesting.CreateResourceDescriptor("aws", "unsupported_resource", "", "us-east-1"),
     },
 })
+require.NoError(t, err)
+require.Len(t, resp.GetResults(), 2)
 ```
 
 Batch conformance coverage includes:
 
-- Query type behavior (`ESTIMATE`, `ACTUAL`, `PROJECTED`, `UNSPECIFIED`)
+- Query type behavior (`ESTIMATE`, `ACTUAL`, `PROJECTED`, `DRY_RUN`, `UNSPECIFIED`)
 - Positional ordering (`results[i]` matches `resources[i]`)
 - Partial failure semantics (mixed success/error in one response)
 - Fallback path behavior for plugins without `BatchCostHandler`

@@ -377,6 +377,7 @@ func (p *capabilityTestPlugin) DismissRecommendation(
 
 // Implements DryRunHandler.
 func (p *capabilityTestPlugin) HandleDryRun(
+	_ context.Context,
 	_ *pbc.DryRunRequest,
 ) (*pbc.DryRunResponse, error) {
 	return &pbc.DryRunResponse{}, nil

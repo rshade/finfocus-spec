@@ -97,7 +97,7 @@ func TestBatchCostConformanceEmptyBatch(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Empty(t, resp.GetResults())
-	assert.Equal(t, int32(100), resp.GetMaxBatchSize())
+	assert.Equal(t, int32(pluginsdk.DefaultMaxBatchSize), resp.GetMaxBatchSize())
 }
 
 func TestBatchCostConformancePartialFailures(t *testing.T) {
@@ -168,74 +168,79 @@ func TestBatchCostConformanceAllFailuresStillReturnResponse(t *testing.T) {
 func TestBatchCostConformanceErrorCodeMapping(t *testing.T) {
 	ctx := context.Background()
 
-	t.Run("not_found from estimate", func(t *testing.T) {
-		plugin := plugintesting.NewMockPlugin()
-		harness := plugintesting.NewTestHarness(plugin)
-		harness.Start(t)
-		defer harness.Stop()
-
-		resp, err := harness.Client().BatchCost(ctx, &pbc.BatchCostRequest{
-			QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
-			Resources: []*pbc.ResourceDescriptor{
-				plugintesting.CreateResourceDescriptor("unknown", "ec2", "", "nowhere"),
+	tests := []struct {
+		name     string
+		setup    func(*plugintesting.MockPlugin)
+		request  *pbc.BatchCostRequest
+		expected codes.Code
+	}{
+		{
+			name:  "not_found from estimate",
+			setup: func(_ *plugintesting.MockPlugin) {},
+			request: &pbc.BatchCostRequest{
+				QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+				Resources: []*pbc.ResourceDescriptor{
+					plugintesting.CreateResourceDescriptor("unknown", "ec2", "", "nowhere"),
+				},
 			},
-		})
-		require.NoError(t, err)
-		require.Len(t, resp.GetResults(), 1)
-		assert.Equal(t, int32(codes.NotFound), resp.GetResults()[0].GetError().GetCode())
-	})
-
-	t.Run("unimplemented for unsupported resource", func(t *testing.T) {
-		plugin := plugintesting.NewMockPlugin()
-		plugin.UnsupportedBatchResourceTypes["unsupported_resource"] = true
-		harness := plugintesting.NewTestHarness(plugin)
-		harness.Start(t)
-		defer harness.Stop()
-
-		resp, err := harness.Client().BatchCost(ctx, &pbc.BatchCostRequest{
-			QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
-			Resources: []*pbc.ResourceDescriptor{
-				plugintesting.CreateResourceDescriptor("aws", "unsupported_resource", "", "us-east-1"),
+			expected: codes.NotFound,
+		},
+		{
+			name: "unimplemented for unsupported resource",
+			setup: func(p *plugintesting.MockPlugin) {
+				p.UnsupportedBatchResourceTypes["unsupported_resource"] = true
 			},
-		})
-		require.NoError(t, err)
-		assert.Equal(t, int32(codes.Unimplemented), resp.GetResults()[0].GetError().GetCode())
-	})
-
-	t.Run("internal from dry_run handler error", func(t *testing.T) {
-		plugin := plugintesting.NewMockPlugin()
-		plugin.ShouldErrorOnDryRun = true
-		harness := plugintesting.NewTestHarness(plugin)
-		harness.Start(t)
-		defer harness.Stop()
-
-		resp, err := harness.Client().BatchCost(ctx, &pbc.BatchCostRequest{
-			QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
-			DryRun:    true,
-			Resources: []*pbc.ResourceDescriptor{
-				plugintesting.CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1"),
+			request: &pbc.BatchCostRequest{
+				QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+				Resources: []*pbc.ResourceDescriptor{
+					plugintesting.CreateResourceDescriptor("aws", "unsupported_resource", "", "us-east-1"),
+				},
 			},
-		})
-		require.NoError(t, err)
-		assert.Equal(t, int32(codes.Internal), resp.GetResults()[0].GetError().GetCode())
-	})
-
-	t.Run("unavailable from projected cost error", func(t *testing.T) {
-		plugin := plugintesting.NewMockPlugin()
-		plugin.ShouldErrorOnProjectedCost = true
-		harness := plugintesting.NewTestHarness(plugin)
-		harness.Start(t)
-		defer harness.Stop()
-
-		resp, err := harness.Client().BatchCost(ctx, &pbc.BatchCostRequest{
-			QueryType: pbc.CostQueryType_COST_QUERY_TYPE_PROJECTED,
-			Resources: []*pbc.ResourceDescriptor{
-				plugintesting.CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1"),
+			expected: codes.Unimplemented,
+		},
+		{
+			name: "internal from dry_run handler error",
+			setup: func(p *plugintesting.MockPlugin) {
+				p.ShouldErrorOnDryRun = true
 			},
+			request: &pbc.BatchCostRequest{
+				QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+				DryRun:    true,
+				Resources: []*pbc.ResourceDescriptor{
+					plugintesting.CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1"),
+				},
+			},
+			expected: codes.Internal,
+		},
+		{
+			name: "unavailable from projected cost error",
+			setup: func(p *plugintesting.MockPlugin) {
+				p.ShouldErrorOnProjectedCost = true
+			},
+			request: &pbc.BatchCostRequest{
+				QueryType: pbc.CostQueryType_COST_QUERY_TYPE_PROJECTED,
+				Resources: []*pbc.ResourceDescriptor{
+					plugintesting.CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1"),
+				},
+			},
+			expected: codes.Unavailable,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			plugin := plugintesting.NewMockPlugin()
+			tt.setup(plugin)
+			harness := plugintesting.NewTestHarness(plugin)
+			harness.Start(t)
+			defer harness.Stop()
+
+			resp, err := harness.Client().BatchCost(ctx, tt.request)
+			require.NoError(t, err)
+			require.Len(t, resp.GetResults(), 1)
+			assert.Equal(t, int32(tt.expected), resp.GetResults()[0].GetError().GetCode())
 		})
-		require.NoError(t, err)
-		assert.Equal(t, int32(codes.Unavailable), resp.GetResults()[0].GetError().GetCode())
-	})
+	}
 }
 
 func TestBatchCostFallbackWhenPluginDoesNotImplementBatchHandler(t *testing.T) {
@@ -334,6 +339,47 @@ func TestBatchCostDryRunConformance(t *testing.T) {
 	assert.True(t, secondErr.GetResourceTypeUnsupported())
 }
 
+func TestBatchCostConformanceActualCostPaginationPreserved(t *testing.T) {
+	plugin := &paginatedBatchFallbackPlugin{}
+	server := pluginsdk.NewServer(plugin)
+	harness := plugintesting.NewTestHarness(server)
+	harness.Start(t)
+	defer harness.Stop()
+
+	ctx := context.Background()
+	start, end := plugintesting.CreateTimeRange(plugintesting.HoursPerDay)
+	resource := plugintesting.CreateResourceDescriptor("aws", "ec2", "i-batch-page-1", "us-east-1")
+	resource.Id = "i-batch-page-1"
+
+	batchResp, err := harness.Client().BatchCost(ctx, &pbc.BatchCostRequest{
+		QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ACTUAL,
+		Start:     start,
+		End:       end,
+		Resources: []*pbc.ResourceDescriptor{resource},
+	})
+	require.NoError(t, err)
+	require.Len(t, batchResp.GetResults(), 1)
+
+	actual := batchResp.GetResults()[0].GetCostData().GetActualCost()
+	require.NotNil(t, actual)
+	require.Len(t, actual.GetResults(), 1)
+	assert.Equal(t, "actual-page-2", actual.GetNextPageToken())
+	assert.Equal(t, int32(2), actual.GetTotalCount())
+
+	followUpResp, err := harness.Client().GetActualCost(ctx, &pbc.GetActualCostRequest{
+		ResourceId: resource.GetId(),
+		Start:      start,
+		End:        end,
+		PageSize:   1,
+		PageToken:  actual.GetNextPageToken(),
+	})
+	require.NoError(t, err)
+	require.Len(t, followUpResp.GetResults(), 1)
+	assert.Empty(t, followUpResp.GetNextPageToken())
+	assert.Equal(t, int32(2), followUpResp.GetTotalCount())
+	assert.Equal(t, "actual-page-2", followUpResp.GetResults()[0].GetSource())
+}
+
 type fallbackBatchPlugin struct {
 	estimateCalls  atomic.Int64
 	actualCalls    atomic.Int64
@@ -423,10 +469,18 @@ func (p *customBatchPlugin) BatchCost(
 
 	return &pbc.BatchCostResponse{
 		Results:      results,
-		MaxBatchSize: 100,
+		MaxBatchSize: pluginsdk.DefaultMaxBatchSize,
 	}, nil
 }
 
+// TestBatchCostFallbackWorkerPoolConfig verifies that the batch fallback path
+// succeeds via both the direct Server.BatchCost call and the gRPC transport path.
+//
+// NOTE: Both servers use NewServer() with the default worker count (10). Without a
+// public WithBatchWorkers option there is no way to configure a single-worker server
+// for a meaningful sequential-vs-concurrent timing comparison. The assertions here
+// are smoke tests that confirm both paths complete without error.
+// TODO: Add a meaningful concurrency test once a public WithBatchWorkers option is available.
 func TestBatchCostFallbackWorkerPoolConfig(t *testing.T) {
 	plugin := &sleepyFallbackPlugin{delay: 20 * time.Millisecond}
 	server := pluginsdk.NewServer(plugin)
@@ -441,31 +495,21 @@ func TestBatchCostFallbackWorkerPoolConfig(t *testing.T) {
 		},
 	}
 
-	serverSequential := pluginsdk.NewServer(plugin)
-	serverSequentialField := serverSequential
-	_ = serverSequentialField
-
-	// Default worker count should allow concurrency.
-	startConcurrent := time.Now()
-	_, err := server.BatchCost(context.Background(), req)
+	// Verify direct Server.BatchCost path succeeds with default workers.
+	resp, err := server.BatchCost(context.Background(), req)
 	require.NoError(t, err)
-	concurrentDuration := time.Since(startConcurrent)
+	require.Len(t, resp.GetResults(), len(req.GetResources()))
 
-	// Re-create server to avoid shared counters and force sequential worker config via Serve path.
-	sequentialPlugin := &sleepyFallbackPlugin{delay: 20 * time.Millisecond}
-	sequentialServer := pluginsdk.NewServer(sequentialPlugin)
-	sequentialHarness := plugintesting.NewTestHarness(sequentialServer)
-	sequentialHarness.Start(t)
-	defer sequentialHarness.Stop()
+	// Verify gRPC transport path also succeeds.
+	grpcPlugin := &sleepyFallbackPlugin{delay: 20 * time.Millisecond}
+	grpcServer := pluginsdk.NewServer(grpcPlugin)
+	grpcHarness := plugintesting.NewTestHarness(grpcServer)
+	grpcHarness.Start(t)
+	defer grpcHarness.Stop()
 
-	// This call verifies fallback still succeeds; timing comparison is left tolerant for CI variance.
-	startSequential := time.Now()
-	_, err = sequentialHarness.Client().BatchCost(context.Background(), req)
+	grpcResp, err := grpcHarness.Client().BatchCost(context.Background(), req)
 	require.NoError(t, err)
-	sequentialDuration := time.Since(startSequential)
-
-	assert.GreaterOrEqual(t, sequentialDuration.Milliseconds(), int64(1))
-	assert.GreaterOrEqual(t, concurrentDuration.Milliseconds(), int64(1))
+	require.Len(t, grpcResp.GetResults(), len(req.GetResources()))
 }
 
 type sleepyFallbackPlugin struct {
@@ -484,4 +528,38 @@ func (p *sleepyFallbackPlugin) EstimateCost(
 		Currency:    "USD",
 		CostMonthly: 1,
 	}, nil
+}
+
+type paginatedBatchFallbackPlugin struct {
+	fallbackBatchPlugin
+}
+
+func (p *paginatedBatchFallbackPlugin) GetActualCost(
+	_ context.Context,
+	req *pbc.GetActualCostRequest,
+) (*pbc.GetActualCostResponse, error) {
+	if req.GetStart() == nil || req.GetEnd() == nil {
+		return nil, status.Error(codes.InvalidArgument, "start and end are required")
+	}
+
+	switch req.GetPageToken() {
+	case "":
+		return &pbc.GetActualCostResponse{
+			Results: []*pbc.ActualCostResult{
+				{Cost: 1, UsageAmount: 1, UsageUnit: "hour", Source: "actual-page-1"},
+			},
+			NextPageToken: "actual-page-2",
+			TotalCount:    2,
+		}, nil
+	case "actual-page-2":
+		return &pbc.GetActualCostResponse{
+			Results: []*pbc.ActualCostResult{
+				{Cost: 2, UsageAmount: 1, UsageUnit: "hour", Source: "actual-page-2"},
+			},
+			NextPageToken: "",
+			TotalCount:    2,
+		}, nil
+	default:
+		return nil, status.Error(codes.InvalidArgument, "invalid page token")
+	}
 }
