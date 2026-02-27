@@ -67,6 +67,9 @@ const (
 	// CostSourceServiceDryRunProcedure is the fully-qualified name of the CostSourceService's DryRun
 	// RPC.
 	CostSourceServiceDryRunProcedure = "/finfocus.v1.CostSourceService/DryRun"
+	// CostSourceServiceBatchCostProcedure is the fully-qualified name of the CostSourceService's
+	// BatchCost RPC.
+	CostSourceServiceBatchCostProcedure = "/finfocus.v1.CostSourceService/BatchCost"
 	// ObservabilityServiceHealthCheckProcedure is the fully-qualified name of the
 	// ObservabilityService's HealthCheck RPC.
 	ObservabilityServiceHealthCheckProcedure = "/finfocus.v1.ObservabilityService/HealthCheck"
@@ -210,6 +213,19 @@ type CostSourceServiceClient interface {
 	//	    log.Printf("%s: %v", fm.GetFieldName(), fm.GetSupportStatus())
 	//	}
 	DryRun(context.Context, *connect.Request[v1.DryRunRequest]) (*connect.Response[v1.DryRunResponse], error)
+	// BatchCost queries cost data for multiple resources in a single request.
+	// Supports estimate, actual, and projected cost queries via the query_type
+	// field. Returns per-resource results with partial failure semantics -
+	// individual resource failures do not cause the entire batch to fail.
+	//
+	// An empty resource list is valid and returns an empty results slice with
+	// max_batch_size populated — no processing is performed.
+	//
+	// This is an optional RPC. Plugins that do not implement BatchCostHandler
+	// may be served via SDK fallback behavior.
+	//
+	// Returns INVALID_ARGUMENT if the batch exceeds the plugin's maximum size.
+	BatchCost(context.Context, *connect.Request[v1.BatchCostRequest]) (*connect.Response[v1.BatchCostResponse], error)
 }
 
 // NewCostSourceServiceClient constructs a client for the finfocus.v1.CostSourceService service. By
@@ -289,6 +305,12 @@ func NewCostSourceServiceClient(httpClient connect.HTTPClient, baseURL string, o
 			connect.WithSchema(costSourceServiceMethods.ByName("DryRun")),
 			connect.WithClientOptions(opts...),
 		),
+		batchCost: connect.NewClient[v1.BatchCostRequest, v1.BatchCostResponse](
+			httpClient,
+			baseURL+CostSourceServiceBatchCostProcedure,
+			connect.WithSchema(costSourceServiceMethods.ByName("BatchCost")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -305,6 +327,7 @@ type costSourceServiceClient struct {
 	getBudgets            *connect.Client[v1.GetBudgetsRequest, v1.GetBudgetsResponse]
 	getPluginInfo         *connect.Client[v1.GetPluginInfoRequest, v1.GetPluginInfoResponse]
 	dryRun                *connect.Client[v1.DryRunRequest, v1.DryRunResponse]
+	batchCost             *connect.Client[v1.BatchCostRequest, v1.BatchCostResponse]
 }
 
 // Name calls finfocus.v1.CostSourceService.Name.
@@ -360,6 +383,11 @@ func (c *costSourceServiceClient) GetPluginInfo(ctx context.Context, req *connec
 // DryRun calls finfocus.v1.CostSourceService.DryRun.
 func (c *costSourceServiceClient) DryRun(ctx context.Context, req *connect.Request[v1.DryRunRequest]) (*connect.Response[v1.DryRunResponse], error) {
 	return c.dryRun.CallUnary(ctx, req)
+}
+
+// BatchCost calls finfocus.v1.CostSourceService.BatchCost.
+func (c *costSourceServiceClient) BatchCost(ctx context.Context, req *connect.Request[v1.BatchCostRequest]) (*connect.Response[v1.BatchCostResponse], error) {
+	return c.batchCost.CallUnary(ctx, req)
 }
 
 // CostSourceServiceHandler is an implementation of the finfocus.v1.CostSourceService service.
@@ -494,6 +522,19 @@ type CostSourceServiceHandler interface {
 	//	    log.Printf("%s: %v", fm.GetFieldName(), fm.GetSupportStatus())
 	//	}
 	DryRun(context.Context, *connect.Request[v1.DryRunRequest]) (*connect.Response[v1.DryRunResponse], error)
+	// BatchCost queries cost data for multiple resources in a single request.
+	// Supports estimate, actual, and projected cost queries via the query_type
+	// field. Returns per-resource results with partial failure semantics -
+	// individual resource failures do not cause the entire batch to fail.
+	//
+	// An empty resource list is valid and returns an empty results slice with
+	// max_batch_size populated — no processing is performed.
+	//
+	// This is an optional RPC. Plugins that do not implement BatchCostHandler
+	// may be served via SDK fallback behavior.
+	//
+	// Returns INVALID_ARGUMENT if the batch exceeds the plugin's maximum size.
+	BatchCost(context.Context, *connect.Request[v1.BatchCostRequest]) (*connect.Response[v1.BatchCostResponse], error)
 }
 
 // NewCostSourceServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -569,6 +610,12 @@ func NewCostSourceServiceHandler(svc CostSourceServiceHandler, opts ...connect.H
 		connect.WithSchema(costSourceServiceMethods.ByName("DryRun")),
 		connect.WithHandlerOptions(opts...),
 	)
+	costSourceServiceBatchCostHandler := connect.NewUnaryHandler(
+		CostSourceServiceBatchCostProcedure,
+		svc.BatchCost,
+		connect.WithSchema(costSourceServiceMethods.ByName("BatchCost")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/finfocus.v1.CostSourceService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case CostSourceServiceNameProcedure:
@@ -593,6 +640,8 @@ func NewCostSourceServiceHandler(svc CostSourceServiceHandler, opts ...connect.H
 			costSourceServiceGetPluginInfoHandler.ServeHTTP(w, r)
 		case CostSourceServiceDryRunProcedure:
 			costSourceServiceDryRunHandler.ServeHTTP(w, r)
+		case CostSourceServiceBatchCostProcedure:
+			costSourceServiceBatchCostHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -644,6 +693,10 @@ func (UnimplementedCostSourceServiceHandler) GetPluginInfo(context.Context, *con
 
 func (UnimplementedCostSourceServiceHandler) DryRun(context.Context, *connect.Request[v1.DryRunRequest]) (*connect.Response[v1.DryRunResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("finfocus.v1.CostSourceService.DryRun is not implemented"))
+}
+
+func (UnimplementedCostSourceServiceHandler) BatchCost(context.Context, *connect.Request[v1.BatchCostRequest]) (*connect.Response[v1.BatchCostResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("finfocus.v1.CostSourceService.BatchCost is not implemented"))
 }
 
 // ObservabilityServiceClient is a client for the finfocus.v1.ObservabilityService service.

@@ -3,6 +3,7 @@ package pluginsdk
 
 import (
 	"context"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -72,9 +73,18 @@ func (m *mockCapabilityPlugin) DismissRecommendation(
 
 // Implement DryRunHandler.
 func (m *mockCapabilityPlugin) HandleDryRun(
+	_ context.Context,
 	_ *pbc.DryRunRequest,
 ) (*pbc.DryRunResponse, error) {
 	return &pbc.DryRunResponse{}, nil
+}
+
+// Implement BatchCostHandler.
+func (m *mockCapabilityPlugin) BatchCost(
+	_ context.Context,
+	_ *pbc.BatchCostRequest,
+) (*pbc.BatchCostResponse, error) {
+	return &pbc.BatchCostResponse{}, nil
 }
 
 func TestGetPluginInfo_AutoDiscovery(t *testing.T) {
@@ -86,20 +96,23 @@ func TestGetPluginInfo_AutoDiscovery(t *testing.T) {
 	resp, err := server.GetPluginInfo(context.Background(), &pbc.GetPluginInfoRequest{})
 	require.NoError(t, err)
 
-	// Verify Capabilities Enum - all 4 optional interfaces
+	// Verify Capabilities Enum - all optional interfaces
 	caps := resp.GetCapabilities()
 	assert.Contains(t, caps, pbc.PluginCapability_PLUGIN_CAPABILITY_RECOMMENDATIONS)
 	assert.Contains(t, caps, pbc.PluginCapability_PLUGIN_CAPABILITY_BUDGETS)
 	assert.Contains(t, caps, pbc.PluginCapability_PLUGIN_CAPABILITY_DISMISS_RECOMMENDATIONS)
 	assert.Contains(t, caps, pbc.PluginCapability_PLUGIN_CAPABILITY_DRY_RUN)
+	assert.Contains(t, caps, pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST)
 	// Core capabilities
 	assert.Contains(t, caps, pbc.PluginCapability_PLUGIN_CAPABILITY_PROJECTED_COSTS)
 	assert.Contains(t, caps, pbc.PluginCapability_PLUGIN_CAPABILITY_ACTUAL_COSTS)
 
-	// Verify Legacy Metadata - all 4 optional interfaces
+	// Verify Legacy Metadata - optional interfaces
 	meta := resp.GetMetadata()
 	assert.Equal(t, "true", meta["supports_recommendations"])
 	assert.Equal(t, "true", meta["supports_budgets"])
 	assert.Equal(t, "true", meta["supports_dismiss_recommendations"])
 	assert.Equal(t, "true", meta["supports_dry_run"])
+	assert.Equal(t, "true", meta["supports_batch_cost"])
+	assert.Equal(t, strconv.Itoa(DefaultMaxBatchSize), meta["max_batch_size"])
 }

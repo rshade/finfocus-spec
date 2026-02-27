@@ -147,3 +147,15 @@ func (h *ConnectHandler) GetPluginInfo(
 	}
 	return connect.NewResponse(resp), nil
 }
+
+// BatchCost implements pbcconnect.CostSourceServiceHandler.
+func (h *ConnectHandler) BatchCost(
+	ctx context.Context,
+	req *connect.Request[pbc.BatchCostRequest],
+) (*connect.Response[pbc.BatchCostResponse], error) {
+	resp, err := h.server.BatchCost(ctx, req.Msg)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(resp), nil
+}

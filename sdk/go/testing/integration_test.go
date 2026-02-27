@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -3823,4 +3824,102 @@ func TestBackwardCompat_LegacyHostNoPaginationParams(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, resp.GetResults(), 30, "all 30 records should be returned")
 	require.Empty(t, resp.GetNextPageToken(), "no next token when all records returned")
+}
+
+func TestBatchCostIntegration(t *testing.T) {
+	plugin := plugintesting.NewMockPlugin()
+	harness := plugintesting.NewTestHarness(plugin)
+	harness.Start(t)
+	defer harness.Stop()
+
+	client := harness.Client()
+	ctx := context.Background()
+	start, end := plugintesting.CreateTimeRange(plugintesting.HoursPerDay)
+
+	t.Run("BatchEstimateWithMixedProviders", func(t *testing.T) {
+		resp, err := client.BatchCost(ctx, &pbc.BatchCostRequest{
+			QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+			Resources: []*pbc.ResourceDescriptor{
+				plugintesting.CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1"),
+				plugintesting.CreateResourceDescriptor("azure", "vm", "Standard_B1s", "eastus"),
+				plugintesting.CreateResourceDescriptor("gcp", "compute_engine", "e2-micro", "us-central1"),
+				plugintesting.CreateResourceDescriptor("kubernetes", "namespace", "", ""),
+				plugintesting.CreateResourceDescriptor("aws", "rds", "db.t3.micro", "us-east-1"),
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, resp.GetResults(), 5)
+		for _, result := range resp.GetResults() {
+			assert.Nil(t, result.GetError())
+			require.NotNil(t, result.GetCostData())
+			assert.NotNil(t, result.GetCostData().GetEstimate())
+		}
+	})
+
+	t.Run("BatchActualCostIncludesActualCostData", func(t *testing.T) {
+		resp, err := client.BatchCost(ctx, &pbc.BatchCostRequest{
+			QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ACTUAL,
+			Start:     start,
+			End:       end,
+			Resources: []*pbc.ResourceDescriptor{
+				plugintesting.CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1"),
+				plugintesting.CreateResourceDescriptor("aws", "s3", "", "us-east-1"),
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, resp.GetResults(), 2)
+		for _, result := range resp.GetResults() {
+			assert.Nil(t, result.GetError())
+			require.NotNil(t, result.GetCostData())
+			actual := result.GetCostData().GetActualCost()
+			require.NotNil(t, actual)
+			assert.NotEmpty(t, actual.GetResults())
+		}
+	})
+
+	t.Run("BatchProjectedCostIncludesProjectedCostData", func(t *testing.T) {
+		resp, err := client.BatchCost(ctx, &pbc.BatchCostRequest{
+			QueryType: pbc.CostQueryType_COST_QUERY_TYPE_PROJECTED,
+			Resources: []*pbc.ResourceDescriptor{
+				plugintesting.CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1"),
+				plugintesting.CreateResourceDescriptor("gcp", "compute_engine", "e2-micro", "us-central1"),
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, resp.GetResults(), 2)
+		for _, result := range resp.GetResults() {
+			assert.Nil(t, result.GetError())
+			require.NotNil(t, result.GetCostData())
+			assert.NotNil(t, result.GetCostData().GetProjectedCost())
+		}
+	})
+
+	t.Run("BatchEstimateWithPartialFailures", func(t *testing.T) {
+		plugin.UnsupportedBatchResourceTypes["unsupported_widget"] = true
+		defer delete(plugin.UnsupportedBatchResourceTypes, "unsupported_widget")
+
+		resp, err := client.BatchCost(ctx, &pbc.BatchCostRequest{
+			QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+			Resources: []*pbc.ResourceDescriptor{
+				plugintesting.CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1"),
+				plugintesting.CreateResourceDescriptor("aws", "unsupported_widget", "", "us-east-1"),
+				plugintesting.CreateResourceDescriptor("gcp", "compute_engine", "e2-micro", "us-central1"),
+			},
+		})
+		require.NoError(t, err, "partial failures must not cause top-level error")
+		require.Len(t, resp.GetResults(), 3)
+
+		// First resource: success
+		assert.NotNil(t, resp.GetResults()[0].GetCostData().GetEstimate())
+		assert.Nil(t, resp.GetResults()[0].GetError())
+
+		// Second resource: unsupported → error
+		assert.NotNil(t, resp.GetResults()[1].GetError())
+		assert.True(t, resp.GetResults()[1].GetError().GetResourceTypeUnsupported())
+		assert.Equal(t, int32(codes.Unimplemented), resp.GetResults()[1].GetError().GetCode())
+
+		// Third resource: success
+		assert.NotNil(t, resp.GetResults()[2].GetCostData().GetEstimate())
+		assert.Nil(t, resp.GetResults()[2].GetError())
+	})
 }

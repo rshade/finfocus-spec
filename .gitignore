@@ -20,23 +20,19 @@ profile.cov
 # Log files
 *.log
 
-# Dependency directories (remove the comment below to include it)
-# vendor/
-
 # Go workspace file
 go.work
 go.work.sum
 
 # env file
 .env
+.env*
 
 # Local binary directory for project tools
 bin/
 .gocache/
+vendor/
 
-# Editor/IDE
-# .idea/
-# .vscode/
 Github_Development_Prompt.md
 PR_MESSAGE.md
 CodeRabbitPrompt.md
@@ -44,14 +40,18 @@ node_modules/
 Linter_Validation_Prompt.md
 CodeRabbitPromptGrok.md
 
+# IDE / Editor
+.vscode/
+.idea/
+
 # Universal patterns
 .DS_Store
 Thumbs.db
 *.tmp
 *.swp
+
 # Node.js / TypeScript
 dist/
 build/
 coverage/
 junit.xml
-

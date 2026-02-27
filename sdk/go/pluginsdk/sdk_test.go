@@ -1179,6 +1179,7 @@ func (p *backwardCompatTestPlugin) DismissRecommendation(
 
 // Implements DryRunHandler.
 func (p *backwardCompatTestPlugin) HandleDryRun(
+	_ context.Context,
 	_ *pbc.DryRunRequest,
 ) (*pbc.DryRunResponse, error) {
 	return &pbc.DryRunResponse{}, nil

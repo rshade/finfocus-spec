@@ -156,6 +156,20 @@ service CostSourceService {
   //   }
   //
   rpc DryRun(DryRunRequest) returns (DryRunResponse);
+
+  // BatchCost queries cost data for multiple resources in a single request.
+  // Supports estimate, actual, and projected cost queries via the query_type
+  // field. Returns per-resource results with partial failure semantics -
+  // individual resource failures do not cause the entire batch to fail.
+  //
+  // An empty resource list is valid and returns an empty results slice with
+  // max_batch_size populated — no processing is performed.
+  //
+  // This is an optional RPC. Plugins that do not implement BatchCostHandler
+  // may be served via SDK fallback behavior.
+  //
+  // Returns INVALID_ARGUMENT if the batch exceeds the plugin's maximum size.
+  rpc BatchCost(BatchCostRequest) returns (BatchCostResponse);
 }
 
 // NameRequest is used for the Name RPC call (empty request).
@@ -1664,4 +1678,100 @@ message DryRunResponse {
   // is supported by this plugin. When false, field_mappings may be empty
   // or contain only UNSUPPORTED entries.
   bool resource_type_supported = 4;
+}
+
+// BatchCostRequest contains multiple resource descriptors to query costs for
+// in a single request-response cycle. All resources share the same query type
+// and time range parameters.
+message BatchCostRequest {
+  // resources to query costs for.
+  // Maximum count is plugin-dependent and empty list returns an empty response.
+  repeated ResourceDescriptor resources = 1;
+
+  // query_type selects the cost operation for all resources in the batch.
+  // UNSPECIFIED is treated as ESTIMATE.
+  CostQueryType query_type = 2;
+
+  // start of the time range for actual cost queries.
+  // Required when query_type is COST_QUERY_TYPE_ACTUAL.
+  // Ignored for ESTIMATE and PROJECTED queries.
+  google.protobuf.Timestamp start = 3;
+
+  // end of the time range for actual cost queries.
+  // Required when query_type is COST_QUERY_TYPE_ACTUAL. Must be after start.
+  // Ignored for ESTIMATE and PROJECTED queries.
+  google.protobuf.Timestamp end = 4;
+
+  // dry_run returns field mapping information per resource type instead of
+  // querying external cost APIs.
+  bool dry_run = 5;
+}
+
+// BatchCostResponse contains per-resource results in the same order as the
+// request's resource descriptors. results[i] corresponds to request.resources[i].
+message BatchCostResponse {
+  // per-resource result entries (either cost_data or error).
+  repeated ResourceCostResult results = 1;
+
+  // max_batch_size is the maximum batch size this plugin supports.
+  int32 max_batch_size = 2;
+}
+
+// ResourceCostResult represents a single resource's outcome within a batch.
+// Contains either cost data (success) or error information (failure).
+message ResourceCostResult {
+  // resource descriptor from the request, echoed back for correlation.
+  ResourceDescriptor resource = 1;
+
+  // result for this resource: cost data or structured error.
+  oneof result {
+    // cost data for the resource (success path).
+    CostData cost_data = 2;
+    // error information for the resource (failure path).
+    ResourceError error = 3;
+  }
+}
+
+// CostData wraps the query-type-specific cost response for a single resource.
+// Exactly one field is populated based on query_type (or dry_run flag).
+message CostData {
+  oneof data {
+    // actual cost results for query_type=ACTUAL.
+    ActualCostData actual_cost = 1;
+    // projected cost for query_type=PROJECTED.
+    GetProjectedCostResponse projected_cost = 2;
+    // estimate cost for query_type=ESTIMATE.
+    EstimateCostResponse estimate = 3;
+    // field mapping information for dry_run=true.
+    DryRunResponse dry_run_result = 4;
+  }
+}
+
+// ActualCostData wraps actual cost results for a single resource within a batch response.
+message ActualCostData {
+  // cost data points for the requested time range.
+  repeated ActualCostResult results = 1;
+
+  // hint for the host on whether to try other plugins for this resource.
+  FallbackHint fallback_hint = 2;
+
+  // pagination token for retrieving additional results for this resource.
+  // If empty, all results for this resource have been returned.
+  string next_page_token = 3;
+
+  // total number of cost data points available for this resource.
+  int32 total_count = 4;
+}
+
+// ResourceError contains structured error information for a single resource failure.
+// Per-resource errors do not cause the entire batch RPC to fail.
+message ResourceError {
+  // gRPC-compatible status code (e.g., NOT_FOUND=5, INTERNAL=13).
+  int32 code = 1;
+
+  // human-readable error description.
+  string message = 2;
+
+  // true if the error is specifically because the resource type is unsupported.
+  bool resource_type_unsupported = 3;
 }

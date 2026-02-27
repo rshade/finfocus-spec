@@ -193,8 +193,8 @@ const (
 
 	// optionalCapabilities is the number of capabilities from optional
 	// interfaces: RecommendationsProvider, BudgetsProvider, DismissProvider,
-	// DryRunHandler.
-	optionalCapabilities = 4
+	// DryRunHandler, BatchCostHandler.
+	optionalCapabilities = 5
 
 	// maxCapabilities is the total maximum number of capabilities a plugin
 	// can have. Used for pre-allocation to minimize allocations during
@@ -214,53 +214,24 @@ const (
 
 	// maxValidCapability is the maximum valid PluginCapability enum value.
 	// This should be updated when new capabilities are added to the proto definition.
-	maxValidCapability = pbc.PluginCapability_PLUGIN_CAPABILITY_DISMISS_RECOMMENDATIONS // 11
+	maxValidCapability = pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST // 12
 )
 
-// IsValidCapability checks if a PluginCapability enum value is within the valid range.
-// PLUGIN_CAPABILITY_UNSPECIFIED (0) is not considered valid as it's the protobuf default.
-// This function is used to filter out invalid enum values that may be passed through
-// configuration or from untrusted sources.
-//
-// Example:
-//
-//	if pluginsdk.IsValidCapability(cap) {
-//	    // Process valid capability
-//	}
+// IsValidCapability reports whether a PluginCapability value is within the
+// inclusive range of supported capability constants. PLUGIN_CAPABILITY_UNSPECIFIED
+// (0) is treated as invalid because it is the protobuf default and does not
+// represent a real capability.
 func IsValidCapability(capability pbc.PluginCapability) bool {
 	return capability >= minValidCapability && capability <= maxValidCapability
 }
 
-// inferCapabilities determines plugin capabilities by checking implemented interfaces.
-// The slice is pre-allocated with capacity maxCapabilities (4 base + 4 optional) to minimize allocations.
-// Returns a slice of capabilities supported by the plugin, or nil if plugin is nil.
-//
-// The base Plugin interface methods (GetProjectedCost, GetActualCost, etc.) are
-// always assumed to be implemented since they are required by the interface.
-// Only optional interfaces are checked via type assertion.
-//
-// Nil Plugin Handling:
-//
-// This function defensively handles nil plugin input to prevent panics during:
-//   - Unit tests where nil mocks may be passed for isolated capability testing
-//   - Error recovery scenarios in server constructors where plugin creation failed
-//   - Lazy initialization patterns where plugin may be temporarily unset
-//   - Edge cases in test harnesses that need to verify nil-safety
-//
-// Callers should validate plugin is non-nil before calling constructors in production.
-// A nil plugin results in an empty capability set (returns nil slice).
-//
-// Design Note:
-//
-// While a nil plugin is typically a programming error, this function chooses to
-// return nil gracefully rather than panic. The rationale is:
-//   - Type assertions on nil interface values panic in Go
-//   - Callers may not always control the plugin lifecycle
-//   - Fail-safe behavior is preferable for infrastructure code
-//
-// Production code using NewServer/NewServerWithOptions should ensure plugins are
-// non-nil before construction. The server constructors could be enhanced to return
-// errors for nil plugins if stricter validation is desired in the future.
+// inferCapabilities returns the PluginCapability values supported by the given
+// plugin. If plugin is nil, nil is returned to avoid panicking on type
+// assertions. The returned slice always includes the four base capabilities
+// (PROJECTED_COSTS, ACTUAL_COSTS, PRICING_SPEC, ESTIMATE_COST) and appends
+// additional entries when the plugin implements optional interfaces such as
+// RecommendationsProvider, BudgetsProvider, DismissProvider, DryRunHandler,
+// or BatchCostHandler.
 func inferCapabilities(plugin Plugin) []pbc.PluginCapability {
 	// Defensive nil check to prevent panic on type assertions.
 	// See function documentation for rationale on handling nil plugins gracefully.
@@ -268,7 +239,7 @@ func inferCapabilities(plugin Plugin) []pbc.PluginCapability {
 		return nil
 	}
 
-	// Pre-allocate for common case (4 base + 4 optional = maxCapabilities)
+	// Pre-allocate for common case (4 base + 5 optional = maxCapabilities)
 	// This reduces allocations from ~2-3 (slice growth) to 1 (initial make)
 	capabilities := make([]pbc.PluginCapability, 0, maxCapabilities)
 
@@ -292,6 +263,9 @@ func inferCapabilities(plugin Plugin) []pbc.PluginCapability {
 	}
 	if _, ok := plugin.(DryRunHandler); ok {
 		capabilities = append(capabilities, pbc.PluginCapability_PLUGIN_CAPABILITY_DRY_RUN)
+	}
+	if _, ok := plugin.(BatchCostHandler); ok {
+		capabilities = append(capabilities, pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST)
 	}
 
 	return capabilities

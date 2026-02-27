@@ -513,7 +513,7 @@ func (m *mockDryRunHandler) EstimateCost(
 	return &pbc.EstimateCostResponse{}, nil
 }
 
-func (m *mockDryRunHandler) HandleDryRun(_ *pbc.DryRunRequest) (*pbc.DryRunResponse, error) {
+func (m *mockDryRunHandler) HandleDryRun(_ context.Context, _ *pbc.DryRunRequest) (*pbc.DryRunResponse, error) {
 	return &pbc.DryRunResponse{}, nil
 }
 

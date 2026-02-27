@@ -30,6 +30,7 @@ const (
 	CostSourceService_GetBudgets_FullMethodName            = "/finfocus.v1.CostSourceService/GetBudgets"
 	CostSourceService_GetPluginInfo_FullMethodName         = "/finfocus.v1.CostSourceService/GetPluginInfo"
 	CostSourceService_DryRun_FullMethodName                = "/finfocus.v1.CostSourceService/DryRun"
+	CostSourceService_BatchCost_FullMethodName             = "/finfocus.v1.CostSourceService/BatchCost"
 )
 
 // CostSourceServiceClient is the client API for CostSourceService service.
@@ -170,6 +171,19 @@ type CostSourceServiceClient interface {
 	//	    log.Printf("%s: %v", fm.GetFieldName(), fm.GetSupportStatus())
 	//	}
 	DryRun(ctx context.Context, in *DryRunRequest, opts ...grpc.CallOption) (*DryRunResponse, error)
+	// BatchCost queries cost data for multiple resources in a single request.
+	// Supports estimate, actual, and projected cost queries via the query_type
+	// field. Returns per-resource results with partial failure semantics -
+	// individual resource failures do not cause the entire batch to fail.
+	//
+	// An empty resource list is valid and returns an empty results slice with
+	// max_batch_size populated — no processing is performed.
+	//
+	// This is an optional RPC. Plugins that do not implement BatchCostHandler
+	// may be served via SDK fallback behavior.
+	//
+	// Returns INVALID_ARGUMENT if the batch exceeds the plugin's maximum size.
+	BatchCost(ctx context.Context, in *BatchCostRequest, opts ...grpc.CallOption) (*BatchCostResponse, error)
 }
 
 type costSourceServiceClient struct {
@@ -284,6 +298,16 @@ func (c *costSourceServiceClient) DryRun(ctx context.Context, in *DryRunRequest,
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DryRunResponse)
 	err := c.cc.Invoke(ctx, CostSourceService_DryRun_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *costSourceServiceClient) BatchCost(ctx context.Context, in *BatchCostRequest, opts ...grpc.CallOption) (*BatchCostResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BatchCostResponse)
+	err := c.cc.Invoke(ctx, CostSourceService_BatchCost_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -428,6 +452,19 @@ type CostSourceServiceServer interface {
 	//	    log.Printf("%s: %v", fm.GetFieldName(), fm.GetSupportStatus())
 	//	}
 	DryRun(context.Context, *DryRunRequest) (*DryRunResponse, error)
+	// BatchCost queries cost data for multiple resources in a single request.
+	// Supports estimate, actual, and projected cost queries via the query_type
+	// field. Returns per-resource results with partial failure semantics -
+	// individual resource failures do not cause the entire batch to fail.
+	//
+	// An empty resource list is valid and returns an empty results slice with
+	// max_batch_size populated — no processing is performed.
+	//
+	// This is an optional RPC. Plugins that do not implement BatchCostHandler
+	// may be served via SDK fallback behavior.
+	//
+	// Returns INVALID_ARGUMENT if the batch exceeds the plugin's maximum size.
+	BatchCost(context.Context, *BatchCostRequest) (*BatchCostResponse, error)
 	mustEmbedUnimplementedCostSourceServiceServer()
 }
 
@@ -470,6 +507,9 @@ func (UnimplementedCostSourceServiceServer) GetPluginInfo(context.Context, *GetP
 }
 func (UnimplementedCostSourceServiceServer) DryRun(context.Context, *DryRunRequest) (*DryRunResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DryRun not implemented")
+}
+func (UnimplementedCostSourceServiceServer) BatchCost(context.Context, *BatchCostRequest) (*BatchCostResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method BatchCost not implemented")
 }
 func (UnimplementedCostSourceServiceServer) mustEmbedUnimplementedCostSourceServiceServer() {}
 func (UnimplementedCostSourceServiceServer) testEmbeddedByValue()                           {}
@@ -690,6 +730,24 @@ func _CostSourceService_DryRun_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CostSourceService_BatchCost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BatchCostRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CostSourceServiceServer).BatchCost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CostSourceService_BatchCost_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CostSourceServiceServer).BatchCost(ctx, req.(*BatchCostRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CostSourceService_ServiceDesc is the grpc.ServiceDesc for CostSourceService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -740,6 +798,10 @@ var CostSourceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DryRun",
 			Handler:    _CostSourceService_DryRun_Handler,
+		},
+		{
+			MethodName: "BatchCost",
+			Handler:    _CostSourceService_BatchCost_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

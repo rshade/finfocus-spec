@@ -1345,3 +1345,149 @@ func BenchmarkActualCostWithExpiresAt(b *testing.B) {
 		}
 	})
 }
+
+func BenchmarkBatchCostEstimate(b *testing.B) {
+	plugin := plugintesting.NewMockPlugin()
+	harness := plugintesting.NewTestHarness(plugin)
+	harness.Start(b)
+	defer harness.Stop()
+
+	client := harness.Client()
+	ctx := context.Background()
+
+	for _, size := range []int{10, 50, 100} {
+		b.Run(fmt.Sprintf("resources_%d", size), func(b *testing.B) {
+			req := &pbc.BatchCostRequest{
+				QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+				Resources: benchmarkBatchResources(size),
+			}
+
+			b.ReportAllocs()
+			b.ResetTimer()
+			for range b.N {
+				resp, err := client.BatchCost(ctx, req)
+				if err != nil {
+					b.Fatalf("BatchCost() failed: %v", err)
+				}
+				if len(resp.GetResults()) != size {
+					b.Fatalf("expected %d results, got %d", size, len(resp.GetResults()))
+				}
+			}
+		})
+	}
+}
+
+func BenchmarkBatchCostActual(b *testing.B) {
+	plugin := plugintesting.NewMockPlugin()
+	harness := plugintesting.NewTestHarness(plugin)
+	harness.Start(b)
+	defer harness.Stop()
+
+	client := harness.Client()
+	ctx := context.Background()
+	start, end := plugintesting.CreateTimeRange(plugintesting.HoursPerDay)
+	req := &pbc.BatchCostRequest{
+		QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ACTUAL,
+		Start:     start,
+		End:       end,
+		Resources: benchmarkBatchResources(20),
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		resp, err := client.BatchCost(ctx, req)
+		if err != nil {
+			b.Fatalf("BatchCost ACTUAL failed: %v", err)
+		}
+		if len(resp.GetResults()) != 20 {
+			b.Fatalf("expected 20 results, got %d", len(resp.GetResults()))
+		}
+	}
+}
+
+func BenchmarkBatchCostFallback(b *testing.B) {
+	ctx := context.Background()
+	req := &pbc.BatchCostRequest{
+		QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+		Resources: benchmarkBatchResources(50),
+	}
+
+	b.Run("custom_handler", func(b *testing.B) {
+		plugin := plugintesting.NewMockPlugin()
+		harness := plugintesting.NewTestHarness(plugin)
+		harness.Start(b)
+		defer harness.Stop()
+
+		client := harness.Client()
+		b.ReportAllocs()
+		b.ResetTimer()
+		for range b.N {
+			resp, err := client.BatchCost(ctx, req)
+			if err != nil {
+				b.Fatalf("custom BatchCost failed: %v", err)
+			}
+			if len(resp.GetResults()) != 50 {
+				b.Fatalf("expected 50 results, got %d", len(resp.GetResults()))
+			}
+		}
+	})
+
+	b.Run("fallback_handler", func(b *testing.B) {
+		plugin := &fallbackBatchPlugin{}
+		server := pluginsdk.NewServer(plugin)
+		harness := plugintesting.NewTestHarness(server)
+		harness.Start(b)
+		defer harness.Stop()
+
+		client := harness.Client()
+		b.ReportAllocs()
+		b.ResetTimer()
+		for range b.N {
+			resp, err := client.BatchCost(ctx, req)
+			if err != nil {
+				b.Fatalf("fallback BatchCost failed: %v", err)
+			}
+			if len(resp.GetResults()) != 50 {
+				b.Fatalf("expected 50 results, got %d", len(resp.GetResults()))
+			}
+		}
+	})
+}
+
+func BenchmarkBatchCostConcurrent(b *testing.B) {
+	plugin := plugintesting.NewMockPlugin()
+	harness := plugintesting.NewTestHarness(plugin)
+	harness.Start(b)
+	defer harness.Stop()
+
+	client := harness.Client()
+	ctx := context.Background()
+	req := &pbc.BatchCostRequest{
+		QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+		Resources: benchmarkBatchResources(10),
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			resp, err := client.BatchCost(ctx, req)
+			if err != nil {
+				b.Fatalf("BatchCost concurrent failed: %v", err)
+			}
+			if len(resp.GetResults()) != 10 {
+				b.Fatalf("expected 10 results, got %d", len(resp.GetResults()))
+			}
+		}
+	})
+}
+
+func benchmarkBatchResources(count int) []*pbc.ResourceDescriptor {
+	resources := make([]*pbc.ResourceDescriptor, count)
+	for i := range count {
+		resources[i] = plugintesting.CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1")
+		resources[i].Id = fmt.Sprintf("batch-%d", i)
+	}
+	return resources
+}

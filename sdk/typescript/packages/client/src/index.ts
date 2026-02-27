@@ -21,6 +21,11 @@ export { FocusRecordBuilder } from "./builders/focus-record.js";
 // Utilities
 export { recommendationsIterator } from "./utils/pagination.js";
 export {
+  DEFAULT_MAX_BATCH_SIZE,
+  MAX_BATCH_SIZE,
+  isBatchSupported,
+} from "./utils/batch.js";
+export {
   getAllUsageProfiles,
   isValidUsageProfile,
   parseUsageProfile,

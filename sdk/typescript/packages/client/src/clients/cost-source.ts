@@ -2,6 +2,8 @@ import { createClient, Client, Transport } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { create } from "@bufbuild/protobuf";
 import {
+  BatchCostRequest,
+  BatchCostResponse,
   CostSourceService,
   GetActualCostRequest,
   GetActualCostRequestSchema,
@@ -38,6 +40,7 @@ import {
   GetBudgetsResponse
 } from "../generated/finfocus/v1/budget_pb.js";
 import { ValidationError } from "../errors/validation-error.js";
+import { MAX_BATCH_SIZE } from "../utils/batch.js";
 
 export interface CostSourceClientConfig {
   baseUrl: string;
@@ -102,5 +105,17 @@ export class CostSourceClient {
 
   async dryRun(req: DryRunRequest = create(DryRunRequestSchema)): Promise<DryRunResponse> {
     return this.client.dryRun(req);
+  }
+
+  async batchCost(req: BatchCostRequest): Promise<BatchCostResponse> {
+    const resourceCount = req.resources?.length ?? 0;
+    if (resourceCount > MAX_BATCH_SIZE) {
+      throw new ValidationError(
+        `Batch size ${resourceCount} exceeds maximum supported size ${MAX_BATCH_SIZE}`,
+        "resources",
+      );
+    }
+
+    return this.client.batchCost(req);
   }
 }

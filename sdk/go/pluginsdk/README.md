@@ -163,6 +163,16 @@ type ServeConfig struct {
     // Optional: Additional gRPC unary interceptors.
     // Chained after the built-in tracing interceptor.
     UnaryInterceptors []grpc.UnaryServerInterceptor
+
+    // Optional: Max resources accepted by BatchCost.
+    // Defaults to 100; hard-clamped to 1000.
+    MaxBatchSize int
+
+    // Optional: Fallback worker count for BatchCost when plugin does not
+    // implement BatchCostHandler.
+    // Defaults to 10. Non-positive values (<= 0) reset to 10.
+    // Positive values above 50 are clamped to 50.
+    BatchWorkers int
 }
 ```
 
@@ -647,10 +657,11 @@ Simply implement the standard interfaces:
 | `RecommendationsProvider` | `GetRecommendations`    | `PLUGIN_CAPABILITY_RECOMMENDATIONS`         |
 | `BudgetsProvider`         | `GetBudgets`            | `PLUGIN_CAPABILITY_BUDGETS`                 |
 | `DismissProvider`         | `DismissRecommendation` | `PLUGIN_CAPABILITY_DISMISS_RECOMMENDATIONS` |
+| `BatchCostHandler`        | `BatchCost`             | `PLUGIN_CAPABILITY_BATCH_COST`              |
 
 ```go
 // Example: Implementing DryRunHandler
-func (p *MyPlugin) HandleDryRun(req *pbc.DryRunRequest) (*pbc.DryRunResponse, error) {
+func (p *MyPlugin) HandleDryRun(ctx context.Context, req *pbc.DryRunRequest) (*pbc.DryRunResponse, error) {
     // ...
     return &pbc.DryRunResponse{}, nil
 }
@@ -680,6 +691,23 @@ info := pluginsdk.NewPluginInfo("my-plugin", "v1.0.0",
 
 **Backward Compatibility**: The SDK automatically populates the legacy `metadata` map
 (e.g., `"supports_dry_run": "true"`) derived from your capabilities to support older hosts.
+
+### BatchCost RPC
+
+Plugins can opt into a custom batch implementation by adding the `BatchCostHandler`
+interface. If not implemented, the SDK executes a bounded-concurrency fallback that
+fans out to `EstimateCost`, `GetActualCost`, or `GetProjectedCost` per resource.
+
+```go
+type BatchCostHandler interface {
+    BatchCost(ctx context.Context, req *pbc.BatchCostRequest) (*pbc.BatchCostResponse, error)
+}
+```
+
+`GetPluginInfo` metadata includes:
+
+- `supports_batch_cost`: `"true"` when `PLUGIN_CAPABILITY_BATCH_COST` is present
+- `max_batch_size`: configured batch limit (default `"100"`)
 
 ## Environment Variables
 

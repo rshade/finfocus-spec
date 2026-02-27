@@ -377,6 +377,7 @@ func (p *capabilityTestPlugin) DismissRecommendation(
 
 // Implements DryRunHandler.
 func (p *capabilityTestPlugin) HandleDryRun(
+	_ context.Context,
 	_ *pbc.DryRunRequest,
 ) (*pbc.DryRunResponse, error) {
 	return &pbc.DryRunResponse{}, nil
@@ -827,12 +828,13 @@ func TestIsValidCapability(t *testing.T) {
 		{"PRICING_SPEC", pbc.PluginCapability_PLUGIN_CAPABILITY_PRICING_SPEC, true},
 		{"ESTIMATE_COST", pbc.PluginCapability_PLUGIN_CAPABILITY_ESTIMATE_COST, true},
 		{"DISMISS_RECOMMENDATIONS", pbc.PluginCapability_PLUGIN_CAPABILITY_DISMISS_RECOMMENDATIONS, true},
+		{"BATCH_COST", pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST, true},
 
 		// Invalid capabilities
 		{"UNSPECIFIED (0)", pbc.PluginCapability_PLUGIN_CAPABILITY_UNSPECIFIED, false},
 		{"negative value (-1)", pbc.PluginCapability(-1), false},
 		{"out of range (999)", pbc.PluginCapability(999), false},
-		{"just above max (12)", pbc.PluginCapability(12), false},
+		{"just above max (13)", pbc.PluginCapability(13), false},
 		{"very large value", pbc.PluginCapability(1000000), false},
 	}
 
