@@ -718,8 +718,18 @@ back to the per-resource `GetActualCost` RPC:
 
 1. Call `BatchCost` with the desired resources and `query_type = COST_QUERY_TYPE_ACTUAL`.
 2. For each `ResourceCostResult` whose `ActualCostData.next_page_token` is non-empty:
-   a. Call `GetActualCost` with the resource's `resource_id` and the token as `page_token`.
+   a. Call `GetActualCost` with the resource's `ResourceDescriptor.id` (or `.arn`)
+      as `resource_id`, and the `next_page_token` as `page_token`.
    b. Continue calling `GetActualCost` until `next_page_token` is empty.
+
+The `next_page_token` from `ActualCostData` is guaranteed to be a valid
+`page_token` for the corresponding `GetActualCost` call. Pass it
+unchanged — do not decode, modify, or persist it across sessions.
+
+> **Note**: If many resources require continuation, the sequential
+> `GetActualCost` calls partially offset the batch efficiency gain. Consider
+> requesting smaller batch sizes or adjusting the first-page size limit to
+> minimize truncation.
 
 ```go
 // Example: paginate remaining results for a batched resource
@@ -729,9 +739,15 @@ if err != nil {
 }
 
 for _, res := range batchResp.GetResults() {
+    // Check for per-resource errors before accessing cost data.
+    if resErr := res.GetError(); resErr != nil {
+        log.Printf("resource %s failed: code=%d msg=%s",
+            res.GetResource().GetId(), resErr.GetCode(), resErr.GetMessage())
+        continue
+    }
     data := res.GetCostData().GetActualCost()
     if data == nil {
-        continue
+        continue // projected, estimate, or dry_run result
     }
 
     // Process the first page returned by BatchCost.
@@ -741,15 +757,17 @@ for _, res := range batchResp.GetResults() {
     pageToken := data.GetNextPageToken()
     for pageToken != "" {
         resp, err := client.GetActualCost(ctx, &pbc.GetActualCostRequest{
-            ResourceId: res.GetResource().GetResourceId(),
+            ResourceId: res.GetResource().GetId(),
+            Arn:        res.GetResource().GetArn(),  // forward for exact matching
+            Tags:       res.GetResource().GetTags(), // forward for consistent filtering
             Start:      batchReq.GetStart(),
             End:        batchReq.GetEnd(),
             PageToken:  pageToken,
-            PageSize:   100, // or your preferred page size
+            PageSize:   100, // server default is 50 (DefaultPageSize); omit to use it
         })
         if err != nil {
             return fmt.Errorf("pagination for %s: %w",
-                res.GetResource().GetResourceId(), err)
+                res.GetResource().GetId(), err)
         }
         processResults(resp.GetResults())
         pageToken = resp.GetNextPageToken()

@@ -6152,8 +6152,8 @@ type ActualCostData struct {
 	//	  1. Call BatchCost with resources and query_type=ACTUAL.
 	//	  2. For each ResourceCostResult whose ActualCostData has a non-empty
 	//	     next_page_token:
-	//	     a. Call GetActualCost with the resource's resource_id and the
-	//	        next_page_token value as page_token.
+	//	     a. Call GetActualCost with the resource's ResourceDescriptor.id
+	//	        (or .arn) as resource_id, and the next_page_token as page_token.
 	//	     b. Continue calling GetActualCost until next_page_token is empty.
 	NextPageToken string `protobuf:"bytes,3,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	// total number of cost data points available for this resource.
