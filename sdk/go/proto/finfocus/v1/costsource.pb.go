@@ -6143,6 +6143,18 @@ type ActualCostData struct {
 	FallbackHint FallbackHint `protobuf:"varint,2,opt,name=fallback_hint,json=fallbackHint,proto3,enum=finfocus.v1.FallbackHint" json:"fallback_hint,omitempty"`
 	// pagination token for retrieving additional results for this resource.
 	// If empty, all results for this resource have been returned.
+	//
+	// Pagination continuation workflow:
+	//
+	//	BatchCostRequest does not accept page tokens, so when this field is
+	//	non-empty the caller must switch to the per-resource GetActualCost RPC
+	//	to retrieve the remaining pages:
+	//	  1. Call BatchCost with resources and query_type=ACTUAL.
+	//	  2. For each ResourceCostResult whose ActualCostData has a non-empty
+	//	     next_page_token:
+	//	     a. Call GetActualCost with the resource's resource_id and the
+	//	        next_page_token value as page_token.
+	//	     b. Continue calling GetActualCost until next_page_token is empty.
 	NextPageToken string `protobuf:"bytes,3,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	// total number of cost data points available for this resource.
 	TotalCount    int32 `protobuf:"varint,4,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`

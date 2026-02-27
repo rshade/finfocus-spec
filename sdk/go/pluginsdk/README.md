@@ -709,6 +709,57 @@ type BatchCostHandler interface {
 - `supports_batch_cost`: `"true"` when `PLUGIN_CAPABILITY_BATCH_COST` is present
 - `max_batch_size`: configured batch limit (default `"100"`)
 
+### Pagination Continuation for Batch Actual Cost Results
+
+`BatchCostRequest` does not accept page tokens. When `query_type` is `ACTUAL`,
+each resource's `ActualCostData` may include a non-empty `next_page_token`
+indicating that additional cost records are available. To retrieve them, fall
+back to the per-resource `GetActualCost` RPC:
+
+1. Call `BatchCost` with the desired resources and `query_type = COST_QUERY_TYPE_ACTUAL`.
+2. For each `ResourceCostResult` whose `ActualCostData.next_page_token` is non-empty:
+   a. Call `GetActualCost` with the resource's `resource_id` and the token as `page_token`.
+   b. Continue calling `GetActualCost` until `next_page_token` is empty.
+
+```go
+// Example: paginate remaining results for a batched resource
+batchResp, err := client.BatchCost(ctx, batchReq)
+if err != nil {
+    return err
+}
+
+for _, res := range batchResp.GetResults() {
+    data := res.GetCostData().GetActualCost()
+    if data == nil {
+        continue
+    }
+
+    // Process the first page returned by BatchCost.
+    processResults(data.GetResults())
+
+    // Fetch remaining pages via GetActualCost.
+    pageToken := data.GetNextPageToken()
+    for pageToken != "" {
+        resp, err := client.GetActualCost(ctx, &pbc.GetActualCostRequest{
+            ResourceId: res.GetResource().GetResourceId(),
+            Start:      batchReq.GetStart(),
+            End:        batchReq.GetEnd(),
+            PageToken:  pageToken,
+            PageSize:   100, // or your preferred page size
+        })
+        if err != nil {
+            return fmt.Errorf("pagination for %s: %w",
+                res.GetResource().GetResourceId(), err)
+        }
+        processResults(resp.GetResults())
+        pageToken = resp.GetNextPageToken()
+    }
+}
+```
+
+Alternatively, use the `ActualCostIterator` (see [Pagination Helpers](#pagination-helpers))
+to handle token management automatically for each resource that needs continuation.
+
 ## Environment Variables
 
 Plugins can be configured using standard environment variables. The SDK provides backward compatibility
