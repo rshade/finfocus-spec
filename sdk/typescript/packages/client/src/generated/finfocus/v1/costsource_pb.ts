@@ -3375,9 +3375,14 @@ export type ActualCostData = Message<"finfocus.v1.ActualCostData"> & {
    *     1. Call BatchCost with resources and query_type=ACTUAL.
    *     2. For each ResourceCostResult whose ActualCostData has a non-empty
    *        next_page_token:
-   *        a. Call GetActualCost with the resource's ResourceDescriptor.id
-   *           (or .arn) as resource_id, and the next_page_token as page_token.
-   *        b. Continue calling GetActualCost until next_page_token is empty.
+   *        a. Call GetActualCost with the exact same lookup identifier used in
+   *           the initial request (the plugin/billing-system resource_id).
+   *           ResourceDescriptor.id is a correlation identifier unless your
+   *           integration explicitly uses it for lookup. When applicable, use
+   *           ResourceDescriptor.arn (or another stable provider identifier) as
+   *           resource_id.
+   *        b. Continue calling GetActualCost with each returned next_page_token
+   *           passed unchanged as page_token until next_page_token is empty.
    *
    * @generated from field: string next_page_token = 3;
    */

@@ -6152,9 +6152,14 @@ type ActualCostData struct {
 	//	  1. Call BatchCost with resources and query_type=ACTUAL.
 	//	  2. For each ResourceCostResult whose ActualCostData has a non-empty
 	//	     next_page_token:
-	//	     a. Call GetActualCost with the resource's ResourceDescriptor.id
-	//	        (or .arn) as resource_id, and the next_page_token as page_token.
-	//	     b. Continue calling GetActualCost until next_page_token is empty.
+	//	     a. Call GetActualCost with the exact same lookup identifier used in
+	//	        the initial request (the plugin/billing-system resource_id).
+	//	        ResourceDescriptor.id is a correlation identifier unless your
+	//	        integration explicitly uses it for lookup. When applicable, use
+	//	        ResourceDescriptor.arn (or another stable provider identifier) as
+	//	        resource_id.
+	//	     b. Continue calling GetActualCost with each returned next_page_token
+	//	        passed unchanged as page_token until next_page_token is empty.
 	NextPageToken string `protobuf:"bytes,3,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	// total number of cost data points available for this resource.
 	TotalCount    int32 `protobuf:"varint,4,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`

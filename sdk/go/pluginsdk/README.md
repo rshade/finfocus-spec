@@ -718,9 +718,14 @@ back to the per-resource `GetActualCost` RPC:
 
 1. Call `BatchCost` with the desired resources and `query_type = COST_QUERY_TYPE_ACTUAL`.
 2. For each `ResourceCostResult` whose `ActualCostData.next_page_token` is non-empty:
-   a. Call `GetActualCost` with the resource's `ResourceDescriptor.id` (or `.arn`)
-      as `resource_id`, and the `next_page_token` as `page_token`.
-   b. Continue calling `GetActualCost` until `next_page_token` is empty.
+   a. Call `GetActualCost` with the plugin-specific lookup identifier in
+      `GetActualCostRequest.ResourceId` (the same value used for the initial
+      lookup). `ResourceDescriptor.id` is often correlation-only; if the plugin
+      expects ARN-based lookup, forward `ResourceDescriptor.arn` and use it as
+      the lookup identifier.
+   b. Continue calling `GetActualCost`, passing each returned
+      `next_page_token` unchanged as `page_token`, until `next_page_token` is
+      empty.
 
 The `next_page_token` from `ActualCostData` is guaranteed to be a valid
 `page_token` for the corresponding `GetActualCost` call. Pass it
@@ -753,16 +758,20 @@ for _, res := range batchResp.GetResults() {
     // Process the first page returned by BatchCost.
     processResults(data.GetResults())
 
+    // Resolve the plugin-specific lookup identifier used for this resource.
+    // ResourceDescriptor.id may be correlation-only; use ARN if lookup is ARN-based.
+    lookupID := pluginLookupIDForResource(res.GetResource())
+
     // Fetch remaining pages via GetActualCost.
     pageToken := data.GetNextPageToken()
     for pageToken != "" {
         resp, err := client.GetActualCost(ctx, &pbc.GetActualCostRequest{
-            ResourceId: res.GetResource().GetId(),
-            Arn:        res.GetResource().GetArn(),  // forward for exact matching
+            ResourceId: lookupID,
+            Arn:        res.GetResource().GetArn(),  // forward when plugin expects ARN lookup
             Tags:       res.GetResource().GetTags(), // forward for consistent filtering
             Start:      batchReq.GetStart(),
             End:        batchReq.GetEnd(),
-            PageToken:  pageToken,
+            PageToken:  pageToken, // pass through unchanged from the previous response
             PageSize:   100, // server default is 50 (DefaultPageSize); omit to use it
         })
         if err != nil {
