@@ -62,8 +62,8 @@
   "devDependencies": {
     "@commitlint/cli": "^20.4.2",
     "@commitlint/config-conventional": "^20.4.2",
-    "@types/node": "^24.10.13",
-    "keep-a-changelog": "^3.0.1",
+    "@types/node": "^24.11.0",
+    "keep-a-changelog": "^3.0.2",
     "markdownlint-cli2": "^0.21.0",
     "prettier": "^3.8.1",
     "yaml-lint": "^1.7.0"
