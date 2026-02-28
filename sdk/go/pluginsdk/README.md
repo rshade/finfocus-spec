@@ -709,6 +709,84 @@ type BatchCostHandler interface {
 - `supports_batch_cost`: `"true"` when `PLUGIN_CAPABILITY_BATCH_COST` is present
 - `max_batch_size`: configured batch limit (default `"100"`)
 
+### Pagination Continuation for Batch Actual Cost Results
+
+`BatchCostRequest` does not accept page tokens. When `query_type` is `ACTUAL`,
+each resource's `ActualCostData` may include a non-empty `next_page_token`
+indicating that additional cost records are available. To retrieve them, fall
+back to the per-resource `GetActualCost` RPC:
+
+1. Call `BatchCost` with the desired resources and `query_type = COST_QUERY_TYPE_ACTUAL`.
+2. For each `ResourceCostResult` whose `ActualCostData.next_page_token` is non-empty:
+   a. Call `GetActualCost` with the plugin-specific lookup identifier in
+      `GetActualCostRequest.ResourceId` (the same value used for the initial
+      lookup). `ResourceDescriptor.id` is often correlation-only; if the plugin
+      expects ARN-based lookup, forward `ResourceDescriptor.arn` and use it as
+      the lookup identifier.
+   b. Continue calling `GetActualCost`, passing each returned
+      `next_page_token` unchanged as `page_token`, until `next_page_token` is
+      empty.
+
+The `next_page_token` from `ActualCostData` is guaranteed to be a valid
+`page_token` for the corresponding `GetActualCost` call. Pass it
+unchanged — do not decode, modify, or persist it across sessions.
+
+> **Note**: If many resources require continuation, the sequential
+> `GetActualCost` calls partially offset the batch efficiency gain. Consider
+> requesting smaller batch sizes or adjusting the first-page size limit to
+> minimize truncation.
+
+```go
+// Example: paginate remaining results for a batched resource
+batchResp, err := client.BatchCost(ctx, batchReq)
+if err != nil {
+    return err
+}
+
+for _, res := range batchResp.GetResults() {
+    // Check for per-resource errors before accessing cost data.
+    if resErr := res.GetError(); resErr != nil {
+        log.Printf("resource %s failed: code=%d msg=%s",
+            res.GetResource().GetId(), resErr.GetCode(), resErr.GetMessage())
+        continue
+    }
+    data := res.GetCostData().GetActualCost()
+    if data == nil {
+        continue // projected, estimate, or dry_run result
+    }
+
+    // Process the first page returned by BatchCost.
+    processResults(data.GetResults())
+
+    // Resolve the plugin-specific lookup identifier used for this resource.
+    // ResourceDescriptor.id may be correlation-only; use ARN if lookup is ARN-based.
+    lookupID := pluginLookupIDForResource(res.GetResource())
+
+    // Fetch remaining pages via GetActualCost.
+    pageToken := data.GetNextPageToken()
+    for pageToken != "" {
+        resp, err := client.GetActualCost(ctx, &pbc.GetActualCostRequest{
+            ResourceId: lookupID,
+            Arn:        res.GetResource().GetArn(),  // forward when plugin expects ARN lookup
+            Tags:       res.GetResource().GetTags(), // forward for consistent filtering
+            Start:      batchReq.GetStart(),
+            End:        batchReq.GetEnd(),
+            PageToken:  pageToken, // pass through unchanged from the previous response
+            PageSize:   100, // server default is 50 (DefaultPageSize); omit to use it
+        })
+        if err != nil {
+            return fmt.Errorf("pagination for %s: %w",
+                res.GetResource().GetId(), err)
+        }
+        processResults(resp.GetResults())
+        pageToken = resp.GetNextPageToken()
+    }
+}
+```
+
+Alternatively, use the `ActualCostIterator` (see [Pagination Helpers](#pagination-helpers))
+to handle token management automatically for each resource that needs continuation.
+
 ## Environment Variables
 
 Plugins can be configured using standard environment variables. The SDK provides backward compatibility
