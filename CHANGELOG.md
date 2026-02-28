@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.7](https://github.com/rshade/finfocus-spec/compare/v0.5.6...v0.5.7) (2026-02-28)
+
+
+### Added
+
+* **proto:** add batch cost operation for multi-resource queries ([#392](https://github.com/rshade/finfocus-spec/issues/392)) ([15addc9](https://github.com/rshade/finfocus-spec/commit/15addc9a3792c186a6dad703c8b608ea674bbebe))
+* **proto:** add expires_at caching hint to cost results ([#382](https://github.com/rshade/finfocus-spec/issues/382)) ([6bf8705](https://github.com/rshade/finfocus-spec/commit/6bf8705a12111183a357180cbc19e589673bc636))
+
+
+### Documentation
+
+* **proto:** add batch cost pagination continuation docs ([#408](https://github.com/rshade/finfocus-spec/issues/408)) ([0a3a47c](https://github.com/rshade/finfocus-spec/commit/0a3a47ca1d73be3e7a3efe444e84eb398358cbb4))
+
 ## [0.5.6](https://github.com/rshade/finfocus-spec/compare/v0.5.5...v0.5.6) (2026-02-12)
 
 

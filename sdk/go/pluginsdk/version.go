@@ -28,7 +28,7 @@ func init() {
 //
 // IMPORTANT: This value should be updated when the spec version changes.
 // It is typically synchronized with the repository's release tags.
-const SpecVersion = "v0.5.6" // x-release-please-version
+const SpecVersion = "v0.5.7" // x-release-please-version
 
 // ValidateSpecVersion validates that a version string is a valid semantic version.
 // The version must be in the format vMAJOR.MINOR.PATCH where MAJOR, MINOR, and PATCH

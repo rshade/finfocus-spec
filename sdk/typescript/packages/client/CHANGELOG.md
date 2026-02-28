@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.3](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.6.2...finfocus-client-v0.6.3) (2026-02-28)
+
+
+### Features
+
+* **proto:** add batch cost operation for multi-resource queries ([#392](https://github.com/rshade/finfocus-spec/issues/392)) ([15addc9](https://github.com/rshade/finfocus-spec/commit/15addc9a3792c186a6dad703c8b608ea674bbebe))
+* **proto:** add expires_at caching hint to cost results ([#382](https://github.com/rshade/finfocus-spec/issues/382)) ([6bf8705](https://github.com/rshade/finfocus-spec/commit/6bf8705a12111183a357180cbc19e589673bc636))
+
 ## [0.6.2](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.6.1...finfocus-client-v0.6.2) (2026-02-12)
 
 

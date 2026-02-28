@@ -1,6 +1,6 @@
 {
   "name": "@finfocus/spec",
-  "version": "0.5.6",
+  "version": "0.5.7",
   "description": "Production-ready specification for cloud cost source plugins with gRPC protocol, JSON schemas, and Go SDK",
   "keywords": [
     "pulumi",
