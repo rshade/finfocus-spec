@@ -417,9 +417,9 @@ func resolveBatchSize(configured int) int32 {
 }
 
 // resolveBatchWorkers returns the number of workers to use for batching.
-// If configured is < MinBatchWorkers it returns DefaultBatchWorkers. Values above
-// MaxBatchWorkers are lowered to MaxBatchWorkers; otherwise the configured value
-// is returned.
+// If configured is < MinBatchWorkers it returns DefaultBatchWorkers (not
+// MinBatchWorkers). Values above MaxBatchWorkers are capped at MaxBatchWorkers;
+// otherwise the configured value is returned as-is.
 func resolveBatchWorkers(configured int) int {
 	switch {
 	case configured < MinBatchWorkers:
@@ -515,9 +515,11 @@ func logBatchCostCompletion(
 
 // batchCostFallback processes each resource in req in parallel (bounded by workers),
 // invoking batchCostForResource for each and collecting per-resource results into a
-// BatchCostResponse. It respects ctx cancellation for individual work items by
-// recording a ResourceError when the context is done and always returns a response
-// populated with the per-resource results and the provided maxBatchSize.
+// BatchCostResponse. If the context is cancelled while launching goroutines, remaining
+// un-launched resources are immediately marked with a cancellation error and goroutine
+// launching stops. Goroutines already launched before cancellation run to completion;
+// their results are included in the response. Always returns a response populated with
+// per-resource results and the provided maxBatchSize.
 //
 // IMPORTANT: req is read-only; the caller skips proto.Clone before passing it here.
 // All downstream functions must not modify req. Query type normalization is performed
@@ -533,24 +535,43 @@ func batchCostFallback(
 	results := make([]*pbc.ResourceCostResult, len(resources))
 	queryType := NormalizeCostQueryType(req.GetQueryType())
 
-	semaphore := make(chan struct{}, workers)
+	sem := make(chan struct{}, workers)
 	var wg sync.WaitGroup
 
+loop:
 	for idx, resource := range resources {
+		select {
+		case sem <- struct{}{}:
+		case <-ctx.Done():
+			// Record cancellation for remaining resources.
+			// INVARIANT: goroutines already launched write to results[0..idx-1];
+			// this fill-in covers results[idx..len-1], so there is no overlap.
+			// Sample ctx.Err() once to avoid repeated calls.
+			ctxErr := ctx.Err()
+			for j := idx; j < len(resources); j++ {
+				results[j] = newResourceErrorResult(
+					resources[j],
+					resourceErrorFromGRPCError(ctxErr),
+				)
+			}
+			break loop // wg.Wait() below drains in-flight goroutines
+		}
+
 		wg.Add(1)
 		go func(index int, descriptor *pbc.ResourceDescriptor) {
 			defer wg.Done()
-
-			select {
-			case semaphore <- struct{}{}:
-				defer func() { <-semaphore }()
-			case <-ctx.Done():
-				results[index] = newResourceErrorResult(
-					descriptor,
-					resourceErrorFromGRPCError(ctx.Err()),
-				)
-				return
-			}
+			defer func() { <-sem }()
+			defer func() {
+				if r := recover(); r != nil {
+					results[index] = newResourceErrorResult(
+						descriptor,
+						&pbc.ResourceError{
+							Code:    int32(codes.Internal),
+							Message: fmt.Sprintf("plugin panic: %v", r),
+						},
+					)
+				}
+			}()
 
 			results[index] = batchCostForResource(ctx, plugin, req, descriptor, queryType)
 		}(idx, resource)
