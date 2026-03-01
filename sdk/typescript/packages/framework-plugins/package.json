@@ -17,7 +17,7 @@
     "finfocus-client": "*"
   },
   "devDependencies": {
-    "@types/node": "^24.10.13",
+    "@types/node": "^24.11.0",
     "@types/express": "^5.0.6",
     "express": "^5.2.1",
     "fastify": "^5.7.4",
