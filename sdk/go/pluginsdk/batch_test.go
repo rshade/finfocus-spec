@@ -4,6 +4,7 @@ package pluginsdk
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -396,4 +397,239 @@ func (p *customBatchServerPlugin) BatchCost(
 		Results:      results,
 		MaxBatchSize: DefaultMaxBatchSize,
 	}, nil
+}
+
+// TestValidateResourceDescriptor tests field-level validation for ResourceDescriptor.
+func TestValidateResourceDescriptor(t *testing.T) {
+	tests := []struct {
+		name        string
+		resource    *pbc.ResourceDescriptor
+		expectError bool
+		errorText   string
+	}{
+		{
+			name:        "nil resource is valid",
+			resource:    nil,
+			expectError: false,
+		},
+		{
+			name: "valid resource with all fields",
+			resource: &pbc.ResourceDescriptor{
+				Provider:     "aws",
+				ResourceType: "ec2",
+				Sku:          "t3.micro",
+				Region:       "us-east-1",
+				Id:           "test-id",
+				Arn:          "arn:aws:ec2:us-east-1:123456789012:instance/i-1234567890abcdef0",
+				Tags:         map[string]string{"env": "prod"},
+			},
+			expectError: false,
+		},
+		{
+			name: "provider exceeds max length",
+			resource: &pbc.ResourceDescriptor{
+				Provider:     strings.Repeat("a", MaxProviderLength+1),
+				ResourceType: "ec2",
+			},
+			expectError: true,
+			errorText:   "provider length",
+		},
+		{
+			name: "resource_type exceeds max length",
+			resource: &pbc.ResourceDescriptor{
+				Provider:     "aws",
+				ResourceType: strings.Repeat("a", MaxResourceTypeLength+1),
+			},
+			expectError: true,
+			errorText:   "resource_type length",
+		},
+		{
+			name: "id exceeds max length",
+			resource: &pbc.ResourceDescriptor{
+				Provider:     "aws",
+				ResourceType: "ec2",
+				Id:           strings.Repeat("a", MaxIDLength+1),
+			},
+			expectError: true,
+			errorText:   "id length",
+		},
+		{
+			name: "arn exceeds max length",
+			resource: &pbc.ResourceDescriptor{
+				Provider:     "aws",
+				ResourceType: "ec2",
+				Arn:          strings.Repeat("a", MaxARNLength+1),
+			},
+			expectError: true,
+			errorText:   "arn length",
+		},
+		{
+			name: "sku exceeds max length",
+			resource: &pbc.ResourceDescriptor{
+				Provider:     "aws",
+				ResourceType: "ec2",
+				Sku:          strings.Repeat("a", MaxSKULength+1),
+			},
+			expectError: true,
+			errorText:   "sku length",
+		},
+		{
+			name: "region exceeds max length",
+			resource: &pbc.ResourceDescriptor{
+				Provider:     "aws",
+				ResourceType: "ec2",
+				Region:       strings.Repeat("a", MaxRegionLength+1),
+			},
+			expectError: true,
+			errorText:   "region length",
+		},
+		{
+			name: "too many tags",
+			resource: &pbc.ResourceDescriptor{
+				Provider:     "aws",
+				ResourceType: "ec2",
+				Tags:         generateTags(MaxTagsPerResource + 1),
+			},
+			expectError: true,
+			errorText:   "tag count",
+		},
+		{
+			name: "tag key exceeds max length",
+			resource: &pbc.ResourceDescriptor{
+				Provider:     "aws",
+				ResourceType: "ec2",
+				Tags: map[string]string{
+					strings.Repeat("k", MaxTagKeyLength+1): "value",
+				},
+			},
+			expectError: true,
+			errorText:   "tag key length",
+		},
+		{
+			name: "tag value exceeds max length",
+			resource: &pbc.ResourceDescriptor{
+				Provider:     "aws",
+				ResourceType: "ec2",
+				Tags: map[string]string{
+					"key": strings.Repeat("v", MaxTagValueLength+1),
+				},
+			},
+			expectError: true,
+			errorText:   "tag value length",
+		},
+		{
+			name: "max valid provider length",
+			resource: &pbc.ResourceDescriptor{
+				Provider:     strings.Repeat("a", MaxProviderLength),
+				ResourceType: "ec2",
+			},
+			expectError: false,
+		},
+		{
+			name: "max valid resource_type length",
+			resource: &pbc.ResourceDescriptor{
+				Provider:     "aws",
+				ResourceType: strings.Repeat("a", MaxResourceTypeLength),
+			},
+			expectError: false,
+		},
+		{
+			name: "max valid tags",
+			resource: &pbc.ResourceDescriptor{
+				Provider:     "aws",
+				ResourceType: "ec2",
+				Tags:         generateTags(MaxTagsPerResource),
+			},
+			expectError: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateResourceDescriptor(tc.resource)
+			if tc.expectError {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.errorText)
+				assert.Equal(t, codes.InvalidArgument, status.Code(err))
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+// TestValidateBatchCostRequestResourceDescriptorValidation tests that
+// ValidateBatchCostRequest calls ValidateResourceDescriptor for each resource.
+func TestValidateBatchCostRequestResourceDescriptorValidation(t *testing.T) {
+	tests := []struct {
+		name        string
+		resources   []*pbc.ResourceDescriptor
+		expectError bool
+		errorText   string
+	}{
+		{
+			name: "valid resources pass validation",
+			resources: []*pbc.ResourceDescriptor{
+				{Provider: "aws", ResourceType: "ec2"},
+				{Provider: "azure", ResourceType: "vm"},
+			},
+			expectError: false,
+		},
+		{
+			name: "first resource invalid",
+			resources: []*pbc.ResourceDescriptor{
+				{Provider: strings.Repeat("a", MaxProviderLength+1), ResourceType: "ec2"},
+				{Provider: "azure", ResourceType: "vm"},
+			},
+			expectError: true,
+			errorText:   "resource at index 0",
+		},
+		{
+			name: "second resource invalid",
+			resources: []*pbc.ResourceDescriptor{
+				{Provider: "aws", ResourceType: "ec2"},
+				{Provider: "azure", ResourceType: strings.Repeat("a", MaxResourceTypeLength+1)},
+			},
+			expectError: true,
+			errorText:   "resource at index 1",
+		},
+		{
+			name: "resource with too many tags",
+			resources: []*pbc.ResourceDescriptor{
+				{
+					Provider:     "aws",
+					ResourceType: "ec2",
+					Tags:         generateTags(MaxTagsPerResource + 1),
+				},
+			},
+			expectError: true,
+			errorText:   "resource at index 0",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			req := &pbc.BatchCostRequest{
+				QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+				Resources: tc.resources,
+			}
+			_, err := ValidateBatchCostRequest(req, DefaultMaxBatchSize)
+			if tc.expectError {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.errorText)
+				assert.Equal(t, codes.InvalidArgument, status.Code(err))
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+// generateTags creates a map with the specified number of tags.
+func generateTags(count int) map[string]string {
+	tags := make(map[string]string, count)
+	for i := range count {
+		tags[fmt.Sprintf("key%d", i)] = fmt.Sprintf("value%d", i)
+	}
+	return tags
 }
