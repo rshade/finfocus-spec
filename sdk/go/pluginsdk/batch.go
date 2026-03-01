@@ -43,6 +43,11 @@ const (
 	MaxBatchWorkers = 50
 )
 
+// DoS-guard limits for ResourceDescriptor field validation.
+// These are intentionally more generous than the contract validation limits
+// in testing/contract.go (e.g., MaxTagCount=50, MaxResourceIDLength=512),
+// which enforce stricter bounds for well-formed data. These limits only
+// prevent unbounded allocations from malicious or malformed input.
 const (
 	// MaxTagsPerResource is the maximum number of tags allowed per ResourceDescriptor.
 	MaxTagsPerResource = 256
@@ -107,75 +112,88 @@ func NormalizeCostQueryType(queryType pbc.CostQueryType) pbc.CostQueryType {
 }
 
 // ValidateResourceDescriptor validates individual ResourceDescriptor fields against defined limits.
-// It checks string field lengths and tag map constraints to prevent denial-of-service scenarios.
+// It checks string field lengths and tag map constraints to prevent denial-of-service scenarios
+// from unbounded allocations during batch processing.
+//
+// This function validates field sizes for DoS prevention only. Semantic validation of field
+// values (e.g., recognized provider names, valid ARN formats) is the plugin's responsibility.
+// These limits are intentionally more generous than the contract validation limits in the
+// testing package (testing/contract.go), which enforce stricter bounds for well-formed data.
 //
 // Validation rules:
-// - provider must not exceed MaxProviderLength (32 characters)
-// - resource_type must not exceed MaxResourceTypeLength (256 characters)
-// - id must not exceed MaxIDLength (1024 characters)
-// - arn must not exceed MaxARNLength (2048 characters)
-// - sku must not exceed MaxSKULength (128 characters)
-// - region must not exceed MaxRegionLength (64 characters)
-// - tags map must not exceed MaxTagsPerResource (256 entries)
-// - tag keys must not exceed MaxTagKeyLength (128 characters)
-// - tag values must not exceed MaxTagValueLength (256 characters)
+//   - resource must not be nil
+//   - provider must not exceed MaxProviderLength (32 characters)
+//   - resource_type must not exceed MaxResourceTypeLength (256 characters)
+//   - id must not exceed MaxIDLength (1024 characters)
+//   - arn must not exceed MaxARNLength (2048 characters)
+//   - sku must not exceed MaxSKULength (128 characters)
+//   - region must not exceed MaxRegionLength (64 characters)
+//   - tags map must not exceed MaxTagsPerResource (256 entries)
+//   - tag keys must not exceed MaxTagKeyLength (128 characters)
+//   - tag values must not exceed MaxTagValueLength (256 characters)
 //
 // Returns nil if validation passes, or a gRPC InvalidArgument error describing the violation.
 func ValidateResourceDescriptor(resource *pbc.ResourceDescriptor) error {
 	if resource == nil {
-		return nil
+		return status.Error(codes.InvalidArgument, "resource descriptor must not be nil")
 	}
 
-	if len(resource.GetProvider()) > MaxProviderLength {
+	provider := resource.GetProvider()
+	if len(provider) > MaxProviderLength {
 		return status.Errorf(
 			codes.InvalidArgument,
 			"provider length %d exceeds maximum %d",
-			len(resource.GetProvider()),
+			len(provider),
 			MaxProviderLength,
 		)
 	}
 
-	if len(resource.GetResourceType()) > MaxResourceTypeLength {
+	resourceType := resource.GetResourceType()
+	if len(resourceType) > MaxResourceTypeLength {
 		return status.Errorf(
 			codes.InvalidArgument,
 			"resource_type length %d exceeds maximum %d",
-			len(resource.GetResourceType()),
+			len(resourceType),
 			MaxResourceTypeLength,
 		)
 	}
 
-	if len(resource.GetId()) > MaxIDLength {
+	id := resource.GetId()
+	if len(id) > MaxIDLength {
 		return status.Errorf(
 			codes.InvalidArgument,
 			"id length %d exceeds maximum %d",
-			len(resource.GetId()),
+			len(id),
 			MaxIDLength,
 		)
 	}
 
-	if len(resource.GetArn()) > MaxARNLength {
+	arn := resource.GetArn()
+	if len(arn) > MaxARNLength {
 		return status.Errorf(
 			codes.InvalidArgument,
 			"arn length %d exceeds maximum %d",
-			len(resource.GetArn()),
+			len(arn),
 			MaxARNLength,
 		)
 	}
 
-	if len(resource.GetSku()) > MaxSKULength {
+	sku := resource.GetSku()
+	if len(sku) > MaxSKULength {
 		return status.Errorf(
 			codes.InvalidArgument,
 			"sku length %d exceeds maximum %d",
-			len(resource.GetSku()),
+			len(sku),
 			MaxSKULength,
 		)
 	}
 
-	if len(resource.GetRegion()) > MaxRegionLength {
+	region := resource.GetRegion()
+	if len(region) > MaxRegionLength {
 		return status.Errorf(
 			codes.InvalidArgument,
 			"region length %d exceeds maximum %d",
-			len(resource.GetRegion()),
+			len(region),
 			MaxRegionLength,
 		)
 	}
@@ -194,7 +212,8 @@ func ValidateResourceDescriptor(resource *pbc.ResourceDescriptor) error {
 		if len(key) > MaxTagKeyLength {
 			return status.Errorf(
 				codes.InvalidArgument,
-				"tag key length %d exceeds maximum %d",
+				"tag key %q: length %d exceeds maximum %d",
+				key,
 				len(key),
 				MaxTagKeyLength,
 			)
@@ -202,7 +221,8 @@ func ValidateResourceDescriptor(resource *pbc.ResourceDescriptor) error {
 		if len(value) > MaxTagValueLength {
 			return status.Errorf(
 				codes.InvalidArgument,
-				"tag value length %d exceeds maximum %d",
+				"tag value for key %q: length %d exceeds maximum %d",
+				key,
 				len(value),
 				MaxTagValueLength,
 			)
@@ -258,11 +278,14 @@ func ValidateBatchCostRequest(req *pbc.BatchCostRequest, maxBatchSize int32) (*p
 	// Validate each resource descriptor for field length and tag constraints.
 	for i, resource := range req.GetResources() {
 		if err := ValidateResourceDescriptor(resource); err != nil {
+			// ValidateResourceDescriptor always returns gRPC status errors,
+			// so status.FromError is guaranteed to succeed here.
+			s, _ := status.FromError(err)
 			return nil, status.Errorf(
 				codes.InvalidArgument,
-				"resource at index %d: %v",
+				"resource at index %d: %s",
 				i,
-				err,
+				s.Message(),
 			)
 		}
 	}

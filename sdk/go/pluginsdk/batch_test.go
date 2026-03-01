@@ -118,6 +118,30 @@ func BenchmarkIsValidCostQueryType_ZeroAllocs(b *testing.B) {
 	}
 }
 
+func BenchmarkValidateResourceDescriptor_ZeroAllocs(b *testing.B) {
+	resource := &pbc.ResourceDescriptor{
+		Provider:     "aws",
+		ResourceType: "ec2",
+		Id:           "i-1234567890abcdef0",
+		Arn:          "arn:aws:ec2:us-east-1:123456789012:instance/i-1234567890abcdef0",
+		Sku:          "t3.micro",
+		Region:       "us-east-1",
+		Tags: map[string]string{
+			"env":     "production",
+			"team":    "platform",
+			"service": "api",
+		},
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		if err := ValidateResourceDescriptor(resource); err != nil {
+			b.Fatalf("unexpected error: %v", err)
+		}
+	}
+}
+
 func TestServerBatchCostEnforcesDefaultMaxBatchSize(t *testing.T) {
 	plugin := &batchServerTestPlugin{}
 	server := NewServer(plugin)
@@ -408,9 +432,10 @@ func TestValidateResourceDescriptor(t *testing.T) {
 		errorText   string
 	}{
 		{
-			name:        "nil resource is valid",
+			name:        "nil resource is rejected",
 			resource:    nil,
-			expectError: false,
+			expectError: true,
+			errorText:   "resource descriptor must not be nil",
 		},
 		{
 			name: "valid resource with all fields",
@@ -503,7 +528,7 @@ func TestValidateResourceDescriptor(t *testing.T) {
 				},
 			},
 			expectError: true,
-			errorText:   "tag key length",
+			errorText:   "tag key",
 		},
 		{
 			name: "tag value exceeds max length",
@@ -511,11 +536,11 @@ func TestValidateResourceDescriptor(t *testing.T) {
 				Provider:     "aws",
 				ResourceType: "ec2",
 				Tags: map[string]string{
-					"key": strings.Repeat("v", MaxTagValueLength+1),
+					"mykey": strings.Repeat("v", MaxTagValueLength+1),
 				},
 			},
 			expectError: true,
-			errorText:   "tag value length",
+			errorText:   `tag value for key "mykey": length`,
 		},
 		{
 			name: "max valid provider length",
@@ -539,6 +564,64 @@ func TestValidateResourceDescriptor(t *testing.T) {
 				Provider:     "aws",
 				ResourceType: "ec2",
 				Tags:         generateTags(MaxTagsPerResource),
+			},
+			expectError: false,
+		},
+		{
+			name: "max valid id length",
+			resource: &pbc.ResourceDescriptor{
+				Provider:     "aws",
+				ResourceType: "ec2",
+				Id:           strings.Repeat("a", MaxIDLength),
+			},
+			expectError: false,
+		},
+		{
+			name: "max valid arn length",
+			resource: &pbc.ResourceDescriptor{
+				Provider:     "aws",
+				ResourceType: "ec2",
+				Arn:          strings.Repeat("a", MaxARNLength),
+			},
+			expectError: false,
+		},
+		{
+			name: "max valid sku length",
+			resource: &pbc.ResourceDescriptor{
+				Provider:     "aws",
+				ResourceType: "ec2",
+				Sku:          strings.Repeat("a", MaxSKULength),
+			},
+			expectError: false,
+		},
+		{
+			name: "max valid region length",
+			resource: &pbc.ResourceDescriptor{
+				Provider:     "aws",
+				ResourceType: "ec2",
+				Region:       strings.Repeat("a", MaxRegionLength),
+			},
+			expectError: false,
+		},
+		{
+			name: "max valid tag key length",
+			resource: &pbc.ResourceDescriptor{
+				Provider:     "aws",
+				ResourceType: "ec2",
+				Tags: map[string]string{
+					strings.Repeat("k", MaxTagKeyLength): "value",
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "max valid tag value length",
+			resource: &pbc.ResourceDescriptor{
+				Provider:     "aws",
+				ResourceType: "ec2",
+				Tags: map[string]string{
+					"mykey": strings.Repeat("v", MaxTagValueLength),
+				},
 			},
 			expectError: false,
 		},
@@ -618,6 +701,12 @@ func TestValidateBatchCostRequestResourceDescriptorValidation(t *testing.T) {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tc.errorText)
 				assert.Equal(t, codes.InvalidArgument, status.Code(err))
+				// Verify clean error wrapping: the status message (desc) should not
+				// contain a nested "rpc error: code =" from an inner gRPC status.
+				s, ok := status.FromError(err)
+				require.True(t, ok, "expected gRPC status error")
+				assert.NotContains(t, s.Message(), "rpc error: code =",
+					"nested gRPC error should be unwrapped before wrapping")
 			} else {
 				assert.NoError(t, err)
 			}
