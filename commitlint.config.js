@@ -57,7 +57,8 @@ module.exports = {
 
     // Format rules
     'type-case': [2, 'always', 'lower-case'],
-    'subject-case': [2, 'always', ['sentence-case', 'lower-case', 'start-case']],
+    // Disabled: technical subjects often contain PascalCase identifiers (e.g., BatchCost)
+    'subject-case': [0],
 
     // No period at end of subject
     'subject-full-stop': [2, 'never', '.'],
