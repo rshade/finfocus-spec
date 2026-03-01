@@ -2,6 +2,7 @@ package testing_test
 
 import (
 	"context"
+	"strconv"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -309,6 +310,41 @@ func TestBatchCostCapabilityDiscovery(t *testing.T) {
 	assert.NotContains(t, withoutResp.GetMetadata(), "max_batch_size")
 }
 
+func TestBatchCostCapabilityDiscoveryWithPluginInfoProvider(t *testing.T) {
+	plugin := &pluginInfoProviderWithBatch{}
+	server := pluginsdk.NewServer(plugin)
+	harness := plugintesting.NewTestHarness(server)
+	harness.Start(t)
+	defer harness.Stop()
+
+	ctx := context.Background()
+
+	// Verify GetPluginInfo response includes PLUGIN_CAPABILITY_BATCH_COST
+	infoResp, err := harness.Client().GetPluginInfo(ctx, &pbc.GetPluginInfoRequest{})
+	require.NoError(t, err)
+	assert.Contains(t, infoResp.GetCapabilities(), pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST)
+
+	// Verify max_batch_size metadata is present and correct (this is what issue #2 was about)
+	assert.Equal(t, "100", infoResp.GetMetadata()["max_batch_size"])
+
+	// Verify custom metadata from plugin is preserved
+	assert.Equal(t, "custom_value", infoResp.GetMetadata()["custom_key"])
+
+	// Verify BatchCost RPC works correctly
+	batchResp, err := harness.Client().BatchCost(ctx, &pbc.BatchCostRequest{
+		QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+		Resources: []*pbc.ResourceDescriptor{
+			plugintesting.CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1"),
+		},
+	})
+	require.NoError(t, err)
+	require.Len(t, batchResp.GetResults(), 1)
+	assert.NotNil(t, batchResp.GetResults()[0].GetCostData().GetEstimate())
+
+	// Verify metadata consistency: max_batch_size from GetPluginInfo should match BatchCost response
+	assert.Equal(t, infoResp.GetMetadata()["max_batch_size"], strconv.Itoa(int(batchResp.GetMaxBatchSize())))
+}
+
 func TestBatchCostDryRunConformance(t *testing.T) {
 	plugin := plugintesting.NewMockPlugin()
 	plugin.UnsupportedBatchResourceTypes["unsupported_resource"] = true
@@ -562,4 +598,53 @@ func (p *paginatedBatchFallbackPlugin) GetActualCost(
 	default:
 		return nil, status.Error(codes.InvalidArgument, "invalid page token")
 	}
+}
+
+type pluginInfoProviderWithBatch struct {
+	fallbackBatchPlugin
+}
+
+func (p *pluginInfoProviderWithBatch) GetPluginInfo(
+	_ context.Context,
+	_ *pbc.GetPluginInfoRequest,
+) (*pbc.GetPluginInfoResponse, error) {
+	return &pbc.GetPluginInfoResponse{
+		Name:        "plugin-info-provider-with-batch",
+		Version:     "v1.0.0",
+		SpecVersion: pluginsdk.SpecVersion,
+		Providers:   []string{"aws"},
+		Capabilities: []pbc.PluginCapability{
+			pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST,
+		},
+		Metadata: map[string]string{
+			"custom_key": "custom_value",
+		},
+	}, nil
+}
+
+func (p *pluginInfoProviderWithBatch) BatchCost(
+	_ context.Context,
+	req *pbc.BatchCostRequest,
+) (*pbc.BatchCostResponse, error) {
+	results := make([]*pbc.ResourceCostResult, len(req.GetResources()))
+	for i, resource := range req.GetResources() {
+		results[i] = &pbc.ResourceCostResult{
+			Resource: resource,
+			Result: &pbc.ResourceCostResult_CostData{
+				CostData: &pbc.CostData{
+					Data: &pbc.CostData_Estimate{
+						Estimate: &pbc.EstimateCostResponse{
+							Currency:    "USD",
+							CostMonthly: 75,
+						},
+					},
+				},
+			},
+		}
+	}
+
+	return &pbc.BatchCostResponse{
+		Results:      results,
+		MaxBatchSize: pluginsdk.DefaultMaxBatchSize,
+	}, nil
 }
