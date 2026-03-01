@@ -18,6 +18,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/rshade/finfocus-spec/sdk/go/internal/grpcconv"
 	"github.com/rshade/finfocus-spec/sdk/go/internal/utilization"
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
@@ -66,11 +67,10 @@ const (
 
 	// Mock impact metric base values at 100% utilization.
 	// These are arbitrary values for testing purposes only.
-	mockCarbonPerHour       = 100.0 // gCO2e per hour at 100% utilization
-	mockEnergyPerHour       = 1.0   // kWh per hour at 100% utilization
-	mockWaterPerHour        = 5.0   // L per hour at 100% utilization
-	defaultMockBatchSize    = 100
-	fallbackInternalErrCode = int32(codes.Internal) // Fallback error code for overflow cases
+	mockCarbonPerHour    = 100.0 // gCO2e per hour at 100% utilization
+	mockEnergyPerHour    = 1.0   // kWh per hour at 100% utilization
+	mockWaterPerHour     = 5.0   // L per hour at 100% utilization
+	defaultMockBatchSize = 100
 )
 
 // MockPlugin provides a configurable mock implementation of CostSourceServiceServer.
@@ -532,7 +532,7 @@ func (m *MockPlugin) BatchCost(
 				Resource: nil,
 				Result: &pbc.ResourceCostResult_Error{
 					Error: &pbc.ResourceError{
-						Code:    batchGRPCCodeToInt32(codes.InvalidArgument),
+						Code:    grpcconv.CodeToInt32(codes.InvalidArgument),
 						Message: "resource descriptor is required",
 					},
 				},
@@ -543,7 +543,7 @@ func (m *MockPlugin) BatchCost(
 				Resource: resource,
 				Result: &pbc.ResourceCostResult_Error{
 					Error: &pbc.ResourceError{
-						Code: batchGRPCCodeToInt32(codes.Unimplemented),
+						Code: grpcconv.CodeToInt32(codes.Unimplemented),
 						Message: fmt.Sprintf(
 							"resource type %q is not supported",
 							resource.GetResourceType(),
@@ -696,7 +696,7 @@ func (m *MockPlugin) BatchCost(
 				Resource: resource,
 				Result: &pbc.ResourceCostResult_Error{
 					Error: &pbc.ResourceError{
-						Code:    batchGRPCCodeToInt32(codes.InvalidArgument),
+						Code:    grpcconv.CodeToInt32(codes.InvalidArgument),
 						Message: "invalid query type",
 					},
 				},
@@ -744,31 +744,20 @@ func defaultBatchResourceID(resource *pbc.ResourceDescriptor) string {
 
 // batchResourceErrorFromErr converts an error into a pbc.ResourceError suitable for batch responses.
 // If the error is a gRPC status error its code and message are used; otherwise the error is reported
-// with an Internal code and the error string. The gRPC code is mapped to int32 via batchGRPCCodeToInt32.
+// with an Internal code and the error string. The gRPC code is mapped to int32 via grpcconv.CodeToInt32.
 func batchResourceErrorFromErr(err error) *pbc.ResourceError {
 	st, ok := status.FromError(err)
 	if !ok {
 		return &pbc.ResourceError{
-			Code:    batchGRPCCodeToInt32(codes.Internal),
+			Code:    grpcconv.CodeToInt32(codes.Internal),
 			Message: err.Error(),
 		}
 	}
 
 	return &pbc.ResourceError{
-		Code:    batchGRPCCodeToInt32(st.Code()),
+		Code:    grpcconv.CodeToInt32(st.Code()),
 		Message: st.Message(),
 	}
-}
-
-// batchGRPCCodeToInt32 converts a gRPC `codes.Code` value (uint32) to an `int32` suitable for protobuf fields.
-// If the code exceeds `math.MaxInt32`, `fallbackInternalErrCode` is returned to avoid overflow.
-func batchGRPCCodeToInt32(code codes.Code) int32 {
-	codeValue := int64(code)
-	if codeValue > math.MaxInt32 {
-		return fallbackInternalErrCode
-	}
-	//nolint:gosec // Overflow impossible: codeValue is in [0, math.MaxInt32] after the bounds check above.
-	return int32(codeValue)
 }
 
 // generateDefaultFieldMappings creates default field mappings for all FOCUS fields.
