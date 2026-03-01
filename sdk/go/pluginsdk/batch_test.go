@@ -256,6 +256,27 @@ func TestServerBatchCostStructuredLogging(t *testing.T) {
 	assert.Contains(t, logOutput, "\"duration_ms\":")
 }
 
+func TestBatchCostFallbackDoesNotMutateRequest(t *testing.T) {
+	plugin := &batchServerTestPlugin{}
+	server := NewServer(plugin)
+
+	originalQueryType := pbc.CostQueryType_COST_QUERY_TYPE_UNSPECIFIED
+	req := &pbc.BatchCostRequest{
+		QueryType: originalQueryType,
+		Resources: []*pbc.ResourceDescriptor{
+			{Provider: "aws", ResourceType: "ec2"},
+		},
+	}
+
+	_, err := server.BatchCost(context.Background(), req)
+	require.NoError(t, err)
+
+	// The fallback path normalizes query_type into a local variable;
+	// it must not write the normalized value back into the original request.
+	assert.Equal(t, originalQueryType, req.GetQueryType(),
+		"BatchCost fallback must not mutate the original request's QueryType")
+}
+
 type batchServerTestPlugin struct {
 	estimateDelay  time.Duration
 	currentRunning atomic.Int64

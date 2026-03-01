@@ -352,6 +352,10 @@ func logBatchCostCompletion(
 // BatchCostResponse. It respects ctx cancellation for individual work items by
 // recording a ResourceError when the context is done and always returns a response
 // populated with the per-resource results and the provided maxBatchSize.
+//
+// IMPORTANT: req is read-only; the caller skips proto.Clone before passing it here.
+// All downstream functions must not modify req. Query type normalization is performed
+// into a local variable, never written back to req.
 func batchCostFallback(
 	ctx context.Context,
 	plugin Plugin,

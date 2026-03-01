@@ -123,6 +123,7 @@ func BenchmarkNewBatchCostResponse(b *testing.B) {
 }
 
 // BenchmarkBatchCostFallback_Small measures fallback processing for a small batch.
+// req is shared across iterations and must remain read-only (fallback path skips proto.Clone).
 func BenchmarkBatchCostFallback_Small(b *testing.B) {
 	plugin := &benchmarkPlugin{}
 	server := pluginsdk.NewServer(plugin)
@@ -138,6 +139,15 @@ func BenchmarkBatchCostFallback_Small(b *testing.B) {
 
 	ctx := context.Background()
 
+	// Validate once before benchmark loop to fail fast on regressions.
+	resp, err := server.BatchCost(ctx, req)
+	if err != nil {
+		b.Fatalf("pre-check failed: %v", err)
+	}
+	if resp == nil {
+		b.Fatal("pre-check returned nil response")
+	}
+
 	b.ReportAllocs()
 	b.ResetTimer()
 	for range b.N {
@@ -146,6 +156,7 @@ func BenchmarkBatchCostFallback_Small(b *testing.B) {
 }
 
 // BenchmarkBatchCostFallback_Large measures fallback processing for a larger batch.
+// req is shared across iterations and must remain read-only (fallback path skips proto.Clone).
 func BenchmarkBatchCostFallback_Large(b *testing.B) {
 	plugin := &benchmarkPlugin{}
 	server := pluginsdk.NewServer(plugin)
@@ -160,6 +171,196 @@ func BenchmarkBatchCostFallback_Large(b *testing.B) {
 	}
 
 	ctx := context.Background()
+
+	// Validate once before benchmark loop to fail fast on regressions.
+	resp, err := server.BatchCost(ctx, req)
+	if err != nil {
+		b.Fatalf("pre-check failed: %v", err)
+	}
+	if resp == nil {
+		b.Fatal("pre-check returned nil response")
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		_, _ = server.BatchCost(ctx, req)
+	}
+}
+
+// BenchmarkBatchCostFallback_100Resources measures fallback processing for 100 resources.
+// req is shared across iterations and must remain read-only (fallback path skips proto.Clone).
+func BenchmarkBatchCostFallback_100Resources(b *testing.B) {
+	plugin := &benchmarkPlugin{}
+	server := pluginsdk.NewServer(plugin)
+
+	resources := make([]*pbc.ResourceDescriptor, 100)
+	for i := range resources {
+		resources[i] = &pbc.ResourceDescriptor{Provider: "aws", ResourceType: "ec2"}
+	}
+	req := &pbc.BatchCostRequest{
+		QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+		Resources: resources,
+	}
+
+	ctx := context.Background()
+
+	// Validate once before benchmark loop to fail fast on regressions.
+	resp, err := server.BatchCost(ctx, req)
+	if err != nil {
+		b.Fatalf("pre-check failed: %v", err)
+	}
+	if resp == nil {
+		b.Fatal("pre-check returned nil response")
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		_, _ = server.BatchCost(ctx, req)
+	}
+}
+
+// BenchmarkBatchCostFallback_50ResourcesWithTags measures fallback with tags.
+// req is shared across iterations and must remain read-only (fallback path skips proto.Clone).
+func BenchmarkBatchCostFallback_50ResourcesWithTags(b *testing.B) {
+	plugin := &benchmarkPlugin{}
+	server := pluginsdk.NewServer(plugin)
+
+	resources := make([]*pbc.ResourceDescriptor, 50)
+	for i := range resources {
+		resources[i] = &pbc.ResourceDescriptor{
+			Provider:     "aws",
+			ResourceType: "ec2",
+			Tags: map[string]string{
+				"env":     "production",
+				"team":    "platform",
+				"service": "api",
+			},
+		}
+	}
+	req := &pbc.BatchCostRequest{
+		QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+		Resources: resources,
+	}
+
+	ctx := context.Background()
+
+	// Validate once before benchmark loop to fail fast on regressions.
+	resp, err := server.BatchCost(ctx, req)
+	if err != nil {
+		b.Fatalf("pre-check failed: %v", err)
+	}
+	if resp == nil {
+		b.Fatal("pre-check returned nil response")
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		_, _ = server.BatchCost(ctx, req)
+	}
+}
+
+// BenchmarkBatchCostFallback_100ResourcesWithTags measures fallback with tags.
+// req is shared across iterations and must remain read-only (fallback path skips proto.Clone).
+func BenchmarkBatchCostFallback_100ResourcesWithTags(b *testing.B) {
+	plugin := &benchmarkPlugin{}
+	server := pluginsdk.NewServer(plugin)
+
+	resources := make([]*pbc.ResourceDescriptor, 100)
+	for i := range resources {
+		resources[i] = &pbc.ResourceDescriptor{
+			Provider:     "aws",
+			ResourceType: "ec2",
+			Tags: map[string]string{
+				"env":     "production",
+				"team":    "platform",
+				"service": "api",
+			},
+		}
+	}
+	req := &pbc.BatchCostRequest{
+		QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+		Resources: resources,
+	}
+
+	ctx := context.Background()
+
+	// Validate once before benchmark loop to fail fast on regressions.
+	resp, err := server.BatchCost(ctx, req)
+	if err != nil {
+		b.Fatalf("pre-check failed: %v", err)
+	}
+	if resp == nil {
+		b.Fatal("pre-check returned nil response")
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		_, _ = server.BatchCost(ctx, req)
+	}
+}
+
+// BenchmarkBatchCostCustomHandler_Small measures the custom handler path (with proto.Clone).
+// Compare with BenchmarkBatchCostFallback_Small to see the clone/no-clone delta.
+func BenchmarkBatchCostCustomHandler_Small(b *testing.B) {
+	plugin := &benchmarkCustomPlugin{}
+	server := pluginsdk.NewServer(plugin)
+
+	req := &pbc.BatchCostRequest{
+		QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+		Resources: []*pbc.ResourceDescriptor{
+			{Provider: "aws", ResourceType: "ec2"},
+			{Provider: "azure", ResourceType: "vm"},
+			{Provider: "gcp", ResourceType: "compute_engine"},
+		},
+	}
+
+	ctx := context.Background()
+
+	// Validate once before benchmark loop to fail fast on regressions.
+	resp, err := server.BatchCost(ctx, req)
+	if err != nil {
+		b.Fatalf("pre-check failed: %v", err)
+	}
+	if resp == nil {
+		b.Fatal("pre-check returned nil response")
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		_, _ = server.BatchCost(ctx, req)
+	}
+}
+
+// BenchmarkBatchCostCustomHandler_Large measures the custom handler path (with proto.Clone) for 50 resources.
+// Compare with BenchmarkBatchCostFallback_Large to see the clone/no-clone delta.
+func BenchmarkBatchCostCustomHandler_Large(b *testing.B) {
+	plugin := &benchmarkCustomPlugin{}
+	server := pluginsdk.NewServer(plugin)
+
+	resources := make([]*pbc.ResourceDescriptor, 50)
+	for i := range resources {
+		resources[i] = &pbc.ResourceDescriptor{Provider: "aws", ResourceType: "ec2"}
+	}
+	req := &pbc.BatchCostRequest{
+		QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+		Resources: resources,
+	}
+
+	ctx := context.Background()
+
+	// Validate once before benchmark loop to fail fast on regressions.
+	resp, err := server.BatchCost(ctx, req)
+	if err != nil {
+		b.Fatalf("pre-check failed: %v", err)
+	}
+	if resp == nil {
+		b.Fatal("pre-check returned nil response")
+	}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -201,4 +402,36 @@ func (p *benchmarkPlugin) EstimateCost(
 	_ *pbc.EstimateCostRequest,
 ) (*pbc.EstimateCostResponse, error) {
 	return &pbc.EstimateCostResponse{Currency: "USD", CostMonthly: 42}, nil
+}
+
+// benchmarkCustomPlugin implements BatchCostHandler to exercise the custom handler path
+// (which calls proto.Clone). Embedding benchmarkPlugin provides the base Plugin interface.
+type benchmarkCustomPlugin struct {
+	benchmarkPlugin
+}
+
+func (p *benchmarkCustomPlugin) BatchCost(
+	_ context.Context,
+	req *pbc.BatchCostRequest,
+) (*pbc.BatchCostResponse, error) {
+	results := make([]*pbc.ResourceCostResult, len(req.GetResources()))
+	for i, resource := range req.GetResources() {
+		results[i] = &pbc.ResourceCostResult{
+			Resource: resource,
+			Result: &pbc.ResourceCostResult_CostData{
+				CostData: &pbc.CostData{
+					Data: &pbc.CostData_Estimate{
+						Estimate: &pbc.EstimateCostResponse{
+							Currency:    "USD",
+							CostMonthly: 42,
+						},
+					},
+				},
+			},
+		}
+	}
+	return &pbc.BatchCostResponse{
+		Results:      results,
+		MaxBatchSize: pluginsdk.DefaultMaxBatchSize,
+	}, nil
 }

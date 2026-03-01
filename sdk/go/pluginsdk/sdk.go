@@ -789,16 +789,18 @@ func (s *Server) BatchCost(
 		return emptyResp, nil
 	}
 
-	normalizedReq, ok := proto.Clone(req).(*pbc.BatchCostRequest)
-	if !ok {
-		s.logger.Error().
-			Int32("query_type", int32(req.GetQueryType())).
-			Msg("proto.Clone returned unexpected type for BatchCostRequest")
-		return nil, status.Error(codes.Internal, "failed to clone batch request")
-	}
-	normalizedReq.QueryType = NormalizeCostQueryType(req.GetQueryType())
-
+	// Check if we have a custom BatchCostHandler
 	if handler, hasCustomHandler := s.plugin.(BatchCostHandler); hasCustomHandler {
+		// Clone and normalize for custom handler (handler needs a safe copy)
+		normalizedReq, ok := proto.Clone(req).(*pbc.BatchCostRequest)
+		if !ok {
+			s.logger.Error().
+				Int32("query_type", int32(req.GetQueryType())).
+				Msg("proto.Clone returned unexpected type for BatchCostRequest")
+			return nil, status.Error(codes.Internal, "failed to clone batch request")
+		}
+		normalizedReq.QueryType = NormalizeCostQueryType(req.GetQueryType())
+
 		resp, batchErr := handler.BatchCost(ctx, normalizedReq)
 		if batchErr != nil {
 			s.logger.Error().Err(batchErr).Msg("BatchCost handler error")
@@ -816,7 +818,9 @@ func (s *Server) BatchCost(
 		return resp, nil
 	}
 
-	resp := batchCostFallback(ctx, s.plugin, normalizedReq, s.maxBatchSize, s.batchWorkers)
+	// Fallback path: skip proto.Clone because batchCostFallback is read-only on req.
+	// It normalizes query_type into a local variable, never writing back to req.
+	resp := batchCostFallback(ctx, s.plugin, req, s.maxBatchSize, s.batchWorkers)
 	errorCount := logBatchCostResourceErrors(s.logger, resp.GetResults())
 	logBatchCostCompletion(s.logger, startedAt, resp, errorCount)
 	return resp, nil
