@@ -6229,7 +6229,10 @@ func (x *ActualCostData) GetTotalCount() int32 {
 // Per-resource errors do not cause the entire batch RPC to fail.
 type ResourceError struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// gRPC-compatible status code (e.g., NOT_FOUND=5, INTERNAL=13).
+	// gRPC-compatible status code from google.rpc.Code.
+	// Common values: INVALID_ARGUMENT(3), NOT_FOUND(5), UNIMPLEMENTED(12), INTERNAL(13).
+	// Must not be OK(0) — the presence of ResourceError implies a non-OK status.
+	// See: https://grpc.io/docs/guides/status-codes/
 	Code int32 `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
 	// human-readable error description.
 	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`

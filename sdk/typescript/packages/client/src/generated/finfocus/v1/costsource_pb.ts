@@ -3411,7 +3411,10 @@ export const ActualCostDataSchema: GenMessage<ActualCostData> = /*@__PURE__*/
  */
 export type ResourceError = Message<"finfocus.v1.ResourceError"> & {
   /**
-   * gRPC-compatible status code (e.g., NOT_FOUND=5, INTERNAL=13).
+   * gRPC-compatible status code from google.rpc.Code.
+   * Common values: INVALID_ARGUMENT(3), NOT_FOUND(5), UNIMPLEMENTED(12), INTERNAL(13).
+   * Must not be OK(0) — the presence of ResourceError implies a non-OK status.
+   * See: https://grpc.io/docs/guides/status-codes/
    *
    * @generated from field: int32 code = 1;
    */
