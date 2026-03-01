@@ -53,9 +53,9 @@ centered around the FinOps Foundation's FOCUS standard.
 - [ ] **Deduplicate grpcCodeToInt32**
   ([#399](https://github.com/rshade/finfocus-spec/issues/399)) [S] -
   Deduplicate grpcCodeToInt32 between pluginsdk and testing packages.
-- [ ] **Improve ValidateBatchCostRequest Return Type**
+- [x] **Improve ValidateBatchCostRequest Return Type**
   ([#400](https://github.com/rshade/finfocus-spec/issues/400)) [M] -
-  Improve return type to avoid (nil, nil) sentinel pattern.
+  Improve return type to avoid (nil, nil) sentinel pattern. Resolved Mar 2026.
 - [ ] **Add ResourceDescriptor Field Validation Limits**
   ([#401](https://github.com/rshade/finfocus-spec/issues/401)) [M] -
   Add field validation limits to batch request validation.

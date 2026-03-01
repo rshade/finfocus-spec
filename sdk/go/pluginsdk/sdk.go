@@ -809,14 +809,14 @@ func (s *Server) BatchCost(
 ) (*pbc.BatchCostResponse, error) {
 	startedAt := logBatchCostRequest(s.logger, req)
 
-	emptyResp, err := ValidateBatchCostRequest(req, s.maxBatchSize)
+	result, err := ValidateBatchCostRequest(req, s.maxBatchSize)
 	if err != nil {
 		return nil, err
 	}
-	if emptyResp != nil {
-		errorCount := logBatchCostResourceErrors(s.logger, emptyResp.GetResults())
-		logBatchCostCompletion(s.logger, startedAt, emptyResp, errorCount)
-		return emptyResp, nil
+	if result.EarlyResponse != nil {
+		errorCount := logBatchCostResourceErrors(s.logger, result.EarlyResponse.GetResults())
+		logBatchCostCompletion(s.logger, startedAt, result.EarlyResponse, errorCount)
+		return result.EarlyResponse, nil
 	}
 
 	// Check if we have a custom BatchCostHandler

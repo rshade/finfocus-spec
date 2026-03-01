@@ -232,26 +232,34 @@ func ValidateResourceDescriptor(resource *pbc.ResourceDescriptor) error {
 	return nil
 }
 
-// ValidateBatchCostRequest validates a BatchCostRequest and either returns an eager empty
-// BatchCostResponse for an empty resource list, an error for invalid requests, or (nil, nil)
-// to indicate a valid non-empty request that should be processed further.
+// BatchCostValidationResult represents the outcome of validating a BatchCostRequest.
+// If EarlyResponse is non-nil, the caller should return it immediately without further processing.
+// If EarlyResponse is nil and no error occurred, the caller should proceed with normal processing.
+type BatchCostValidationResult struct {
+	// EarlyResponse is set when validation determines an empty response should be
+	// returned immediately (e.g., for empty resource lists).
+	EarlyResponse *pbc.BatchCostResponse
+}
+
+// ValidateBatchCostRequest validates a BatchCostRequest and returns a BatchCostValidationResult
+// indicating whether the request is valid and if an early response should be returned.
 //
 // Validation rules:
 // - req must be non-nil.
 // - If maxBatchSize <= 0, DefaultMaxBatchSize is applied.
-// - If the resource list is empty, returns a BatchCostResponse with Results=[] and MaxBatchSize set.
+// - If the resource list is empty, returns a ValidationResult with EarlyResponse set.
 // - The number of resources must not exceed maxBatchSize.
 // - Each ResourceDescriptor is validated via ValidateResourceDescriptor (field lengths, tag constraints).
 // - query_type must be a valid CostQueryType.
-// - If the normalized query type is not ACTUAL, returns (nil, nil) to signal no further eager validation here.
 // - For ACTUAL queries, both start and end must be present and start must be strictly before end.
 //
 // Return values:
-// - (*pbc.BatchCostResponse, nil): when an eager empty response is produced for an empty resource list.
-// - (nil, error): when the request is invalid.
-func ValidateBatchCostRequest(req *pbc.BatchCostRequest, maxBatchSize int32) (*pbc.BatchCostResponse, error) {
+// - BatchCostValidationResult with EarlyResponse set: when an eager empty response should be returned.
+// - BatchCostValidationResult with EarlyResponse nil: when the request is valid and should be processed normally.
+// - error: when the request is invalid.
+func ValidateBatchCostRequest(req *pbc.BatchCostRequest, maxBatchSize int32) (BatchCostValidationResult, error) {
 	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "request is required")
+		return BatchCostValidationResult{}, status.Error(codes.InvalidArgument, "request is required")
 	}
 
 	if maxBatchSize <= 0 {
@@ -260,14 +268,16 @@ func ValidateBatchCostRequest(req *pbc.BatchCostRequest, maxBatchSize int32) (*p
 
 	resourceCount := len(req.GetResources())
 	if resourceCount == 0 {
-		return NewBatchCostResponse(
-			WithBatchResults([]*pbc.ResourceCostResult{}),
-			WithMaxBatchSize(maxBatchSize),
-		), nil
+		return BatchCostValidationResult{
+			EarlyResponse: NewBatchCostResponse(
+				WithBatchResults([]*pbc.ResourceCostResult{}),
+				WithMaxBatchSize(maxBatchSize),
+			),
+		}, nil
 	}
 
 	if int64(resourceCount) > int64(maxBatchSize) {
-		return nil, status.Errorf(
+		return BatchCostValidationResult{}, status.Errorf(
 			codes.InvalidArgument,
 			"batch size %d exceeds max_batch_size %d",
 			resourceCount,
@@ -281,7 +291,7 @@ func ValidateBatchCostRequest(req *pbc.BatchCostRequest, maxBatchSize int32) (*p
 			// ValidateResourceDescriptor always returns gRPC status errors,
 			// so status.FromError is guaranteed to succeed here.
 			s, _ := status.FromError(err)
-			return nil, status.Errorf(
+			return BatchCostValidationResult{}, status.Errorf(
 				codes.InvalidArgument,
 				"resource at index %d: %s",
 				i,
@@ -292,26 +302,30 @@ func ValidateBatchCostRequest(req *pbc.BatchCostRequest, maxBatchSize int32) (*p
 
 	queryType := req.GetQueryType()
 	if !IsValidCostQueryType(queryType) {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid query_type: %d", queryType)
+		return BatchCostValidationResult{}, status.Errorf(codes.InvalidArgument, "invalid query_type: %d", queryType)
 	}
 
 	if NormalizeCostQueryType(queryType) != pbc.CostQueryType_COST_QUERY_TYPE_ACTUAL {
-		//nolint:nilnil // Non-empty valid requests intentionally return (nil, nil)
-		return nil, nil
+		return BatchCostValidationResult{}, nil
 	}
 
 	start := req.GetStart()
 	end := req.GetEnd()
 	if start == nil || end == nil {
-		return nil, status.Error(codes.InvalidArgument, "start and end are required for ACTUAL query type")
+		return BatchCostValidationResult{}, status.Error(
+			codes.InvalidArgument,
+			"start and end are required for ACTUAL query type",
+		)
 	}
 
 	if !start.AsTime().Before(end.AsTime()) {
-		return nil, status.Error(codes.InvalidArgument, "start must be before end for ACTUAL query type")
+		return BatchCostValidationResult{}, status.Error(
+			codes.InvalidArgument,
+			"start must be before end for ACTUAL query type",
+		)
 	}
 
-	//nolint:nilnil // Non-empty valid requests intentionally return (nil, nil)
-	return nil, nil
+	return BatchCostValidationResult{}, nil
 }
 
 // BatchCostResponseOption is a functional option for BatchCostResponse.
