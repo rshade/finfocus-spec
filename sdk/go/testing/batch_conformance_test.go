@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/rshade/finfocus-spec/sdk/go/internal/testutil"
 	"github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 	plugintesting "github.com/rshade/finfocus-spec/sdk/go/testing"
@@ -509,56 +510,86 @@ func (p *customBatchPlugin) BatchCost(
 	}, nil
 }
 
-// TestBatchCostFallbackWorkerPoolConfig verifies that the batch fallback path
-// succeeds via both the direct Server.BatchCost call and the gRPC transport path.
-//
-// NOTE: Both servers use NewServer() with the default worker count (10). Without a
-// public WithBatchWorkers option there is no way to configure a single-worker server
-// for a meaningful sequential-vs-concurrent timing comparison. The assertions here
-// are smoke tests that confirm both paths complete without error.
-// TODO: Add a meaningful concurrency test once a public WithBatchWorkers option is available.
+// TestBatchCostFallbackWorkerPoolConfig verifies that the batch fallback worker pool
+// correctly executes requests sequentially (1 worker) vs concurrently (10 workers).
+// This test confirms that the worker pool configuration controls concurrency as expected.
 func TestBatchCostFallbackWorkerPoolConfig(t *testing.T) {
-	plugin := &sleepyFallbackPlugin{delay: 20 * time.Millisecond}
-	server := pluginsdk.NewServer(plugin)
-
-	req := &pbc.BatchCostRequest{
-		QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
-		Resources: []*pbc.ResourceDescriptor{
-			plugintesting.CreateResourceDescriptor("aws", "ec2", "", "us-east-1"),
-			plugintesting.CreateResourceDescriptor("aws", "ec2", "", "us-east-1"),
-			plugintesting.CreateResourceDescriptor("aws", "ec2", "", "us-east-1"),
-			plugintesting.CreateResourceDescriptor("aws", "ec2", "", "us-east-1"),
-		},
+	makeRequest := func() *pbc.BatchCostRequest {
+		return &pbc.BatchCostRequest{
+			QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+			Resources: []*pbc.ResourceDescriptor{
+				plugintesting.CreateResourceDescriptor("aws", "ec2", "", "us-east-1"),
+				plugintesting.CreateResourceDescriptor("aws", "ec2", "", "us-east-1"),
+				plugintesting.CreateResourceDescriptor("aws", "ec2", "", "us-east-1"),
+				plugintesting.CreateResourceDescriptor("aws", "ec2", "", "us-east-1"),
+				plugintesting.CreateResourceDescriptor("aws", "ec2", "", "us-east-1"),
+				plugintesting.CreateResourceDescriptor("aws", "ec2", "", "us-east-1"),
+			},
+		}
 	}
 
-	// Verify direct Server.BatchCost path succeeds with default workers.
-	resp, err := server.BatchCost(context.Background(), req)
+	// Test sequential execution with 1 worker - max concurrency should be 1.
+	sequentialPlugin := &sleepyFallbackPlugin{delay: 20 * time.Millisecond}
+	sequentialServer := pluginsdk.NewServer(sequentialPlugin).SetBatchWorkersForTesting(1)
+	_, err := sequentialServer.BatchCost(context.Background(), makeRequest())
 	require.NoError(t, err)
-	require.Len(t, resp.GetResults(), len(req.GetResources()))
+	assert.Equal(t, int64(1), sequentialPlugin.maxConcurrent.Load(),
+		"sequential execution (1 worker) should have max concurrency of 1")
 
-	// Verify gRPC transport path also succeeds.
+	// Test concurrent execution with 10 workers - max concurrency should be > 1.
+	concurrentPlugin := &sleepyFallbackPlugin{delay: 20 * time.Millisecond}
+	concurrentServer := pluginsdk.NewServer(concurrentPlugin).SetBatchWorkersForTesting(10)
+	_, err = concurrentServer.BatchCost(context.Background(), makeRequest())
+	require.NoError(t, err)
+	assert.Greater(t, concurrentPlugin.maxConcurrent.Load(), int64(1),
+		"concurrent execution (10 workers) should have max concurrency > 1")
+
+	// Verify gRPC transport path also respects worker configuration.
 	grpcPlugin := &sleepyFallbackPlugin{delay: 20 * time.Millisecond}
-	grpcServer := pluginsdk.NewServer(grpcPlugin)
+	grpcServer := pluginsdk.NewServer(grpcPlugin).SetBatchWorkersForTesting(10)
 	grpcHarness := plugintesting.NewTestHarness(grpcServer)
 	grpcHarness.Start(t)
 	defer grpcHarness.Stop()
 
-	grpcResp, err := grpcHarness.Client().BatchCost(context.Background(), req)
+	grpcResp, err := grpcHarness.Client().BatchCost(context.Background(), makeRequest())
 	require.NoError(t, err)
-	require.Len(t, grpcResp.GetResults(), len(req.GetResources()))
+	require.Len(t, grpcResp.GetResults(), 6)
+	assert.Greater(t, grpcPlugin.maxConcurrent.Load(), int64(1),
+		"gRPC transport should also execute concurrently with 10 workers")
+
+	// Verify that zero workers are clamped to MinBatchWorkers and do not deadlock.
+	zeroPlugin := &sleepyFallbackPlugin{delay: 0}
+	zeroServer := pluginsdk.NewServer(zeroPlugin).SetBatchWorkersForTesting(0)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	_, err = zeroServer.BatchCost(ctx, makeRequest())
+	require.NoError(t, err, "zero workers should be clamped to MinBatchWorkers")
 }
 
 type sleepyFallbackPlugin struct {
 	fallbackBatchPlugin
 
-	delay time.Duration
+	delay          time.Duration
+	currentRunning atomic.Int64
+	maxConcurrent  atomic.Int64
 }
 
+// EstimateCost intentionally overrides fallbackBatchPlugin.EstimateCost to add
+// concurrency tracking and controlled delays for worker pool testing.
 func (p *sleepyFallbackPlugin) EstimateCost(
-	_ context.Context,
+	ctx context.Context,
 	_ *pbc.EstimateCostRequest,
 ) (*pbc.EstimateCostResponse, error) {
-	time.Sleep(p.delay)
+	current := p.currentRunning.Add(1)
+	testutil.UpdateAtomicMaxInt64(&p.maxConcurrent, current)
+	defer p.currentRunning.Add(-1)
+
+	select {
+	case <-time.After(p.delay):
+	case <-ctx.Done():
+		return nil, status.FromContextError(ctx.Err()).Err()
+	}
+
 	p.estimateCalls.Add(1)
 	return &pbc.EstimateCostResponse{
 		Currency:    "USD",

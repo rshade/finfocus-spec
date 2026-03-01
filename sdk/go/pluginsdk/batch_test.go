@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/rshade/finfocus-spec/sdk/go/internal/testutil"
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
 
@@ -349,7 +350,7 @@ func (p *batchServerTestPlugin) EstimateCost(
 	req *pbc.EstimateCostRequest,
 ) (*pbc.EstimateCostResponse, error) {
 	current := p.currentRunning.Add(1)
-	updateMaxConcurrent(&p.maxConcurrent, current)
+	testutil.UpdateAtomicMaxInt64(&p.maxConcurrent, current)
 	defer p.currentRunning.Add(-1)
 
 	if p.estimateDelay > 0 {
@@ -364,18 +365,6 @@ func (p *batchServerTestPlugin) EstimateCost(
 		Currency:    "USD",
 		CostMonthly: 10,
 	}, nil
-}
-
-func updateMaxConcurrent(currentMax *atomic.Int64, value int64) {
-	for {
-		current := currentMax.Load()
-		if value <= current {
-			return
-		}
-		if currentMax.CompareAndSwap(current, value) {
-			return
-		}
-	}
 }
 
 type customBatchServerPlugin struct {
