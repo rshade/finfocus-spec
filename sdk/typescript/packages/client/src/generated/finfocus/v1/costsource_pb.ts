@@ -236,6 +236,11 @@ export type GetActualCostRequest = Message<"finfocus.v1.GetActualCostRequest"> &
    * Empty string requests the first page of results.
    * Ignored when dry_run is true.
    *
+   * IMPORTANT: page_token is an OPAQUE value. Clients MUST NOT parse, validate,
+   * or construct page tokens manually. The token format is an implementation
+   * detail subject to change without notice. Always pass tokens back verbatim
+   * as received from next_page_token in the response.
+   *
    * @generated from field: string page_token = 8;
    */
   pageToken: string;
@@ -281,6 +286,11 @@ export type GetActualCostResponse = Message<"finfocus.v1.GetActualCostResponse">
    * next_page_token is the token for retrieving the next page of results.
    * Non-empty when additional pages are available. Empty when this is the
    * last page or when all results fit in a single response.
+   *
+   * IMPORTANT: next_page_token is an OPAQUE value. Clients MUST NOT parse,
+   * validate, or construct page tokens manually. The token format is an
+   * implementation detail subject to change without notice. Always pass this
+   * token back verbatim as page_token in the next GetActualCost request.
    *
    * @generated from field: string next_page_token = 4;
    */
@@ -1888,7 +1898,12 @@ export type GetRecommendationsRequest = Message<"finfocus.v1.GetRecommendationsR
   pageSize: number;
 
   /**
-   * page_token is the continuation token from a previous response
+   * page_token is the continuation token from a previous response.
+   *
+   * IMPORTANT: page_token is an OPAQUE value. Clients MUST NOT parse, validate,
+   * or construct page tokens manually. The token format is an implementation
+   * detail subject to change without notice. Always pass tokens back verbatim
+   * as received from next_page_token in the response.
    *
    * @generated from field: string page_token = 4;
    */
@@ -1978,7 +1993,12 @@ export type GetRecommendationsResponse = Message<"finfocus.v1.GetRecommendations
   summary?: RecommendationSummary;
 
   /**
-   * next_page_token is the token for retrieving the next page (empty if last)
+   * next_page_token is the token for retrieving the next page (empty if last).
+   *
+   * IMPORTANT: next_page_token is an OPAQUE value. Clients MUST NOT parse,
+   * validate, or construct page tokens manually. The token format is an
+   * implementation detail subject to change without notice. Always pass this
+   * token back verbatim as page_token in the next GetRecommendations request.
    *
    * @generated from field: string next_page_token = 3;
    */
@@ -3367,6 +3387,10 @@ export type ActualCostData = Message<"finfocus.v1.ActualCostData"> & {
   /**
    * pagination token for retrieving additional results for this resource.
    * If empty, all results for this resource have been returned.
+   *
+   * IMPORTANT: next_page_token is an OPAQUE value. Clients MUST NOT parse,
+   * validate, or construct page tokens manually. The token format is an
+   * implementation detail subject to change without notice.
    *
    * Pagination continuation workflow:
    *   BatchCostRequest does not accept page tokens, so when this field is

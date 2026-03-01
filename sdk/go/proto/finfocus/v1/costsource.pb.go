@@ -1158,6 +1158,11 @@ type GetActualCostRequest struct {
 	// page_token is the continuation token from a previous GetActualCost response.
 	// Empty string requests the first page of results.
 	// Ignored when dry_run is true.
+	//
+	// IMPORTANT: page_token is an OPAQUE value. Clients MUST NOT parse, validate,
+	// or construct page tokens manually. The token format is an implementation
+	// detail subject to change without notice. Always pass tokens back verbatim
+	// as received from next_page_token in the response.
 	PageToken     string `protobuf:"bytes,8,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1263,6 +1268,11 @@ type GetActualCostResponse struct {
 	// next_page_token is the token for retrieving the next page of results.
 	// Non-empty when additional pages are available. Empty when this is the
 	// last page or when all results fit in a single response.
+	//
+	// IMPORTANT: next_page_token is an OPAQUE value. Clients MUST NOT parse,
+	// validate, or construct page tokens manually. The token format is an
+	// implementation detail subject to change without notice. Always pass this
+	// token back verbatim as page_token in the next GetActualCost request.
 	NextPageToken string `protobuf:"bytes,4,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	// total_count is the total number of matching cost records across all pages.
 	// Optional: may be 0 if the total is expensive to compute.
@@ -3692,7 +3702,12 @@ type GetRecommendationsRequest struct {
 	ProjectionPeriod string `protobuf:"bytes,2,opt,name=projection_period,json=projectionPeriod,proto3" json:"projection_period,omitempty"`
 	// page_size is the maximum number of recommendations to return (default: 50, max: 1000)
 	PageSize int32 `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	// page_token is the continuation token from a previous response
+	// page_token is the continuation token from a previous response.
+	//
+	// IMPORTANT: page_token is an OPAQUE value. Clients MUST NOT parse, validate,
+	// or construct page tokens manually. The token format is an implementation
+	// detail subject to change without notice. Always pass tokens back verbatim
+	// as received from next_page_token in the response.
 	PageToken string `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	// excluded_recommendation_ids contains IDs of recommendations to exclude from results.
 	// Use this to filter out recommendations that have been dismissed by users.
@@ -3824,7 +3839,12 @@ type GetRecommendationsResponse struct {
 	// in this response page (not across all pages). Clients should aggregate
 	// summaries across pages if global totals are needed.
 	Summary *RecommendationSummary `protobuf:"bytes,2,opt,name=summary,proto3" json:"summary,omitempty"`
-	// next_page_token is the token for retrieving the next page (empty if last)
+	// next_page_token is the token for retrieving the next page (empty if last).
+	//
+	// IMPORTANT: next_page_token is an OPAQUE value. Clients MUST NOT parse,
+	// validate, or construct page tokens manually. The token format is an
+	// implementation detail subject to change without notice. Always pass this
+	// token back verbatim as page_token in the next GetRecommendations request.
 	NextPageToken string `protobuf:"bytes,3,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -6143,6 +6163,10 @@ type ActualCostData struct {
 	FallbackHint FallbackHint `protobuf:"varint,2,opt,name=fallback_hint,json=fallbackHint,proto3,enum=finfocus.v1.FallbackHint" json:"fallback_hint,omitempty"`
 	// pagination token for retrieving additional results for this resource.
 	// If empty, all results for this resource have been returned.
+	//
+	// IMPORTANT: next_page_token is an OPAQUE value. Clients MUST NOT parse,
+	// validate, or construct page tokens manually. The token format is an
+	// implementation detail subject to change without notice.
 	//
 	// Pagination continuation workflow:
 	//
