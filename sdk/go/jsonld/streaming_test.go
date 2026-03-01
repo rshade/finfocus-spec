@@ -761,3 +761,188 @@ func TestSerializeStream_MaxRecordSizeLimit(t *testing.T) {
 		t.Errorf("Expected ErrRecordTooLarge, got %v", result.Errors[0].Err)
 	}
 }
+
+func TestStreamResult_IsOutputValid(t *testing.T) {
+	tests := []struct {
+		name              string
+		corruptedOnCancel bool
+		expected          bool
+	}{
+		{
+			name:              "valid output - not corrupted",
+			corruptedOnCancel: false,
+			expected:          true,
+		},
+		{
+			name:              "invalid output - corrupted on cancel",
+			corruptedOnCancel: true,
+			expected:          false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := &jsonld.StreamResult{CorruptedOnCancel: tt.corruptedOnCancel}
+			if got := result.IsOutputValid(); got != tt.expected {
+				t.Errorf("IsOutputValid() = %v, want %v", got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestStreamResult_ValidateOutputJSON(t *testing.T) {
+	tests := []struct {
+		name              string
+		corruptedOnCancel bool
+		data              []byte
+		wantErr           bool
+	}{
+		{
+			name:              "not corrupted - valid JSON",
+			corruptedOnCancel: false,
+			data:              []byte(`[{"key": "value"}]`),
+			wantErr:           false,
+		},
+		{
+			name:              "not corrupted - invalid JSON",
+			corruptedOnCancel: false,
+			data:              []byte(`[{"key": "value"`),
+			wantErr:           false, // Should not validate if not corrupted
+		},
+		{
+			name:              "corrupted - valid JSON",
+			corruptedOnCancel: true,
+			data:              []byte(`[{"key": "value"}]`),
+			wantErr:           false, // Valid JSON passes validation
+		},
+		{
+			name:              "corrupted - invalid JSON",
+			corruptedOnCancel: true,
+			data:              []byte(`[{"key": "value"`),
+			wantErr:           true,
+		},
+		{
+			name:              "corrupted - empty data",
+			corruptedOnCancel: true,
+			data:              []byte(``),
+			wantErr:           true,
+		},
+		{
+			name:              "corrupted - partial record",
+			corruptedOnCancel: true,
+			data:              []byte(`[{"key": "val`),
+			wantErr:           true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := &jsonld.StreamResult{CorruptedOnCancel: tt.corruptedOnCancel}
+			err := result.ValidateOutputJSON(tt.data)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateOutputJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if tt.wantErr && err != nil {
+				if !errors.Is(err, jsonld.ErrOutputCorrupted) {
+					t.Errorf("ValidateOutputJSON() error = %v, want %v", err, jsonld.ErrOutputCorrupted)
+				}
+			}
+		})
+	}
+}
+
+func TestStreamResult_ValidateOutputJSON_Integration(t *testing.T) {
+	// Integration test: test the usage pattern from the issue description.
+	// Uses an unbuffered channel + signal writer to ensure deterministic ordering:
+	// 1. SerializeStream reads the record from the unbuffered channel
+	// 2. The record is written to output (signalWriter notifies)
+	// 3. Only THEN is context cancelled
+	// This eliminates the race between ctx.Done() and channel reads in the select.
+	serializer := jsonld.NewSerializer()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ch := make(chan *pbc.FocusCostRecord) // unbuffered: send blocks until received
+	recordWritten := make(chan struct{})
+	sw := &signalWriter{signal: recordWritten}
+
+	type streamResult struct {
+		result *jsonld.StreamResult
+		err    error
+	}
+	done := make(chan streamResult, 1)
+
+	// Start serialization first so it's ready to receive from the channel
+	go func() {
+		result, err := serializer.SerializeStream(ctx, ch, sw)
+		done <- streamResult{result, err}
+	}()
+
+	// Send one record — blocks until SerializeStream reads it (unbuffered channel)
+	ch <- &pbc.FocusCostRecord{
+		BillingAccountId:  "123456789012",
+		ChargePeriodStart: &timestamppb.Timestamp{Seconds: 1735689600},
+		ServiceName:       "Amazon EC2",
+		BilledCost:        100.0,
+		BillingCurrency:   "USD",
+	}
+
+	// Wait until the record data has been written to output (RecordsWritten > 0 guaranteed)
+	<-recordWritten
+
+	// Cancel context after record is written — CorruptedOnCancel will be true
+	cancel()
+
+	// Wait for SerializeStream to return, then close the channel
+	sr := <-done
+	close(ch)
+
+	// Should return context.Canceled error
+	if !errors.Is(sr.err, context.Canceled) {
+		t.Fatalf("Expected context.Canceled error, got %v", sr.err)
+	}
+
+	// CorruptedOnCancel must be true since records were written before cancel
+	if !sr.result.CorruptedOnCancel {
+		t.Fatal("Expected CorruptedOnCancel to be true when records were written before cancel")
+	}
+
+	// Validate usage pattern from issue description
+	if valErr := sr.result.ValidateOutputJSON(sw.Bytes()); valErr != nil {
+		if !errors.Is(valErr, jsonld.ErrOutputCorrupted) {
+			t.Errorf("Expected ErrOutputCorrupted, got %v", valErr)
+		}
+		t.Logf("Output corrupted and invalid - would retry: %v", valErr)
+	} else {
+		t.Log("Output is valid despite cancellation")
+	}
+
+	// Assert that IsOutputValid() reports false for cancelled stream
+	if sr.result.IsOutputValid() {
+		t.Fatal("Expected IsOutputValid() to return false for cancelled stream, got true")
+	}
+}
+
+// signalWriter wraps bytes.Buffer and signals after the first record data is written.
+// The first Write is the opening bracket "[\n"; subsequent writes contain record data.
+type signalWriter struct {
+	bytes.Buffer
+
+	writes int
+	signal chan struct{}
+	once   sync.Once
+}
+
+func (w *signalWriter) Write(p []byte) (int, error) {
+	n, err := w.Buffer.Write(p)
+	w.writes++
+	// Signal after the first record data write (write #1 is "[\n", write #2+ is record data)
+	if w.writes > 1 {
+		w.once.Do(func() { close(w.signal) })
+	}
+	return n, err
+}

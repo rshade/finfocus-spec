@@ -25,8 +25,10 @@ The examples below assume the following imports:
 ```go
 import (
     "bytes"
+    "context"
     "fmt"
     "log"
+    "time"
 
     "google.golang.org/protobuf/types/known/timestamppb"
     pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
@@ -63,7 +65,7 @@ serializer := jsonld.NewSerializer()
 records := []*pbc.FocusCostRecord{...} // 10,000+ records
 
 var buf bytes.Buffer
-result, err := serializer.SerializeSlice(records, &buf)
+result, err := serializer.SerializeSlice(context.Background(), records, &buf)
 if err != nil {
     log.Fatal(err)
 }
@@ -192,13 +194,58 @@ if err != nil {
 ### Streaming Errors
 
 ```go
-result, err := serializer.SerializeSlice(records, &buf)
+result, err := serializer.SerializeSlice(context.Background(), records, &buf)
 if result.HasErrors() {
     for _, e := range result.Errors {
         fmt.Printf("Index %d: %v\n", e.Index, e.Err)
     }
 }
 ```
+
+### Context Cancellation and Output Validation
+
+When using context cancellation with streaming operations, the output may be corrupted if
+cancellation occurs mid-stream. Use the helper methods to validate output safety:
+
+```go
+ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+defer cancel()
+
+var buf bytes.Buffer
+result, err := serializer.SerializeStream(ctx, recordsChan, &buf)
+
+// Always check the error first
+if err != nil {
+    // For non-cancel errors (e.g., write failures), the output is unusable
+    if !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
+        return fmt.Errorf("serialization failed: %w", err)
+    }
+    // Context was cancelled — check if the partial output is still valid
+    if !result.IsOutputValid() {
+        // ValidateOutputJSON checks if the buffer contains parseable JSON.
+        // This only proves syntactic validity, not that serialization completed.
+        if valErr := result.ValidateOutputJSON(buf.Bytes()); valErr != nil {
+            // Output is corrupted - must retry from scratch
+            return retry()
+        }
+        // Output is parseable JSON despite cancellation - safe to use
+    }
+}
+// err == nil && result.IsOutputValid(): serialization completed successfully
+```
+
+**Helper Methods**:
+
+- `IsOutputValid()` - Returns `false` if context cancellation may have corrupted the output
+- `ValidateOutputJSON(data []byte) error` - Checks if the buffer contains parseable JSON
+  when `CorruptedOnCancel` is true; does **not** guarantee serialization completed successfully
+
+**Best Practices**:
+
+1. Always check the `err` return value before using the output buffer
+2. Check `IsOutputValid()` when context cancellation is possible
+3. Use `ValidateOutputJSON()` to verify JSON parseability for partial output
+4. Consider transactional writes (write to temp file, rename on success) for critical operations
 
 ## Testing
 

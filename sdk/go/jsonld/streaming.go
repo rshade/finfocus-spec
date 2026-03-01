@@ -67,11 +67,41 @@ var (
 	ErrMaxRecordsExceeded = errors.New("max records limit exceeded")
 	// ErrRecordTooLarge is returned when a single record exceeds the size limit.
 	ErrRecordTooLarge = errors.New("record size exceeds limit")
+	// ErrOutputCorrupted is returned when context cancellation corrupted the output JSON.
+	ErrOutputCorrupted = errors.New("output corrupted during cancellation: JSON is invalid")
 )
 
 // HasErrors returns true if any errors occurred during streaming.
 func (r *StreamResult) HasErrors() bool {
 	return len(r.Errors) > 0
+}
+
+// IsOutputValid returns true if the output can be safely used.
+// Returns false if context cancellation may have corrupted the output.
+func (r *StreamResult) IsOutputValid() bool {
+	return !r.CorruptedOnCancel
+}
+
+// ValidateOutputJSON validates the output if corruption may have occurred.
+// Returns nil if output is valid, error if corrupted and invalid JSON.
+//
+// Usage pattern after context cancellation:
+//
+//	result, err := serializer.SerializeStream(ctx, ch, &buf)
+//	if err != nil && result.CorruptedOnCancel {
+//	    if valErr := result.ValidateOutputJSON(buf.Bytes()); valErr != nil {
+//	        // Must retry from scratch
+//	        return retry()
+//	    }
+//	    // Output is valid despite cancellation
+//	}
+func (r *StreamResult) ValidateOutputJSON(data []byte) error {
+	if r.CorruptedOnCancel {
+		if !json.Valid(data) {
+			return ErrOutputCorrupted
+		}
+	}
+	return nil
 }
 
 // Buffer pool configuration constants.
