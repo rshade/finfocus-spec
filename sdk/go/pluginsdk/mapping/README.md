@@ -149,6 +149,43 @@ mapping.ExtractAWSRegionFromAZ("")         // ""
 mapping.ExtractGCPRegionFromZone("invalid")// "" (fails validation)
 ```
 
+### Sparse Property Scenarios
+
+When processing cost diff requests, property maps may be incomplete (from Pulumi's
+`OldState.Inputs`). Extraction functions return **empty string** for missing properties:
+
+```go
+// Sparse property map from old resource state
+props := map[string]string{
+    "instanceType": "t3.medium",
+    // availabilityZone missing (was provider-computed)
+    // monitoring missing (was defaulted)
+}
+
+sku := mapping.ExtractAWSSKU(props)       // "t3.medium" - present
+region := mapping.ExtractAWSRegion(props) // "" - MISSING
+
+// CRITICAL: Always check extraction results before use
+if region == "" {
+    // Handle sparse property scenario:
+    // Option 1: Signal inability to estimate
+    return signalSparseProperties("region")
+
+    // Option 2: Apply documented default
+    region = "us-east-1"
+    billingDetail += "; region defaulted to us-east-1"
+}
+```
+
+**Best Practice**: Check all extraction results before proceeding with cost calculations. See
+[docs/PROPERTY_MAPPING.md](../../../../docs/PROPERTY_MAPPING.md) section "Sparse Property
+Scenarios" for comprehensive guidance.
+
+**Related Documentation**:
+
+- [PLUGIN_DEVELOPER_GUIDE.md](../../../../PLUGIN_DEVELOPER_GUIDE.md) - "Cost Diff Pattern: Handling Sparse Properties"
+- [docs/ADVANCED_PATTERNS.md](../../../../docs/ADVANCED_PATTERNS.md) - "Cost Diff Patterns: Comparing Resource States"
+
 ## Performance
 
 All functions are optimized for minimal allocation:

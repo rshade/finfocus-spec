@@ -1836,6 +1836,15 @@ func (x *GetPricingSpecResponse) GetSpec() *PricingSpec {
 //   - REQUIRED fields must be non-empty for valid requests
 //   - OPTIONAL fields may be omitted or empty depending on context
 //
+// Sparse Property Scenarios:
+//   - When GetProjectedCost is called for cost diff operations, the ResourceDescriptor
+//     may contain sparse property sets from Pulumi's OldState.Inputs
+//   - OldState.Inputs contains only user-declared inputs, not computed or defaulted values
+//   - Plugins MUST handle sparse scenarios by either:
+//     a) Signaling missing critical properties via billing_detail
+//     b) Applying documented defaults and indicating them in billing_detail
+//   - See PLUGIN_DEVELOPER_GUIDE.md section "Cost Diff Pattern: Handling Sparse Properties"
+//
 // Validation Rules:
 //   - provider: Must be one of: "aws", "azure", "gcp", "kubernetes", "custom"
 //   - resource_type: Must match the plugin's supported resource types
@@ -1857,6 +1866,14 @@ type ResourceDescriptor struct {
 	ResourceType string `protobuf:"bytes,2,opt,name=resource_type,json=resourceType,proto3" json:"resource_type,omitempty"`
 	// sku is the provider-specific SKU or instance size.
 	// OPTIONAL. Required for compute resources, may be omitted for others.
+	//
+	// Sparse Property Note:
+	//   - May be empty when called with old resource state (OldState.Inputs)
+	//   - Plugins should use pluginsdk.ValidateProjectedCostRequestLenient() for
+	//     cost diff scenarios to allow empty SKU
+	//   - When empty, plugins MUST signal via billing_detail rather than returning
+	//     misleading cost estimates
+	//
 	// Examples:
 	//   - AWS: "t3.micro", "m5.large"
 	//   - Azure: "Standard_B1s", "Standard_D2s_v3"
@@ -1865,6 +1882,12 @@ type ResourceDescriptor struct {
 	Sku string `protobuf:"bytes,3,opt,name=sku,proto3" json:"sku,omitempty"`
 	// region specifies the deployment region.
 	// OPTIONAL. Required for regional resources, omit for global resources.
+	//
+	// Sparse Property Note:
+	//   - May be empty when called with old resource state if region was provider-assigned
+	//   - Plugins may apply default region but MUST document it in billing_detail
+	//   - Consider using ValidateProjectedCostRequestLenient() to allow empty region
+	//
 	// Examples:
 	//   - AWS: "us-east-1", "eu-west-1"
 	//   - Azure: "eastus", "westeurope"
@@ -1873,6 +1896,13 @@ type ResourceDescriptor struct {
 	Region string `protobuf:"bytes,4,opt,name=region,proto3" json:"region,omitempty"`
 	// tags provide label/tag hints for resource identification and filtering.
 	// OPTIONAL. Used for additional resource matching and cost allocation.
+	//
+	// Sparse Property Note:
+	//   - May contain incomplete property sets when called with OldState.Inputs
+	//   - Properties that were computed or defaulted by the provider will be missing
+	//   - Plugins MUST check for empty extraction results from mapping helpers
+	//   - See docs/PROPERTY_MAPPING.md section "Sparse Property Scenarios"
+	//
 	// Examples: {"app": "web", "env": "production", "team": "platform"}
 	// Both keys and values should be non-empty when provided.
 	Tags map[string]string `protobuf:"bytes,5,rep,name=tags,proto3" json:"tags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`

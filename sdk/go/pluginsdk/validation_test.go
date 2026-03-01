@@ -454,3 +454,288 @@ func BenchmarkIsUtilizationValid_Invalid(b *testing.B) {
 		_ = pluginsdk.IsUtilizationValid(1.5)
 	}
 }
+
+func TestValidateProjectedCostRequestLenient(t *testing.T) {
+	tests := []struct {
+		name    string
+		req     *pbc.GetProjectedCostRequest
+		wantErr error
+	}{
+		{
+			name:    "nil request returns error",
+			req:     nil,
+			wantErr: pluginsdk.ErrProjectedCostRequestNil,
+		},
+		{
+			name:    "nil resource returns error",
+			req:     &pbc.GetProjectedCostRequest{Resource: nil},
+			wantErr: pluginsdk.ErrProjectedCostResourceNil,
+		},
+		{
+			name:    "unset resource field returns error",
+			req:     &pbc.GetProjectedCostRequest{},
+			wantErr: pluginsdk.ErrProjectedCostResourceNil,
+		},
+		{
+			name: "empty provider returns error",
+			req: &pbc.GetProjectedCostRequest{
+				Resource: &pbc.ResourceDescriptor{
+					Provider:     "",
+					ResourceType: "ec2",
+				},
+			},
+			wantErr: pluginsdk.ErrProjectedCostProviderEmpty,
+		},
+		{
+			name: "empty resource_type returns error",
+			req: &pbc.GetProjectedCostRequest{
+				Resource: &pbc.ResourceDescriptor{
+					Provider:     "aws",
+					ResourceType: "",
+				},
+			},
+			wantErr: pluginsdk.ErrProjectedCostResourceTypeEmpty,
+		},
+		{
+			name: "empty sku is ALLOWED in lenient mode",
+			req: &pbc.GetProjectedCostRequest{
+				Resource: &pbc.ResourceDescriptor{
+					Provider:     "aws",
+					ResourceType: "ec2",
+					Sku:          "",
+					Region:       "us-east-1",
+				},
+			},
+			wantErr: nil, // No error - lenient mode allows empty SKU
+		},
+		{
+			name: "empty region is ALLOWED in lenient mode",
+			req: &pbc.GetProjectedCostRequest{
+				Resource: &pbc.ResourceDescriptor{
+					Provider:     "aws",
+					ResourceType: "ec2",
+					Sku:          "t3.micro",
+					Region:       "",
+				},
+			},
+			wantErr: nil, // No error - lenient mode allows empty region
+		},
+		{
+			name: "both sku and region empty is ALLOWED in lenient mode",
+			req: &pbc.GetProjectedCostRequest{
+				Resource: &pbc.ResourceDescriptor{
+					Provider:     "aws",
+					ResourceType: "ec2",
+					Sku:          "",
+					Region:       "",
+				},
+			},
+			wantErr: nil, // No error - lenient mode allows sparse properties
+		},
+		{
+			name: "valid complete request returns nil",
+			req: &pbc.GetProjectedCostRequest{
+				Resource: &pbc.ResourceDescriptor{
+					Provider:     "aws",
+					ResourceType: "ec2",
+					Sku:          "t3.micro",
+					Region:       "us-east-1",
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "sparse old state properties passes validation",
+			req: &pbc.GetProjectedCostRequest{
+				Resource: &pbc.ResourceDescriptor{
+					Provider:     "aws",
+					ResourceType: "ec2",
+					Tags: map[string]string{
+						"instanceType": "t3.medium",
+						// availabilityZone missing
+						// monitoring missing
+					},
+					// SKU and region extracted from tags - may be empty
+					Sku:    "",
+					Region: "",
+				},
+			},
+			wantErr: nil, // Lenient mode allows this
+		},
+		{
+			name: "utilization too high still returns error",
+			req: &pbc.GetProjectedCostRequest{
+				UtilizationPercentage: 1.1,
+				Resource: &pbc.ResourceDescriptor{
+					Provider:     "aws",
+					ResourceType: "ec2",
+					Sku:          "",
+					Region:       "",
+				},
+			},
+			wantErr: pluginsdk.ErrUtilizationOutOfRange,
+		},
+		{
+			name: "utilization too low still returns error",
+			req: &pbc.GetProjectedCostRequest{
+				UtilizationPercentage: -0.1,
+				Resource: &pbc.ResourceDescriptor{
+					Provider:     "aws",
+					ResourceType: "ec2",
+					Sku:          "",
+					Region:       "",
+				},
+			},
+			wantErr: pluginsdk.ErrUtilizationOutOfRange,
+		},
+		{
+			name: "resource utilization override too high still returns error",
+			req: &pbc.GetProjectedCostRequest{
+				Resource: &pbc.ResourceDescriptor{
+					Provider:              "aws",
+					ResourceType:          "ec2",
+					Sku:                   "",
+					Region:                "",
+					UtilizationPercentage: proto.Float64(1.1),
+				},
+			},
+			wantErr: pluginsdk.ErrUtilizationOutOfRange,
+		},
+		{
+			name: "valid utilization with sparse properties passes",
+			req: &pbc.GetProjectedCostRequest{
+				UtilizationPercentage: 0.75,
+				Resource: &pbc.ResourceDescriptor{
+					Provider:              "aws",
+					ResourceType:          "ec2",
+					Sku:                   "",
+					Region:                "",
+					UtilizationPercentage: proto.Float64(0.5),
+				},
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := pluginsdk.ValidateProjectedCostRequestLenient(tt.req)
+			if !errors.Is(err, tt.wantErr) {
+				t.Errorf("ValidateProjectedCostRequestLenient() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidateProjectedCostRequestLenient_DifferenceFromStrictValidation(t *testing.T) {
+	t.Run("strict validation rejects empty sku", func(t *testing.T) {
+		req := &pbc.GetProjectedCostRequest{
+			Resource: &pbc.ResourceDescriptor{
+				Provider:     "aws",
+				ResourceType: "ec2",
+				Sku:          "",
+				Region:       "us-east-1",
+			},
+		}
+
+		// Strict validation should fail
+		err := pluginsdk.ValidateProjectedCostRequest(req)
+		if err == nil {
+			t.Error("ValidateProjectedCostRequest() expected error for empty sku, got nil")
+		}
+		if !errors.Is(err, pluginsdk.ErrProjectedCostSkuEmpty) {
+			t.Errorf("ValidateProjectedCostRequest() expected ErrProjectedCostSkuEmpty, got %v", err)
+		}
+
+		// Lenient validation should pass
+		err = pluginsdk.ValidateProjectedCostRequestLenient(req)
+		if err != nil {
+			t.Errorf("ValidateProjectedCostRequestLenient() unexpected error: %v", err)
+		}
+	})
+
+	t.Run("strict validation rejects empty region", func(t *testing.T) {
+		req := &pbc.GetProjectedCostRequest{
+			Resource: &pbc.ResourceDescriptor{
+				Provider:     "aws",
+				ResourceType: "ec2",
+				Sku:          "t3.micro",
+				Region:       "",
+			},
+		}
+
+		// Strict validation should fail
+		err := pluginsdk.ValidateProjectedCostRequest(req)
+		if err == nil {
+			t.Error("ValidateProjectedCostRequest() expected error for empty region, got nil")
+		}
+		if !errors.Is(err, pluginsdk.ErrProjectedCostRegionEmpty) {
+			t.Errorf("ValidateProjectedCostRequest() expected ErrProjectedCostRegionEmpty, got %v", err)
+		}
+
+		// Lenient validation should pass
+		err = pluginsdk.ValidateProjectedCostRequestLenient(req)
+		if err != nil {
+			t.Errorf("ValidateProjectedCostRequestLenient() unexpected error: %v", err)
+		}
+	})
+
+	t.Run("both validations accept complete requests", func(t *testing.T) {
+		req := &pbc.GetProjectedCostRequest{
+			Resource: &pbc.ResourceDescriptor{
+				Provider:     "aws",
+				ResourceType: "ec2",
+				Sku:          "t3.micro",
+				Region:       "us-east-1",
+			},
+		}
+
+		// Both should pass
+		if err := pluginsdk.ValidateProjectedCostRequest(req); err != nil {
+			t.Errorf("ValidateProjectedCostRequest() unexpected error: %v", err)
+		}
+		if err := pluginsdk.ValidateProjectedCostRequestLenient(req); err != nil {
+			t.Errorf("ValidateProjectedCostRequestLenient() unexpected error: %v", err)
+		}
+	})
+
+	t.Run("both validations reject structural errors", func(t *testing.T) {
+		req := &pbc.GetProjectedCostRequest{
+			Resource: &pbc.ResourceDescriptor{
+				Provider:     "",
+				ResourceType: "ec2",
+				Sku:          "t3.micro",
+				Region:       "us-east-1",
+			},
+		}
+
+		// Both should fail with same error
+		strictErr := pluginsdk.ValidateProjectedCostRequest(req)
+		lenientErr := pluginsdk.ValidateProjectedCostRequestLenient(req)
+
+		if !errors.Is(strictErr, pluginsdk.ErrProjectedCostProviderEmpty) {
+			t.Errorf("ValidateProjectedCostRequest() expected ErrProjectedCostProviderEmpty, got %v", strictErr)
+		}
+		if !errors.Is(lenientErr, pluginsdk.ErrProjectedCostProviderEmpty) {
+			t.Errorf("ValidateProjectedCostRequestLenient() expected ErrProjectedCostProviderEmpty, got %v", lenientErr)
+		}
+	})
+}
+
+// BenchmarkValidateProjectedCostRequestLenient validates the zero-allocation claim.
+func BenchmarkValidateProjectedCostRequestLenient(b *testing.B) {
+	req := &pbc.GetProjectedCostRequest{
+		Resource: &pbc.ResourceDescriptor{
+			Provider:     "aws",
+			ResourceType: "ec2",
+			Sku:          "",
+			Region:       "",
+		},
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		_ = pluginsdk.ValidateProjectedCostRequestLenient(req)
+	}
+}
