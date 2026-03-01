@@ -86,6 +86,13 @@ var (
 // for risk scores while being large enough to catch representation errors.
 const spotRiskEpsilon = 1e-9
 
+// Metadata validation limits.
+const (
+	maxMetadataEntries  = 32
+	maxMetadataKeyLen   = 64
+	maxMetadataValueLen = 1024
+)
+
 // ValidateProjectedCostRequest validates a GetProjectedCostRequest for required fields.
 // This function is designed for use in both:
 //   - Core: Pre-flight validation before sending requests to plugins
@@ -561,6 +568,11 @@ func ValidateGetProjectedCostResponse(resp *pbc.GetProjectedCostResponse) error 
 		}
 	}
 
+	// Validate metadata map constraints
+	if err := validateMetadataMap(resp.GetMetadata()); err != nil {
+		return fmt.Errorf("GetProjectedCostResponse: %w", err)
+	}
+
 	return nil
 }
 
@@ -596,4 +608,35 @@ func CheckSpotRiskConsistency(category pbc.FocusPricingCategory, score float64) 
 	}
 
 	return warnings
+}
+
+// validateMetadataMap validates a metadata map for size and content constraints.
+// Limits: max 32 entries, keys 1-64 bytes printable ASCII, values max 1024 bytes.
+func validateMetadataMap(m map[string]string) error {
+	if len(m) == 0 {
+		return nil
+	}
+
+	if len(m) > maxMetadataEntries {
+		return fmt.Errorf("metadata has %d entries, max %d", len(m), maxMetadataEntries)
+	}
+
+	for k, v := range m {
+		if len(k) == 0 {
+			return errors.New("metadata contains empty key")
+		}
+		if len(k) > maxMetadataKeyLen {
+			return fmt.Errorf("metadata key %q exceeds max length %d", k, maxMetadataKeyLen)
+		}
+		for i := range len(k) {
+			if k[i] < 0x20 || k[i] > 0x7E {
+				return fmt.Errorf("metadata key %q contains non-printable ASCII at byte %d", k, i)
+			}
+		}
+		if len(v) > maxMetadataValueLen {
+			return fmt.Errorf("metadata value for key %q exceeds max length %d", k, maxMetadataValueLen)
+		}
+	}
+
+	return nil
 }

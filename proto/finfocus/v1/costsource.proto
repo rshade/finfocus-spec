@@ -488,6 +488,23 @@ message GetProjectedCostResponse {
   //   - Stable pricing: Set far future for resources with fixed pricing
   //   - Volatile pricing: Leave unset or set short TTL
   google.protobuf.Timestamp expires_at = 13;
+
+  // metadata carries plugin-specific key-value pairs for downstream
+  // consumers. Keys are namespaced by convention (e.g., "defaults_applied",
+  // "estimate_quality"). Consumers that don't recognize a key MUST ignore it.
+  //
+  // Common use cases:
+  //   - defaults_applied: Comma-separated list of "name=default_value" pairs
+  //     indicating which resource properties used default values
+  //   - estimate_quality: Qualitative signal ("high", "medium", "low") for
+  //     cases where prediction intervals are unavailable. Distinct from the
+  //     structured confidence_level field (field 12), which is a quantitative
+  //     0.0-1.0 value tied to prediction intervals
+  //
+  // Backward compatibility:
+  //   - Empty map when not populated by plugin
+  //   - Existing consumers unaffected (safe to ignore)
+  map<string, string> metadata = 14;
 }
 
 // GetPricingSpecRequest contains the resource descriptor for pricing specification.
