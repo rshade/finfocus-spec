@@ -66,11 +66,11 @@ const (
 
 	// Mock impact metric base values at 100% utilization.
 	// These are arbitrary values for testing purposes only.
-	mockCarbonPerHour      = 100.0 // gCO2e per hour at 100% utilization
-	mockEnergyPerHour      = 1.0   // kWh per hour at 100% utilization
-	mockWaterPerHour       = 5.0   // L per hour at 100% utilization
-	defaultMockBatchSize   = 100
-	defaultInternalErrCode = 13
+	mockCarbonPerHour       = 100.0 // gCO2e per hour at 100% utilization
+	mockEnergyPerHour       = 1.0   // kWh per hour at 100% utilization
+	mockWaterPerHour        = 5.0   // L per hour at 100% utilization
+	defaultMockBatchSize    = 100
+	fallbackInternalErrCode = int32(codes.Internal) // Fallback error code for overflow cases
 )
 
 // MockPlugin provides a configurable mock implementation of CostSourceServiceServer.
@@ -761,11 +761,11 @@ func batchResourceErrorFromErr(err error) *pbc.ResourceError {
 }
 
 // batchGRPCCodeToInt32 converts a gRPC `codes.Code` value (uint32) to an `int32` suitable for protobuf fields.
-// If the code exceeds `math.MaxInt32`, `defaultInternalErrCode` is returned to avoid overflow.
+// If the code exceeds `math.MaxInt32`, `fallbackInternalErrCode` is returned to avoid overflow.
 func batchGRPCCodeToInt32(code codes.Code) int32 {
 	codeValue := int64(code)
 	if codeValue > math.MaxInt32 {
-		return defaultInternalErrCode
+		return fallbackInternalErrCode
 	}
 	//nolint:gosec // Overflow impossible: codeValue is in [0, math.MaxInt32] after the bounds check above.
 	return int32(codeValue)
