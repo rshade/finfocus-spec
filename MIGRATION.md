@@ -127,6 +127,72 @@ go build ./...
 go test ./...
 ```
 
+### Breaking Changes in SDK Interfaces
+
+#### DryRunHandler.HandleDryRun Interface Change (v0.5.7+)
+
+The `DryRunHandler` interface signature has been updated to include a `context.Context` parameter
+for proper cancellation propagation in batch operations. This is a **compile-time breaking change**
+that affects all plugins implementing the DryRunHandler interface.
+
+##### Interface Signature Change
+
+**Before (pre-v0.5.7):**
+
+```go
+type DryRunHandler interface {
+    HandleDryRun(req *pbc.DryRunRequest) (*pbc.DryRunResponse, error)
+}
+```
+
+**After (v0.5.7+):**
+
+```go
+type DryRunHandler interface {
+    HandleDryRun(ctx context.Context, req *pbc.DryRunRequest) (*pbc.DryRunResponse, error)
+}
+```
+
+##### Migration Steps for Plugin Developers
+
+If your plugin implements the `DryRunHandler` interface, you must update your implementation:
+
+**Add context.Context parameter:**
+
+```go
+// Old implementation (will not compile with v0.5.7+)
+func (p *MyPlugin) HandleDryRun(req *pbc.DryRunRequest) (*pbc.DryRunResponse, error) {
+    // Implementation
+}
+
+// New implementation (required for v0.5.7+)
+func (p *MyPlugin) HandleDryRun(ctx context.Context, req *pbc.DryRunRequest) (*pbc.DryRunResponse, error) {
+    mappings := pluginsdk.AllFieldsWithStatus(pbc.FieldSupportStatus_FIELD_SUPPORT_STATUS_SUPPORTED)
+
+    return pluginsdk.NewDryRunResponse(
+        pluginsdk.WithFieldMappings(mappings),
+        pluginsdk.WithResourceTypeSupported(true),
+    ), nil
+}
+```
+
+##### Why This Change Was Necessary
+
+This change enables:
+
+- **Batch operation cancellation**: Hosts can cancel in-flight DryRun requests during batch operations
+- **Timeout enforcement**: Proper timeout handling for DryRun requests
+- **Request tracing**: Context propagation for distributed tracing in complex plugin chains
+- **Resource cleanup**: Graceful handling of request cancellation to prevent resource leaks
+
+##### Impact Assessment
+
+- **Severity**: Breaking change (compile-time error)
+- **Affected plugins**: Only plugins that implement the `DryRunHandler` interface
+- **Detection**: Compilation will fail with signature mismatch error
+- **Mitigation**: Update method signature to include `context.Context` parameter (simple mechanical change)
+- **Version**: Introduced in v0.5.7
+
 ## Backwards Compatibility
 
 The SDK implements **full backwards compatibility** with multi-layer fallback chains. If a
