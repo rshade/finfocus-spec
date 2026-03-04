@@ -335,6 +335,36 @@ func (s *Server) GetGlobalCapabilities() []pbc.PluginCapability {
 	return append([]pbc.PluginCapability{}, s.globalCapabilities...)
 }
 
+// SetBatchWorkersForTesting sets the batch worker pool size for testing purposes.
+// workers must be in the range [MinBatchWorkers, MaxBatchWorkers]. Values outside
+// this range are clamped to the nearest bound.
+//
+// This method intentionally does NOT mirror resolveBatchWorkers semantics used by
+// the Serve path: values below MinBatchWorkers clamp to MinBatchWorkers here,
+// while Serve treats non-positive values as DefaultBatchWorkers. The stricter
+// clamping behavior allows tests to force single-worker fallback execution.
+//
+// This method is exported to support cross-package integration tests and is not
+// protected by build tags. Production code should configure BatchWorkers via
+// ServeConfig to preserve production defaults.
+//
+// This method should only be used in tests to verify concurrency behavior.
+// Returns the server to allow method chaining.
+//
+// Example:
+//
+//	server := pluginsdk.NewServer(plugin).SetBatchWorkersForTesting(1)
+func (s *Server) SetBatchWorkersForTesting(workers int) *Server {
+	if workers < MinBatchWorkers {
+		workers = MinBatchWorkers
+	}
+	if workers > MaxBatchWorkers {
+		workers = MaxBatchWorkers
+	}
+	s.batchWorkers = workers
+	return s
+}
+
 // Name implements the gRPC Name method.
 func (s *Server) Name(_ context.Context, _ *pbc.NameRequest) (*pbc.NameResponse, error) {
 	return &pbc.NameResponse{Name: s.plugin.Name()}, nil
