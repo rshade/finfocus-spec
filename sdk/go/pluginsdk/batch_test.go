@@ -29,10 +29,11 @@ func TestValidateBatchCostRequestActualRequiresTimeRange(t *testing.T) {
 		},
 	}
 
-	_, err := ValidateBatchCostRequest(req, DefaultMaxBatchSize)
+	result, err := ValidateBatchCostRequest(req, DefaultMaxBatchSize)
 	require.Error(t, err)
 	assert.Equal(t, codes.InvalidArgument, status.Code(err))
 	assert.Contains(t, err.Error(), "start and end are required")
+	assert.Nil(t, result.EarlyResponse, "EarlyResponse must be nil when error is returned")
 }
 
 func TestValidateBatchCostRequestActualStartBeforeEnd(t *testing.T) {
@@ -46,10 +47,23 @@ func TestValidateBatchCostRequestActualStartBeforeEnd(t *testing.T) {
 		},
 	}
 
-	_, err := ValidateBatchCostRequest(req, DefaultMaxBatchSize)
+	result, err := ValidateBatchCostRequest(req, DefaultMaxBatchSize)
 	require.Error(t, err)
 	assert.Equal(t, codes.InvalidArgument, status.Code(err))
 	assert.Contains(t, err.Error(), "start must be before end")
+	assert.Nil(t, result.EarlyResponse, "EarlyResponse must be nil when error is returned")
+}
+
+func TestValidateBatchCostRequestEmptyResourcesReturnsEarlyResponse(t *testing.T) {
+	req := &pbc.BatchCostRequest{
+		QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+		Resources: []*pbc.ResourceDescriptor{},
+	}
+	result, err := ValidateBatchCostRequest(req, DefaultMaxBatchSize)
+	require.NoError(t, err)
+	require.NotNil(t, result.EarlyResponse)
+	assert.Empty(t, result.EarlyResponse.GetResults())
+	assert.Equal(t, int32(DefaultMaxBatchSize), result.EarlyResponse.GetMaxBatchSize())
 }
 
 func TestValidateBatchCostRequestNonActualIgnoresTimeRange(t *testing.T) {
@@ -79,9 +93,9 @@ func TestValidateBatchCostRequestNonActualIgnoresTimeRange(t *testing.T) {
 					{Provider: "aws", ResourceType: "ec2"},
 				},
 			}
-			emptyResp, err := ValidateBatchCostRequest(req, DefaultMaxBatchSize)
+			result, err := ValidateBatchCostRequest(req, DefaultMaxBatchSize)
 			require.NoError(t, err)
-			assert.Nil(t, emptyResp)
+			assert.Nil(t, result.EarlyResponse)
 		})
 	}
 }
@@ -685,11 +699,12 @@ func TestValidateBatchCostRequestResourceDescriptorValidation(t *testing.T) {
 				QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
 				Resources: tc.resources,
 			}
-			_, err := ValidateBatchCostRequest(req, DefaultMaxBatchSize)
+			result, err := ValidateBatchCostRequest(req, DefaultMaxBatchSize)
 			if tc.expectError {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tc.errorText)
 				assert.Equal(t, codes.InvalidArgument, status.Code(err))
+				assert.Nil(t, result.EarlyResponse, "EarlyResponse must be nil when error is returned")
 				// Verify clean error wrapping: the status message (desc) should not
 				// contain a nested "rpc error: code =" from an inner gRPC status.
 				s, ok := status.FromError(err)
