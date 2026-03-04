@@ -145,6 +145,92 @@ func ValidateProjectedCostRequest(req *pbc.GetProjectedCostRequest) error {
 	return nil
 }
 
+// ValidateProjectedCostRequestLenient validates a GetProjectedCostRequest for sparse property scenarios.
+// This function is designed for cost diff operations where the request may contain incomplete
+// property sets from Pulumi's OldState.Inputs.
+//
+// Unlike ValidateProjectedCostRequest, this lenient validator:
+//   - Does NOT require resource.sku to be non-empty
+//   - Does NOT require resource.region to be non-empty
+//   - Still validates structural requirements (non-nil request/resource, provider, resource_type)
+//
+// Use this validator when:
+//   - Processing GetProjectedCostRequest for cost diff baseline (old state properties)
+//   - The caller may provide sparse property maps from historical resource state
+//   - Your plugin can handle or signal missing SKU/region appropriately
+//
+// After lenient validation passes, plugins MUST:
+//   - Check extraction results from mapping helpers (they return "" for missing properties)
+//   - Signal missing critical properties via billing_detail rather than returning misleading costs
+//   - Document any applied defaults in billing_detail
+//
+// Validation order (fail-fast):
+//  1. Request nil check
+//  2. Resource nil check
+//  3. Provider empty check
+//  4. ResourceType empty check
+//  5. Global utilization range check (if non-zero)
+//  6. Resource-level utilization range check (if provided)
+//
+// Performance: Zero allocations on the happy path (valid request returns nil).
+// Error paths allocate for the error message.
+//
+// Example usage:
+//
+//	func (p *MyPlugin) GetProjectedCost(ctx context.Context, req *pbc.GetProjectedCostRequest) (*pbc.GetProjectedCostResponse, error) {
+//	    // Use lenient validation for potential old-state scenarios
+//	    if err := pluginsdk.ValidateProjectedCostRequestLenient(req); err != nil {
+//	        return nil, status.Error(codes.InvalidArgument, err.Error())
+//	    }
+//
+//	    // Check extraction results - may be empty for sparse properties
+//	    sku := mapping.ExtractAWSSKU(req.Resource.Tags)
+//	    if sku == "" {
+//	        // Signal sparse properties rather than guessing
+//	        return &pbc.GetProjectedCostResponse{
+//	            CostPerMonth:  0,
+//	            Currency:      "USD",
+//	            BillingDetail: "SPARSE_PROPERTIES:instanceType|Cannot estimate without SKU",
+//	        }, nil
+//	    }
+//	    // Process with available properties...
+//	}
+//
+// Returns nil if the request is valid, or an error describing the first validation failure.
+func ValidateProjectedCostRequestLenient(req *pbc.GetProjectedCostRequest) error {
+	if req == nil {
+		return ErrProjectedCostRequestNil
+	}
+
+	resource := req.GetResource()
+	if resource == nil {
+		return ErrProjectedCostResourceNil
+	}
+
+	if len(resource.GetProvider()) == 0 {
+		return ErrProjectedCostProviderEmpty
+	}
+
+	if len(resource.GetResourceType()) == 0 {
+		return ErrProjectedCostResourceTypeEmpty
+	}
+
+	// SKU and region validation intentionally omitted for lenient mode
+
+	// Validate utilization values using centralized helper
+	// Global utilization: non-zero values must be valid (protobuf3 default is 0.0)
+	if u := req.GetUtilizationPercentage(); u != 0 && !IsUtilizationValid(u) {
+		return ErrUtilizationOutOfRange
+	}
+
+	// Resource-level utilization: if explicitly set, must be valid
+	if resource.UtilizationPercentage != nil && !IsUtilizationValid(resource.GetUtilizationPercentage()) {
+		return ErrUtilizationOutOfRange
+	}
+
+	return nil
+}
+
 // ValidateSupportsResponse validates a SupportsResponse for correctness.
 //
 // Validation order:

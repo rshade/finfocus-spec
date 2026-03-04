@@ -612,6 +612,415 @@ func (c *PluginChain) GetActualCost(
 }
 ```
 
+## Cost Diff Patterns: Comparing Resource States
+
+The **cost diff** feature enables showing cost impact before applying infrastructure changes by
+calling `GetProjectedCost` twice - once with old state properties and once with new state
+properties. This section covers advanced patterns for handling this use case.
+
+### Understanding the Two-Call Pattern
+
+```go
+// Baseline cost: Properties before the change (OldState.Inputs)
+baselineReq := &pbc.GetProjectedCostRequest{
+    Resource: &pbc.ResourceDescriptor{
+        Provider:     "aws",
+        ResourceType: "ec2",
+        Tags: map[string]string{
+            "instanceType": "t3.medium", // From old state
+            // availabilityZone missing (was computed)
+            // monitoring missing (was defaulted)
+        },
+    },
+}
+baselineResp, err := plugin.GetProjectedCost(ctx, baselineReq)
+if err != nil {
+    return fmt.Errorf("baseline cost lookup failed: %w", err)
+}
+
+// Modified cost: Properties after the change (NewState.Inputs)
+modifiedReq := &pbc.GetProjectedCostRequest{
+    Resource: &pbc.ResourceDescriptor{
+        Provider:     "aws",
+        ResourceType: "ec2",
+        Tags: map[string]string{
+            "instanceType":     "t3.large",  // Updated
+            "availabilityZone": "us-east-1a", // Now present
+            "monitoring":       "detailed",   // Explicitly set
+        },
+    },
+}
+modifiedResp, err := plugin.GetProjectedCost(ctx, modifiedReq)
+if err != nil {
+    return fmt.Errorf("modified cost lookup failed: %w", err)
+}
+
+// Validate responses before use
+if baselineResp == nil || modifiedResp == nil {
+    return fmt.Errorf("received nil response from GetProjectedCost")
+}
+
+// Cost impact
+costDiff := modifiedResp.CostPerMonth - baselineResp.CostPerMonth
+```
+
+### Pattern 1: Graceful Degradation with Partial Properties
+
+When critical properties are missing, signal the limitation rather than returning misleading results:
+
+```go
+func (p *Plugin) GetProjectedCost(
+    ctx context.Context,
+    req *pbc.GetProjectedCostRequest,
+) (*pbc.GetProjectedCostResponse, error) {
+    // Extract using mapping helpers
+    sku := mapping.ExtractAWSSKU(req.Resource.Tags)
+    region := mapping.ExtractAWSRegion(req.Resource.Tags)
+
+    // Check for sparse property scenario
+    if sku == "" {
+        // Cannot estimate without SKU - signal explicitly
+        return pluginsdk.NewProjectedCostResponse(
+            pluginsdk.WithCostPerMonth(0),
+            pluginsdk.WithCurrency("USD"),
+            pluginsdk.WithBillingDetail("SPARSE_PROPERTIES:instanceType|Cannot estimate without instance type"),
+        ), nil
+    }
+
+    // If region is missing, we can try a default but should document it
+    regionDefaulted := false
+    if region == "" {
+        region = "us-east-1"
+        regionDefaulted = true
+    }
+
+    // Proceed with available properties
+    cost, err := p.pricingAPI.GetCost(ctx, sku, region)
+    if err != nil {
+        return nil, status.Errorf(codes.Unavailable, "pricing lookup failed: %v", err)
+    }
+
+    var billingDetail strings.Builder
+    billingDetail.WriteString(fmt.Sprintf("SKU: %s, Region: %s", sku, region))
+    if regionDefaulted {
+        billingDetail.WriteString("; region defaulted to us-east-1")
+    }
+
+    return pluginsdk.NewProjectedCostResponse(
+        pluginsdk.WithCostPerMonth(cost),
+        pluginsdk.WithCurrency("USD"),
+        pluginsdk.WithBillingDetail(billingDetail.String()),
+    ), nil
+}
+```
+
+### Pattern 2: Using Most-Specific Available Properties
+
+Prefer more-specific properties when available, with graceful fallback:
+
+```go
+func extractStorageSize(tags map[string]string) (int, bool, []string) {
+    var defaults []string
+
+    // Try explicit storage specification
+    if size, ok := tags["allocatedStorage"]; ok {
+        return parseSize(size), true, defaults
+    }
+
+    // Try volume configuration
+    if size, ok := tags["volumeSize"]; ok {
+        return parseSize(size), true, defaults
+    }
+
+    // No explicit storage - check if this is a sparse property scenario
+    // by verifying expected keys are present alongside instanceType
+    if _, hasInstanceType := tags["instanceType"]; hasInstanceType {
+        _, hasAMI := tags["ami"]
+        _, hasRegion := tags["region"]
+        if !hasAMI && !hasRegion {
+            // Missing expected keys indicates sparse old state - return 0 with flag
+            return 0, false, defaults
+        }
+    }
+
+    // Use provider default
+    defaultSize := 20 // GB
+    defaults = append(defaults, fmt.Sprintf("allocatedStorage=%dGB", defaultSize))
+    return defaultSize, true, defaults
+}
+
+func (p *Plugin) GetProjectedCost(
+    ctx context.Context,
+    req *pbc.GetProjectedCostRequest,
+) (*pbc.GetProjectedCostResponse, error) {
+    tags := req.Resource.Tags
+
+    sku := mapping.ExtractAWSSKU(tags)
+    if sku == "" {
+        return signalSparseProperties("instanceType")
+    }
+
+    storageGB, hasStorage, defaults := extractStorageSize(tags)
+    if !hasStorage {
+        // Storage property missing and cannot default safely
+        return signalSparseProperties("allocatedStorage")
+    }
+
+    // Include defaults in response
+    var billingDetail strings.Builder
+    billingDetail.WriteString(fmt.Sprintf("Instance: %s, Storage: %dGB", sku, storageGB))
+    if len(defaults) > 0 {
+        billingDetail.WriteString(fmt.Sprintf("; defaults: %s", strings.Join(defaults, ", ")))
+    }
+
+    cost := calculateCost(sku, storageGB)
+    return pluginsdk.NewProjectedCostResponse(
+        pluginsdk.WithCostPerMonth(cost),
+        pluginsdk.WithCurrency("USD"),
+        pluginsdk.WithBillingDetail(billingDetail.String()),
+    ), nil
+}
+```
+
+### Pattern 3: Differentiating Usage Properties from Configuration Properties
+
+Handle missing **usage properties** (requests, data transfer) differently from **configuration
+properties** (instance type, region):
+
+```go
+func (p *Plugin) GetProjectedCost(
+    ctx context.Context,
+    req *pbc.GetProjectedCostRequest,
+) (*pbc.GetProjectedCostResponse, error) {
+    tags := req.Resource.Tags
+
+    // Configuration properties - MUST be present
+    functionMemory := tags["memory"]
+    if functionMemory == "" {
+        return signalSparseProperties("memory")
+    }
+
+    // Usage properties - can estimate with reasonable defaults
+    monthlyRequests := 1000000 // Default 1M requests
+    var defaults []string
+
+    if r, ok := tags["monthlyRequests"]; ok {
+        monthlyRequests = parseInt(r)
+    } else {
+        defaults = append(defaults, "monthlyRequests=1000000")
+    }
+
+    avgDuration := 100.0 // Default 100ms
+    if d, ok := tags["averageDuration"]; ok {
+        avgDuration = parseFloat(d)
+    } else {
+        defaults = append(defaults, "averageDuration=100ms")
+    }
+
+    // Calculate with documented assumptions
+    cost := calculateLambdaCost(functionMemory, monthlyRequests, avgDuration)
+
+    var billingDetail strings.Builder
+    billingDetail.WriteString(fmt.Sprintf(
+        "Memory: %sMB, Requests: %d/mo, Duration: %.0fms",
+        functionMemory, monthlyRequests, avgDuration,
+    ))
+    if len(defaults) > 0 {
+        billingDetail.WriteString(fmt.Sprintf("; assumed: %s", strings.Join(defaults, ", ")))
+    }
+
+    return pluginsdk.NewProjectedCostResponse(
+        pluginsdk.WithCostPerMonth(cost),
+        pluginsdk.WithCurrency("USD"),
+        pluginsdk.WithBillingDetail(billingDetail.String()),
+    ), nil
+}
+```
+
+### Anti-Pattern: Silent Defaulting
+
+**DO NOT** silently apply defaults that produce misleading cost comparisons:
+
+```go
+// WRONG: Silent defaults make cost diffs meaningless
+func (p *Plugin) GetProjectedCost(
+    ctx context.Context,
+    req *pbc.GetProjectedCostRequest,
+) (*pbc.GetProjectedCostResponse, error) {
+    tags := req.Resource.Tags
+
+    // Silently default everything
+    sku := tags["instanceType"]
+    if sku == "" {
+        sku = "t3.micro" // USER DOESN'T KNOW THIS HAPPENED
+    }
+
+    region := tags["region"]
+    if region == "" {
+        region = "us-east-1" // USER DOESN'T KNOW THIS HAPPENED
+    }
+
+    storageGB := parseInt(tags["storage"])
+    if storageGB == 0 {
+        storageGB = 20 // USER DOESN'T KNOW THIS HAPPENED
+    }
+
+    // This cost may be completely wrong but user sees a number
+    cost := calculateCost(sku, region, storageGB)
+    return pluginsdk.NewProjectedCostResponse(
+        pluginsdk.WithCostPerMonth(cost),
+        pluginsdk.WithCurrency("USD"),
+    ), nil
+}
+
+// CORRECT: Document defaults or signal missing properties
+func (p *Plugin) GetProjectedCost(
+    ctx context.Context,
+    req *pbc.GetProjectedCostRequest,
+) (*pbc.GetProjectedCostResponse, error) {
+    tags := req.Resource.Tags
+    var defaults []string
+
+    // Critical property missing - cannot estimate
+    sku := tags["instanceType"]
+    if sku == "" {
+        return signalSparseProperties("instanceType")
+    }
+
+    // Optional property - use default but document it
+    region := tags["region"]
+    if region == "" {
+        region = "us-east-1"
+        defaults = append(defaults, "region=us-east-1")
+    }
+
+    storageGB := parseInt(tags["storage"])
+    if storageGB == 0 {
+        storageGB = 20
+        defaults = append(defaults, "storage=20GB")
+    }
+
+    cost := calculateCost(sku, region, storageGB)
+
+    var billingDetail strings.Builder
+    billingDetail.WriteString(fmt.Sprintf("SKU: %s, Region: %s, Storage: %dGB", sku, region, storageGB))
+    if len(defaults) > 0 {
+        billingDetail.WriteString(fmt.Sprintf("; defaults: %s", strings.Join(defaults, ", ")))
+    }
+
+    return pluginsdk.NewProjectedCostResponse(
+        pluginsdk.WithCostPerMonth(cost),
+        pluginsdk.WithCurrency("USD"),
+        pluginsdk.WithBillingDetail(billingDetail.String()),
+    ), nil
+}
+```
+
+### When NOT to Use FallbackHint for Sparse Properties
+
+`FallbackHint` signals **"resource type not supported"** or **"no data available"**, not **"properties incomplete"**:
+
+| Scenario | Correct Approach | Wrong Approach |
+|---|---|---|
+| SKU missing from old state | Return response with `SPARSE_PROPERTIES` billing detail | `FALLBACK_HINT_REQUIRED` |
+| Region missing from old state | Use default region, document in billing detail | `FALLBACK_HINT_RECOMMENDED` |
+| Usage property missing | Use reasonable default, document in billing detail | `FALLBACK_HINT_RECOMMENDED` |
+| Unsupported resource type | `FALLBACK_HINT_REQUIRED` | Error or $0 response |
+| No billing data available | `FALLBACK_HINT_RECOMMENDED` | Error or $0 response |
+
+**Correct pattern for sparse properties:**
+
+```go
+if sku == "" {
+    // NOT fallback - just incomplete properties
+    return &pbc.GetProjectedCostResponse{
+        CostPerMonth:  0,
+        Currency:      "USD",
+        BillingDetail: "SPARSE_PROPERTIES:instanceType|Cannot estimate without SKU",
+        // FallbackHint is UNSPECIFIED - this is the right response
+    }, nil
+}
+```
+
+### Testing Cost Diff Scenarios
+
+Comprehensive tests should cover realistic old/new state combinations:
+
+```go
+func TestCostDiff_RealWorldScenarios(t *testing.T) {
+    tests := []struct {
+        name         string
+        oldTags      map[string]string
+        newTags      map[string]string
+        wantBaseline float64
+        wantModified float64
+        wantDiff     float64
+    }{
+        {
+            name: "instance type change with sparse old state",
+            oldTags: map[string]string{
+                "instanceType": "t3.medium",
+                // monitoring was defaulted (missing)
+                // availabilityZone was computed (missing)
+            },
+            newTags: map[string]string{
+                "instanceType": "t3.large",
+                "monitoring":   "detailed", // Now explicit
+            },
+            wantBaseline: 30.37,  // t3.medium with basic monitoring (default)
+            wantModified: 80.65,  // t3.large with detailed monitoring
+            wantDiff:     50.28,
+        },
+        {
+            name: "storage increase with complete state",
+            oldTags: map[string]string{
+                "instanceType": "t3.medium",
+                "storage":      "20",
+            },
+            newTags: map[string]string{
+                "instanceType": "t3.medium",
+                "storage":      "100",
+            },
+            wantBaseline: 38.37,  // t3.medium + 20GB
+            wantModified: 46.37,  // t3.medium + 100GB
+            wantDiff:     8.00,
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            // Test baseline
+            baselineReq := &pbc.GetProjectedCostRequest{
+                Resource: &pbc.ResourceDescriptor{
+                    Provider:     "aws",
+                    ResourceType: "ec2",
+                    Tags:         tt.oldTags,
+                },
+            }
+            baselineResp, err := plugin.GetProjectedCost(ctx, baselineReq)
+            require.NoError(t, err)
+            assert.InDelta(t, tt.wantBaseline, baselineResp.CostPerMonth, 0.01)
+
+            // Test modified
+            modifiedReq := &pbc.GetProjectedCostRequest{
+                Resource: &pbc.ResourceDescriptor{
+                    Provider:     "aws",
+                    ResourceType: "ec2",
+                    Tags:         tt.newTags,
+                },
+            }
+            modifiedResp, err := plugin.GetProjectedCost(ctx, modifiedReq)
+            require.NoError(t, err)
+            assert.InDelta(t, tt.wantModified, modifiedResp.CostPerMonth, 0.01)
+
+            // Verify cost diff
+            diff := modifiedResp.CostPerMonth - baselineResp.CostPerMonth
+            assert.InDelta(t, tt.wantDiff, diff, 0.01)
+        })
+    }
+}
+```
+
 ## Cost Aggregation Strategies
 
 ### Time-Based Aggregation

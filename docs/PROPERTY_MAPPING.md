@@ -289,6 +289,191 @@ props := map[string]string{"location": "eastus"}
 region := mapping.ExtractRegion(props)  // "eastus"
 ```
 
+## Sparse Property Scenarios: Old vs New State
+
+When `GetProjectedCost` is called as part of a **cost diff operation**, the plugin receives
+property maps that may be incomplete. Understanding the difference between old state and new state
+properties is critical for accurate cost projections.
+
+### Property Availability by Source
+
+| Property Source | Typical Contents | Completeness |
+|---|---|---|
+| **OldState.Inputs** | User-declared inputs from previous deployment | **Sparse** - Only explicit declarations |
+| **NewState.Inputs** | Current user-declared inputs | **Partial** - Richer than OldState.Inputs but can omit provider-computed/defaulted values |
+| **Computed Values** | Provider-calculated values (e.g., auto-generated IDs) | **Never in OldState.Inputs** |
+
+### Per-Provider Property Patterns
+
+#### AWS Properties
+
+| Property | OldState.Inputs | NewState.Inputs | Notes |
+|---|---|---|---|
+| `instanceType` | ✅ Usually present | ✅ Always present | User-specified |
+| `availabilityZone` | ⚠️ Often missing | ✅ Usually present | May be provider-assigned |
+| `ebsOptimized` | ❌ Rarely present | ✅ Often present | Defaults to false if omitted |
+| `monitoring` | ❌ Rarely present | ⚠️ Sometimes present | Defaults to basic if omitted |
+| `volumeSize` | ⚠️ Depends on declaration | ✅ Usually present | May have provider default |
+
+**Extraction Pattern for AWS:**
+
+```go
+sku := mapping.ExtractAWSSKU(props)
+if sku == "" {
+    // Old state likely missing instanceType - cannot estimate
+    return signalSparseProperties("instanceType")
+}
+
+region := mapping.ExtractAWSRegion(props)
+if region == "" {
+    // availabilityZone missing - may need to use default region
+    region = "us-east-1" // Or signal error
+}
+```
+
+#### Azure Properties
+
+| Property | OldState.Inputs | NewState.Inputs | Notes |
+|---|---|---|---|
+| `vmSize` | ✅ Usually present | ✅ Always present | User-specified |
+| `location` | ✅ Usually present | ✅ Always present | Required at creation |
+| `osDisk.diskSizeGB` | ❌ Often missing | ⚠️ Sometimes present | Provider default varies by SKU |
+| `networkInterfaces` | ❌ Rarely present | ⚠️ Sometimes present | Often computed |
+
+**Extraction Pattern for Azure:**
+
+```go
+sku := mapping.ExtractAzureSKU(props)
+if sku == "" {
+    return signalSparseProperties("vmSize")
+}
+
+// Location is usually stable across old and new state
+region := mapping.ExtractAzureRegion(props)
+```
+
+#### GCP Properties
+
+| Property | OldState.Inputs | NewState.Inputs | Notes |
+|---|---|---|---|
+| `machineType` | ✅ Usually present | ✅ Always present | User-specified |
+| `zone` | ⚠️ Sometimes missing | ✅ Usually present | May be project default |
+| `diskSizeGb` | ❌ Often missing | ⚠️ Sometimes present | Provider default 10GB |
+| `serviceAccount` | ❌ Rarely present | ⚠️ Sometimes present | May use default SA |
+
+**Extraction Pattern for GCP:**
+
+```go
+sku := mapping.ExtractGCPSKU(props)
+if sku == "" {
+    return signalSparseProperties("machineType")
+}
+
+region := mapping.ExtractGCPRegion(props)
+if region == "" {
+    // Zone missing - try project default or signal error
+    return signalSparseProperties("zone")
+}
+```
+
+### Extraction Function Behavior with Sparse Maps
+
+All mapping extraction functions return **empty string** when properties are missing:
+
+```go
+// Empty map
+props := map[string]string{}
+sku := mapping.ExtractAWSSKU(props) // Returns: ""
+
+// Nil map
+var props map[string]string
+sku = mapping.ExtractAWSSKU(props)  // Returns: ""
+
+// Property present but empty
+props = map[string]string{"instanceType": ""}
+sku = mapping.ExtractAWSSKU(props)  // Returns: ""
+```
+
+**Critical Pattern**: Always check extraction results before proceeding:
+
+```go
+// CORRECT: Check before use
+sku := mapping.ExtractAWSSKU(req.Resource.Tags)
+if sku == "" {
+    // Handle sparse property scenario
+    return &pbc.GetProjectedCostResponse{
+        CostPerMonth:  0,
+        Currency:      "USD",
+        BillingDetail: "SPARSE_PROPERTIES:instanceType|Cannot estimate without SKU",
+    }, nil
+}
+
+// WRONG: Assume extraction succeeded
+sku := mapping.ExtractAWSSKU(req.Resource.Tags)
+price := pricingAPI.GetPrice(sku) // May fail or return wrong result
+```
+
+### Testing with Sparse Properties
+
+Plugins should test realistic sparse property scenarios:
+
+```go
+func TestSparseOldStateProperties(t *testing.T) {
+    tests := []struct {
+        name     string
+        props    map[string]string
+        wantErr  bool
+        wantCost float64
+    }{
+        {
+            name: "old state - only instanceType",
+            props: map[string]string{
+                "instanceType": "t3.medium",
+                // No availabilityZone (was provider-assigned)
+                // No ebsOptimized (was defaulted)
+            },
+            wantErr:  false,
+            wantCost: 30.37, // Should use default values
+        },
+        {
+            name: "old state - completely sparse",
+            props: map[string]string{},
+            wantErr:  false,
+            wantCost: 0, // Should signal sparse properties
+        },
+        {
+            name: "new state - complete properties",
+            props: map[string]string{
+                "instanceType":     "t3.large",
+                "availabilityZone": "us-east-1a",
+                "ebsOptimized":     "true",
+            },
+            wantErr:  false,
+            wantCost: 75.65,
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            req := &pbc.GetProjectedCostRequest{
+                Resource: &pbc.ResourceDescriptor{
+                    Provider:     "aws",
+                    ResourceType: "ec2",
+                    Tags:         tt.props,
+                },
+            }
+            resp, err := plugin.GetProjectedCost(ctx, req)
+            if tt.wantErr {
+                assert.Error(t, err)
+            } else {
+                assert.NoError(t, err)
+                assert.Equal(t, tt.wantCost, resp.CostPerMonth)
+            }
+        })
+    }
+}
+```
+
 ## Common Pitfalls
 
 ### 1. Nested Struct Properties

@@ -398,6 +398,196 @@ These two RPCs serve different use cases. Understanding when to use each is impo
 - You need deterministic, cacheable results for cost comparisons
 - You're building Pulumi preview cost estimation features
 
+### Cost Diff Pattern: Handling Sparse Properties
+
+The **cost diff feature** introduces a critical calling pattern where `GetProjectedCost` is called **twice per updated resource**:
+
+1. **Baseline call**: Using `OldState.Inputs` (resource properties before the change)
+2. **Modified call**: Using `NewState.Inputs` (resource properties after the change)
+
+This pattern enables accurate cost impact analysis by comparing the two projections. However,
+`OldState.Inputs` often contains **sparse property sets** because Pulumi stores only the
+explicitly declared inputs, not computed or defaulted values.
+
+#### Why Properties Are Sparse
+
+When Pulumi stores old resource state, it captures the **user-declared inputs** rather than
+the full computed state. This means:
+
+- **Optional properties** that were computed by the provider are missing
+- **Default values** that were applied during previous deployments are not present
+- **Nested structures** may be incomplete or flattened differently
+- **Tags and metadata** may be partially populated
+
+#### Plugin Contract Requirements
+
+Plugins **MUST** handle sparse property scenarios correctly to avoid producing misleading cost
+comparisons:
+
+##### Contract 1: Signal Missing Critical Properties
+
+Do NOT silently return `$0` or apply arbitrary defaults when critical properties are missing. Instead, signal the gap explicitly:
+
+```go
+func (p *Plugin) GetProjectedCost(ctx context.Context, req *pbc.GetProjectedCostRequest) (*pbc.GetProjectedCostResponse, error) {
+    tags := req.Resource.Tags
+
+    instanceType := tags["instanceType"]
+    if instanceType == "" {
+        // Critical property missing - signal inability to estimate
+        return &pbc.GetProjectedCostResponse{
+            CostPerMonth:  0,
+            Currency:      "USD",
+            BillingDetail: "SPARSE_PROPERTIES:instanceType|Cannot estimate without instance type",
+        }, nil
+    }
+
+    // Process valid properties...
+}
+```
+
+##### Contract 2: Document Applied Defaults
+
+When defaulting optional properties, track and communicate which defaults were applied:
+
+```go
+func (p *Plugin) GetProjectedCost(ctx context.Context, req *pbc.GetProjectedCostRequest) (*pbc.GetProjectedCostResponse, error) {
+    tags := req.Resource.Tags
+    var defaultsApplied []string
+
+    // Required property
+    instanceType := tags["instanceType"]
+    if instanceType == "" {
+        return &pbc.GetProjectedCostResponse{
+            CostPerMonth:  0,
+            Currency:      "USD",
+            BillingDetail: "SPARSE_PROPERTIES:instanceType|Cannot estimate",
+        }, nil
+    }
+
+    // Optional property with documented default
+    storageGB := 20 // default
+    if s, ok := tags["allocatedStorage"]; ok {
+        storageGB = parseSize(s)
+    } else {
+        defaultsApplied = append(defaultsApplied, "allocatedStorage=20GB")
+    }
+
+    // Include defaults in billing detail for transparency
+    var billingDetail strings.Builder
+    billingDetail.WriteString(fmt.Sprintf("Instance: %s, Storage: %dGB", instanceType, storageGB))
+    if len(defaultsApplied) > 0 {
+        billingDetail.WriteString(fmt.Sprintf("; defaults applied: %s", strings.Join(defaultsApplied, ", ")))
+    }
+
+    cost := calculateCost(instanceType, storageGB)
+    return &pbc.GetProjectedCostResponse{
+        CostPerMonth:  cost,
+        Currency:      "USD",
+        BillingDetail: billingDetail.String(),
+    }, nil
+}
+```
+
+##### Contract 3: Distinguish Explicit Zero from Missing
+
+Use the presence/absence of map keys to differentiate between "property explicitly set to zero"
+and "property not provided":
+
+```go
+// CORRECT: Check for key presence
+if requestCount, ok := tags["requestCount"]; ok {
+    // User explicitly set requestCount (even if "0")
+    count = parseCount(requestCount)
+} else {
+    // Property missing - this is old state
+    return signalSparseProperties("requestCount")
+}
+
+// WRONG: Treats explicit zero same as missing
+requestCount := tags["requestCount"]
+if requestCount == "" {
+    // Can't distinguish "" from missing!
+}
+```
+
+#### Validation Strategy
+
+For sparse property scenarios, use **lenient validation** that allows missing SKU and region:
+
+```go
+// Use lenient validation for old-state baseline lookups
+err := pluginsdk.ValidateProjectedCostRequestLenient(req)
+if err != nil {
+    return nil, status.Error(codes.InvalidArgument, err.Error())
+}
+
+// Extract properties, checking for empty results
+sku := mapping.ExtractAWSSKU(req.Resource.Tags)
+if sku == "" {
+    // SKU missing - signal sparse properties
+    return &pbc.GetProjectedCostResponse{
+        CostPerMonth:  0,
+        Currency:      "USD",
+        BillingDetail: "SPARSE_PROPERTIES:sku|Cannot estimate without SKU",
+    }, nil
+}
+```
+
+#### Note on FallbackHint
+
+`FallbackHint` is a field on `GetActualCostResponse` and `ActualCostData` only — it is **not part of
+`GetProjectedCostResponse`**. For `GetProjectedCost`, signal missing or sparse properties via the
+`billing_detail` field (e.g., `"SPARSE_PROPERTIES:sku|Cannot estimate without SKU"`) or return a
+structured gRPC error with an appropriate status code. See the examples above for recommended patterns.
+
+#### Testing Your Implementation
+
+Test your plugin with realistic sparse property scenarios:
+
+```go
+func TestCostDiff_SparseOldState(t *testing.T) {
+    plugin := &MyPlugin{}
+
+    // Old state: Only instanceType present (common scenario)
+    oldStateReq := &pbc.GetProjectedCostRequest{
+        Resource: &pbc.ResourceDescriptor{
+            Provider:     "aws",
+            ResourceType: "ec2",
+            Tags: map[string]string{
+                "instanceType": "t3.medium",
+                // allocatedStorage missing (was computed)
+            },
+        },
+    }
+
+    // New state: All properties present
+    newStateReq := &pbc.GetProjectedCostRequest{
+        Resource: &pbc.ResourceDescriptor{
+            Provider:     "aws",
+            ResourceType: "ec2",
+            Tags: map[string]string{
+                "instanceType":     "t3.large",
+                "allocatedStorage": "100",
+            },
+        },
+    }
+
+    oldResp, err := plugin.GetProjectedCost(ctx, oldStateReq)
+    require.NoError(t, err)
+
+    newResp, err := plugin.GetProjectedCost(ctx, newStateReq)
+    require.NoError(t, err)
+
+    // Verify defaults are documented
+    assert.Contains(t, oldResp.BillingDetail, "defaults applied")
+
+    // Cost diff should reflect actual change
+    costDiff := newResp.CostPerMonth - oldResp.CostPerMonth
+    assert.Greater(t, costDiff, 0.0) // Larger instance + explicit storage
+}
+```
+
 ### Implementation Requirements
 
 #### Error Handling
