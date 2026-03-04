@@ -19,6 +19,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/rs/zerolog"
+
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
 
@@ -26,9 +28,24 @@ import (
 // It is called by ActualCostIterator to retrieve each page of data.
 type ActualCostFetchFunc func(ctx context.Context, pageToken string, pageSize int32) (*pbc.GetActualCostResponse, error)
 
+// ActualCostIteratorOption is a functional option for configuring ActualCostIterator.
+type ActualCostIteratorOption func(*ActualCostIterator)
+
+// WithLogger sets a custom logger for the iterator. When not set, the iterator
+// uses the default pluginsdk logger. Use zerolog.Nop() in tests to suppress output.
+func WithLogger(logger zerolog.Logger) ActualCostIteratorOption {
+	return func(it *ActualCostIterator) {
+		it.logger = &logger
+	}
+}
+
 // ActualCostIterator provides a standard Go iterator pattern (Next/Record/Err)
 // for consuming paginated GetActualCost responses. It lazily fetches pages
 // on demand and yields one ActualCostResult at a time.
+//
+// If total_count changes between pages (indicating a dataset mutation mid-iteration),
+// the iterator logs a warning at Warn level. The warning includes previous_total_count,
+// new_total_count, and page_number fields for diagnostics.
 //
 // # Concurrency Safety
 //
@@ -76,6 +93,8 @@ type ActualCostIterator struct {
 	totalCount int32
 	done       bool
 	err        error
+	logger     *zerolog.Logger
+	pageNumber int
 }
 
 // NewActualCostIterator creates a new iterator for consuming paginated actual cost responses.
@@ -84,17 +103,23 @@ type ActualCostIterator struct {
 //   - ctx: Context for cancellation and deadline propagation
 //   - fetchFn: Callback function that makes the GetActualCost RPC call
 //   - pageSize: Number of records to request per page (0 uses server default)
+//   - opts: Optional configuration (e.g., WithLogger)
 func NewActualCostIterator(
 	ctx context.Context,
 	fetchFn ActualCostFetchFunc,
 	pageSize int32,
+	opts ...ActualCostIteratorOption,
 ) *ActualCostIterator {
-	return &ActualCostIterator{
+	it := &ActualCostIterator{
 		ctx:      ctx,
 		fetchFn:  fetchFn,
 		pageSize: pageSize,
 		index:    -1,
 	}
+	for _, o := range opts {
+		o(it)
+	}
+	return it
 }
 
 // maxEmptyPages is the maximum number of consecutive empty pages the iterator
@@ -164,8 +189,25 @@ func (it *ActualCostIterator) Next() bool {
 
 		it.current = resp.GetResults()
 		it.pageToken = resp.GetNextPageToken()
-		it.totalCount = resp.GetTotalCount()
+		newTotalCount := resp.GetTotalCount()
 		it.index = 0
+		it.pageNumber++
+
+		// Track total_count changes across pages (skip first page)
+		if it.pageNumber > 1 && newTotalCount != it.totalCount {
+			// Subsequent page with different total_count: log warning
+			if it.logger == nil {
+				l := newDefaultLogger()
+				it.logger = &l
+			}
+			it.logger.Warn().
+				Int32("previous_total_count", it.totalCount).
+				Int32("new_total_count", newTotalCount).
+				Int("page_number", it.pageNumber).
+				Msg("total_count changed during pagination, underlying dataset may have changed")
+		}
+
+		it.totalCount = newTotalCount
 
 		if len(it.current) > 0 {
 			return true

@@ -15,11 +15,14 @@
 package pluginsdk_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"math"
 	"testing"
+
+	"github.com/rs/zerolog"
 
 	"github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
@@ -318,7 +321,8 @@ func TestActualCostIterator_InconsistentTotalCount(t *testing.T) {
 		}, nil
 	}
 
-	iter := pluginsdk.NewActualCostIterator(context.Background(), fetchFn, 10)
+	nop := zerolog.Nop()
+	iter := pluginsdk.NewActualCostIterator(context.Background(), fetchFn, 10, pluginsdk.WithLogger(nop))
 
 	var collected []*pbc.ActualCostResult
 	for iter.Next() {
@@ -397,5 +401,235 @@ func BenchmarkActualCostIterator_Next(b *testing.B) {
 		if err := iter.Err(); err != nil {
 			b.Fatalf("unexpected error: %v", err)
 		}
+	}
+}
+
+// TestActualCostIterator_ConsistentTotalCount_NoWarning verifies that when
+// total_count is consistent across all pages, no warning is logged.
+func TestActualCostIterator_ConsistentTotalCount_NoWarning(t *testing.T) {
+	var logBuf bytes.Buffer
+	logger := zerolog.New(&logBuf).With().Timestamp().Logger()
+
+	// Create fetch function that returns consistent total_count=30 across all pages
+	callCount := 0
+	fetchFn := func(_ context.Context, _ string, _ int32) (*pbc.GetActualCostResponse, error) {
+		callCount++
+		results := make([]*pbc.ActualCostResult, 10)
+		for i := range results {
+			results[i] = &pbc.ActualCostResult{
+				Cost:   float64((callCount-1)*10 + i + 1),
+				Source: "test",
+			}
+		}
+
+		nextToken := ""
+		if callCount < 3 {
+			nextToken = fmt.Sprintf("page-%d", callCount)
+		}
+
+		return &pbc.GetActualCostResponse{
+			Results:       results,
+			NextPageToken: nextToken,
+			TotalCount:    30, // Consistent across all pages
+		}, nil
+	}
+
+	iter := pluginsdk.NewActualCostIterator(context.Background(), fetchFn, 10, pluginsdk.WithLogger(logger))
+
+	var collected []*pbc.ActualCostResult
+	for iter.Next() {
+		collected = append(collected, iter.Record())
+	}
+
+	if iter.Err() != nil {
+		t.Fatalf("unexpected error: %v", iter.Err())
+	}
+	if len(collected) != 30 {
+		t.Errorf("expected 30 records, got %d", len(collected))
+	}
+
+	// Verify no warning was logged
+	logOutput := logBuf.String()
+	if bytes.Contains(logBuf.Bytes(), []byte("total_count changed")) {
+		t.Errorf("expected no warning for consistent total_count, but got: %s", logOutput)
+	}
+	if bytes.Contains(logBuf.Bytes(), []byte(`"level":"warn"`)) {
+		t.Errorf("expected no warning logs, but found warning in output: %s", logOutput)
+	}
+}
+
+// TestActualCostIterator_InconsistentTotalCount_LogsWarning verifies that when
+// total_count changes between pages, a warning is logged with context.
+func TestActualCostIterator_InconsistentTotalCount_LogsWarning(t *testing.T) {
+	var logBuf bytes.Buffer
+	logger := zerolog.New(&logBuf).With().Timestamp().Logger()
+
+	callCount := 0
+	fetchFn := func(_ context.Context, _ string, _ int32) (*pbc.GetActualCostResponse, error) {
+		callCount++
+		// Return changing TotalCount on each page: 100, 90, 80
+		totalCounts := []int32{100, 90, 80}
+		tc := totalCounts[0]
+		if callCount <= len(totalCounts) {
+			tc = totalCounts[callCount-1]
+		}
+
+		results := make([]*pbc.ActualCostResult, 10)
+		for i := range results {
+			results[i] = &pbc.ActualCostResult{
+				Cost:   float64((callCount-1)*10 + i + 1),
+				Source: "test",
+			}
+		}
+
+		nextToken := ""
+		if callCount < 3 {
+			nextToken = fmt.Sprintf("page-%d", callCount)
+		}
+
+		return &pbc.GetActualCostResponse{
+			Results:       results,
+			NextPageToken: nextToken,
+			TotalCount:    tc,
+		}, nil
+	}
+
+	iter := pluginsdk.NewActualCostIterator(context.Background(), fetchFn, 10, pluginsdk.WithLogger(logger))
+
+	var collected []*pbc.ActualCostResult
+	for iter.Next() {
+		collected = append(collected, iter.Record())
+	}
+
+	if iter.Err() != nil {
+		t.Fatalf("unexpected error: %v", iter.Err())
+	}
+	if len(collected) != 30 {
+		t.Errorf("expected 30 records, got %d", len(collected))
+	}
+
+	// Verify warning was logged
+	logOutput := logBuf.String()
+	if !bytes.Contains(logBuf.Bytes(), []byte("total_count changed")) {
+		t.Errorf("expected warning about total_count change, but got: %s", logOutput)
+	}
+	if !bytes.Contains(logBuf.Bytes(), []byte(`"level":"warn"`)) {
+		t.Errorf("expected warning level log, but got: %s", logOutput)
+	}
+
+	// Verify first transition (100→90): page 2 detects change from page 1
+	if !bytes.Contains(logBuf.Bytes(), []byte(`"previous_total_count":100`)) {
+		t.Errorf("expected previous_total_count=100 in first warning, but got: %s", logOutput)
+	}
+	if !bytes.Contains(logBuf.Bytes(), []byte(`"new_total_count":90`)) {
+		t.Errorf("expected new_total_count=90 in first warning, but got: %s", logOutput)
+	}
+
+	// Verify second transition (90→80): page 3 detects change from page 2
+	if !bytes.Contains(logBuf.Bytes(), []byte(`"previous_total_count":90`)) {
+		t.Errorf("expected previous_total_count=90 in second warning, but got: %s", logOutput)
+	}
+	if !bytes.Contains(logBuf.Bytes(), []byte(`"new_total_count":80`)) {
+		t.Errorf("expected new_total_count=80 in second warning, but got: %s", logOutput)
+	}
+
+	if !bytes.Contains(logBuf.Bytes(), []byte("underlying dataset may have changed")) {
+		t.Errorf("expected warning message about dataset change, but got: %s", logOutput)
+	}
+
+	// Verify page_number fields in warnings (page 2 detects first change, page 3 detects second)
+	if !bytes.Contains(logBuf.Bytes(), []byte(`"page_number":2`)) {
+		t.Errorf("expected page_number=2 in first warning, but got: %s", logOutput)
+	}
+	if !bytes.Contains(logBuf.Bytes(), []byte(`"page_number":3`)) {
+		t.Errorf("expected page_number=3 in second warning, but got: %s", logOutput)
+	}
+
+	// Verify TotalCount() still returns the most recent value
+	if iter.TotalCount() != 80 {
+		t.Errorf("expected TotalCount=80 (most recent), got %d", iter.TotalCount())
+	}
+}
+
+// TestActualCostIterator_UnpopulatedThenPopulatedTotalCount documents the behavior when
+// a server returns total_count=0 (proto3 zero value / unset) on page 1 and then returns
+// a real count on subsequent pages. The iterator treats 0 as a valid total_count value,
+// so the transition from 0→N triggers a warning. This is the expected behavior because
+// the iterator cannot distinguish between "server doesn't support total_count" (always 0)
+// and "server forgot to set it on page 1" — both cases warrant a diagnostic warning.
+func TestActualCostIterator_UnpopulatedThenPopulatedTotalCount(t *testing.T) {
+	var logBuf bytes.Buffer
+	logger := zerolog.New(&logBuf).With().Timestamp().Logger()
+
+	callCount := 0
+	fetchFn := func(_ context.Context, _ string, _ int32) (*pbc.GetActualCostResponse, error) {
+		callCount++
+		results := make([]*pbc.ActualCostResult, 5)
+		for i := range results {
+			results[i] = &pbc.ActualCostResult{
+				Cost:   float64((callCount-1)*5 + i + 1),
+				Source: "test",
+			}
+		}
+
+		nextToken := ""
+		if callCount < 3 {
+			nextToken = fmt.Sprintf("page-%d", callCount)
+		}
+
+		// Page 1: total_count=0 (unset/zero value)
+		// Page 2: total_count=15 (server starts reporting)
+		// Page 3: total_count=15 (consistent)
+		tc := int32(0)
+		if callCount >= 2 {
+			tc = 15
+		}
+
+		return &pbc.GetActualCostResponse{
+			Results:       results,
+			NextPageToken: nextToken,
+			TotalCount:    tc,
+		}, nil
+	}
+
+	iter := pluginsdk.NewActualCostIterator(context.Background(), fetchFn, 5, pluginsdk.WithLogger(logger))
+
+	var collected []*pbc.ActualCostResult
+	for iter.Next() {
+		collected = append(collected, iter.Record())
+	}
+
+	if iter.Err() != nil {
+		t.Fatalf("unexpected error: %v", iter.Err())
+	}
+	if len(collected) != 15 {
+		t.Errorf("expected 15 records, got %d", len(collected))
+	}
+
+	// The 0→15 transition on page 2 SHOULD trigger a warning.
+	// This documents that the iterator cannot distinguish "unset" from "actually zero".
+	logOutput := logBuf.String()
+	if !bytes.Contains(logBuf.Bytes(), []byte(`"level":"warn"`)) {
+		t.Errorf("expected warning for 0→15 total_count transition, but got: %s", logOutput)
+	}
+	if !bytes.Contains(logBuf.Bytes(), []byte(`"previous_total_count":0`)) {
+		t.Errorf("expected previous_total_count=0, but got: %s", logOutput)
+	}
+	if !bytes.Contains(logBuf.Bytes(), []byte(`"new_total_count":15`)) {
+		t.Errorf("expected new_total_count=15, but got: %s", logOutput)
+	}
+	if !bytes.Contains(logBuf.Bytes(), []byte(`"page_number":2`)) {
+		t.Errorf("expected page_number=2 for the transition, but got: %s", logOutput)
+	}
+
+	// Page 2→3 should NOT trigger a second warning (15→15 is consistent)
+	warnCount := bytes.Count(logBuf.Bytes(), []byte("total_count changed"))
+	if warnCount != 1 {
+		t.Errorf("expected exactly 1 warning (0→15 only), got %d warnings: %s", warnCount, logOutput)
+	}
+
+	// TotalCount should reflect the most recent value
+	if iter.TotalCount() != 15 {
+		t.Errorf("expected TotalCount=15, got %d", iter.TotalCount())
 	}
 }
