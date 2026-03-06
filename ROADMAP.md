@@ -50,7 +50,7 @@ centered around the FinOps Foundation's FOCUS standard.
 - [ ] **Fix Unbounded Goroutine Creation in batchCostFallback**
   ([#398](https://github.com/rshade/finfocus-spec/issues/398)) [M] -
   Add goroutine pool bounds to prevent unbounded concurrency.
-- [ ] **Deduplicate grpcCodeToInt32**
+- [x] **Deduplicate grpcCodeToInt32**
   ([#399](https://github.com/rshade/finfocus-spec/issues/399)) [S] -
   Deduplicate grpcCodeToInt32 between pluginsdk and testing packages.
 - [x] **Improve ValidateBatchCostRequest Return Type**
@@ -83,7 +83,7 @@ centered around the FinOps Foundation's FOCUS standard.
 - [ ] **Resolve Concurrency TODO in BatchCost Tests**
   ([#403](https://github.com/rshade/finfocus-spec/issues/403)) [M] -
   Resolve TODO in TestBatchCostFallbackWorkerPoolConfig for concurrency assertions.
-- [ ] **Replace Magic Constant defaultInternalErrCode**
+- [x] **Replace Magic Constant defaultInternalErrCode**
   ([#404](https://github.com/rshade/finfocus-spec/issues/404)) [S] -
   Replace magic constant with `codes.Internal` from gRPC.
 - [ ] **Extract Helper from MockPlugin.BatchCost**

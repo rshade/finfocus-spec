@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"sync"
 	"time"
 
@@ -27,6 +26,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/rshade/finfocus-spec/sdk/go/internal/grpcconv"
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
 
@@ -363,21 +363,10 @@ func NewResourceError(code codes.Code, message string, resourceTypeUnsupported b
 		message = code.String()
 	}
 	return &pbc.ResourceError{
-		Code:                    grpcCodeToInt32(code),
+		Code:                    grpcconv.CodeToInt32(code),
 		Message:                 message,
 		ResourceTypeUnsupported: resourceTypeUnsupported,
 	}
-}
-
-// grpcCodeToInt32 converts a gRPC codes.Code to its int32 numeric value for use in protobuf fields.
-// If the code's numeric value is outside the int32 range, it returns the numeric value for codes.Internal.
-func grpcCodeToInt32(code codes.Code) int32 {
-	codeValue := int64(code)
-	if codeValue > math.MaxInt32 {
-		return int32(codes.Internal)
-	}
-	//nolint:gosec // Overflow impossible: codeValue is in [0, math.MaxInt32] after the bounds check above.
-	return int32(codeValue)
 }
 
 // resourceErrorFromGRPCError converts a Go error into a ResourceError.
