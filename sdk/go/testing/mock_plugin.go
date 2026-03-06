@@ -16,6 +16,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/rshade/finfocus-spec/sdk/go/internal/grpcconv"
@@ -478,8 +479,6 @@ func (m *MockPlugin) DryRun(
 }
 
 // BatchCost returns per-resource batch cost results with partial failure semantics.
-//
-//nolint:gocognit,funlen // Branching/length are intentional for query routing and per-resource partial failures.
 func (m *MockPlugin) BatchCost(
 	ctx context.Context,
 	req *pbc.BatchCostRequest,
@@ -524,190 +523,231 @@ func (m *MockPlugin) BatchCost(
 			return nil, status.Error(codes.InvalidArgument, "start must be before end for ACTUAL query type")
 		}
 	}
+
 	results := make([]*pbc.ResourceCostResult, len(resources))
 	for index, resource := range resources {
-		switch {
-		case resource == nil:
-			results[index] = &pbc.ResourceCostResult{
-				Resource: nil,
-				Result: &pbc.ResourceCostResult_Error{
-					Error: &pbc.ResourceError{
-						Code:    grpcconv.CodeToInt32(codes.InvalidArgument),
-						Message: "resource descriptor is required",
-					},
-				},
-			}
-			continue
-		case m.UnsupportedBatchResourceTypes[resource.GetResourceType()]:
-			results[index] = &pbc.ResourceCostResult{
-				Resource: resource,
-				Result: &pbc.ResourceCostResult_Error{
-					Error: &pbc.ResourceError{
-						Code: grpcconv.CodeToInt32(codes.Unimplemented),
-						Message: fmt.Sprintf(
-							"resource type %q is not supported",
-							resource.GetResourceType(),
-						),
-						ResourceTypeUnsupported: true,
-					},
-				},
-			}
-			continue
-		case req.GetDryRun():
-			dryRunResp, err := m.DryRun(ctx, &pbc.DryRunRequest{Resource: resource})
-			if err != nil {
-				results[index] = &pbc.ResourceCostResult{
-					Resource: resource,
-					Result: &pbc.ResourceCostResult_Error{
-						Error: batchResourceErrorFromErr(err),
-					},
-				}
-				continue
-			}
-
-			results[index] = &pbc.ResourceCostResult{
-				Resource: resource,
-				Result: &pbc.ResourceCostResult_CostData{
-					CostData: &pbc.CostData{
-						Data: &pbc.CostData_DryRunResult{
-							DryRunResult: dryRunResp,
-						},
-					},
-				},
-			}
-			continue
-		}
-
-		switch queryType {
-		case pbc.CostQueryType_COST_QUERY_TYPE_ACTUAL:
-			actualResp, err := m.GetActualCost(ctx, &pbc.GetActualCostRequest{
-				ResourceId: defaultBatchResourceID(resource),
-				Start:      req.GetStart(),
-				End:        req.GetEnd(),
-				Tags:       resource.GetTags(),
-				Arn:        resource.GetArn(),
-			})
-			if err != nil {
-				results[index] = &pbc.ResourceCostResult{
-					Resource: resource,
-					Result: &pbc.ResourceCostResult_Error{
-						Error: batchResourceErrorFromErr(err),
-					},
-				}
-				continue
-			}
-			if actualResp == nil {
-				results[index] = &pbc.ResourceCostResult{
-					Resource: resource,
-					Result: &pbc.ResourceCostResult_Error{
-						Error: batchResourceErrorFromErr(
-							errors.New("GetActualCost returned nil response")),
-					},
-				}
-				continue
-			}
-
-			results[index] = &pbc.ResourceCostResult{
-				Resource: resource,
-				Result: &pbc.ResourceCostResult_CostData{
-					CostData: &pbc.CostData{
-						Data: &pbc.CostData_ActualCost{
-							ActualCost: &pbc.ActualCostData{
-								Results:       actualResp.GetResults(),
-								FallbackHint:  actualResp.GetFallbackHint(),
-								NextPageToken: actualResp.GetNextPageToken(),
-								TotalCount:    actualResp.GetTotalCount(),
-							},
-						},
-					},
-				},
-			}
-		case pbc.CostQueryType_COST_QUERY_TYPE_PROJECTED:
-			projectedResp, err := m.GetProjectedCost(ctx, &pbc.GetProjectedCostRequest{
-				Resource: resource,
-			})
-			if err != nil {
-				results[index] = &pbc.ResourceCostResult{
-					Resource: resource,
-					Result: &pbc.ResourceCostResult_Error{
-						Error: batchResourceErrorFromErr(err),
-					},
-				}
-				continue
-			}
-			if projectedResp == nil {
-				results[index] = &pbc.ResourceCostResult{
-					Resource: resource,
-					Result: &pbc.ResourceCostResult_Error{
-						Error: batchResourceErrorFromErr(
-							errors.New("GetProjectedCost returned nil response")),
-					},
-				}
-				continue
-			}
-
-			results[index] = &pbc.ResourceCostResult{
-				Resource: resource,
-				Result: &pbc.ResourceCostResult_CostData{
-					CostData: &pbc.CostData{
-						Data: &pbc.CostData_ProjectedCost{
-							ProjectedCost: projectedResp,
-						},
-					},
-				},
-			}
-		case pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
-			pbc.CostQueryType_COST_QUERY_TYPE_UNSPECIFIED:
-			estimateResp, err := m.EstimateCost(ctx, &pbc.EstimateCostRequest{
-				ResourceType: batchEstimateResourceType(resource),
-			})
-			if err != nil {
-				results[index] = &pbc.ResourceCostResult{
-					Resource: resource,
-					Result: &pbc.ResourceCostResult_Error{
-						Error: batchResourceErrorFromErr(err),
-					},
-				}
-				continue
-			}
-			if estimateResp == nil {
-				results[index] = &pbc.ResourceCostResult{
-					Resource: resource,
-					Result: &pbc.ResourceCostResult_Error{
-						Error: batchResourceErrorFromErr(
-							errors.New("EstimateCost returned nil response")),
-					},
-				}
-				continue
-			}
-
-			results[index] = &pbc.ResourceCostResult{
-				Resource: resource,
-				Result: &pbc.ResourceCostResult_CostData{
-					CostData: &pbc.CostData{
-						Data: &pbc.CostData_Estimate{
-							Estimate: estimateResp,
-						},
-					},
-				},
-			}
-		default:
-			results[index] = &pbc.ResourceCostResult{
-				Resource: resource,
-				Result: &pbc.ResourceCostResult_Error{
-					Error: &pbc.ResourceError{
-						Code:    grpcconv.CodeToInt32(codes.InvalidArgument),
-						Message: "invalid query type",
-					},
-				},
-			}
-		}
+		results[index] = m.batchSingleResource(ctx, req, resource, queryType)
 	}
 
 	return &pbc.BatchCostResponse{
 		Results:      results,
 		MaxBatchSize: defaultMockBatchSize,
 	}, nil
+}
+
+// batchSingleResource processes a single resource for BatchCost and returns a ResourceCostResult.
+// It handles nil resource validation, unsupported resource types, dry-run mode, and query type routing.
+func (m *MockPlugin) batchSingleResource(
+	ctx context.Context,
+	req *pbc.BatchCostRequest,
+	resource *pbc.ResourceDescriptor,
+	queryType pbc.CostQueryType,
+) *pbc.ResourceCostResult {
+	if err := ctx.Err(); err != nil {
+		return &pbc.ResourceCostResult{
+			Resource: resource,
+			Result: &pbc.ResourceCostResult_Error{
+				Error: batchResourceErrorFromErr(err),
+			},
+		}
+	}
+
+	if resource == nil {
+		return &pbc.ResourceCostResult{
+			Resource: nil,
+			Result: &pbc.ResourceCostResult_Error{
+				Error: &pbc.ResourceError{
+					Code:    grpcconv.CodeToInt32(codes.InvalidArgument),
+					Message: "resource descriptor is required",
+				},
+			},
+		}
+	}
+
+	if m.UnsupportedBatchResourceTypes[resource.GetResourceType()] {
+		return &pbc.ResourceCostResult{
+			Resource: resource,
+			Result: &pbc.ResourceCostResult_Error{
+				Error: &pbc.ResourceError{
+					Code: grpcconv.CodeToInt32(codes.Unimplemented),
+					Message: fmt.Sprintf(
+						"resource type %q is not supported",
+						resource.GetResourceType(),
+					),
+					ResourceTypeUnsupported: true,
+				},
+			},
+		}
+	}
+
+	if req.GetDryRun() {
+		dryRunResp, err := m.DryRun(ctx, &pbc.DryRunRequest{Resource: descriptorClone(resource)})
+		if err != nil {
+			return &pbc.ResourceCostResult{
+				Resource: resource,
+				Result: &pbc.ResourceCostResult_Error{
+					Error: batchResourceErrorFromErr(err),
+				},
+			}
+		}
+
+		return &pbc.ResourceCostResult{
+			Resource: resource,
+			Result: &pbc.ResourceCostResult_CostData{
+				CostData: &pbc.CostData{
+					Data: &pbc.CostData_DryRunResult{
+						DryRunResult: dryRunResp,
+					},
+				},
+			},
+		}
+	}
+
+	switch queryType {
+	case pbc.CostQueryType_COST_QUERY_TYPE_ACTUAL:
+		return m.batchActualCost(ctx, req, resource)
+	case pbc.CostQueryType_COST_QUERY_TYPE_PROJECTED:
+		return m.batchProjectedCost(ctx, resource)
+	case pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+		pbc.CostQueryType_COST_QUERY_TYPE_UNSPECIFIED:
+		// NormalizeCostQueryType maps UNSPECIFIED -> ESTIMATE before this function is called;
+		// UNSPECIFIED is listed here for exhaustive switch compliance.
+		return m.batchEstimateCost(ctx, resource)
+	default:
+		return &pbc.ResourceCostResult{
+			Resource: resource,
+			Result: &pbc.ResourceCostResult_Error{
+				Error: &pbc.ResourceError{
+					Code:    grpcconv.CodeToInt32(codes.InvalidArgument),
+					Message: "invalid query type",
+				},
+			},
+		}
+	}
+}
+
+// batchActualCost delegates to GetActualCost and wraps the response as a ResourceCostResult.
+func (m *MockPlugin) batchActualCost(
+	ctx context.Context,
+	req *pbc.BatchCostRequest,
+	resource *pbc.ResourceDescriptor,
+) *pbc.ResourceCostResult {
+	actualResp, err := m.GetActualCost(ctx, &pbc.GetActualCostRequest{
+		ResourceId: defaultBatchResourceID(resource),
+		Start:      req.GetStart(),
+		End:        req.GetEnd(),
+		Tags:       copyStringMap(resource.GetTags()),
+		Arn:        resource.GetArn(),
+	})
+	if err != nil {
+		return &pbc.ResourceCostResult{
+			Resource: resource,
+			Result: &pbc.ResourceCostResult_Error{
+				Error: batchResourceErrorFromErr(err),
+			},
+		}
+	}
+	if actualResp == nil {
+		return &pbc.ResourceCostResult{
+			Resource: resource,
+			Result: &pbc.ResourceCostResult_Error{
+				Error: batchResourceErrorFromErr(
+					errors.New("GetActualCost returned nil response")),
+			},
+		}
+	}
+
+	return &pbc.ResourceCostResult{
+		Resource: resource,
+		Result: &pbc.ResourceCostResult_CostData{
+			CostData: &pbc.CostData{
+				Data: &pbc.CostData_ActualCost{
+					ActualCost: &pbc.ActualCostData{
+						Results:       actualResp.GetResults(),
+						FallbackHint:  actualResp.GetFallbackHint(),
+						NextPageToken: actualResp.GetNextPageToken(),
+						TotalCount:    actualResp.GetTotalCount(),
+					},
+				},
+			},
+		},
+	}
+}
+
+// batchProjectedCost delegates to GetProjectedCost and wraps the response as a ResourceCostResult.
+func (m *MockPlugin) batchProjectedCost(
+	ctx context.Context,
+	resource *pbc.ResourceDescriptor,
+) *pbc.ResourceCostResult {
+	projectedResp, err := m.GetProjectedCost(ctx, &pbc.GetProjectedCostRequest{
+		Resource: descriptorClone(resource),
+	})
+	if err != nil {
+		return &pbc.ResourceCostResult{
+			Resource: resource,
+			Result: &pbc.ResourceCostResult_Error{
+				Error: batchResourceErrorFromErr(err),
+			},
+		}
+	}
+	if projectedResp == nil {
+		return &pbc.ResourceCostResult{
+			Resource: resource,
+			Result: &pbc.ResourceCostResult_Error{
+				Error: batchResourceErrorFromErr(
+					errors.New("GetProjectedCost returned nil response")),
+			},
+		}
+	}
+
+	return &pbc.ResourceCostResult{
+		Resource: resource,
+		Result: &pbc.ResourceCostResult_CostData{
+			CostData: &pbc.CostData{
+				Data: &pbc.CostData_ProjectedCost{
+					ProjectedCost: projectedResp,
+				},
+			},
+		},
+	}
+}
+
+// batchEstimateCost delegates to EstimateCost and wraps the response as a ResourceCostResult.
+func (m *MockPlugin) batchEstimateCost(
+	ctx context.Context,
+	resource *pbc.ResourceDescriptor,
+) *pbc.ResourceCostResult {
+	estimateResp, err := m.EstimateCost(ctx, &pbc.EstimateCostRequest{
+		ResourceType: batchEstimateResourceType(resource),
+	})
+	if err != nil {
+		return &pbc.ResourceCostResult{
+			Resource: resource,
+			Result: &pbc.ResourceCostResult_Error{
+				Error: batchResourceErrorFromErr(err),
+			},
+		}
+	}
+	if estimateResp == nil {
+		return &pbc.ResourceCostResult{
+			Resource: resource,
+			Result: &pbc.ResourceCostResult_Error{
+				Error: batchResourceErrorFromErr(
+					errors.New("EstimateCost returned nil response")),
+			},
+		}
+	}
+
+	return &pbc.ResourceCostResult{
+		Resource: resource,
+		Result: &pbc.ResourceCostResult_CostData{
+			CostData: &pbc.CostData{
+				Data: &pbc.CostData_Estimate{
+					Estimate: estimateResp,
+				},
+			},
+		},
+	}
 }
 
 // batchEstimateResourceType builds a canonical estimate resource type string for a ResourceDescriptor
@@ -743,9 +783,24 @@ func defaultBatchResourceID(resource *pbc.ResourceDescriptor) string {
 }
 
 // batchResourceErrorFromErr converts an error into a pbc.ResourceError suitable for batch responses.
-// If the error is a gRPC status error its code and message are used; otherwise the error is reported
-// with an Internal code and the error string. The gRPC code is mapped to int32 via grpcconv.CodeToInt32.
+// Context errors are mapped via status.FromContextError to preserve Canceled/DeadlineExceeded codes.
+// gRPC status errors use their code and message; other errors are reported with Internal code.
 func batchResourceErrorFromErr(err error) *pbc.ResourceError {
+	if err == nil {
+		return &pbc.ResourceError{
+			Code:    grpcconv.CodeToInt32(codes.Unknown),
+			Message: "unknown error",
+		}
+	}
+
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		ctxStatus := status.FromContextError(err)
+		return &pbc.ResourceError{
+			Code:    grpcconv.CodeToInt32(ctxStatus.Code()),
+			Message: ctxStatus.Message(),
+		}
+	}
+
 	st, ok := status.FromError(err)
 	if !ok {
 		return &pbc.ResourceError{
@@ -758,6 +813,30 @@ func batchResourceErrorFromErr(err error) *pbc.ResourceError {
 		Code:    grpcconv.CodeToInt32(st.Code()),
 		Message: st.Message(),
 	}
+}
+
+// descriptorClone returns a deep copy of the given ResourceDescriptor.
+// If resource is nil, descriptorClone returns nil.
+func descriptorClone(resource *pbc.ResourceDescriptor) *pbc.ResourceDescriptor {
+	if resource == nil {
+		return nil
+	}
+	// proto.Clone preserves the concrete type, so this assertion is safe.
+	//nolint:errcheck // Type assertion guaranteed by proto.Clone contract.
+	return proto.Clone(resource).(*pbc.ResourceDescriptor)
+}
+
+// copyStringMap returns a shallow copy of the input map, or nil if the input is empty.
+// This prevents callers from mutating the original map through the returned reference.
+func copyStringMap(in map[string]string) map[string]string {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make(map[string]string, len(in))
+	for key, value := range in {
+		out[key] = value
+	}
+	return out
 }
 
 // generateDefaultFieldMappings creates default field mappings for all FOCUS fields.
