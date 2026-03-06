@@ -23,7 +23,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 	"github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1/pbcconnect"
@@ -819,19 +818,9 @@ func (s *Server) BatchCost(
 		return result.EarlyResponse, nil
 	}
 
-	// Check if we have a custom BatchCostHandler
 	if handler, hasCustomHandler := s.plugin.(BatchCostHandler); hasCustomHandler {
-		// Clone and normalize for custom handler (handler needs a safe copy)
-		normalizedReq, ok := proto.Clone(req).(*pbc.BatchCostRequest)
-		if !ok {
-			s.logger.Error().
-				Int32("query_type", int32(req.GetQueryType())).
-				Msg("proto.Clone returned unexpected type for BatchCostRequest")
-			return nil, status.Error(codes.Internal, "failed to clone batch request")
-		}
-		normalizedReq.QueryType = NormalizeCostQueryType(req.GetQueryType())
-
-		resp, batchErr := handler.BatchCost(ctx, normalizedReq)
+		req.QueryType = NormalizeCostQueryType(req.GetQueryType())
+		resp, batchErr := handler.BatchCost(ctx, req)
 		if batchErr != nil {
 			s.logger.Error().Err(batchErr).Msg("BatchCost handler error")
 			return nil, status.Error(codes.Internal, "plugin failed to execute BatchCost")

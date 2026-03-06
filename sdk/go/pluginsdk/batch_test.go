@@ -317,6 +317,44 @@ func TestBatchCostFallbackDoesNotMutateRequest(t *testing.T) {
 		"BatchCost fallback must not mutate the original request's QueryType")
 }
 
+func TestBatchCostCustomHandlerNormalizesQueryType(t *testing.T) {
+	var capturedQueryType pbc.CostQueryType
+	handlerCalled := false
+	plugin := &queryCapturingBatchPlugin{
+		onBatchCost: func(req *pbc.BatchCostRequest) {
+			handlerCalled = true
+			capturedQueryType = req.GetQueryType()
+		},
+	}
+	server := NewServer(plugin)
+
+	req := &pbc.BatchCostRequest{
+		QueryType: pbc.CostQueryType_COST_QUERY_TYPE_UNSPECIFIED,
+		Resources: []*pbc.ResourceDescriptor{
+			{Provider: "aws", ResourceType: "ec2"},
+		},
+	}
+
+	_, err := server.BatchCost(context.Background(), req)
+	require.NoError(t, err)
+
+	// Verify the custom handler actually ran (guards against false-pass
+	// when capturedQueryType defaults to UNSPECIFIED).
+	assert.True(t, handlerCalled,
+		"BatchCostHandler callback must be invoked by the custom handler path")
+
+	// Custom BatchCostHandler must receive the normalized QueryType,
+	// consistent with the fallback path which also normalizes
+	// UNSPECIFIED → ESTIMATE via NormalizeCostQueryType.
+	assert.Equal(t, pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE, capturedQueryType,
+		"BatchCostHandler must receive the normalized QueryType (ESTIMATE)")
+
+	// The caller's request object is mutated in-place (safe because gRPC
+	// delivers a fresh message per call in production).
+	assert.Equal(t, pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE, req.GetQueryType(),
+		"BatchCost custom handler path normalizes QueryType in-place")
+}
+
 type batchServerTestPlugin struct {
 	estimateDelay  time.Duration
 	currentRunning atomic.Int64
@@ -424,6 +462,59 @@ func (p *customBatchServerPlugin) BatchCost(
 		Results:      results,
 		MaxBatchSize: DefaultMaxBatchSize,
 	}, nil
+}
+
+// queryCapturingBatchPlugin implements BatchCostHandler and captures the request
+// for assertion in tests.
+type queryCapturingBatchPlugin struct {
+	batchServerTestPlugin
+
+	onBatchCost func(req *pbc.BatchCostRequest)
+}
+
+func (p *queryCapturingBatchPlugin) BatchCost(
+	_ context.Context,
+	req *pbc.BatchCostRequest,
+) (*pbc.BatchCostResponse, error) {
+	if p.onBatchCost != nil {
+		p.onBatchCost(req)
+	}
+	results := make([]*pbc.ResourceCostResult, len(req.GetResources()))
+	for i, resource := range req.GetResources() {
+		results[i] = &pbc.ResourceCostResult{
+			Resource: resource,
+			Result: &pbc.ResourceCostResult_CostData{
+				CostData: &pbc.CostData{
+					Data: &pbc.CostData_Estimate{
+						Estimate: &pbc.EstimateCostResponse{
+							Currency:    "USD",
+							CostMonthly: 1,
+						},
+					},
+				},
+			},
+		}
+	}
+	return &pbc.BatchCostResponse{
+		Results:      results,
+		MaxBatchSize: DefaultMaxBatchSize,
+	}, nil
+}
+
+// benchmarkStaticBatchPlugin implements BatchCostHandler and returns a pre-built
+// response, isolating benchmark measurements to Server.BatchCost dispatch overhead
+// rather than per-iteration response construction.
+type benchmarkStaticBatchPlugin struct {
+	batchServerTestPlugin
+
+	response *pbc.BatchCostResponse
+}
+
+func (p *benchmarkStaticBatchPlugin) BatchCost(
+	_ context.Context,
+	_ *pbc.BatchCostRequest,
+) (*pbc.BatchCostResponse, error) {
+	return p.response, nil
 }
 
 // TestValidateResourceDescriptor tests field-level validation for ResourceDescriptor.
@@ -725,4 +816,54 @@ func generateTags(count int) map[string]string {
 		tags[fmt.Sprintf("key%d", i)] = fmt.Sprintf("value%d", i)
 	}
 	return tags
+}
+
+// BenchmarkServerBatchCost_CustomHandler_NoClone measures the allocation and
+// latency of the BatchCostHandler custom path (no proto.Clone).
+// Uses a static pre-built response to isolate dispatch overhead from
+// per-iteration response construction.
+func BenchmarkServerBatchCost_CustomHandler_NoClone(b *testing.B) {
+	staticResp := &pbc.BatchCostResponse{
+		Results: []*pbc.ResourceCostResult{
+			{
+				Resource: &pbc.ResourceDescriptor{
+					Provider: "aws", ResourceType: "ec2", Region: "us-east-1",
+				},
+				Result: &pbc.ResourceCostResult_CostData{
+					CostData: &pbc.CostData{
+						Data: &pbc.CostData_Estimate{
+							Estimate: &pbc.EstimateCostResponse{
+								Currency:    "USD",
+								CostMonthly: 1,
+							},
+						},
+					},
+				},
+			},
+		},
+		MaxBatchSize: DefaultMaxBatchSize,
+	}
+
+	plugin := &benchmarkStaticBatchPlugin{response: staticResp}
+	server := NewServer(plugin)
+
+	req := &pbc.BatchCostRequest{
+		QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+		Resources: []*pbc.ResourceDescriptor{
+			{Provider: "aws", ResourceType: "ec2", Region: "us-east-1"},
+		},
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for range b.N {
+		resp, err := server.BatchCost(context.Background(), req)
+		if err != nil {
+			b.Fatalf("BatchCost returned error: %v", err)
+		}
+		if resp == nil {
+			b.Fatal("BatchCost returned nil response")
+		}
+	}
 }
