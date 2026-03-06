@@ -819,6 +819,7 @@ func (s *Server) BatchCost(
 	}
 
 	if handler, hasCustomHandler := s.plugin.(BatchCostHandler); hasCustomHandler {
+		req.QueryType = NormalizeCostQueryType(req.GetQueryType())
 		resp, batchErr := handler.BatchCost(ctx, req)
 		if batchErr != nil {
 			s.logger.Error().Err(batchErr).Msg("BatchCost handler error")

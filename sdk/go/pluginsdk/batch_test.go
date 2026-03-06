@@ -317,7 +317,7 @@ func TestBatchCostFallbackDoesNotMutateRequest(t *testing.T) {
 		"BatchCost fallback must not mutate the original request's QueryType")
 }
 
-func TestBatchCostCustomHandlerDoesNotMutateRequest(t *testing.T) {
+func TestBatchCostCustomHandlerNormalizesQueryType(t *testing.T) {
 	var capturedQueryType pbc.CostQueryType
 	handlerCalled := false
 	plugin := &queryCapturingBatchPlugin{
@@ -343,15 +343,16 @@ func TestBatchCostCustomHandlerDoesNotMutateRequest(t *testing.T) {
 	assert.True(t, handlerCalled,
 		"BatchCostHandler callback must be invoked by the custom handler path")
 
-	// Custom BatchCostHandler must receive the original QueryType,
-	// not a normalized value. Plugins that need normalization can call
-	// NormalizeCostQueryType themselves.
-	assert.Equal(t, pbc.CostQueryType_COST_QUERY_TYPE_UNSPECIFIED, capturedQueryType,
-		"BatchCostHandler must receive the original QueryType (UNSPECIFIED), not the normalized value")
+	// Custom BatchCostHandler must receive the normalized QueryType,
+	// consistent with the fallback path which also normalizes
+	// UNSPECIFIED → ESTIMATE via NormalizeCostQueryType.
+	assert.Equal(t, pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE, capturedQueryType,
+		"BatchCostHandler must receive the normalized QueryType (ESTIMATE)")
 
-	// The request object itself must also remain unmutated.
-	assert.Equal(t, pbc.CostQueryType_COST_QUERY_TYPE_UNSPECIFIED, req.GetQueryType(),
-		"BatchCost custom handler path must not mutate the original request's QueryType")
+	// The caller's request object is mutated in-place (safe because gRPC
+	// delivers a fresh message per call in production).
+	assert.Equal(t, pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE, req.GetQueryType(),
+		"BatchCost custom handler path normalizes QueryType in-place")
 }
 
 type batchServerTestPlugin struct {
@@ -498,6 +499,22 @@ func (p *queryCapturingBatchPlugin) BatchCost(
 		Results:      results,
 		MaxBatchSize: DefaultMaxBatchSize,
 	}, nil
+}
+
+// benchmarkStaticBatchPlugin implements BatchCostHandler and returns a pre-built
+// response, isolating benchmark measurements to Server.BatchCost dispatch overhead
+// rather than per-iteration response construction.
+type benchmarkStaticBatchPlugin struct {
+	batchServerTestPlugin
+
+	response *pbc.BatchCostResponse
+}
+
+func (p *benchmarkStaticBatchPlugin) BatchCost(
+	_ context.Context,
+	_ *pbc.BatchCostRequest,
+) (*pbc.BatchCostResponse, error) {
+	return p.response, nil
 }
 
 // TestValidateResourceDescriptor tests field-level validation for ResourceDescriptor.
@@ -803,8 +820,31 @@ func generateTags(count int) map[string]string {
 
 // BenchmarkServerBatchCost_CustomHandler_NoClone measures the allocation and
 // latency of the BatchCostHandler custom path (no proto.Clone).
+// Uses a static pre-built response to isolate dispatch overhead from
+// per-iteration response construction.
 func BenchmarkServerBatchCost_CustomHandler_NoClone(b *testing.B) {
-	plugin := &queryCapturingBatchPlugin{}
+	staticResp := &pbc.BatchCostResponse{
+		Results: []*pbc.ResourceCostResult{
+			{
+				Resource: &pbc.ResourceDescriptor{
+					Provider: "aws", ResourceType: "ec2", Region: "us-east-1",
+				},
+				Result: &pbc.ResourceCostResult_CostData{
+					CostData: &pbc.CostData{
+						Data: &pbc.CostData_Estimate{
+							Estimate: &pbc.EstimateCostResponse{
+								Currency:    "USD",
+								CostMonthly: 1,
+							},
+						},
+					},
+				},
+			},
+		},
+		MaxBatchSize: DefaultMaxBatchSize,
+	}
+
+	plugin := &benchmarkStaticBatchPlugin{response: staticResp}
 	server := NewServer(plugin)
 
 	req := &pbc.BatchCostRequest{
