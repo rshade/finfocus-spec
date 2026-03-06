@@ -493,6 +493,15 @@ Configuration: `lefthook.yml`, `commitlint.config.js`
 - Solution: Separate CI jobs for unit tests, integration tests, and benchmarks
 - Pattern: Parallel job execution with artifact collection for benchmarks
 
+## Pre-Commit Requirements
+
+**MANDATORY**: Before committing any code changes, ALWAYS run:
+
+1. `golangci-lint run ./...` — Verify no lint errors (or `make lint` for full linting)
+2. `make test` — Verify all tests pass
+
+Do NOT commit code without running both checks. Fix any issues before committing.
+
 ## Best Practices Discovered
 
 ### Testing Framework Architecture

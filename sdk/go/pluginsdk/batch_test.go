@@ -517,6 +517,188 @@ func (p *benchmarkStaticBatchPlugin) BatchCost(
 	return p.response, nil
 }
 
+func TestBatchCostFallbackCancelledBeforeLaunch(t *testing.T) {
+	plugin := &batchServerTestPlugin{}
+	server := NewServer(plugin)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // cancel immediately before any goroutines launch
+
+	resp, err := server.BatchCost(ctx, &pbc.BatchCostRequest{
+		QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+		Resources: []*pbc.ResourceDescriptor{
+			{Provider: "aws", ResourceType: "ec2"},
+			{Provider: "aws", ResourceType: "s3"},
+			{Provider: "gcp", ResourceType: "compute"},
+		},
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.GetResults(), 3, "result count must equal resource count")
+
+	// With a pre-cancelled context, Go's select is non-deterministic (both sem
+	// and ctx.Done() are ready), so some resources may be processed while others
+	// get cancellation errors. The key invariant: all results are non-nil, no
+	// panics, and no data races (verified by -race flag).
+	expectedProviders := []string{"aws", "aws", "gcp"}
+	for i, result := range resp.GetResults() {
+		require.NotNil(t, result, "resource %d must have a non-nil result", i)
+		require.NotNil(t, result.GetResource(), "resource %d must echo back the descriptor", i)
+
+		// Verify result-to-resource index correspondence.
+		assert.Equal(t, expectedProviders[i], result.GetResource().GetProvider(),
+			"resource %d provider must match input ordering", i)
+
+		// Each result must be valid: either cost data or a cancellation error.
+		hasData := result.GetCostData() != nil
+		isCancelled := result.GetError() != nil &&
+			result.GetError().GetCode() == int32(codes.Canceled)
+		assert.True(t, hasData || isCancelled,
+			"resource %d must have cost data or cancellation error, got neither", i)
+	}
+}
+
+func TestBatchCostFallbackCancelledMidBatch(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	var callCount atomic.Int64
+	plugin := &cancellingBatchPlugin{
+		cancelAfter: 2,
+		cancel:      cancel,
+		callCount:   &callCount,
+	}
+	server := NewServer(plugin)
+	server.batchWorkers = 1 // sequential to control cancellation point
+
+	resp, err := server.BatchCost(ctx, &pbc.BatchCostRequest{
+		QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+		Resources: []*pbc.ResourceDescriptor{
+			{Provider: "aws", ResourceType: "ec2"},
+			{Provider: "aws", ResourceType: "s3"},
+			{Provider: "aws", ResourceType: "rds"},
+			{Provider: "aws", ResourceType: "lambda"},
+		},
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.GetResults(), 4, "result count must always equal resource count")
+
+	// First resources were processed; remaining should have cancellation errors.
+	// With workers=1, cancellation after 2 calls means resources 2+ get errors.
+	cancelledCount := 0
+	for _, result := range resp.GetResults() {
+		if result.GetError() != nil && result.GetError().GetCode() == int32(codes.Canceled) {
+			cancelledCount++
+		}
+	}
+	assert.Positive(t, cancelledCount, "at least one resource must have cancellation error")
+	assert.LessOrEqual(t, callCount.Load(), int64(3),
+		"no goroutines should launch for remaining resources after cancellation")
+}
+
+func TestBatchCostFallbackCancelledMidBatchConcurrent(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	var callCount atomic.Int64
+	plugin := &cancellingBatchPlugin{
+		cancelAfter: 5,
+		cancel:      cancel,
+		callCount:   &callCount,
+	}
+	server := NewServer(plugin)
+	// Use default workers (10) so multiple goroutines are in flight at cancellation.
+
+	const numResources = 25
+	resources := make([]*pbc.ResourceDescriptor, numResources)
+	for i := range resources {
+		resources[i] = &pbc.ResourceDescriptor{
+			Provider: "aws", ResourceType: fmt.Sprintf("type-%d", i),
+		}
+	}
+
+	resp, err := server.BatchCost(ctx, &pbc.BatchCostRequest{
+		QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+		Resources: resources,
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.GetResults(), numResources, "result count must always equal resource count")
+
+	cancelledCount := 0
+	for i, result := range resp.GetResults() {
+		require.NotNil(t, result, "resource %d must have a non-nil result", i)
+		if result.GetError() != nil && result.GetError().GetCode() == int32(codes.Canceled) {
+			cancelledCount++
+		}
+	}
+	assert.Positive(t, cancelledCount, "at least one resource must have cancellation error with concurrent workers")
+}
+
+func TestBatchCostFallbackPluginPanic(t *testing.T) {
+	plugin := &panickingBatchPlugin{}
+	server := NewServer(plugin)
+
+	resp, err := server.BatchCost(context.Background(), &pbc.BatchCostRequest{
+		QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+		Resources: []*pbc.ResourceDescriptor{
+			{Provider: "aws", ResourceType: "ec2"},
+			{Provider: "aws", ResourceType: "panic-trigger"},
+			{Provider: "aws", ResourceType: "s3"},
+		},
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.GetResults(), 3, "result count must equal resource count")
+
+	// The panicking resource should get an Internal error, not crash the process.
+	for i, result := range resp.GetResults() {
+		require.NotNil(t, result, "resource %d must have a non-nil result", i)
+		if result.GetResource().GetResourceType() == "panic-trigger" {
+			require.NotNil(t, result.GetError(), "panicking resource must have an error")
+			assert.Equal(t, int32(codes.Internal), result.GetError().GetCode())
+			assert.Contains(t, result.GetError().GetMessage(), "plugin panic")
+		} else {
+			assert.NotNil(t, result.GetCostData(), "non-panicking resource %d must have cost data", i)
+		}
+	}
+}
+
+// panickingBatchPlugin panics when processing "panic-trigger" resource type.
+type panickingBatchPlugin struct {
+	batchServerTestPlugin
+}
+
+func (p *panickingBatchPlugin) EstimateCost(
+	_ context.Context,
+	req *pbc.EstimateCostRequest,
+) (*pbc.EstimateCostResponse, error) {
+	if req.GetResourceType() == "panic-trigger" {
+		panic("simulated plugin crash")
+	}
+	return &pbc.EstimateCostResponse{
+		Currency:    "USD",
+		CostMonthly: 10,
+	}, nil
+}
+
+// cancellingBatchPlugin cancels the context after a specified number of EstimateCost calls.
+type cancellingBatchPlugin struct {
+	batchServerTestPlugin
+
+	cancelAfter int64
+	cancel      context.CancelFunc
+	callCount   *atomic.Int64
+}
+
+func (p *cancellingBatchPlugin) EstimateCost(
+	ctx context.Context,
+	req *pbc.EstimateCostRequest,
+) (*pbc.EstimateCostResponse, error) {
+	count := p.callCount.Add(1)
+	// Use >= defensively: if multiple goroutines increment past the threshold
+	// concurrently, all of them should still trigger cancellation.
+	if count >= p.cancelAfter {
+		p.cancel()
+	}
+	return p.batchServerTestPlugin.EstimateCost(ctx, req)
+}
+
 // TestValidateResourceDescriptor tests field-level validation for ResourceDescriptor.
 func TestValidateResourceDescriptor(t *testing.T) {
 	tests := []struct {
@@ -864,6 +1046,95 @@ func BenchmarkServerBatchCost_CustomHandler_NoClone(b *testing.B) {
 		}
 		if resp == nil {
 			b.Fatal("BatchCost returned nil response")
+		}
+	}
+}
+
+func TestResolveBatchWorkers(t *testing.T) {
+	tests := []struct {
+		name       string
+		configured int
+		expected   int
+	}{
+		{"zero returns default", 0, DefaultBatchWorkers},
+		{"negative returns default", -1, DefaultBatchWorkers},
+		{"minimum boundary", MinBatchWorkers, MinBatchWorkers},
+		{"mid-range passthrough", 25, 25},
+		{"maximum boundary", MaxBatchWorkers, MaxBatchWorkers},
+		{"above maximum is capped", MaxBatchWorkers + 1, MaxBatchWorkers},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := resolveBatchWorkers(tt.configured)
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
+
+// BenchmarkServerBatchCost_CancelledContext measures the overhead of the
+// cancellation fast-path where no goroutines are launched.
+func BenchmarkServerBatchCost_CancelledContext(b *testing.B) {
+	plugin := &batchServerTestPlugin{}
+	server := NewServer(plugin)
+
+	resources := make([]*pbc.ResourceDescriptor, 100)
+	for i := range resources {
+		resources[i] = &pbc.ResourceDescriptor{
+			Provider: "aws", ResourceType: "ec2", Region: "us-east-1",
+		}
+	}
+
+	req := &pbc.BatchCostRequest{
+		QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+		Resources: resources,
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // pre-cancelled
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for range b.N {
+		resp, err := server.BatchCost(ctx, req)
+		if err != nil {
+			b.Fatalf("BatchCost returned error: %v", err)
+		}
+		if len(resp.GetResults()) != 100 {
+			b.Fatalf("expected 100 results, got %d", len(resp.GetResults()))
+		}
+	}
+}
+
+// BenchmarkServerBatchCost_Fallback_1000Resources measures memory and throughput
+// at MaxBatchSize (1000 resources) to validate the bounded-goroutine approach.
+func BenchmarkServerBatchCost_Fallback_1000Resources(b *testing.B) {
+	plugin := &batchServerTestPlugin{}
+	server := NewServer(plugin)
+	server.maxBatchSize = int32(MaxBatchSize)
+
+	resources := make([]*pbc.ResourceDescriptor, MaxBatchSize)
+	for i := range resources {
+		resources[i] = &pbc.ResourceDescriptor{
+			Provider: "aws", ResourceType: "ec2", Region: "us-east-1",
+		}
+	}
+
+	req := &pbc.BatchCostRequest{
+		QueryType: pbc.CostQueryType_COST_QUERY_TYPE_ESTIMATE,
+		Resources: resources,
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for range b.N {
+		resp, err := server.BatchCost(context.Background(), req)
+		if err != nil {
+			b.Fatalf("BatchCost returned error: %v", err)
+		}
+		if len(resp.GetResults()) != MaxBatchSize {
+			b.Fatalf("expected %d results, got %d", MaxBatchSize, len(resp.GetResults()))
 		}
 	}
 }
