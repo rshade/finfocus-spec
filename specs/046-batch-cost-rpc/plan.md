@@ -17,7 +17,7 @@ capability discovery.
 
 ## Technical Context
 
-**Language/Version**: Go 1.25.7 (per go.mod) + Protocol Buffers v3, TypeScript (SDK)
+**Language/Version**: Go 1.25.8 (per go.mod) + Protocol Buffers v3, TypeScript (SDK)
 **Primary Dependencies**: google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1,
 zerolog
 **Storage**: N/A (stateless batch RPC, no data persistence)

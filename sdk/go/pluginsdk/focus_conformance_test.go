@@ -340,76 +340,89 @@ func TestFOCUS12TypeMappings(t *testing.T) {
 // TestValidateFocusRecord_MandatoryFields tests that all 14 mandatory fields are validated.
 func TestValidateFocusRecord_MandatoryFields(t *testing.T) {
 	tests := []struct {
-		name        string
-		modifyFunc  func(*pbc.FocusCostRecord)
-		expectedErr string
+		name          string
+		modifyFunc    func(*pbc.FocusCostRecord)
+		errorContains string
+		expectedField string
 	}{
 		{
 			name: "missing provider_name",
 			//nolint:staticcheck // SA1019: Testing validation of deprecated provider_name field
-			modifyFunc:  func(r *pbc.FocusCostRecord) { r.ProviderName = "" },
-			expectedErr: "provider_name is required",
+			modifyFunc:    func(r *pbc.FocusCostRecord) { r.ProviderName = "" },
+			errorContains: "provider_name",
+			expectedField: "provider_name",
 		},
 		{
-			name:        "missing billing_account_id",
-			modifyFunc:  func(r *pbc.FocusCostRecord) { r.BillingAccountId = "" },
-			expectedErr: "billing_account_id is required",
+			name:          "missing billing_account_id",
+			modifyFunc:    func(r *pbc.FocusCostRecord) { r.BillingAccountId = "" },
+			errorContains: "billing_account_id",
+			expectedField: "billing_account_id",
 		},
 		{
-			name:        "missing billing_period_start",
-			modifyFunc:  func(r *pbc.FocusCostRecord) { r.BillingPeriodStart = nil },
-			expectedErr: "billing_period (start/end) is required",
+			name:          "missing billing_period_start",
+			modifyFunc:    func(r *pbc.FocusCostRecord) { r.BillingPeriodStart = nil },
+			errorContains: "billing_period.start",
+			expectedField: "billing_period.start",
 		},
 		{
-			name:        "missing billing_period_end",
-			modifyFunc:  func(r *pbc.FocusCostRecord) { r.BillingPeriodEnd = nil },
-			expectedErr: "billing_period (start/end) is required",
+			name:          "missing billing_period_end",
+			modifyFunc:    func(r *pbc.FocusCostRecord) { r.BillingPeriodEnd = nil },
+			errorContains: "billing_period.end",
+			expectedField: "billing_period.end",
 		},
 		{
-			name:        "missing charge_period_start",
-			modifyFunc:  func(r *pbc.FocusCostRecord) { r.ChargePeriodStart = nil },
-			expectedErr: "charge_period (start/end) is required",
+			name:          "missing charge_period_start",
+			modifyFunc:    func(r *pbc.FocusCostRecord) { r.ChargePeriodStart = nil },
+			errorContains: "charge_period.start",
+			expectedField: "charge_period.start",
 		},
 		{
-			name:        "missing charge_period_end",
-			modifyFunc:  func(r *pbc.FocusCostRecord) { r.ChargePeriodEnd = nil },
-			expectedErr: "charge_period (start/end) is required",
+			name:          "missing charge_period_end",
+			modifyFunc:    func(r *pbc.FocusCostRecord) { r.ChargePeriodEnd = nil },
+			errorContains: "charge_period.end",
+			expectedField: "charge_period.end",
 		},
 		{
 			name: "missing charge_category",
 			modifyFunc: func(r *pbc.FocusCostRecord) {
 				r.ChargeCategory = pbc.FocusChargeCategory_FOCUS_CHARGE_CATEGORY_UNSPECIFIED
 			},
-			expectedErr: "charge_category is required",
+			errorContains: "charge_category",
+			expectedField: "charge_category",
 		},
 		{
 			name: "missing charge_class",
 			modifyFunc: func(r *pbc.FocusCostRecord) {
 				r.ChargeClass = pbc.FocusChargeClass_FOCUS_CHARGE_CLASS_UNSPECIFIED
 			},
-			expectedErr: "charge_class is required",
+			errorContains: "charge_class",
+			expectedField: "charge_class",
 		},
 		{
-			name:        "missing charge_description",
-			modifyFunc:  func(r *pbc.FocusCostRecord) { r.ChargeDescription = "" },
-			expectedErr: "charge_description is required",
+			name:          "missing charge_description",
+			modifyFunc:    func(r *pbc.FocusCostRecord) { r.ChargeDescription = "" },
+			errorContains: "charge_description",
+			expectedField: "charge_description",
 		},
 		{
 			name: "missing service_category",
 			modifyFunc: func(r *pbc.FocusCostRecord) {
 				r.ServiceCategory = pbc.FocusServiceCategory_FOCUS_SERVICE_CATEGORY_UNSPECIFIED
 			},
-			expectedErr: "service_category is required",
+			errorContains: "service_category",
+			expectedField: "service_category",
 		},
 		{
-			name:        "missing service_name",
-			modifyFunc:  func(r *pbc.FocusCostRecord) { r.ServiceName = "" },
-			expectedErr: "service_name is required",
+			name:          "missing service_name",
+			modifyFunc:    func(r *pbc.FocusCostRecord) { r.ServiceName = "" },
+			errorContains: "service_name",
+			expectedField: "service_name",
 		},
 		{
-			name:        "missing billing_currency",
-			modifyFunc:  func(r *pbc.FocusCostRecord) { r.BillingCurrency = "" },
-			expectedErr: "billing_currency is required",
+			name:          "missing billing_currency",
+			modifyFunc:    func(r *pbc.FocusCostRecord) { r.BillingCurrency = "" },
+			errorContains: "billing_currency",
+			expectedField: "billing_currency",
 		},
 	}
 
@@ -420,11 +433,20 @@ func TestValidateFocusRecord_MandatoryFields(t *testing.T) {
 
 			err := pluginsdk.ValidateFocusRecord(record)
 			if err == nil {
-				t.Errorf("Expected error %q, got nil", tt.expectedErr)
+				t.Errorf("Expected error containing %q, got nil", tt.errorContains)
 				return
 			}
-			if err.Error() != tt.expectedErr {
-				t.Errorf("Expected error %q, got %q", tt.expectedErr, err.Error())
+			if !strings.Contains(err.Error(), tt.errorContains) {
+				t.Errorf("Expected error containing %q, got %q", tt.errorContains, err.Error())
+			}
+			// Verify structured error extraction
+			var valErr *pluginsdk.ValidationError
+			if !errors.As(err, &valErr) {
+				t.Errorf("errors.As failed: expected *ValidationError, got %T", err)
+				return
+			}
+			if valErr.FieldName != tt.expectedField {
+				t.Errorf("FieldName = %q, want %q", valErr.FieldName, tt.expectedField)
 			}
 		})
 	}
@@ -446,11 +468,11 @@ func TestValidateFocusRecord_ISO4217Currency(t *testing.T) {
 		{"valid CNY", "CNY", "", false, ""},
 		{"valid CAD", "CAD", "", false, ""},
 		{"valid AUD", "AUD", "", false, ""},
-		{"invalid billing currency", "ABC", "", true, "billing_currency must be a valid ISO 4217"},
-		{"invalid lowercase", "usd", "", true, "billing_currency must be a valid ISO 4217"},
+		{"invalid billing currency", "ABC", "", true, "billing_currency: must be valid ISO 4217"},
+		{"invalid lowercase", "usd", "", true, "billing_currency: must be valid ISO 4217"},
 		{"empty pricing currency ok", "USD", "", false, ""},
 		{"valid pricing currency", "USD", "EUR", false, ""},
-		{"invalid pricing currency", "USD", "ZZZ", true, "pricing_currency must be a valid ISO 4217"},
+		{"invalid pricing currency", "USD", "ZZZ", true, "pricing_currency: must be valid ISO 4217"},
 	}
 
 	for _, tt := range tests {
@@ -682,7 +704,7 @@ func TestValidateFocusRecord_FOCUS13AllocationRule(t *testing.T) {
 			allocatedMethodID:   "proportional-cpu",
 			allocatedResourceID: "",
 			expectError:         true,
-			errorContains:       "allocated_resource_id is required when allocated_method_id is set",
+			errorContains:       "allocated_resource_id: required when allocated_method_id set",
 		},
 	}
 
@@ -894,7 +916,7 @@ func TestValidateFocusRecord_CostHierarchy(t *testing.T) {
 			listCost:      200.0,
 			chargeClass:   pbc.FocusChargeClass_FOCUS_CHARGE_CLASS_REGULAR,
 			expectError:   true,
-			errorContains: "effective_cost must not exceed billed_cost",
+			errorContains: "effective_cost: must not exceed billed_cost",
 		},
 		{
 			name:          "invalid: listCost less than effectiveCost (FR-002)",
@@ -903,7 +925,7 @@ func TestValidateFocusRecord_CostHierarchy(t *testing.T) {
 			listCost:      50.0,
 			chargeClass:   pbc.FocusChargeClass_FOCUS_CHARGE_CLASS_REGULAR,
 			expectError:   true,
-			errorContains: "list_cost must be >= effective_cost",
+			errorContains: "list_cost: must be >= effective_cost",
 		},
 	}
 
@@ -969,7 +991,7 @@ func TestValidateFocusRecord_CommitmentDiscountConsistency(t *testing.T) {
 			commitmentDiscountStatus: pbc.FocusCommitmentDiscountStatus_FOCUS_COMMITMENT_DISCOUNT_STATUS_UNSPECIFIED,
 			chargeCategory:           pbc.FocusChargeCategory_FOCUS_CHARGE_CATEGORY_USAGE,
 			expectError:              true,
-			errorContains:            "commitment_discount_status required",
+			errorContains:            "commitment_discount_status: required when",
 		},
 		{
 			name:                     "invalid: status set without ID (FR-004)",
@@ -977,7 +999,7 @@ func TestValidateFocusRecord_CommitmentDiscountConsistency(t *testing.T) {
 			commitmentDiscountStatus: pbc.FocusCommitmentDiscountStatus_FOCUS_COMMITMENT_DISCOUNT_STATUS_USED,
 			chargeCategory:           pbc.FocusChargeCategory_FOCUS_CHARGE_CATEGORY_USAGE,
 			expectError:              true,
-			errorContains:            "commitment_discount_id required",
+			errorContains:            "commitment_discount_id: required when",
 		},
 	}
 
@@ -1037,7 +1059,7 @@ func TestValidateFocusRecord_PricingConsistency(t *testing.T) {
 			pricingQuantity: 10.0,
 			pricingUnit:     "",
 			expectError:     true,
-			errorContains:   "pricing_unit required when pricing_quantity > 0",
+			errorContains:   "pricing_unit: required when pricing_quantity > 0",
 		},
 	}
 
@@ -1101,7 +1123,7 @@ func TestValidateFocusRecord_CapacityReservationConsistency(t *testing.T) {
 			capacityReservationStatus: pbc.FocusCapacityReservationStatus_FOCUS_CAPACITY_RESERVATION_STATUS_UNSPECIFIED,
 			chargeCategory:            pbc.FocusChargeCategory_FOCUS_CHARGE_CATEGORY_USAGE,
 			expectError:               true,
-			errorContains:             "capacity_reservation_status required",
+			errorContains:             "capacity_reservation_status: required when",
 		},
 		{
 			name:                      "invalid: status set without ID (FR-005 bidirectional)",
@@ -1109,7 +1131,7 @@ func TestValidateFocusRecord_CapacityReservationConsistency(t *testing.T) {
 			capacityReservationStatus: pbc.FocusCapacityReservationStatus_FOCUS_CAPACITY_RESERVATION_STATUS_USED,
 			chargeCategory:            pbc.FocusChargeCategory_FOCUS_CHARGE_CATEGORY_USAGE,
 			expectError:               true,
-			errorContains:             "capacity_reservation_id required",
+			errorContains:             "capacity_reservation_id: required when",
 		},
 	}
 
@@ -1184,6 +1206,131 @@ func TestValidateFocusRecordWithOptions_AggregateMode(t *testing.T) {
 	})
 }
 
+// TestValidateFocusRecordWithOptions_AggregateMode_ErrorsAs verifies all errors in aggregate
+// mode are *ValidationError instances with distinct FieldName values.
+func TestValidateFocusRecordWithOptions_AggregateMode_ErrorsAs(t *testing.T) {
+	record := createValidFocusRecord()
+	// Set up 3+ distinct violations
+	record.EffectiveCost = 150.0 // Exceeds BilledCost (10.0) - FR-001
+	record.CommitmentDiscountStatus = pbc.FocusCommitmentDiscountStatus_FOCUS_COMMITMENT_DISCOUNT_STATUS_USED
+	// No CommitmentDiscountId - FR-004
+	record.PricingQuantity = 10.0
+	record.PricingUnit = "" // FR-006
+
+	opts := pluginsdk.ValidationOptions{Mode: pluginsdk.ValidationModeAggregate}
+	errs := pluginsdk.ValidateFocusRecordWithOptions(record, opts)
+
+	if len(errs) < 3 {
+		t.Fatalf("Expected at least 3 errors, got %d: %v", len(errs), errs)
+	}
+
+	// Every error should be extractable as *ValidationError
+	fieldNames := make(map[string]bool)
+	for i, err := range errs {
+		var valErr *pluginsdk.ValidationError
+		if !errors.As(err, &valErr) {
+			t.Errorf("errs[%d]: errors.As failed: error %T does not contain *ValidationError", i, err)
+			continue
+		}
+		if valErr.FieldName == "" {
+			t.Errorf("errs[%d]: FieldName is empty", i)
+		}
+		fieldNames[valErr.FieldName] = true
+	}
+
+	// Verify distinct field names
+	if len(fieldNames) < 3 {
+		t.Errorf("Expected at least 3 distinct field names, got %d: %v", len(fieldNames), fieldNames)
+	}
+}
+
+// TestValidateFocusRecord_ErrorsIs_AllSentinels verifies errors.Is(err, sentinel) returns true
+// for all 7 sentinel errors when returned by ValidateFocusRecord through *ValidationError wrapping.
+func TestValidateFocusRecord_ErrorsIs_AllSentinels(t *testing.T) {
+	tests := []struct {
+		name       string
+		modifyFunc func(*pbc.FocusCostRecord)
+		sentinel   error
+	}{
+		{
+			name: "ErrEffectiveCostExceedsBilledCost",
+			modifyFunc: func(r *pbc.FocusCostRecord) {
+				r.BilledCost = 100.0
+				r.EffectiveCost = 150.0
+				r.ListCost = 200.0
+			},
+			sentinel: pluginsdk.ErrEffectiveCostExceedsBilledCost,
+		},
+		{
+			name: "ErrListCostLessThanEffectiveCost",
+			modifyFunc: func(r *pbc.FocusCostRecord) {
+				r.BilledCost = 100.0
+				r.EffectiveCost = 100.0
+				r.ListCost = 50.0
+			},
+			sentinel: pluginsdk.ErrListCostLessThanEffectiveCost,
+		},
+		{
+			name: "ErrCommitmentStatusMissing",
+			modifyFunc: func(r *pbc.FocusCostRecord) {
+				r.CommitmentDiscountId = "ri-12345"
+				r.CommitmentDiscountStatus = pbc.FocusCommitmentDiscountStatus_FOCUS_COMMITMENT_DISCOUNT_STATUS_UNSPECIFIED
+				r.ChargeCategory = pbc.FocusChargeCategory_FOCUS_CHARGE_CATEGORY_USAGE
+			},
+			sentinel: pluginsdk.ErrCommitmentStatusMissing,
+		},
+		{
+			name: "ErrCommitmentIDMissingForStatus",
+			modifyFunc: func(r *pbc.FocusCostRecord) {
+				r.CommitmentDiscountId = ""
+				r.CommitmentDiscountStatus = pbc.FocusCommitmentDiscountStatus_FOCUS_COMMITMENT_DISCOUNT_STATUS_USED
+			},
+			sentinel: pluginsdk.ErrCommitmentIDMissingForStatus,
+		},
+		{
+			name: "ErrCapacityReservationStatusMissing",
+			modifyFunc: func(r *pbc.FocusCostRecord) {
+				r.CapacityReservationId = "cr-12345"
+				r.CapacityReservationStatus = pbc.FocusCapacityReservationStatus_FOCUS_CAPACITY_RESERVATION_STATUS_UNSPECIFIED
+				r.ChargeCategory = pbc.FocusChargeCategory_FOCUS_CHARGE_CATEGORY_USAGE
+			},
+			sentinel: pluginsdk.ErrCapacityReservationStatusMissing,
+		},
+		{
+			name: "ErrCapacityReservationIDMissing",
+			modifyFunc: func(r *pbc.FocusCostRecord) {
+				r.CapacityReservationId = ""
+				r.CapacityReservationStatus = pbc.FocusCapacityReservationStatus_FOCUS_CAPACITY_RESERVATION_STATUS_USED
+			},
+			sentinel: pluginsdk.ErrCapacityReservationIDMissing,
+		},
+		{
+			name: "ErrPricingUnitMissing",
+			modifyFunc: func(r *pbc.FocusCostRecord) {
+				r.PricingQuantity = 10.0
+				r.PricingUnit = ""
+			},
+			sentinel: pluginsdk.ErrPricingUnitMissing,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			record := createValidFocusRecord()
+			tt.modifyFunc(record)
+
+			err := pluginsdk.ValidateFocusRecord(record)
+			if err == nil {
+				t.Fatal("Expected error, got nil")
+			}
+
+			if !errors.Is(err, tt.sentinel) {
+				t.Errorf("errors.Is(err, %s) = false, want true", tt.name)
+			}
+		})
+	}
+}
+
 // TestSentinelErrors verifies sentinel errors can be checked with errors.Is.
 func TestSentinelErrors(t *testing.T) {
 	tests := []struct {
@@ -1237,42 +1384,42 @@ func TestValidateFocusRecord_ExtremeValues(t *testing.T) {
 			setField:      func(r *pbc.FocusCostRecord, v float64) { r.BilledCost = v },
 			fieldValue:    math.Inf(1),
 			expectError:   true,
-			errorContains: "cannot be infinity",
+			errorContains: "must be finite",
 		},
 		{
 			name:          "effective_cost NaN",
 			setField:      func(r *pbc.FocusCostRecord, v float64) { r.EffectiveCost = v },
 			fieldValue:    math.NaN(),
 			expectError:   true,
-			errorContains: "cannot be NaN",
+			errorContains: "must be a number",
 		},
 		{
 			name:          "list_cost positive infinity",
 			setField:      func(r *pbc.FocusCostRecord, v float64) { r.ListCost = v },
 			fieldValue:    math.Inf(1),
 			expectError:   true,
-			errorContains: "cannot be infinity",
+			errorContains: "must be finite",
 		},
 		{
 			name:          "contracted_cost NaN",
 			setField:      func(r *pbc.FocusCostRecord, v float64) { r.ContractedCost = v },
 			fieldValue:    math.NaN(),
 			expectError:   true,
-			errorContains: "cannot be NaN",
+			errorContains: "must be a number",
 		},
 		{
 			name:          "contracted_unit_price negative infinity",
 			setField:      func(r *pbc.FocusCostRecord, v float64) { r.ContractedUnitPrice = v },
 			fieldValue:    math.Inf(-1),
 			expectError:   true,
-			errorContains: "cannot be infinity",
+			errorContains: "must be finite",
 		},
 		{
 			name:          "list_unit_price NaN",
 			setField:      func(r *pbc.FocusCostRecord, v float64) { r.ListUnitPrice = v },
 			fieldValue:    math.NaN(),
 			expectError:   true,
-			errorContains: "cannot be NaN",
+			errorContains: "must be a number",
 		},
 	}
 
@@ -1302,6 +1449,181 @@ func TestValidateFocusRecord_ExtremeValues(t *testing.T) {
 				}
 			} else if err != nil {
 				t.Errorf("Expected no error, got %v", err)
+			}
+		})
+	}
+}
+
+// TestValidateFocusRecord_ErrorsAs_SentinelErrors verifies errors.As extracts *ValidationError
+// with correct FieldName for all 7 sentinel error cases.
+func TestValidateFocusRecord_ErrorsAs_SentinelErrors(t *testing.T) {
+	tests := []struct {
+		name              string
+		modifyFunc        func(*pbc.FocusCostRecord)
+		expectedFieldName string
+		expectedSentinel  error
+	}{
+		{
+			name: "effective_cost exceeds billed_cost",
+			modifyFunc: func(r *pbc.FocusCostRecord) {
+				r.BilledCost = 100.0
+				r.EffectiveCost = 150.0
+				r.ListCost = 200.0
+			},
+			expectedFieldName: "effective_cost",
+			expectedSentinel:  pluginsdk.ErrEffectiveCostExceedsBilledCost,
+		},
+		{
+			name: "list_cost less than effective_cost",
+			modifyFunc: func(r *pbc.FocusCostRecord) {
+				r.BilledCost = 100.0
+				r.EffectiveCost = 100.0
+				r.ListCost = 50.0
+			},
+			expectedFieldName: "list_cost",
+			expectedSentinel:  pluginsdk.ErrListCostLessThanEffectiveCost,
+		},
+		{
+			name: "commitment_discount_status missing",
+			modifyFunc: func(r *pbc.FocusCostRecord) {
+				r.CommitmentDiscountId = "ri-12345"
+				r.CommitmentDiscountStatus = pbc.FocusCommitmentDiscountStatus_FOCUS_COMMITMENT_DISCOUNT_STATUS_UNSPECIFIED
+				r.ChargeCategory = pbc.FocusChargeCategory_FOCUS_CHARGE_CATEGORY_USAGE
+			},
+			expectedFieldName: "commitment_discount_status",
+			expectedSentinel:  pluginsdk.ErrCommitmentStatusMissing,
+		},
+		{
+			name: "commitment_discount_id missing for status",
+			modifyFunc: func(r *pbc.FocusCostRecord) {
+				r.CommitmentDiscountId = ""
+				r.CommitmentDiscountStatus = pbc.FocusCommitmentDiscountStatus_FOCUS_COMMITMENT_DISCOUNT_STATUS_USED
+			},
+			expectedFieldName: "commitment_discount_id",
+			expectedSentinel:  pluginsdk.ErrCommitmentIDMissingForStatus,
+		},
+		{
+			name: "capacity_reservation_status missing",
+			modifyFunc: func(r *pbc.FocusCostRecord) {
+				r.CapacityReservationId = "cr-12345"
+				r.CapacityReservationStatus = pbc.FocusCapacityReservationStatus_FOCUS_CAPACITY_RESERVATION_STATUS_UNSPECIFIED
+				r.ChargeCategory = pbc.FocusChargeCategory_FOCUS_CHARGE_CATEGORY_USAGE
+			},
+			expectedFieldName: "capacity_reservation_status",
+			expectedSentinel:  pluginsdk.ErrCapacityReservationStatusMissing,
+		},
+		{
+			name: "capacity_reservation_id missing",
+			modifyFunc: func(r *pbc.FocusCostRecord) {
+				r.CapacityReservationId = ""
+				r.CapacityReservationStatus = pbc.FocusCapacityReservationStatus_FOCUS_CAPACITY_RESERVATION_STATUS_USED
+			},
+			expectedFieldName: "capacity_reservation_id",
+			expectedSentinel:  pluginsdk.ErrCapacityReservationIDMissing,
+		},
+		{
+			name: "pricing_unit missing",
+			modifyFunc: func(r *pbc.FocusCostRecord) {
+				r.PricingQuantity = 10.0
+				r.PricingUnit = ""
+			},
+			expectedFieldName: "pricing_unit",
+			expectedSentinel:  pluginsdk.ErrPricingUnitMissing,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			record := createValidFocusRecord()
+			tt.modifyFunc(record)
+
+			err := pluginsdk.ValidateFocusRecord(record)
+			if err == nil {
+				t.Fatal("Expected validation error, got nil")
+			}
+
+			// errors.As should extract *ValidationError with correct FieldName
+			var valErr *pluginsdk.ValidationError
+			if !errors.As(err, &valErr) {
+				t.Fatalf("errors.As failed: error %T does not contain *ValidationError", err)
+			}
+			if valErr.FieldName != tt.expectedFieldName {
+				t.Errorf("FieldName = %q, want %q", valErr.FieldName, tt.expectedFieldName)
+			}
+
+			// errors.Is should still find the sentinel through Unwrap()
+			if !errors.Is(err, tt.expectedSentinel) {
+				t.Errorf("errors.Is failed: error does not wrap %v", tt.expectedSentinel)
+			}
+		})
+	}
+}
+
+// TestValidateFocusRecord_ErrorsAs_AdHocErrors verifies errors.As extracts *ValidationError
+// for ad-hoc errors (mandatory fields, currency, NaN/Inf, nil record).
+func TestValidateFocusRecord_ErrorsAs_AdHocErrors(t *testing.T) {
+	tests := []struct {
+		name              string
+		record            *pbc.FocusCostRecord
+		expectedFieldName string
+	}{
+		{
+			name:              "nil record",
+			record:            nil,
+			expectedFieldName: "record",
+		},
+		{
+			name: "mandatory field (provider_name)",
+			record: func() *pbc.FocusCostRecord {
+				r := createValidFocusRecord()
+				//nolint:staticcheck // SA1019: Testing deprecated field
+				r.ProviderName = ""
+				return r
+			}(),
+			expectedFieldName: "provider_name",
+		},
+		{
+			name: "currency validation",
+			record: func() *pbc.FocusCostRecord {
+				r := createValidFocusRecord()
+				r.BillingCurrency = "INVALID"
+				return r
+			}(),
+			expectedFieldName: "billing_currency",
+		},
+		{
+			name: "NaN cost",
+			record: func() *pbc.FocusCostRecord {
+				r := createValidFocusRecord()
+				r.BilledCost = math.NaN()
+				return r
+			}(),
+			expectedFieldName: "billed_cost",
+		},
+		{
+			name: "Inf cost",
+			record: func() *pbc.FocusCostRecord {
+				r := createValidFocusRecord()
+				r.BilledCost = math.Inf(1)
+				return r
+			}(),
+			expectedFieldName: "billed_cost",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := pluginsdk.ValidateFocusRecord(tt.record)
+			if err == nil {
+				t.Fatal("Expected validation error, got nil")
+			}
+
+			var valErr *pluginsdk.ValidationError
+			if !errors.As(err, &valErr) {
+				t.Fatalf("errors.As failed: error %T does not contain *ValidationError", err)
+			}
+			if valErr.FieldName != tt.expectedFieldName {
+				t.Errorf("FieldName = %q, want %q", valErr.FieldName, tt.expectedFieldName)
 			}
 		})
 	}

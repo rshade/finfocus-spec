@@ -12,7 +12,7 @@ conformance tests, and benchmarks. TypeScript types are auto-generated from prot
 
 ## Technical Context
 
-**Language/Version**: Go 1.25.7 (per go.mod) + Protocol Buffers v3, TypeScript (SDK)
+**Language/Version**: Go 1.25.8 (per go.mod) + Protocol Buffers v3, TypeScript (SDK)
 **Primary Dependencies**: google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1
 **Storage**: N/A (stateless proto field addition, no persistence)
 **Testing**: `go test` (unit, integration, conformance, benchmarks), vitest (TypeScript)

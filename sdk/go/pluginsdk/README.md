@@ -1703,13 +1703,33 @@ The `FocusCostRecord` proto message implements all 57 columns defined in FOCUS 1
 
 ### Validation
 
-The builder validates mandatory fields and business rules on `Build()`:
+The builder validates mandatory fields and business rules on `Build()`.
+All validation errors are `*ValidationError` instances that can be inspected with
+`errors.As` for structured field access (`FieldName`, `Constraint`, etc.).
+Only errors created via `NewValidationErrorWithCause` wrap a sentinel, enabling
+`errors.Is` to match through the chain; `NewValidationError` yields structured
+errors without a wrapped sentinel, so `errors.Is` will not match sentinels on those:
 
 ```go
+import (
+    "errors"
+    "fmt"
+
+    "github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
+)
+
 record, err := builder.Build()
 if err != nil {
-    // Handle validation error
-    // e.g., "billing_account_id is required"
+    // Extract structured error details
+    var valErr *pluginsdk.ValidationError
+    if errors.As(err, &valErr) {
+        fmt.Printf("Field %s: %s\n", valErr.FieldName, valErr.Constraint)
+    }
+
+    // Match sentinel errors (backward compatible)
+    if errors.Is(err, pluginsdk.ErrEffectiveCostExceedsBilledCost) {
+        // handle cost hierarchy violation
+    }
 }
 ```
 
@@ -1750,14 +1770,15 @@ builder.WithContractedCost(65.0)
 
 **Common Validation Errors**:
 
-| Error                                          | Cause                                     | Solution                                         |
-| ---------------------------------------------- | ----------------------------------------- | ------------------------------------------------ |
-| `billing_account_id is required`               | Missing identity                          | Call `WithIdentity()`                            |
-| `charge_period (start/end) is required`        | Missing charge period                     | Call `WithChargePeriod()`                        |
-| `service_category is required`                 | Unspecified category                      | Call `WithService()` or `WithServiceCategory()`  |
-| `charge_category is required`                  | Unspecified category                      | Call `WithChargeDetails()`                       |
-| `billing_currency is required`                 | Missing currency                          | Call `WithBillingPeriod()` or `WithFinancials()` |
-| `consumed_quantity must be positive for usage` | Zero or negative usage for Usage category | Set positive usage via `WithUsage()`             |
+| FieldName              | Constraint                           | Cause                                     | Solution                                         |
+| ---------------------- | ------------------------------------ | ----------------------------------------- | ------------------------------------------------ |
+| `billing_account_id`   | `required`                           | Missing identity                          | Call `WithIdentity()`                            |
+| `charge_period.start`  | `required`                           | Missing charge period start               | Call `WithChargePeriod()`                        |
+| `charge_period.end`    | `required`                           | Missing charge period end                 | Call `WithChargePeriod()`                        |
+| `service_category`     | `required`                           | Unspecified category                      | Call `WithService()` or `WithServiceCategory()`  |
+| `charge_category`      | `required`                           | Unspecified category                      | Call `WithChargeDetails()`                       |
+| `billing_currency`     | `required`                           | Missing currency                          | Call `WithBillingPeriod()` or `WithFinancials()` |
+| `consumed_quantity`    | `must be positive for usage charges` | Zero or negative usage for Usage category | Set positive usage via `WithUsage()`             |
 
 ### Complete Example
 

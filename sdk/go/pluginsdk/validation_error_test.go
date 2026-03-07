@@ -1,6 +1,8 @@
 package pluginsdk_test
 
 import (
+	"errors"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -98,6 +100,106 @@ func TestValidationError_FieldAccess(t *testing.T) {
 	assert.Equal(t, "must be >= effective_cost", err.Constraint)
 	assert.Equal(t, "50.00", err.ActualValue)
 	assert.Equal(t, ">= 100.00", err.ExpectedValue)
+}
+
+func TestValidationError_Unwrap(t *testing.T) {
+	t.Run("returns nil when no cause", func(t *testing.T) {
+		err := &pluginsdk.ValidationError{
+			FieldName:  "test_field",
+			Constraint: "required",
+		}
+		assert.NoError(t, err.Unwrap())
+	})
+
+	t.Run("returns wrapped cause", func(t *testing.T) {
+		cause := errors.New("sentinel error")
+		err := pluginsdk.NewValidationErrorWithCause(
+			"effective_cost", "must not exceed billed_cost", "150.00", "<= 100.00", cause,
+		)
+		assert.Equal(t, cause, err.Unwrap())
+	})
+}
+
+func TestValidationError_ErrorsIs_ChainTraversal(t *testing.T) {
+	sentinel := errors.New("test sentinel")
+	valErr := pluginsdk.NewValidationErrorWithCause(
+		"test_field", "test constraint", "actual", "expected", sentinel,
+	)
+
+	// errors.Is should find the sentinel through Unwrap()
+	require.ErrorIs(t, valErr, sentinel)
+
+	// errors.As should find *ValidationError
+	var extracted *pluginsdk.ValidationError
+	require.ErrorAs(t, valErr, &extracted)
+	assert.Equal(t, "test_field", extracted.FieldName)
+	assert.Equal(t, "test constraint", extracted.Constraint)
+
+	// Both should work on the same error
+	require.ErrorIs(t, valErr, sentinel)
+	require.ErrorAs(t, valErr, &extracted)
+}
+
+func TestNewValidationErrorWithCause(t *testing.T) {
+	cause := errors.New("original error")
+	err := pluginsdk.NewValidationErrorWithCause(
+		"field_name", "constraint_desc", "actual_val", "expected_val", cause,
+	)
+
+	require.NotNil(t, err)
+	assert.Equal(t, "field_name", err.FieldName)
+	assert.Equal(t, "constraint_desc", err.Constraint)
+	assert.Equal(t, "actual_val", err.ActualValue)
+	assert.Equal(t, "expected_val", err.ExpectedValue)
+	assert.Equal(t, cause, err.Unwrap())
+
+	// Error() format should be the same as without cause
+	expected := "field_name: constraint_desc (actual: actual_val, expected: expected_val)"
+	assert.Equal(t, expected, err.Error())
+}
+
+func TestNewValidationErrorWithCause_NilCause(t *testing.T) {
+	err := pluginsdk.NewValidationErrorWithCause(
+		"field", "constraint", "actual", "expected", nil,
+	)
+	assert.NoError(t, err.Unwrap())
+}
+
+func BenchmarkNewValidationError(b *testing.B) {
+	b.ReportAllocs()
+	var result *pluginsdk.ValidationError
+	for b.Loop() {
+		result = pluginsdk.NewValidationError(
+			"effective_cost", "must not exceed billed_cost", "150.00", "<= 100.00",
+		)
+	}
+	runtime.KeepAlive(result)
+}
+
+func BenchmarkNewValidationErrorWithCause(b *testing.B) {
+	cause := errors.New("sentinel")
+	b.ReportAllocs()
+	b.ResetTimer()
+	var result *pluginsdk.ValidationError
+	for b.Loop() {
+		result = pluginsdk.NewValidationErrorWithCause(
+			"effective_cost", "must not exceed billed_cost",
+			"150.00", "<= 100.00", cause,
+		)
+	}
+	runtime.KeepAlive(result)
+}
+
+func BenchmarkValidationError_Unwrap(b *testing.B) {
+	cause := errors.New("sentinel")
+	err := pluginsdk.NewValidationErrorWithCause("field", "constraint", "actual", "expected", cause)
+	b.ReportAllocs()
+	b.ResetTimer()
+	var result error
+	for b.Loop() {
+		result = err.Unwrap()
+	}
+	runtime.KeepAlive(result)
 }
 
 func TestNewValidationError(t *testing.T) {
