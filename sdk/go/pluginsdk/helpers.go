@@ -588,8 +588,13 @@ func ValidateRecommendation(rec *pbc.Recommendation) error {
 			return fmt.Errorf("recommendation.confidence_score: %w", err)
 		}
 	}
+	if err := validateMetadataMap(rec.GetMetadata()); err != nil {
+		return fmt.Errorf("recommendation: %w", err)
+	}
 	return nil
 }
+
+// TODO(#381): Wire validateMetadataMap into Budget validation when ValidateBudget moves to pluginsdk.
 
 // ValidateResourceRecommendationInfo validates resource information fields.
 func ValidateResourceRecommendationInfo(res *pbc.ResourceRecommendationInfo) error {

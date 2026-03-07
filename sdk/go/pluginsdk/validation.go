@@ -32,6 +32,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"unicode/utf8"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
@@ -81,6 +82,17 @@ var (
 	)
 )
 
+// Validation error messages for metadata map constraints.
+var (
+	ErrMetadataTooManyEntries   = errors.New("metadata has too many entries")
+	ErrMetadataEmptyKey         = errors.New("metadata contains empty key")
+	ErrMetadataKeyTooLong       = errors.New("metadata key exceeds max length")
+	ErrMetadataKeyInvalidChar   = errors.New("metadata key contains character outside allowed range (0x21-0x7E)")
+	ErrMetadataValueTooLong     = errors.New("metadata value exceeds max length")
+	ErrMetadataValueNotUTF8     = errors.New("metadata value is not valid UTF-8")
+	ErrMetadataValueControlChar = errors.New("metadata value contains control character")
+)
+
 // spotRiskEpsilon is used for float comparison to handle floating-point representation errors.
 // This small value (1e-9) is chosen to be well below the precision typically meaningful
 // for risk scores while being large enough to catch representation errors.
@@ -88,8 +100,16 @@ const spotRiskEpsilon = 1e-9
 
 // Metadata validation limits.
 const (
-	maxMetadataEntries  = 32
-	maxMetadataKeyLen   = 64
+	// maxMetadataEntries limits map size to bound serialization cost and memory.
+	// 32 entries covers known use cases (defaults_applied, estimate_quality, etc.)
+	// while preventing unbounded growth from misconfigured plugins.
+	maxMetadataEntries = 32
+	// maxMetadataKeyLen matches common key-value store limits (e.g., HTTP header names).
+	// 64 bytes accommodates namespaced keys like "provider.subsystem.metric_name".
+	maxMetadataKeyLen = 64
+	// maxMetadataValueLen caps individual values to prevent oversized responses.
+	// 1024 bytes allows structured values (comma-separated lists, short JSON)
+	// while keeping total response size bounded (32 * 1024 = 32 KiB worst case).
 	maxMetadataValueLen = 1024
 )
 
@@ -516,6 +536,8 @@ func ValidateEstimateCostResponse(resp *pbc.EstimateCostResponse) error {
 //  3. Prediction interval consistency (if set)
 //  4. Confidence level range validation (if set)
 //  5. Spot risk score validation (structural + semantic)
+//  6. ExpiresAt timestamp validity (if set)
+//  7. Metadata map validation (if set): entry count, key length/encoding, value length/UTF-8
 //
 // Semantic rules enforced:
 //   - spot_interruption_risk_score must only be non-zero when pricing_category is FOCUS_PRICING_CATEGORY_DYNAMIC
@@ -611,32 +633,65 @@ func CheckSpotRiskConsistency(category pbc.FocusPricingCategory, score float64) 
 }
 
 // validateMetadataMap validates a metadata map for size and content constraints.
-// Limits: max 32 entries, keys 1-64 bytes printable ASCII, values max 1024 bytes.
+//
+// Key constraints: printable ASCII only (0x21-0x7E), no spaces. Since only ASCII
+// is accepted, len(k) equals the character count. Multi-byte UTF-8 sequences are
+// rejected because their individual bytes fall outside the allowed ASCII range.
+//
+// Value constraints: valid UTF-8, max 1024 bytes. Values must not contain C0
+// control characters (0x00-0x1F) or DEL (0x7F). Spaces and multi-byte UTF-8
+// are permitted in values.
+//
+// Limits: max 32 entries, keys 1-64 bytes, values max 1024 bytes.
+//
+// If multiple keys are invalid, the reported key is non-deterministic due to
+// Go map iteration order.
 func validateMetadataMap(m map[string]string) error {
 	if len(m) == 0 {
 		return nil
 	}
 
 	if len(m) > maxMetadataEntries {
-		return fmt.Errorf("metadata has %d entries, max %d", len(m), maxMetadataEntries)
+		return fmt.Errorf("%w: got %d, max %d", ErrMetadataTooManyEntries, len(m), maxMetadataEntries)
 	}
 
 	for k, v := range m {
-		if len(k) == 0 {
-			return errors.New("metadata contains empty key")
-		}
-		if len(k) > maxMetadataKeyLen {
-			return fmt.Errorf("metadata key %q exceeds max length %d", k, maxMetadataKeyLen)
-		}
-		for i := range len(k) {
-			if k[i] < 0x20 || k[i] > 0x7E {
-				return fmt.Errorf("metadata key %q contains non-printable ASCII at byte %d", k, i)
-			}
-		}
-		if len(v) > maxMetadataValueLen {
-			return fmt.Errorf("metadata value for key %q exceeds max length %d", k, maxMetadataValueLen)
+		if err := validateMetadataEntry(k, v); err != nil {
+			return err
 		}
 	}
 
+	return nil
+}
+
+// validateMetadataEntry validates a single metadata key-value pair.
+func validateMetadataEntry(k, v string) error {
+	if len(k) == 0 {
+		return ErrMetadataEmptyKey
+	}
+	if len(k) > maxMetadataKeyLen {
+		return fmt.Errorf("%w: key %q is %d bytes, max %d", ErrMetadataKeyTooLong, k, len(k), maxMetadataKeyLen)
+	}
+	// Keys must be printable ASCII (0x21-0x7E): no space, no control chars, no DEL.
+	// Byte-level iteration is correct here since only single-byte ASCII is allowed.
+	for i := range len(k) {
+		if k[i] <= 0x20 || k[i] > 0x7E {
+			return fmt.Errorf("%w: key %q byte %d (0x%02X)", ErrMetadataKeyInvalidChar, k, i, k[i])
+		}
+	}
+	if len(v) > maxMetadataValueLen {
+		return fmt.Errorf(
+			"%w: key %q value is %d bytes, max %d",
+			ErrMetadataValueTooLong, k, len(v), maxMetadataValueLen,
+		)
+	}
+	if !utf8.ValidString(v) {
+		return fmt.Errorf("%w: key %q", ErrMetadataValueNotUTF8, k)
+	}
+	for i := range len(v) {
+		if v[i] <= 0x1F || v[i] == 0x7F {
+			return fmt.Errorf("%w: key %q byte %d (0x%02X)", ErrMetadataValueControlChar, k, i, v[i])
+		}
+	}
 	return nil
 }

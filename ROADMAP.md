@@ -9,56 +9,14 @@ centered around the FinOps Foundation's FOCUS standard.
 
 ## Immediate Focus (Q2 2026)
 
-### Pagination Hardening
-
-- [ ] **Enforce Token Opacity in Proto Comments**
-  ([#363](https://github.com/rshade/finfocus-spec/issues/363)) [S] -
-  Add explicit warning that `page_token` is opaque; clients MUST NOT parse or construct tokens.
-- [ ] **Warn on TotalCount Change Mid-Iteration**
-  ([#365](https://github.com/rshade/finfocus-spec/issues/365)) [S] -
-  Log zerolog warning when `total_count` changes between pages during iteration.
-
-### GetProjectedCost Enrichment
-
-- [ ] **Plugin Contract for GetProjectedCost**
-  ([#377](https://github.com/rshade/finfocus-spec/issues/377)) [M] -
-  Document plugin contract for sparse/old-state property handling in projected cost responses.
-- [ ] **Metadata Map for Confidence Signals**
-  ([#381](https://github.com/rshade/finfocus-spec/issues/381)) [M] -
-  Add metadata map to GetProjectedCostResponse for property confidence signals.
-
 ### SDK Enhancements
 
-- [ ] **Add StreamResult.ValidateOutputJSON() Helper**
-  ([#344](https://github.com/rshade/finfocus-spec/issues/344)) [M] -
-  Helper method for JSON-LD output validation.
 - [ ] **Integrate ValidationError Type**
   ([#210](https://github.com/rshade/finfocus-spec/issues/210)) [M] -
   Integrate ValidationError type with validation implementation.
 - [ ] **Extract ResourceDescriptor Test Helper**
   ([#204](https://github.com/rshade/finfocus-spec/issues/204)) [S] -
   Refactor test helper for ResourceDescriptor creation.
-
-### Batch RPC Hardening
-
-- [ ] **Document DryRunHandler.HandleDryRun Breaking Change**
-  ([#396](https://github.com/rshade/finfocus-spec/issues/396)) [S] -
-  Document DryRunHandler.HandleDryRun interface change for plugin authors.
-- [ ] **Remove Unnecessary proto.Clone on BatchCostRequest**
-  ([#397](https://github.com/rshade/finfocus-spec/issues/397)) [S] -
-  Remove unnecessary proto.Clone in Server.BatchCost for performance.
-- [ ] **Fix Unbounded Goroutine Creation in batchCostFallback**
-  ([#398](https://github.com/rshade/finfocus-spec/issues/398)) [M] -
-  Add goroutine pool bounds to prevent unbounded concurrency.
-- [x] **Deduplicate grpcCodeToInt32**
-  ([#399](https://github.com/rshade/finfocus-spec/issues/399)) [S] -
-  Deduplicate grpcCodeToInt32 between pluginsdk and testing packages.
-- [x] **Improve ValidateBatchCostRequest Return Type**
-  ([#400](https://github.com/rshade/finfocus-spec/issues/400)) [M] -
-  Improve return type to avoid (nil, nil) sentinel pattern. Resolved Mar 2026.
-- [ ] **Add ResourceDescriptor Field Validation Limits**
-  ([#401](https://github.com/rshade/finfocus-spec/issues/401)) [M] -
-  Add field validation limits to batch request validation.
 
 ### Stability & Maintenance
 
@@ -71,27 +29,21 @@ centered around the FinOps Foundation's FOCUS standard.
 
 ### Batch RPC Code Quality
 
-- [ ] **Avoid Full proto.Clone in BatchCost Normalization**
-  ([#394](https://github.com/rshade/finfocus-spec/issues/394)) [M] -
-  Avoid full proto.Clone in BatchCost request normalization for performance.
-- [ ] **Add PluginInfoProvider + BatchCostHandler Test Coverage**
-  ([#395](https://github.com/rshade/finfocus-spec/issues/395)) [S] -
-  Add test coverage for PluginInfoProvider + BatchCostHandler combination.
 - [ ] **Benchmark descriptorClone Overhead**
   ([#402](https://github.com/rshade/finfocus-spec/issues/402)) [M] -
   Benchmark and evaluate descriptorClone overhead in batch result construction.
 - [ ] **Resolve Concurrency TODO in BatchCost Tests**
   ([#403](https://github.com/rshade/finfocus-spec/issues/403)) [M] -
   Resolve TODO in TestBatchCostFallbackWorkerPoolConfig for concurrency assertions.
-- [x] **Replace Magic Constant defaultInternalErrCode**
-  ([#404](https://github.com/rshade/finfocus-spec/issues/404)) [S] -
-  Replace magic constant with `codes.Internal` from gRPC.
-- [ ] **Extract Helper from MockPlugin.BatchCost**
-  ([#405](https://github.com/rshade/finfocus-spec/issues/405)) [M] -
-  Extract per-resource helper to reduce cognitive complexity.
-- [ ] **Improve ResourceError.code Proto Comment**
-  ([#406](https://github.com/rshade/finfocus-spec/issues/406)) [S] -
-  Add full gRPC status code reference to proto comment.
+
+### Protocol Enhancements
+
+- [ ] **Add expires_at to EstimateCostResponse**
+  ([#434](https://github.com/rshade/finfocus-spec/issues/434)) [M] -
+  Add optional expires_at field for cache-hint parity across all cost RPCs.
+- [ ] **Add CostBreakdown Map to GetProjectedCostResponse**
+  ([#433](https://github.com/rshade/finfocus-spec/issues/433)) [M] -
+  Add structured cost component breakdown map for projected cost responses.
 
 ---
 
@@ -146,6 +98,18 @@ centered around the FinOps Foundation's FOCUS standard.
 
 #### Protocol & Modeling
 
+- [x] **Metadata Map for Confidence Signals**
+  ([#381](https://github.com/rshade/finfocus-spec/issues/381)) -
+  Added metadata map to GetProjectedCostResponse for property confidence signals. Mar 2026.
+- [x] **Enforce Token Opacity in Proto Comments**
+  ([#363](https://github.com/rshade/finfocus-spec/issues/363)) -
+  Added explicit warning that `page_token` is opaque; clients MUST NOT parse or construct tokens. Mar 2026.
+- [x] **Warn on TotalCount Change Mid-Iteration**
+  ([#365](https://github.com/rshade/finfocus-spec/issues/365)) -
+  Log zerolog warning when `total_count` changes between pages during iteration. Mar 2026.
+- [x] **Plugin Contract for GetProjectedCost**
+  ([#377](https://github.com/rshade/finfocus-spec/issues/377)) -
+  Documented plugin contract for sparse/old-state property handling in projected cost responses. Mar 2026.
 - [x] **Pagination for GetActualCost RPC**
   ([#353](https://github.com/rshade/finfocus-spec/issues/353)) -
   Added `page_size`/`page_token` pagination to enable 10,000+ record retrieval without memory exhaustion.
@@ -177,6 +141,42 @@ centered around the FinOps Foundation's FOCUS standard.
 
 #### SDK & Tooling
 
+- [x] **Add StreamResult.ValidateOutputJSON() Helper**
+  ([#344](https://github.com/rshade/finfocus-spec/issues/344)) -
+  Helper method for JSON-LD output validation. Mar 2026.
+- [x] **Document DryRunHandler.HandleDryRun Breaking Change**
+  ([#396](https://github.com/rshade/finfocus-spec/issues/396)) -
+  Documented DryRunHandler.HandleDryRun interface change for plugin authors. Mar 2026.
+- [x] **Remove Unnecessary proto.Clone on BatchCostRequest**
+  ([#397](https://github.com/rshade/finfocus-spec/issues/397)) -
+  Removed unnecessary proto.Clone in Server.BatchCost for performance. Mar 2026.
+- [x] **Fix Unbounded Goroutine Creation in batchCostFallback**
+  ([#398](https://github.com/rshade/finfocus-spec/issues/398)) -
+  Added goroutine pool bounds to prevent unbounded concurrency. Mar 2026.
+- [x] **Add ResourceDescriptor Field Validation Limits**
+  ([#401](https://github.com/rshade/finfocus-spec/issues/401)) -
+  Added field validation limits to batch request validation. Mar 2026.
+- [x] **Improve ValidateBatchCostRequest Return Type**
+  ([#400](https://github.com/rshade/finfocus-spec/issues/400)) -
+  Improved return type to avoid (nil, nil) sentinel pattern. Mar 2026.
+- [x] **Deduplicate grpcCodeToInt32**
+  ([#399](https://github.com/rshade/finfocus-spec/issues/399)) -
+  Eliminated during Batch RPC hardening; function no longer exists in either package. Mar 2026.
+- [x] **Avoid Full proto.Clone in BatchCost Normalization**
+  ([#394](https://github.com/rshade/finfocus-spec/issues/394)) -
+  Avoided full proto.Clone in BatchCost request normalization for performance. Mar 2026.
+- [x] **Add PluginInfoProvider + BatchCostHandler Test Coverage**
+  ([#395](https://github.com/rshade/finfocus-spec/issues/395)) -
+  Added test coverage for PluginInfoProvider + BatchCostHandler combination. Mar 2026.
+- [x] **Replace Magic Constant defaultInternalErrCode**
+  ([#404](https://github.com/rshade/finfocus-spec/issues/404)) -
+  Replaced magic constant with `codes.Internal` from gRPC. Mar 2026.
+- [x] **Extract Helper from MockPlugin.BatchCost**
+  ([#405](https://github.com/rshade/finfocus-spec/issues/405)) -
+  Extracted per-resource helper to reduce cognitive complexity. Mar 2026.
+- [x] **Improve ResourceError.code Proto Comment**
+  ([#406](https://github.com/rshade/finfocus-spec/issues/406)) -
+  Added full gRPC status code reference to proto comment. Mar 2026.
 - [x] **Plugin Capability Discovery** ([#242](https://github.com/rshade/finfocus-spec/issues/242)) -
   Implemented `GetPluginInfo` RPC for spec version compatibility and capability advertisement.
 - [x] **Plugin Capability Dry Run Mode** ([#248](https://github.com/rshade/finfocus-spec/issues/248)) -
