@@ -404,6 +404,30 @@ func TestValidateRecommendation(t *testing.T) {
 			},
 			expectError: true,
 		},
+		{
+			name: "valid metadata passes",
+			rec: &pbc.Recommendation{
+				Id:         "rec-001",
+				Category:   pbc.RecommendationCategory_RECOMMENDATION_CATEGORY_COST,
+				ActionType: pbc.RecommendationActionType_RECOMMENDATION_ACTION_TYPE_RIGHTSIZE,
+				Resource:   &pbc.ResourceRecommendationInfo{Id: "i-123", Provider: "aws"},
+				Impact:     &pbc.RecommendationImpact{EstimatedSavings: 50.0, Currency: "USD"},
+				Metadata:   map[string]string{"source": "cloudwatch"},
+			},
+			expectError: false,
+		},
+		{
+			name: "invalid metadata key fails",
+			rec: &pbc.Recommendation{
+				Id:         "rec-001",
+				Category:   pbc.RecommendationCategory_RECOMMENDATION_CATEGORY_COST,
+				ActionType: pbc.RecommendationActionType_RECOMMENDATION_ACTION_TYPE_RIGHTSIZE,
+				Resource:   &pbc.ResourceRecommendationInfo{Id: "i-123", Provider: "aws"},
+				Impact:     &pbc.RecommendationImpact{EstimatedSavings: 50.0, Currency: "USD"},
+				Metadata:   map[string]string{"invalid key": "value"},
+			},
+			expectError: true,
+		},
 	}
 
 	for _, tc := range testCases {

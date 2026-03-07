@@ -1,7 +1,9 @@
 package pluginsdk_test
 
 import (
+	"fmt"
 	"math"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -781,6 +783,218 @@ func BenchmarkValidateGetProjectedCostResponse_WithPredictionInterval(b *testing
 		PredictionIntervalUpper: &upper,
 		ConfidenceLevel:         &confidence,
 		PricingCategory:         pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_STANDARD,
+	}
+	b.ResetTimer()
+	b.ReportAllocs()
+	for range b.N {
+		_ = pluginsdk.ValidateGetProjectedCostResponse(resp)
+	}
+}
+
+// TestValidateMetadataMap tests metadata map validation via GetProjectedCostResponse.
+func TestValidateMetadataMap(t *testing.T) {
+	// base builds a valid response with the given metadata.
+	base := func(m map[string]string) *pbc.GetProjectedCostResponse {
+		return &pbc.GetProjectedCostResponse{
+			CostPerMonth: 36.50,
+			Metadata:     m,
+		}
+	}
+
+	tests := []struct {
+		name    string
+		meta    map[string]string
+		wantErr error // nil means expect no error
+	}{
+		{
+			name:    "nil_map",
+			meta:    nil,
+			wantErr: nil,
+		},
+		{
+			name:    "empty_map",
+			meta:    map[string]string{},
+			wantErr: nil,
+		},
+		{
+			name:    "valid_single_entry",
+			meta:    map[string]string{"key": "value"},
+			wantErr: nil,
+		},
+		{
+			name: "exactly_32_entries",
+			meta: func() map[string]string {
+				m := make(map[string]string, 32)
+				for i := range 32 {
+					m[fmt.Sprintf("key_%02d", i)] = "value"
+				}
+				return m
+			}(),
+			wantErr: nil,
+		},
+		{
+			name: "33_entries_too_many",
+			meta: func() map[string]string {
+				m := make(map[string]string, 33)
+				for i := range 33 {
+					m[fmt.Sprintf("key_%02d", i)] = "value"
+				}
+				return m
+			}(),
+			wantErr: pluginsdk.ErrMetadataTooManyEntries,
+		},
+		{
+			name:    "empty_key",
+			meta:    map[string]string{"": "value"},
+			wantErr: pluginsdk.ErrMetadataEmptyKey,
+		},
+		{
+			name: "key_exactly_64_bytes",
+			meta: map[string]string{
+				strings.Repeat("a", 64): "value",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "key_65_bytes_too_long",
+			meta: map[string]string{
+				strings.Repeat("a", 65): "value",
+			},
+			wantErr: pluginsdk.ErrMetadataKeyTooLong,
+		},
+		{
+			name:    "key_with_space_rejected",
+			meta:    map[string]string{"key name": "value"},
+			wantErr: pluginsdk.ErrMetadataKeyInvalidChar,
+		},
+		{
+			name:    "key_with_del_0x7F_rejected",
+			meta:    map[string]string{"key\x7F": "value"},
+			wantErr: pluginsdk.ErrMetadataKeyInvalidChar,
+		},
+		{
+			name:    "key_with_control_char_rejected",
+			meta:    map[string]string{"key\x01": "value"},
+			wantErr: pluginsdk.ErrMetadataKeyInvalidChar,
+		},
+		{
+			name:    "key_with_multibyte_utf8_rejected",
+			meta:    map[string]string{"clé": "value"},
+			wantErr: pluginsdk.ErrMetadataKeyInvalidChar,
+		},
+		{
+			name:    "key_with_tab_rejected",
+			meta:    map[string]string{"key\t": "value"},
+			wantErr: pluginsdk.ErrMetadataKeyInvalidChar,
+		},
+		{
+			name: "value_exactly_1024_bytes",
+			meta: map[string]string{
+				"key": strings.Repeat("v", 1024),
+			},
+			wantErr: nil,
+		},
+		{
+			name: "value_1025_bytes_too_long",
+			meta: map[string]string{
+				"key": strings.Repeat("v", 1025),
+			},
+			wantErr: pluginsdk.ErrMetadataValueTooLong,
+		},
+		{
+			name:    "value_with_invalid_utf8",
+			meta:    map[string]string{"key": "value\xff\xfe"},
+			wantErr: pluginsdk.ErrMetadataValueNotUTF8,
+		},
+		{
+			name:    "value_with_nul_byte_rejected",
+			meta:    map[string]string{"key": "value\x00rest"},
+			wantErr: pluginsdk.ErrMetadataValueControlChar,
+		},
+		{
+			name:    "valid_printable_ascii_key",
+			meta:    map[string]string{"key.sub-key_123": "value"},
+			wantErr: nil,
+		},
+		{
+			name:    "key_lowest_valid_char_0x21",
+			meta:    map[string]string{"!": "value"},
+			wantErr: nil,
+		},
+		{
+			name:    "key_highest_valid_char_0x7E",
+			meta:    map[string]string{"~": "value"},
+			wantErr: nil,
+		},
+		{
+			name:    "value_with_tab_rejected",
+			meta:    map[string]string{"key": "value\twith tab"},
+			wantErr: pluginsdk.ErrMetadataValueControlChar,
+		},
+		{
+			name:    "value_with_newline_rejected",
+			meta:    map[string]string{"key": "line1\nline2"},
+			wantErr: pluginsdk.ErrMetadataValueControlChar,
+		},
+		{
+			name:    "value_only_nul_rejected",
+			meta:    map[string]string{"key": "\x00"},
+			wantErr: pluginsdk.ErrMetadataValueControlChar,
+		},
+		{
+			name: "32_entries_max_value_length",
+			meta: func() map[string]string {
+				m := make(map[string]string, 32)
+				for i := range 32 {
+					m[fmt.Sprintf("key_%02d", i)] = strings.Repeat("v", 1024)
+				}
+				return m
+			}(),
+			wantErr: nil,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := pluginsdk.ValidateGetProjectedCostResponse(base(tc.meta))
+			if tc.wantErr == nil {
+				assert.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				assert.ErrorIs(t, err, tc.wantErr)
+			}
+		})
+	}
+}
+
+// BenchmarkValidateGetProjectedCostResponse_WithMetadata32 benchmarks validation
+// with a full 32-entry metadata map to characterize iteration cost.
+func BenchmarkValidateGetProjectedCostResponse_WithMetadata32(b *testing.B) {
+	m := make(map[string]string, 32)
+	for i := range 32 {
+		m[fmt.Sprintf("key_%02d", i)] = "value"
+	}
+	resp := &pbc.GetProjectedCostResponse{
+		CostPerMonth: 36.50,
+		Metadata:     m,
+	}
+	b.ResetTimer()
+	b.ReportAllocs()
+	for range b.N {
+		_ = pluginsdk.ValidateGetProjectedCostResponse(resp)
+	}
+}
+
+// BenchmarkValidateGetProjectedCostResponse_WithMetadata32_LongKeys benchmarks
+// validation with 32 entries using realistic namespaced keys (32-40 bytes).
+func BenchmarkValidateGetProjectedCostResponse_WithMetadata32_LongKeys(b *testing.B) {
+	m := make(map[string]string, 32)
+	for i := range 32 {
+		m[fmt.Sprintf("provider.subsystem.metric_name_%02d", i)] = strings.Repeat("v", 128)
+	}
+	resp := &pbc.GetProjectedCostResponse{
+		CostPerMonth: 36.50,
+		Metadata:     m,
 	}
 	b.ResetTimer()
 	b.ReportAllocs()

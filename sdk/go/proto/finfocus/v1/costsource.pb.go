@@ -1616,6 +1616,11 @@ type GetProjectedCostResponse struct {
 	// consumers. Keys are namespaced by convention (e.g., "defaults_applied",
 	// "estimate_quality"). Consumers that don't recognize a key MUST ignore it.
 	//
+	// Producer constraints (enforced by pluginsdk.ValidateGetProjectedCostResponse):
+	//   - Max 32 entries.
+	//   - Keys: 1-64 bytes, printable ASCII only (0x21-0x7E, no spaces).
+	//   - Values: max 1024 bytes, must be valid UTF-8.
+	//
 	// Common use cases:
 	//   - defaults_applied: Comma-separated list of "name=default_value" pairs
 	//     indicating which resource properties used default values
