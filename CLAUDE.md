@@ -793,24 +793,27 @@ parallel subtests complete.
 
 ## Active Technologies
 
-- Go 1.25.7 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
+- Go 1.25.8 (per go.mod) + google.golang.org/protobuf, google.golang.org/grpc
+  (existing, unchanged) (047-validation-error-integration)
+
+- Go 1.25.8 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
   google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1
   (046-batch-cost-rpc)
 - N/A (stateless batch RPC, no data persistence) (046-batch-cost-rpc)
 
-- Go 1.25.7 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
+- Go 1.25.8 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
   google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1
   (045-caching-hint-expires-at)
 - N/A (stateless proto field addition, no persistence) (045-caching-hint-expires-at)
 
-- Go 1.25.7 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
+- Go 1.25.8 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
   google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1
   (044-actual-cost-pagination)
 - N/A (stateless pagination with offset-based tokens) (044-actual-cost-pagination)
 
 - Markdown documentation (no code changes) + N/A (documentation only) (043-docs-drift-audit)
 
-- Go 1.25.7 (per go.mod) + Protocol Buffers v3, buf v1.32.1, google.golang.org/protobuf,
+- Go 1.25.8 (per go.mod) + Protocol Buffers v3, buf v1.32.1, google.golang.org/protobuf,
   google.golang.org/grpc, zerolog (042-usage-profile-context)
 - N/A (stateless proto definitions and SDK helpers) (042-usage-profile-context)
 
@@ -881,19 +884,11 @@ See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable doc
 
 ## Recent Changes
 
-- 046-batch-cost-rpc: Added Go 1.25.7 (per go.mod) + Protocol Buffers v3,
+- 047-validation-error-integration: Added Go 1.25.8 (per go.mod) +
+  google.golang.org/protobuf, google.golang.org/grpc (existing, unchanged)
+
+- 046-batch-cost-rpc: Added Go 1.25.8 (per go.mod) + Protocol Buffers v3,
   TypeScript (SDK) + google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1
 
-- 045-caching-hint-expires-at: Added Go 1.25.7 (per go.mod) + Protocol Buffers v3,
+- 045-caching-hint-expires-at: Added Go 1.25.8 (per go.mod) + Protocol Buffers v3,
   TypeScript (SDK) + google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1
-
-- 044-actual-cost-pagination: Added Go 1.25.6 (per go.mod) + Protocol Buffers v3,
-  TypeScript (SDK) + google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1
-
-- 043-docs-drift-audit: Added Markdown documentation (no code changes) + N/A
-  (documentation only)
-
-  - `RecommendationActionType_RECOMMENDATION_ACTION_TYPE_INVESTIGATE = 12`
-  - Enables cost anomaly recommendations alongside optimization recommendations
-  - Test coverage: Comprehensive conformance tests in `sdk/go/testing/anomaly_conformance_test.go`
-  - MockPlugin updated to generate realistic anomalies with INVESTIGATE action and negative savings

@@ -1,6 +1,7 @@
 package pluginsdk_test
 
 import (
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -852,6 +853,8 @@ func TestFocusRecordBuilder_WithAllocatedTags(t *testing.T) {
 }
 
 // TestFocusRecordBuilder_AllocationValidation tests that AllocatedMethodId requires AllocatedResourceId.
+//
+//nolint:gocognit // table-driven test with structured error assertions requires nested checks
 func TestFocusRecordBuilder_AllocationValidation(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -859,14 +862,16 @@ func TestFocusRecordBuilder_AllocationValidation(t *testing.T) {
 		resourceID    string
 		expectError   bool
 		errorContains string
+		expectedField string
 	}{
-		{"no allocation - valid", "", "", false, ""},
+		{"no allocation - valid", "", "", false, "", ""},
 		{
 			"method only - invalid", "method-123", "", true,
-			"allocated_resource_id is required when allocated_method_id is set",
+			"allocated_resource_id: required when allocated_method_id set",
+			"allocated_resource_id",
 		},
-		{"resource only - valid", "", "resource-123", false, ""},
-		{"both set - valid", "method-123", "resource-123", false, ""},
+		{"resource only - valid", "", "resource-123", false, "", ""},
+		{"both set - valid", "method-123", "resource-123", false, "", ""},
 	}
 
 	for _, tt := range tests {
@@ -881,16 +886,25 @@ func TestFocusRecordBuilder_AllocationValidation(t *testing.T) {
 
 			_, err := builder.Build()
 
-			if tt.expectError {
-				if err == nil {
-					t.Errorf("Expected error containing %q, got nil", tt.errorContains)
-				} else if !strings.Contains(err.Error(), tt.errorContains) {
-					t.Errorf("Expected error containing %q, got %q", tt.errorContains, err.Error())
-				}
-			} else {
+			if !tt.expectError {
 				if err != nil {
 					t.Errorf("Expected no error, got %v", err)
 				}
+				return
+			}
+
+			if err == nil {
+				t.Fatalf("Expected error containing %q, got nil", tt.errorContains)
+			}
+			if !strings.Contains(err.Error(), tt.errorContains) {
+				t.Errorf("Expected error containing %q, got %q", tt.errorContains, err.Error())
+			}
+			var valErr *pluginsdk.ValidationError
+			if !errors.As(err, &valErr) {
+				t.Fatalf("Expected *pluginsdk.ValidationError, got %T", err)
+			}
+			if valErr.FieldName != tt.expectedField {
+				t.Errorf("Expected FieldName %q, got %q", tt.expectedField, valErr.FieldName)
 			}
 		})
 	}

@@ -73,19 +73,16 @@ func ValidateFocusRecord(r *pbc.FocusCostRecord) error {
 	return nil
 }
 
-// ValidateFocusRecordWithOptions validates a FocusCostRecord with configurable options.
-// In FailFast mode (default), returns a slice with at most one error.
-// In Aggregate mode, returns all validation errors found.
-// Returns an empty slice if the record is valid.
-// ValidateFocusRecordWithOptions validates a FocusCostRecord according to FOCUS 1.2/1.3 and contextual FinOps rules using the provided ValidationOptions.
-// It verifies numeric cost values (no Inf/NaN), required FOCUS fields, ISO 4217 currency codes, and business-rule constraints; when opts.Mode is ValidationModeFailFast validation stops on the first encountered error, otherwise all detected errors are returned.
-// If r is nil, the function returns a single error indicating the record is nil.
-// The function returns a slice of errors; the slice is empty when the record passes all validations.
+// ValidateFocusRecordWithOptions validates a FocusCostRecord according to FOCUS 1.2/1.3
+// and contextual FinOps rules using the provided ValidationOptions.
+// In FailFast mode, validation stops on the first error. In Aggregate mode, all errors
+// are collected and returned. Returns an empty slice when the record is valid.
+// If r is nil, returns a single ValidationError with FieldName "record".
 func ValidateFocusRecordWithOptions(r *pbc.FocusCostRecord, opts ValidationOptions) []error {
 	var errs []error
 
 	if r == nil {
-		return []error{errors.New("record is nil")}
+		return []error{NewValidationError("record", "must not be nil", "nil", "non-nil record")}
 	}
 
 	// Validate cost values (check for Inf/NaN).
@@ -162,10 +159,10 @@ func validateCostValues(r *pbc.FocusCostRecord, opts ValidationOptions) []error 
 // checkCostValue validates a single cost field for Inf/NaN values.
 func checkCostValue(val float64, name string) error {
 	if math.IsInf(val, 0) {
-		return fmt.Errorf("%s cannot be infinity", name)
+		return NewValidationError(name, "must be finite", "infinity", "finite number")
 	}
 	if math.IsNaN(val) {
-		return fmt.Errorf("%s cannot be NaN", name)
+		return NewValidationError(name, "must be a number", "NaN", "finite number")
 	}
 	return nil
 }
@@ -180,42 +177,48 @@ func validateMandatoryFields(r *pbc.FocusCostRecord) error {
 	// Note: provider_name is deprecated in FOCUS 1.3 but still required for FOCUS 1.2 conformance.
 	//nolint:staticcheck // SA1019: Checking deprecated field for FOCUS 1.2 backward compatibility
 	if r.GetProviderName() == "" {
-		return errors.New("provider_name is required")
+		return NewValidationError("provider_name", "required", "", "non-empty string")
 	}
 	if r.GetBillingAccountId() == "" {
-		return errors.New("billing_account_id is required")
+		return NewValidationError("billing_account_id", "required", "", "non-empty string")
 	}
 
 	// Billing period (FOCUS 1.2 Section 2.2).
-	if r.GetBillingPeriodStart() == nil || r.GetBillingPeriodEnd() == nil {
-		return errors.New("billing_period (start/end) is required")
+	if r.GetBillingPeriodStart() == nil {
+		return NewValidationError("billing_period.start", "required", "", "non-nil timestamp")
+	}
+	if r.GetBillingPeriodEnd() == nil {
+		return NewValidationError("billing_period.end", "required", "", "non-nil timestamp")
 	}
 	if r.GetBillingCurrency() == "" {
-		return errors.New("billing_currency is required")
+		return NewValidationError("billing_currency", "required", "", "non-empty string")
 	}
 
 	// Charge period (FOCUS 1.2 Section 2.3).
-	if r.GetChargePeriodStart() == nil || r.GetChargePeriodEnd() == nil {
-		return errors.New("charge_period (start/end) is required")
+	if r.GetChargePeriodStart() == nil {
+		return NewValidationError("charge_period.start", "required", "", "non-nil timestamp")
+	}
+	if r.GetChargePeriodEnd() == nil {
+		return NewValidationError("charge_period.end", "required", "", "non-nil timestamp")
 	}
 
 	// Charge details (FOCUS 1.2 Section 2.4).
 	if r.GetChargeCategory() == pbc.FocusChargeCategory_FOCUS_CHARGE_CATEGORY_UNSPECIFIED {
-		return errors.New("charge_category is required")
+		return NewValidationError("charge_category", "required", "UNSPECIFIED", "valid charge category")
 	}
 	if r.GetChargeClass() == pbc.FocusChargeClass_FOCUS_CHARGE_CLASS_UNSPECIFIED {
-		return errors.New("charge_class is required")
+		return NewValidationError("charge_class", "required", "UNSPECIFIED", "valid charge class")
 	}
 	if r.GetChargeDescription() == "" {
-		return errors.New("charge_description is required")
+		return NewValidationError("charge_description", "required", "", "non-empty string")
 	}
 
 	// Service details (FOCUS 1.2 Section 2.6).
 	if r.GetServiceCategory() == pbc.FocusServiceCategory_FOCUS_SERVICE_CATEGORY_UNSPECIFIED {
-		return errors.New("service_category is required")
+		return NewValidationError("service_category", "required", "UNSPECIFIED", "valid service category")
 	}
 	if r.GetServiceName() == "" {
-		return errors.New("service_name is required")
+		return NewValidationError("service_name", "required", "", "non-empty string")
 	}
 
 	// Note: BilledCost and ContractedCost are mandatory but can be zero or negative
@@ -250,7 +253,10 @@ func validateBusinessRulesWithOptions(r *pbc.FocusCostRecord, opts ValidationOpt
 	// FOCUS 1.2: If ChargeCategory=Usage, ConsumedQuantity must be > 0.
 	if r.GetChargeCategory() == pbc.FocusChargeCategory_FOCUS_CHARGE_CATEGORY_USAGE {
 		if r.GetConsumedQuantity() <= 0 {
-			err := errors.New("consumed_quantity must be positive for usage charge category")
+			err := NewValidationError(
+				"consumed_quantity", "must be positive for usage charges",
+				fmt.Sprintf("%g", r.GetConsumedQuantity()), "> 0",
+			)
 			if opts.Mode == ValidationModeFailFast {
 				return []error{err}
 			}
@@ -355,7 +361,10 @@ func validateFocus13Rules(r *pbc.FocusCostRecord) error {
 // If allocated_method_id is set, allocated_resource_id MUST also be set.
 func validateAllocationRule(r *pbc.FocusCostRecord) error {
 	if r.GetAllocatedMethodId() != "" && r.GetAllocatedResourceId() == "" {
-		return errors.New("allocated_resource_id is required when allocated_method_id is set")
+		return NewValidationError(
+			"allocated_resource_id", "required when allocated_method_id set",
+			"", "non-empty string",
+		)
 	}
 	return nil
 }
@@ -363,7 +372,10 @@ func validateAllocationRule(r *pbc.FocusCostRecord) error {
 // validateCurrency checks if a currency code is a valid ISO 4217 code.
 func validateCurrency(code string, fieldName string) error {
 	if !currency.IsValid(code) {
-		return fmt.Errorf("%s must be a valid ISO 4217 currency code, got %q", fieldName, code)
+		return NewValidationError(
+			fieldName, "must be valid ISO 4217 currency code",
+			code, "valid ISO 4217 code",
+		)
 	}
 	return nil
 }
@@ -390,9 +402,10 @@ func validateContractedCostRule(r *pbc.FocusCostRecord) error {
 
 	// Use relative tolerance for floating-point comparison.
 	if !floatEquals(contractedCost, expectedCost, contractedCostTolerance) {
-		return fmt.Errorf(
-			"contracted_cost (%f) must equal contracted_unit_price (%f) × pricing_quantity (%f) = %f",
-			contractedCost, contractedUnitPrice, pricingQuantity, expectedCost,
+		return NewValidationError(
+			"contracted_cost", "must equal unit_price x quantity",
+			fmt.Sprintf("%g", contractedCost),
+			fmt.Sprintf("%g (unit_price=%g × quantity=%g)", expectedCost, contractedUnitPrice, pricingQuantity),
 		)
 	}
 
@@ -435,7 +448,11 @@ func validateCostHierarchy(r *pbc.FocusCostRecord) error {
 	// Only validate when both are positive (excludes credits/refunds and free tier).
 	if billedCost > 0 && effectiveCost > 0 {
 		if effectiveCost > billedCost && !floatEquals(effectiveCost, billedCost, contractedCostTolerance) {
-			return ErrEffectiveCostExceedsBilledCost
+			return NewValidationErrorWithCause(
+				"effective_cost", "must not exceed billed_cost",
+				fmt.Sprintf("%g", effectiveCost), fmt.Sprintf("<= %g", billedCost),
+				ErrEffectiveCostExceedsBilledCost,
+			)
 		}
 	}
 
@@ -443,7 +460,11 @@ func validateCostHierarchy(r *pbc.FocusCostRecord) error {
 	// Only validate when both are positive.
 	if listCost > 0 && effectiveCost > 0 {
 		if listCost < effectiveCost && !floatEquals(listCost, effectiveCost, contractedCostTolerance) {
-			return ErrListCostLessThanEffectiveCost
+			return NewValidationErrorWithCause(
+				"list_cost", "must be >= effective_cost",
+				fmt.Sprintf("%g", listCost), fmt.Sprintf(">= %g", effectiveCost),
+				ErrListCostLessThanEffectiveCost,
+			)
 		}
 	}
 
@@ -467,10 +488,15 @@ func validateCommitmentDiscountConsistency(
 	// CommitmentDiscountStatus must be set (not UNSPECIFIED).
 	if commitmentID != "" && isUsageCharge {
 		if commitmentStatus == pbc.FocusCommitmentDiscountStatus_FOCUS_COMMITMENT_DISCOUNT_STATUS_UNSPECIFIED {
+			err := NewValidationErrorWithCause(
+				"commitment_discount_status", "required when commitment_discount_id set for usage charges",
+				"UNSPECIFIED", "USED or UNUSED",
+				ErrCommitmentStatusMissing,
+			)
 			if opts.Mode == ValidationModeFailFast {
-				return []error{ErrCommitmentStatusMissing}
+				return []error{err}
 			}
-			errs = append(errs, ErrCommitmentStatusMissing)
+			errs = append(errs, err)
 		}
 	}
 
@@ -478,10 +504,15 @@ func validateCommitmentDiscountConsistency(
 	// CommitmentDiscountId must also be set.
 	if commitmentStatus != pbc.FocusCommitmentDiscountStatus_FOCUS_COMMITMENT_DISCOUNT_STATUS_UNSPECIFIED {
 		if commitmentID == "" {
+			err := NewValidationErrorWithCause(
+				"commitment_discount_id", "required when commitment_discount_status is set",
+				"", "non-empty string",
+				ErrCommitmentIDMissingForStatus,
+			)
 			if opts.Mode == ValidationModeFailFast {
-				return []error{ErrCommitmentIDMissingForStatus}
+				return []error{err}
 			}
-			errs = append(errs, ErrCommitmentIDMissingForStatus)
+			errs = append(errs, err)
 		}
 	}
 
@@ -496,7 +527,11 @@ func validatePricingConsistency(r *pbc.FocusCostRecord) error {
 
 	// If PricingQuantity > 0, PricingUnit must be specified.
 	if pricingQuantity > 0 && pricingUnit == "" {
-		return ErrPricingUnitMissing
+		return NewValidationErrorWithCause(
+			"pricing_unit", "required when pricing_quantity > 0",
+			"", "non-empty string",
+			ErrPricingUnitMissing,
+		)
 	}
 
 	return nil
@@ -514,7 +549,11 @@ func validateCapacityReservationConsistency(r *pbc.FocusCostRecord) error {
 	// CapacityReservationStatus must be set (not UNSPECIFIED).
 	if capacityID != "" && isUsageCharge {
 		if capacityStatus == pbc.FocusCapacityReservationStatus_FOCUS_CAPACITY_RESERVATION_STATUS_UNSPECIFIED {
-			return ErrCapacityReservationStatusMissing
+			return NewValidationErrorWithCause(
+				"capacity_reservation_status", "required when capacity_reservation_id set for usage charges",
+				"UNSPECIFIED", "USED or UNUSED",
+				ErrCapacityReservationStatusMissing,
+			)
 		}
 	}
 
@@ -522,7 +561,11 @@ func validateCapacityReservationConsistency(r *pbc.FocusCostRecord) error {
 	// CapacityReservationId must also be set.
 	if capacityStatus != pbc.FocusCapacityReservationStatus_FOCUS_CAPACITY_RESERVATION_STATUS_UNSPECIFIED {
 		if capacityID == "" {
-			return ErrCapacityReservationIDMissing
+			return NewValidationErrorWithCause(
+				"capacity_reservation_id", "required when capacity_reservation_status is set",
+				"", "non-empty string",
+				ErrCapacityReservationIDMissing,
+			)
 		}
 	}
 
