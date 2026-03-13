@@ -1663,6 +1663,90 @@ func TestSortRecommendationsStrictWeakOrdering(t *testing.T) {
 	}
 }
 
+// newTestDescriptor creates a ResourceDescriptor with standard test defaults
+// (provider="aws", resourceType="ec2", sku="t3.micro", region="us-east-1").
+// ID and ARN are only set when the corresponding parameter is non-empty.
+// Additional opts are appended after defaults, allowing callers to override.
+func newTestDescriptor(id, arn string, opts ...pluginsdk.ResourceDescriptorOption) *pbc.ResourceDescriptor {
+	base := []pluginsdk.ResourceDescriptorOption{
+		pluginsdk.WithSKU("t3.micro"),
+		pluginsdk.WithRegion("us-east-1"),
+	}
+	if id != "" {
+		base = append(base, pluginsdk.WithID(id))
+	}
+	if arn != "" {
+		base = append(base, pluginsdk.WithARN(arn))
+	}
+	base = append(base, opts...)
+	return pluginsdk.NewResourceDescriptor("aws", "ec2", base...)
+}
+
+func TestNewTestDescriptor(t *testing.T) {
+	t.Parallel()
+
+	t.Run("with ID and ARN", func(t *testing.T) {
+		t.Parallel()
+		desc := newTestDescriptor("resource-001", "arn:aws:ec2:us-east-1:123456789012:instance/i-abc123")
+
+		assert.Equal(t, "aws", desc.GetProvider())
+		assert.Equal(t, "ec2", desc.GetResourceType())
+		assert.Equal(t, "t3.micro", desc.GetSku())
+		assert.Equal(t, "us-east-1", desc.GetRegion())
+		assert.Equal(t, "resource-001", desc.GetId())
+		assert.Equal(t, "arn:aws:ec2:us-east-1:123456789012:instance/i-abc123", desc.GetArn())
+	})
+
+	t.Run("empty ID and ARN omits those fields", func(t *testing.T) {
+		t.Parallel()
+		desc := newTestDescriptor("", "")
+
+		assert.Equal(t, "aws", desc.GetProvider())
+		assert.Equal(t, "ec2", desc.GetResourceType())
+		assert.Equal(t, "t3.micro", desc.GetSku())
+		assert.Equal(t, "us-east-1", desc.GetRegion())
+		assert.Empty(t, desc.GetId())
+		assert.Empty(t, desc.GetArn())
+	})
+
+	t.Run("additional options override defaults", func(t *testing.T) {
+		t.Parallel()
+		desc := newTestDescriptor("id-001", "",
+			pluginsdk.WithRegion("eu-west-1"),
+		)
+
+		assert.Equal(t, "eu-west-1", desc.GetRegion())
+		assert.Equal(t, "id-001", desc.GetId())
+	})
+
+	t.Run("additional options add new fields", func(t *testing.T) {
+		t.Parallel()
+		desc := newTestDescriptor("id-001", "",
+			pluginsdk.WithTags(map[string]string{"env": "prod"}),
+		)
+
+		assert.Equal(t, "prod", desc.GetTags()["env"])
+	})
+
+	t.Run("matches equivalent verbose call", func(t *testing.T) {
+		t.Parallel()
+		helper := newTestDescriptor("test-id", "test-arn")
+		verbose := pluginsdk.NewResourceDescriptor("aws", "ec2",
+			pluginsdk.WithSKU("t3.micro"),
+			pluginsdk.WithRegion("us-east-1"),
+			pluginsdk.WithID("test-id"),
+			pluginsdk.WithARN("test-arn"),
+		)
+
+		assert.Equal(t, verbose.GetProvider(), helper.GetProvider())
+		assert.Equal(t, verbose.GetResourceType(), helper.GetResourceType())
+		assert.Equal(t, verbose.GetSku(), helper.GetSku())
+		assert.Equal(t, verbose.GetRegion(), helper.GetRegion())
+		assert.Equal(t, verbose.GetId(), helper.GetId())
+		assert.Equal(t, verbose.GetArn(), helper.GetArn())
+	})
+}
+
 // =============================================================================
 // ResourceDescriptor Helper Tests
 // =============================================================================

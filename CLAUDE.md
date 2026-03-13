@@ -793,6 +793,10 @@ parallel subtests complete.
 
 ## Active Technologies
 
+- Go 1.25.8 (per go.mod) + `github.com/stretchr/testify`,
+  `google.golang.org/protobuf` (existing, unchanged) (048-test-descriptor-helper)
+- N/A (test-only refactoring) (048-test-descriptor-helper)
+
 - Go 1.25.8 (per go.mod) + google.golang.org/protobuf, google.golang.org/grpc
   (existing, unchanged) (047-validation-error-integration)
 
@@ -884,11 +888,13 @@ See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable doc
 
 ## Recent Changes
 
+- 048-test-descriptor-helper: Added Go 1.25.8 (per go.mod) +
+  `github.com/stretchr/testify`, `google.golang.org/protobuf` (existing, unchanged)
+
 - 047-validation-error-integration: Added Go 1.25.8 (per go.mod) +
   google.golang.org/protobuf, google.golang.org/grpc (existing, unchanged)
 
 - 046-batch-cost-rpc: Added Go 1.25.8 (per go.mod) + Protocol Buffers v3,
   TypeScript (SDK) + google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1
 
-- 045-caching-hint-expires-at: Added Go 1.25.8 (per go.mod) + Protocol Buffers v3,
   TypeScript (SDK) + google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1
