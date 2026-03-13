@@ -5,6 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0](https://github.com/rshade/finfocus-spec/compare/v0.5.7...v0.6.0) (2026-03-13)
+
+
+### ⚠ BREAKING CHANGES
+
+* **migration:** DryRunHandler.HandleDryRun signature changed from HandleDryRun(req *pbc.DryRunRequest) to HandleDryRun(ctx context.Context, req *pbc.DryRunRequest). This is a compile-time breaking change affecting all plugins implementing the DryRunHandler interface.
+
+### Added
+
+* add streamresult validation helper methods ([#425](https://github.com/rshade/finfocus-spec/issues/425)) ([ab458e6](https://github.com/rshade/finfocus-spec/commit/ab458e6b6e9497fe9a76dd02c82329239976c286)), closes [#344](https://github.com/rshade/finfocus-spec/issues/344)
+* **pluginsdk:** add ResourceDescriptor field validation limits ([#431](https://github.com/rshade/finfocus-spec/issues/431)) ([f2c07eb](https://github.com/rshade/finfocus-spec/commit/f2c07ebece59884fcbdc3640aebc4a943cf0ae89))
+* **pluginsdk:** warn when total_count changes mid-iteration ([#430](https://github.com/rshade/finfocus-spec/issues/430)) ([523fcad](https://github.com/rshade/finfocus-spec/commit/523fcadf23ba687f038e0046903c64e07829cea4)), closes [#365](https://github.com/rshade/finfocus-spec/issues/365)
+* **proto:** add metadata map to getprojectedcostresponse ([#427](https://github.com/rshade/finfocus-spec/issues/427)) ([e624864](https://github.com/rshade/finfocus-spec/commit/e62486432c58fccdf5b1d79c5aa13c9a6adf0069)), closes [#381](https://github.com/rshade/finfocus-spec/issues/381)
+
+
+### Fixed
+
+* **pluginsdk:** harden metadata map validation and add sentinel errors ([#435](https://github.com/rshade/finfocus-spec/issues/435)) ([1ee2b12](https://github.com/rshade/finfocus-spec/commit/1ee2b12c5504162d59265f47272857554ee7511d)), closes [#381](https://github.com/rshade/finfocus-spec/issues/381)
+
+
+### Performance
+
+* **pluginsdk:** avoid proto.Clone in BatchCost fallback path ([#417](https://github.com/rshade/finfocus-spec/issues/417)) ([73b0f67](https://github.com/rshade/finfocus-spec/commit/73b0f67984730321f34b6e50a90b65a5bfcc4a62)), closes [#394](https://github.com/rshade/finfocus-spec/issues/394)
+* **pluginsdk:** fix unbounded goroutine creation in batchCostFallback ([#424](https://github.com/rshade/finfocus-spec/issues/424)) ([827e2d1](https://github.com/rshade/finfocus-spec/commit/827e2d115c1d71b0d91511576abec760cc2336c9)), closes [#398](https://github.com/rshade/finfocus-spec/issues/398)
+* **pluginsdk:** remove unnecessary proto.clone in batchcost handler ([#422](https://github.com/rshade/finfocus-spec/issues/422)) ([812f70b](https://github.com/rshade/finfocus-spec/commit/812f70b624915e7888809a0cf1cd2bf93067c92f)), closes [#397](https://github.com/rshade/finfocus-spec/issues/397)
+
+
+### Changed
+
+* deduplicate grpccodetoint32 into shared internal package ([#426](https://github.com/rshade/finfocus-spec/issues/426)) ([6a02f49](https://github.com/rshade/finfocus-spec/commit/6a02f49282274daf2f486daf2875de032979b154))
+* **pluginsdk:** extract newTestDescriptor test helper ([#442](https://github.com/rshade/finfocus-spec/issues/442)) ([5604a57](https://github.com/rshade/finfocus-spec/commit/5604a572f218c20149becbda8ddef6821f5830e5)), closes [#204](https://github.com/rshade/finfocus-spec/issues/204)
+* **pluginsdk:** improve ValidateBatchCostRequest return type ([#420](https://github.com/rshade/finfocus-spec/issues/420)) ([3c09962](https://github.com/rshade/finfocus-spec/commit/3c099623b87e184b5e9fdbbd9d444cad0aa1131b)), closes [#400](https://github.com/rshade/finfocus-spec/issues/400)
+* **pluginsdk:** integrate ValidationError with all validation sites ([#438](https://github.com/rshade/finfocus-spec/issues/438)) ([2a7382b](https://github.com/rshade/finfocus-spec/commit/2a7382bb39960547451914103fc2f4c1b81f63e5)), closes [#210](https://github.com/rshade/finfocus-spec/issues/210)
+* **testing:** extract batchsingleresource helper from mockplugin ([#421](https://github.com/rshade/finfocus-spec/issues/421)) ([c437616](https://github.com/rshade/finfocus-spec/commit/c437616e7f8a5c249cccfbe5dec59db7ed78259b)), closes [#405](https://github.com/rshade/finfocus-spec/issues/405)
+* **testing:** replace magic constant with codes.Internal ([#429](https://github.com/rshade/finfocus-spec/issues/429)) ([e0b17f7](https://github.com/rshade/finfocus-spec/commit/e0b17f7ac6faecaddc9d29c2dbc3055aad71c010)), closes [#404](https://github.com/rshade/finfocus-spec/issues/404)
+
+
+### Documentation
+
+* **migration:** document dryrunhandler.handledryrun breaking change ([#423](https://github.com/rshade/finfocus-spec/issues/423)) ([3933722](https://github.com/rshade/finfocus-spec/commit/3933722c5905ba1706eab152e8e08754cf7826a4)), closes [#396](https://github.com/rshade/finfocus-spec/issues/396)
+* **proto:** add grpc code reference to resourceerror.code ([#415](https://github.com/rshade/finfocus-spec/issues/415)) ([587daed](https://github.com/rshade/finfocus-spec/commit/587daed76a5b4ca2496dfd473524adf869346314)), closes [#406](https://github.com/rshade/finfocus-spec/issues/406)
+* **proto:** enforce page_token opacity with explicit warnings ([#428](https://github.com/rshade/finfocus-spec/issues/428)) ([6e4af60](https://github.com/rshade/finfocus-spec/commit/6e4af60ddd4ab76008d83e56df2cd7ee7a51e882)), closes [#363](https://github.com/rshade/finfocus-spec/issues/363)
+* **sdk:** add plugin contract for getprojectedcost ([#416](https://github.com/rshade/finfocus-spec/issues/416)) ([f4b35b7](https://github.com/rshade/finfocus-spec/commit/f4b35b79995860b16256a71fc7e41dcbf2e8da22)), closes [#377](https://github.com/rshade/finfocus-spec/issues/377)
+
 ## [0.5.7](https://github.com/rshade/finfocus-spec/compare/v0.5.6...v0.5.7) (2026-02-28)
 
 

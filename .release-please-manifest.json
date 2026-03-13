@@ -1,4 +1,4 @@
 {
-  ".": "0.5.7",
-  "sdk/typescript/packages/client": "0.6.3"
+  ".": "0.6.0",
+  "sdk/typescript/packages/client": "0.6.4"
 }
