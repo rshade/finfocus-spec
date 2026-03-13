@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.4](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.6.3...finfocus-client-v0.6.4) (2026-03-13)
+
+
+### Features
+
+* **proto:** add metadata map to getprojectedcostresponse ([#427](https://github.com/rshade/finfocus-spec/issues/427)) ([e624864](https://github.com/rshade/finfocus-spec/commit/e62486432c58fccdf5b1d79c5aa13c9a6adf0069)), closes [#381](https://github.com/rshade/finfocus-spec/issues/381)
+
+
+### Bug Fixes
+
+* **pluginsdk:** harden metadata map validation and add sentinel errors ([#435](https://github.com/rshade/finfocus-spec/issues/435)) ([1ee2b12](https://github.com/rshade/finfocus-spec/commit/1ee2b12c5504162d59265f47272857554ee7511d)), closes [#381](https://github.com/rshade/finfocus-spec/issues/381)
+
 ## [0.6.3](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.6.2...finfocus-client-v0.6.3) (2026-02-28)
 
 
