@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@bufbuild/protoc-gen-es": "^2.11.0",
-    "msw": "^2.12.10",
+    "msw": "^2.12.14",
     "tsup": "^8.5.1"
   },
   "files": [
