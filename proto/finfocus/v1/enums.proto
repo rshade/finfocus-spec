@@ -185,6 +185,8 @@ enum PluginCapability {
   PLUGIN_CAPABILITY_DISMISS_RECOMMENDATIONS = 11;
   // Plugin implements BatchCost RPC for efficient multi-resource cost queries
   PLUGIN_CAPABILITY_BATCH_COST = 12;
+  // Plugin implements ResolveResourceTypes RPC for IaC type translation
+  PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES = 13;
 }
 
 // UsageProfile represents the intended workload context for cost estimation.
@@ -231,6 +233,18 @@ enum UsageProfile {
   //   - Elevated data transfer/network costs
   //   - Batch processing or load testing scenarios
   USAGE_PROFILE_BURST = 3;
+}
+
+// SourceFormat identifies the Infrastructure-as-Code tool that produced
+// the resource type strings being resolved.
+enum SourceFormat {
+  // Protobuf default. Plugins return empty mappings for this value.
+  SOURCE_FORMAT_UNSPECIFIED = 0;
+  // Terraform / OpenTofu resource types (e.g., "aws_instance", "google_compute_instance").
+  SOURCE_FORMAT_TERRAFORM = 1;
+  // AWS CloudFormation logical resource types (e.g., "AWS::EC2::Instance").
+  // Reserved for future use; no plugin implements this initially.
+  SOURCE_FORMAT_CLOUDFORMATION = 2;
 }
 
 // CostQueryType specifies which cost operation to perform in a batch query.

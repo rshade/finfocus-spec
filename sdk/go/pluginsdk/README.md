@@ -651,13 +651,14 @@ This simplifies configuration and ensures metadata matches implementation.
 
 Simply implement the standard interfaces:
 
-| Interface                 | Required Method         | Capability Enum                             |
-| ------------------------- | ----------------------- | ------------------------------------------- |
-| `DryRunHandler`           | `HandleDryRun`          | `PLUGIN_CAPABILITY_DRY_RUN`                 |
-| `RecommendationsProvider` | `GetRecommendations`    | `PLUGIN_CAPABILITY_RECOMMENDATIONS`         |
-| `BudgetsProvider`         | `GetBudgets`            | `PLUGIN_CAPABILITY_BUDGETS`                 |
-| `DismissProvider`         | `DismissRecommendation` | `PLUGIN_CAPABILITY_DISMISS_RECOMMENDATIONS` |
-| `BatchCostHandler`        | `BatchCost`             | `PLUGIN_CAPABILITY_BATCH_COST`              |
+| Interface                        | Required Method          | Capability Enum                                |
+| -------------------------------- | ------------------------ | ---------------------------------------------- |
+| `DryRunHandler`                  | `HandleDryRun`           | `PLUGIN_CAPABILITY_DRY_RUN`                    |
+| `RecommendationsProvider`        | `GetRecommendations`     | `PLUGIN_CAPABILITY_RECOMMENDATIONS`            |
+| `BudgetsProvider`                | `GetBudgets`             | `PLUGIN_CAPABILITY_BUDGETS`                    |
+| `DismissProvider`                | `DismissRecommendation`  | `PLUGIN_CAPABILITY_DISMISS_RECOMMENDATIONS`    |
+| `BatchCostHandler`               | `BatchCost`              | `PLUGIN_CAPABILITY_BATCH_COST`                 |
+| `ResolveResourceTypesProvider`   | `ResolveResourceTypes`   | `PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES`     |
 
 ```go
 // Example: Implementing DryRunHandler
@@ -786,6 +787,46 @@ for _, res := range batchResp.GetResults() {
 
 Alternatively, use the `ActualCostIterator` (see [Pagination Helpers](#pagination-helpers))
 to handle token management automatically for each resource that needs continuation.
+
+### ResolveResourceTypes RPC
+
+The `ResolveResourceTypes` RPC translates IaC-format resource type strings
+(e.g., Terraform types) into Pulumi type tokens. Plugins can provide type
+resolution via two approaches:
+
+#### Option 1: TypeRegistry (recommended)
+
+Register mappings declaratively and the SDK handles the RPC automatically:
+
+```go
+registry := pluginsdk.NewTypeRegistry()
+registry.RegisterMappings(pbc.SourceFormat_SOURCE_FORMAT_TERRAFORM, map[string]string{
+    "aws_instance":        "aws:ec2/instance:Instance",
+    "aws_s3_bucket":       "aws:s3/bucket:Bucket",
+    "aws_lambda_function": "aws:lambda/function:Function",
+})
+
+pluginsdk.Serve(ctx, pluginsdk.ServeConfig{
+    Plugin:       &MyPlugin{},
+    PluginInfo:   info,
+    TypeRegistry: registry,
+})
+```
+
+#### Option 2: ResolveResourceTypesProvider interface
+
+Implement the interface for dynamic type resolution. This takes precedence
+over TypeRegistry if both are configured:
+
+```go
+type ResolveResourceTypesProvider interface {
+    ResolveResourceTypes(ctx context.Context, req *pbc.ResolveResourceTypesRequest) (
+        *pbc.ResolveResourceTypesResponse, error)
+}
+```
+
+Plugins that implement neither return an empty response (not an error),
+allowing the core to fall back to heuristic type conversion.
 
 ## Environment Variables
 
