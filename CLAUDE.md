@@ -887,6 +887,7 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+- 047-validation-error-integration: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 
 - 048-test-descriptor-helper: Added Go 1.25.8 (per go.mod) +
   `github.com/stretchr/testify`, `google.golang.org/protobuf` (existing, unchanged)
@@ -894,7 +895,6 @@ See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable doc
 - 047-validation-error-integration: Added Go 1.25.8 (per go.mod) +
   google.golang.org/protobuf, google.golang.org/grpc (existing, unchanged)
 
-- 046-batch-cost-rpc: Added Go 1.25.8 (per go.mod) + Protocol Buffers v3,
   TypeScript (SDK) + google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1
 
   TypeScript (SDK) + google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1

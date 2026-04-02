@@ -120,3 +120,53 @@ func ApplyActualCostResultOptions(result *pbc.ActualCostResult, opts ...ActualCo
 		opt(result)
 	}
 }
+
+// IsEstimateCostExpired returns true if the estimate cost response has an
+// expires_at timestamp that is before the given reference time.
+//
+// Returns false if the response is nil or expires_at is nil/unset.
+func IsEstimateCostExpired(resp *pbc.EstimateCostResponse, now time.Time) bool {
+	if resp == nil {
+		return false
+	}
+	ts := resp.GetExpiresAt()
+	if ts == nil {
+		return false
+	}
+	return ts.AsTime().Before(now)
+}
+
+// EstimateCostExpiresAt returns the expiration time for an estimate cost response.
+// The second return value is false if the response is nil or expires_at is nil/unset.
+func EstimateCostExpiresAt(resp *pbc.EstimateCostResponse) (time.Time, bool) {
+	if resp == nil {
+		return time.Time{}, false
+	}
+	ts := resp.GetExpiresAt()
+	if ts == nil {
+		return time.Time{}, false
+	}
+	return ts.AsTime(), true
+}
+
+// WithEstimateCostExpiresAt returns an EstimateCostResponseOption that sets
+// the expires_at caching hint on the estimate cost response.
+//
+// A zero time.Time results in a nil expires_at (no caching guidance).
+//
+// This integrates with NewEstimateCostResponse for fluent configuration.
+//
+// Usage:
+//
+//	resp := pluginsdk.NewEstimateCostResponse(
+//	    pluginsdk.WithEstimateCostExpiresAt(time.Now().Add(24 * time.Hour)),
+//	)
+func WithEstimateCostExpiresAt(expiresAt time.Time) EstimateCostResponseOption {
+	return func(resp *pbc.EstimateCostResponse) {
+		if expiresAt.IsZero() {
+			resp.ExpiresAt = nil
+			return
+		}
+		resp.ExpiresAt = timestamppb.New(expiresAt)
+	}
+}

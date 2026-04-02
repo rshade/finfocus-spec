@@ -170,3 +170,10 @@ verifying both `errors.Is(err, sentinel)` and `errors.As(err, &valErr)` work on 
 - **Error() format change is intentional**: The `Error()` output changes from bare sentinel
   messages to the richer `ValidationError` format. Callers relying on string matching should
   migrate to `errors.Is`, which is the idiomatic Go error identity check.
+- **TypeScript SDK sync deferred**: The TypeScript SDK has a `ValidationError` class
+  (`sdk/typescript/packages/client/src/errors/validation-error.ts`) with a simpler structure
+  (`field`/`code` vs Go's `FieldName`/`Constraint`/`ActualValue`/`ExpectedValue`/`Unwrap`).
+  Synchronization is deferred because the TypeScript SDK does not yet have FOCUS record validation
+  (`ValidateFocusRecord` equivalent). When TypeScript validation is added, its `ValidationError`
+  should be aligned with the Go SDK's structured fields. Constitution XIII is satisfied by
+  documenting this deferral.

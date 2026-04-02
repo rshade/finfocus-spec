@@ -30,6 +30,9 @@
 
 ## Active Technologies
 
+- Go 1.25.5 + Go standard library (errors, fmt) (047-validation-error-integration)
+- N/A (in-memory validation only) (047-validation-error-integration)
+
 - Documentation (Markdown, JSON) - No code implementation + markdownlint-cli2 (for validation), JSON schema validators (001-migration-docs)
 - Files - Repository documentation files (MIGRATION.md, CHANGELOG.md, README.md) (001-migration-docs)
 

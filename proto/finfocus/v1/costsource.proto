@@ -1135,6 +1135,24 @@ message EstimateCostResponse {
   //
   // Validation: Use pluginsdk.ValidateEstimateCostResponse() to verify all constraints.
   double spot_interruption_risk_score = 4;
+
+  // expires_at is a caching hint indicating when this cost estimate should be
+  // considered stale. Callers MAY use this to manage local caches and avoid
+  // re-requesting estimates before the expiration time.
+  //
+  // Semantics:
+  //   - nil/unset: No caching guidance. Caller should re-fetch on each request.
+  //   - Past timestamp: Data is immediately stale (equivalent to no hint).
+  //   - Future timestamp: Data is valid until this time.
+  //
+  // This field is advisory. Callers MAY apply their own maximum TTL policy
+  // regardless of the value set by the plugin.
+  //
+  // Use cases:
+  //   - Fixed pricing: Set far future for resources with stable pricing
+  //   - Volatile/spot pricing: Set short TTL or leave unset
+  //   - Rate-limited APIs: Set to avoid redundant upstream calls
+  google.protobuf.Timestamp expires_at = 5;
 }
 
 // =============================================================================

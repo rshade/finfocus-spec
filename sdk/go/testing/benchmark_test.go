@@ -1244,7 +1244,7 @@ func BenchmarkGetActualCostPaginated(b *testing.B) {
 	})
 }
 
-// BenchmarkExpiresAtHelpers benchmarks the four expiration check helper functions.
+// BenchmarkExpiresAtHelpers benchmarks the expiration check helper functions.
 // Target: < 10 ns/op, 0 allocs/op.
 func BenchmarkExpiresAtHelpers(b *testing.B) {
 	now := time.Now()
@@ -1253,7 +1253,10 @@ func BenchmarkExpiresAtHelpers(b *testing.B) {
 	result := &pbc.ActualCostResult{
 		ExpiresAt: timestamppb.New(futureTime),
 	}
-	resp := &pbc.GetProjectedCostResponse{
+	projResp := &pbc.GetProjectedCostResponse{
+		ExpiresAt: timestamppb.New(futureTime),
+	}
+	estResp := &pbc.EstimateCostResponse{
 		ExpiresAt: timestamppb.New(futureTime),
 	}
 	nilResult := &pbc.ActualCostResult{}
@@ -1278,7 +1281,7 @@ func BenchmarkExpiresAtHelpers(b *testing.B) {
 		b.ReportAllocs()
 		b.ResetTimer()
 		for range b.N {
-			pluginsdk.IsProjectedCostExpired(resp, now)
+			pluginsdk.IsProjectedCostExpired(projResp, now)
 		}
 	})
 
@@ -1286,7 +1289,33 @@ func BenchmarkExpiresAtHelpers(b *testing.B) {
 		b.ReportAllocs()
 		b.ResetTimer()
 		for range b.N {
-			pluginsdk.ProjectedCostExpiresAt(resp)
+			pluginsdk.ProjectedCostExpiresAt(projResp)
+		}
+	})
+
+	b.Run("IsEstimateCostExpired", func(b *testing.B) {
+		b.ReportAllocs()
+		b.ResetTimer()
+		for range b.N {
+			pluginsdk.IsEstimateCostExpired(estResp, now)
+		}
+	})
+
+	b.Run("EstimateCostExpiresAt", func(b *testing.B) {
+		b.ReportAllocs()
+		b.ResetTimer()
+		for range b.N {
+			pluginsdk.EstimateCostExpiresAt(estResp)
+		}
+	})
+
+	b.Run("WithEstimateCostExpiresAt", func(b *testing.B) {
+		b.ReportAllocs()
+		b.ResetTimer()
+		for range b.N {
+			pluginsdk.NewEstimateCostResponse(
+				pluginsdk.WithEstimateCostExpiresAt(futureTime),
+			)
 		}
 	})
 
