@@ -12,7 +12,7 @@
     "packages/*"
   ],
   "devDependencies": {
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.2",
     "tsx": "^4.21.0",
     "vitest": "^4.1.2",
     "@types/node": "^24.12.0"
