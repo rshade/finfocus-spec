@@ -5,49 +5,39 @@
     ":semanticCommits",
     ":semanticCommitTypeAll(chore)"
   ],
-  "schedule": [
-    "before 4am on monday"
-  ],
+  "schedule": ["before 4am on monday"],
   "timezone": "UTC",
   "packageRules": [
     {
       "matchManagers": ["gomod"],
       "matchDepNames": ["go"],
       "matchDepTypes": ["golang"],
-      "allowedVersions": "~1.25",
+      "allowedVersions": "^1.25.0",
       "description": "Pin Go version to 1.25.x to match CI configuration"
     },
     {
       "groupName": "gRPC and protobuf dependencies",
       "groupSlug": "grpc-protobuf",
       "matchManagers": ["gomod"],
-      "matchPackageNames": [
-        "/^google\\.golang\\.org//"
-      ]
+      "matchPackageNames": ["/^google\\.golang\\.org//"]
     },
     {
       "groupName": "GitHub dependencies",
       "groupSlug": "github-deps",
       "matchManagers": ["gomod"],
-      "matchPackageNames": [
-        "/^github\\.com//"
-      ]
+      "matchPackageNames": ["/^github\\.com//"]
     },
     {
       "groupName": "Go x packages",
       "groupSlug": "go-x-packages",
       "matchManagers": ["gomod"],
-      "matchPackageNames": [
-        "/^golang\\.org/x//"
-      ]
+      "matchPackageNames": ["/^golang\\.org/x//"]
     },
     {
       "groupName": "Buf dependencies",
       "groupSlug": "buf-deps",
       "matchManagers": ["gomod"],
-      "matchPackageNames": [
-        "/^buf\\.build//"
-      ]
+      "matchPackageNames": ["/^buf\\.build//"]
     },
     {
       "groupName": "NPM dev dependencies",
@@ -61,20 +51,12 @@
       "matchManagers": ["github-actions"]
     }
   ],
-  "enabledManagers": [
-    "gomod",
-    "npm",
-    "github-actions"
-  ],
+  "enabledManagers": ["gomod", "npm", "github-actions"],
   "gomod": {
     "enabled": true,
-    "postUpdateOptions": [
-      "gomodTidy"
-    ]
+    "postUpdateOptions": ["gomodTidy"]
   },
-  "ignorePaths": [
-    "examples/**"
-  ],
+  "ignorePaths": ["examples/**"],
   "prHourlyLimit": 2,
   "prConcurrentLimit": 5,
   "rangeStrategy": "bump",
@@ -88,10 +70,7 @@
   "rebaseLabel": "rebase",
   "assignees": [],
   "reviewers": [],
-  "labels": [
-    "dependencies",
-    "renovate"
-  ],
+  "labels": ["dependencies", "renovate"],
   "assignAutomerge": false,
   "automerge": false,
   "automergeType": "pr",
