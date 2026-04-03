@@ -1158,6 +1158,7 @@ func serveConnect(ctx context.Context, listener net.Listener, server *Server, co
 	serverDone := make(chan struct{})
 
 	// Handle context cancellation with proper synchronization
+	//nolint:gosec // G118: parent ctx is cancelled; fresh context needed for graceful shutdown
 	go func() {
 		defer close(shutdownComplete)
 		select {

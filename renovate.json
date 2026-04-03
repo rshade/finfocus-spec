@@ -12,8 +12,14 @@
       "matchManagers": ["gomod"],
       "matchDepNames": ["go"],
       "matchDepTypes": ["golang"],
-      "allowedVersions": "^1.25.0",
+      "allowedVersions": "~1.25.0",
       "description": "Pin Go version to 1.25.x to match CI configuration"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "matchDepNames": ["actions/go-versions"],
+      "allowedVersions": "~1.25.0",
+      "description": "Pin Go version to 1.25.x in CI workflows"
     },
     {
       "groupName": "gRPC and protobuf dependencies",

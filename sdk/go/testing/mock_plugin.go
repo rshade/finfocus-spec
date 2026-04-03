@@ -1718,11 +1718,12 @@ func (m *MockPlugin) GetBudgets(
 	return &pbc.GetBudgetsResponse{
 		Budgets: budgets,
 		Summary: &pbc.BudgetSummary{
-			TotalBudgets:    int32(totalBudgets),    //nolint:gosec // length will not exceed int32 max
-			BudgetsOk:       int32(budgetsOk),       //nolint:gosec // count will not exceed int32 max
-			BudgetsWarning:  int32(budgetsWarning),  //nolint:gosec // count will not exceed int32 max
-			BudgetsCritical: int32(budgetsCritical), //nolint:gosec // count will not exceed int32 max
-			BudgetsExceeded: int32(budgetsExceeded), //nolint:gosec // count will not exceed int32 max
+			//nolint:gosec // G115: mock test data; count won't exceed int32 max
+			TotalBudgets:    int32(totalBudgets),
+			BudgetsOk:       int32(budgetsOk),
+			BudgetsWarning:  int32(budgetsWarning),
+			BudgetsCritical: int32(budgetsCritical),
+			BudgetsExceeded: int32(budgetsExceeded),
 		},
 	}, nil
 }

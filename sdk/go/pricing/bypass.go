@@ -294,16 +294,16 @@ func FormatBypassSummary(bypasses []BypassMetadata) string {
 func FormatBypassDetail(b BypassMetadata) string {
 	var sb strings.Builder
 
-	sb.WriteString(fmt.Sprintf("[%s] %s\n", strings.ToUpper(string(b.Severity)), b.ValidationName))
-	sb.WriteString(fmt.Sprintf("  Original error: %s\n", b.OriginalError))
+	fmt.Fprintf(&sb, "[%s] %s\n", strings.ToUpper(string(b.Severity)), b.ValidationName)
+	fmt.Fprintf(&sb, "  Original error: %s\n", b.OriginalError)
 
 	if b.Reason != "" {
-		sb.WriteString(fmt.Sprintf("  Reason: %s\n", b.Reason))
+		fmt.Fprintf(&sb, "  Reason: %s\n", b.Reason)
 	}
 
-	sb.WriteString(fmt.Sprintf("  Operator: %s\n", b.Operator))
-	sb.WriteString(fmt.Sprintf("  Mechanism: %s\n", b.Mechanism))
-	sb.WriteString(fmt.Sprintf("  Time: %s\n", b.Timestamp.Format(time.RFC3339)))
+	fmt.Fprintf(&sb, "  Operator: %s\n", b.Operator)
+	fmt.Fprintf(&sb, "  Mechanism: %s\n", b.Mechanism)
+	fmt.Fprintf(&sb, "  Time: %s\n", b.Timestamp.Format(time.RFC3339))
 
 	return sb.String()
 }

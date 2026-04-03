@@ -119,8 +119,8 @@ func FormatCategoryResults(categories map[TestCategory]*CategoryResult) string {
 	var sb strings.Builder
 
 	for cat, result := range categories {
-		sb.WriteString(fmt.Sprintf("%s: %d passed, %d failed, %d skipped\n",
-			cat.String(), result.Passed, result.Failed, result.Skipped))
+		fmt.Fprintf(&sb, "%s: %d passed, %d failed, %d skipped\n",
+			cat.String(), result.Passed, result.Failed, result.Skipped)
 	}
 
 	return sb.String()

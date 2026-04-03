@@ -55,7 +55,6 @@ func NewTieredPricingCalculator(tiers []PricingTier, currency string) (*TieredPr
 
 	// Validate tiers are sorted by MinQuantity
 	for i := 1; i < len(tiers); i++ {
-		//nolint:gosec // G602: i starts at 1, so i-1 is always valid (0 <= i-1 < len)
 		if tiers[i].MinQuantity <= tiers[i-1].MinQuantity {
 			return nil, ErrTiersNotSorted
 		}
