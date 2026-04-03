@@ -1095,13 +1095,15 @@ func PaginateActualCosts(
 	// This maintains backward compatibility with hosts that don't use pagination
 	if pageSize == 0 && pageToken == "" {
 		// Clamp totalCount to int32 max to avoid overflow
-		totalCount := int32(total)
+		var totalCount int32
 		if total > math.MaxInt32 {
 			log.Warn().
 				Int("total", total).
 				Int32("clamped_to", math.MaxInt32).
 				Msg("total_count clamped to int32 max; actual count exceeds representable range")
 			totalCount = math.MaxInt32
+		} else {
+			totalCount = int32(total)
 		}
 		return results, "", totalCount, nil
 	}
@@ -1130,13 +1132,15 @@ func PaginateActualCosts(
 	}
 
 	// Clamp totalCount to int32 max to avoid overflow
-	totalCount := int32(total)
+	var totalCount int32
 	if total > math.MaxInt32 {
 		log.Warn().
 			Int("total", total).
 			Int32("clamped_to", math.MaxInt32).
 			Msg("total_count clamped to int32 max; actual count exceeds representable range")
 		totalCount = math.MaxInt32
+	} else {
+		totalCount = int32(total)
 	}
 
 	// Handle out-of-bounds offset

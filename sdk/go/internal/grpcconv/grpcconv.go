@@ -25,6 +25,5 @@ func CodeToInt32(code codes.Code) int32 {
 	if codeValue > math.MaxInt32 {
 		return int32(codes.Internal)
 	}
-	//nolint:gosec // Overflow impossible: codeValue is in [0, math.MaxInt32] after the bounds check above.
 	return int32(codeValue)
 }
