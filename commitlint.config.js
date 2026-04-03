@@ -39,6 +39,7 @@ module.exports = {
         'examples', // Example files
         'ci', // CI/CD pipeline
         'deps', // Dependencies
+        'deps-dev', // Dev dependencies (used by Dependabot)
         'docs', // Documentation
         'main', // Main repository/release changes
       ],

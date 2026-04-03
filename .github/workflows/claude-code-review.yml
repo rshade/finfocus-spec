@@ -7,7 +7,9 @@ on:
 jobs:
   claude-review:
     # Skip automated bot PRs (Renovate, Dependabot, etc.)
-    if: github.event.pull_request.user.login != 'renovate[bot]'
+    if: >-
+      github.event.pull_request.user.login != 'renovate[bot]' &&
+      github.event.pull_request.user.login != 'dependabot[bot]'
 
     runs-on: ubuntu-latest
     permissions:

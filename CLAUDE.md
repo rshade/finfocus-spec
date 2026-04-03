@@ -887,6 +887,7 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+
 - 047-validation-error-integration: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 
 - 048-test-descriptor-helper: Added Go 1.25.8 (per go.mod) +
