@@ -83,8 +83,8 @@ const (
 // Use separate MockPlugin instances for concurrent tests.
 //
 // Fields that must be set before Start() include: ShouldError* flags, *Delay durations,
-// FallbackHint, ExpiresAtDuration, ProjectedCostExpiresAtDuration, MockBudgets,
-// DryRun* fields, PricingCategory/SpotRiskScore fields, and RecommendationsConfig.
+// FallbackHint, ExpiresAtDuration, ProjectedCostExpiresAtDuration, EstimateCostExpiresAtDuration,
+// MockBudgets, DryRun* fields, PricingCategory/SpotRiskScore fields, and RecommendationsConfig.
 //
 // The recommended pattern is:
 //
@@ -154,6 +154,11 @@ type MockPlugin struct {
 	// cost responses. Same semantics as ExpiresAtDuration: zero means unset,
 	// positive means future expiration, negative means immediately stale.
 	ProjectedCostExpiresAtDuration time.Duration
+
+	// EstimateCostExpiresAtDuration configures the expires_at hint for estimate
+	// cost responses. Same semantics as ExpiresAtDuration: zero means unset,
+	// positive means future expiration, negative means immediately stale.
+	EstimateCostExpiresAtDuration time.Duration
 
 	// FallbackHint configuration for GetActualCost responses.
 	// Thread Safety: This field must be set before the plugin begins serving
@@ -2140,12 +2145,19 @@ func (m *MockPlugin) EstimateCost(
 	// Determine pricing category and spot risk score
 	pricingCategory, spotRiskScore := m.resolvePricing(simpleResourceType)
 
-	return &pbc.EstimateCostResponse{
+	resp := &pbc.EstimateCostResponse{
 		Currency:                  m.Currency,
 		CostMonthly:               monthlyCost,
 		PricingCategory:           pricingCategory,
 		SpotInterruptionRiskScore: spotRiskScore,
-	}, nil
+	}
+
+	// Set expires_at caching hint if configured
+	if m.EstimateCostExpiresAtDuration != 0 {
+		resp.ExpiresAt = timestamppb.New(time.Now().Add(m.EstimateCostExpiresAtDuration))
+	}
+
+	return resp, nil
 }
 
 // =============================================================================

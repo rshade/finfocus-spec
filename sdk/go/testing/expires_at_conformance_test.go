@@ -226,3 +226,78 @@ func TestExpiresAtProjectedCost_NilBackwardCompat(t *testing.T) {
 	require.Nil(t, resp.GetExpiresAt(),
 		"projected cost response should have nil ExpiresAt for backward compatibility")
 }
+
+// TestExpiresAtEstimateCost_RoundTrip verifies that when EstimateCostExpiresAtDuration
+// is configured, the EstimateCost response has a non-nil ExpiresAt timestamp set in
+// the future.
+func TestExpiresAtEstimateCost_RoundTrip(t *testing.T) {
+	plugin := plugintesting.NewMockPlugin()
+	plugin.EstimateCostExpiresAtDuration = 1 * time.Hour
+
+	harness := plugintesting.NewTestHarness(plugin)
+	harness.Start(t)
+	defer harness.Stop()
+
+	client := harness.Client()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	resp, err := client.EstimateCost(ctx, &pbc.EstimateCostRequest{
+		ResourceType: "aws:ec2/instance:Instance",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, resp.GetExpiresAt(), "estimate cost response should have non-nil ExpiresAt")
+
+	expiresAt := resp.GetExpiresAt().AsTime()
+	require.True(t, expiresAt.After(time.Now()),
+		"ExpiresAt %v should be in the future", expiresAt)
+}
+
+// TestExpiresAtEstimateCost_NilBackwardCompat verifies that when
+// EstimateCostExpiresAtDuration is zero (default), the EstimateCost response
+// has nil ExpiresAt, preserving backward compatibility.
+func TestExpiresAtEstimateCost_NilBackwardCompat(t *testing.T) {
+	plugin := plugintesting.NewMockPlugin()
+	// EstimateCostExpiresAtDuration is zero by default (backward compatible)
+
+	harness := plugintesting.NewTestHarness(plugin)
+	harness.Start(t)
+	defer harness.Stop()
+
+	client := harness.Client()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	resp, err := client.EstimateCost(ctx, &pbc.EstimateCostRequest{
+		ResourceType: "aws:ec2/instance:Instance",
+	})
+	require.NoError(t, err)
+	require.Nil(t, resp.GetExpiresAt(),
+		"estimate cost response should have nil ExpiresAt for backward compatibility")
+}
+
+// TestExpiresAtEstimateCost_PastTimestamp verifies that a negative
+// EstimateCostExpiresAtDuration produces ExpiresAt timestamps in the past, which can be
+// used to signal that data is already stale.
+func TestExpiresAtEstimateCost_PastTimestamp(t *testing.T) {
+	plugin := plugintesting.NewMockPlugin()
+	plugin.EstimateCostExpiresAtDuration = -1 * time.Hour
+
+	harness := plugintesting.NewTestHarness(plugin)
+	harness.Start(t)
+	defer harness.Stop()
+
+	client := harness.Client()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	resp, err := client.EstimateCost(ctx, &pbc.EstimateCostRequest{
+		ResourceType: "aws:ec2/instance:Instance",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, resp.GetExpiresAt(), "estimate cost response should have non-nil ExpiresAt")
+
+	expiresAt := resp.GetExpiresAt().AsTime()
+	require.True(t, expiresAt.Before(time.Now()),
+		"ExpiresAt %v should be in the past", expiresAt)
+}

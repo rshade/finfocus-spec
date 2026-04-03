@@ -3688,8 +3688,25 @@ type EstimateCostResponse struct {
 	//
 	// Validation: Use pluginsdk.ValidateEstimateCostResponse() to verify all constraints.
 	SpotInterruptionRiskScore float64 `protobuf:"fixed64,4,opt,name=spot_interruption_risk_score,json=spotInterruptionRiskScore,proto3" json:"spot_interruption_risk_score,omitempty"`
-	unknownFields             protoimpl.UnknownFields
-	sizeCache                 protoimpl.SizeCache
+	// expires_at is a caching hint indicating when this cost estimate should be
+	// considered stale. Callers MAY use this to manage local caches and avoid
+	// re-requesting estimates before the expiration time.
+	//
+	// Semantics:
+	//   - nil/unset: No caching guidance. Caller should re-fetch on each request.
+	//   - Past timestamp: Data is immediately stale (equivalent to no hint).
+	//   - Future timestamp: Data is valid until this time.
+	//
+	// This field is advisory. Callers MAY apply their own maximum TTL policy
+	// regardless of the value set by the plugin.
+	//
+	// Use cases:
+	//   - Fixed pricing: Set far future for resources with stable pricing
+	//   - Volatile/spot pricing: Set short TTL or leave unset
+	//   - Rate-limited APIs: Set to avoid redundant upstream calls
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *EstimateCostResponse) Reset() {
@@ -3748,6 +3765,13 @@ func (x *EstimateCostResponse) GetSpotInterruptionRiskScore() float64 {
 		return x.SpotInterruptionRiskScore
 	}
 	return 0
+}
+
+func (x *EstimateCostResponse) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
 }
 
 // GetRecommendationsRequest contains parameters for retrieving recommendations.
@@ -6607,12 +6631,14 @@ const file_finfocus_v1_costsource_proto_rawDesc = "" +
 	"\rresource_type\x18\x01 \x01(\tR\fresourceType\x127\n" +
 	"\n" +
 	"attributes\x18\x02 \x01(\v2\x17.google.protobuf.StructR\n" +
-	"attributes\"\xe4\x01\n" +
+	"attributes\"\x9f\x02\n" +
 	"\x14EstimateCostResponse\x12\x1a\n" +
 	"\bcurrency\x18\x01 \x01(\tR\bcurrency\x12!\n" +
 	"\fcost_monthly\x18\x02 \x01(\x01R\vcostMonthly\x12L\n" +
 	"\x10pricing_category\x18\x03 \x01(\x0e2!.finfocus.v1.FocusPricingCategoryR\x0fpricingCategory\x12?\n" +
-	"\x1cspot_interruption_risk_score\x18\x04 \x01(\x01R\x19spotInterruptionRiskScore\"\x8b\x03\n" +
+	"\x1cspot_interruption_risk_score\x18\x04 \x01(\x01R\x19spotInterruptionRiskScore\x129\n" +
+	"\n" +
+	"expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\x8b\x03\n" +
 	"\x19GetRecommendationsRequest\x129\n" +
 	"\x06filter\x18\x01 \x01(\v2!.finfocus.v1.RecommendationFilterR\x06filter\x12+\n" +
 	"\x11projection_period\x18\x02 \x01(\tR\x10projectionPeriod\x12\x1b\n" +
@@ -7148,104 +7174,105 @@ var file_finfocus_v1_costsource_proto_depIdxs = []int32{
 	42,  // 51: finfocus.v1.LogEntry.error_details:type_name -> finfocus.v1.ErrorDetails
 	98,  // 52: finfocus.v1.EstimateCostRequest.attributes:type_name -> google.protobuf.Struct
 	96,  // 53: finfocus.v1.EstimateCostResponse.pricing_category:type_name -> finfocus.v1.FocusPricingCategory
-	47,  // 54: finfocus.v1.GetRecommendationsRequest.filter:type_name -> finfocus.v1.RecommendationFilter
-	24,  // 55: finfocus.v1.GetRecommendationsRequest.target_resources:type_name -> finfocus.v1.ResourceDescriptor
-	95,  // 56: finfocus.v1.GetRecommendationsRequest.usage_profile:type_name -> finfocus.v1.UsageProfile
-	48,  // 57: finfocus.v1.GetRecommendationsResponse.recommendations:type_name -> finfocus.v1.Recommendation
-	58,  // 58: finfocus.v1.GetRecommendationsResponse.summary:type_name -> finfocus.v1.RecommendationSummary
-	6,   // 59: finfocus.v1.RecommendationFilter.category:type_name -> finfocus.v1.RecommendationCategory
-	7,   // 60: finfocus.v1.RecommendationFilter.action_type:type_name -> finfocus.v1.RecommendationActionType
-	80,  // 61: finfocus.v1.RecommendationFilter.tags:type_name -> finfocus.v1.RecommendationFilter.TagsEntry
-	8,   // 62: finfocus.v1.RecommendationFilter.priority:type_name -> finfocus.v1.RecommendationPriority
-	9,   // 63: finfocus.v1.RecommendationFilter.sort_by:type_name -> finfocus.v1.RecommendationSortBy
-	10,  // 64: finfocus.v1.RecommendationFilter.sort_order:type_name -> finfocus.v1.SortOrder
-	6,   // 65: finfocus.v1.Recommendation.category:type_name -> finfocus.v1.RecommendationCategory
-	7,   // 66: finfocus.v1.Recommendation.action_type:type_name -> finfocus.v1.RecommendationActionType
-	49,  // 67: finfocus.v1.Recommendation.resource:type_name -> finfocus.v1.ResourceRecommendationInfo
-	51,  // 68: finfocus.v1.Recommendation.rightsize:type_name -> finfocus.v1.RightsizeAction
-	52,  // 69: finfocus.v1.Recommendation.terminate:type_name -> finfocus.v1.TerminateAction
-	53,  // 70: finfocus.v1.Recommendation.commitment:type_name -> finfocus.v1.CommitmentAction
-	54,  // 71: finfocus.v1.Recommendation.kubernetes:type_name -> finfocus.v1.KubernetesAction
-	56,  // 72: finfocus.v1.Recommendation.modify:type_name -> finfocus.v1.ModifyAction
-	57,  // 73: finfocus.v1.Recommendation.impact:type_name -> finfocus.v1.RecommendationImpact
-	8,   // 74: finfocus.v1.Recommendation.priority:type_name -> finfocus.v1.RecommendationPriority
-	93,  // 75: finfocus.v1.Recommendation.created_at:type_name -> google.protobuf.Timestamp
-	81,  // 76: finfocus.v1.Recommendation.metadata:type_name -> finfocus.v1.Recommendation.MetadataEntry
-	99,  // 77: finfocus.v1.Recommendation.primary_reason:type_name -> finfocus.v1.RecommendationReason
-	99,  // 78: finfocus.v1.Recommendation.secondary_reasons:type_name -> finfocus.v1.RecommendationReason
-	82,  // 79: finfocus.v1.ResourceRecommendationInfo.tags:type_name -> finfocus.v1.ResourceRecommendationInfo.TagsEntry
-	50,  // 80: finfocus.v1.ResourceRecommendationInfo.utilization:type_name -> finfocus.v1.ResourceUtilization
-	83,  // 81: finfocus.v1.ResourceUtilization.custom_metrics:type_name -> finfocus.v1.ResourceUtilization.CustomMetricsEntry
-	50,  // 82: finfocus.v1.RightsizeAction.projected_utilization:type_name -> finfocus.v1.ResourceUtilization
-	55,  // 83: finfocus.v1.KubernetesAction.current_requests:type_name -> finfocus.v1.KubernetesResources
-	55,  // 84: finfocus.v1.KubernetesAction.recommended_requests:type_name -> finfocus.v1.KubernetesResources
-	55,  // 85: finfocus.v1.KubernetesAction.current_limits:type_name -> finfocus.v1.KubernetesResources
-	55,  // 86: finfocus.v1.KubernetesAction.recommended_limits:type_name -> finfocus.v1.KubernetesResources
-	84,  // 87: finfocus.v1.ModifyAction.current_config:type_name -> finfocus.v1.ModifyAction.CurrentConfigEntry
-	85,  // 88: finfocus.v1.ModifyAction.recommended_config:type_name -> finfocus.v1.ModifyAction.RecommendedConfigEntry
-	86,  // 89: finfocus.v1.RecommendationSummary.count_by_category:type_name -> finfocus.v1.RecommendationSummary.CountByCategoryEntry
-	87,  // 90: finfocus.v1.RecommendationSummary.savings_by_category:type_name -> finfocus.v1.RecommendationSummary.SavingsByCategoryEntry
-	88,  // 91: finfocus.v1.RecommendationSummary.count_by_action_type:type_name -> finfocus.v1.RecommendationSummary.CountByActionTypeEntry
-	89,  // 92: finfocus.v1.RecommendationSummary.savings_by_action_type:type_name -> finfocus.v1.RecommendationSummary.SavingsByActionTypeEntry
-	11,  // 93: finfocus.v1.DismissRecommendationRequest.reason:type_name -> finfocus.v1.DismissalReason
-	93,  // 94: finfocus.v1.DismissRecommendationRequest.expires_at:type_name -> google.protobuf.Timestamp
-	93,  // 95: finfocus.v1.DismissRecommendationResponse.dismissed_at:type_name -> google.protobuf.Timestamp
-	93,  // 96: finfocus.v1.DismissRecommendationResponse.expires_at:type_name -> google.protobuf.Timestamp
-	90,  // 97: finfocus.v1.GetPluginInfoResponse.metadata:type_name -> finfocus.v1.GetPluginInfoResponse.MetadataEntry
-	92,  // 98: finfocus.v1.GetPluginInfoResponse.capabilities:type_name -> finfocus.v1.PluginCapability
-	100, // 99: finfocus.v1.FieldMapping.support_status:type_name -> finfocus.v1.FieldSupportStatus
-	24,  // 100: finfocus.v1.DryRunRequest.resource:type_name -> finfocus.v1.ResourceDescriptor
-	91,  // 101: finfocus.v1.DryRunRequest.simulation_parameters:type_name -> finfocus.v1.DryRunRequest.SimulationParametersEntry
-	63,  // 102: finfocus.v1.DryRunResponse.field_mappings:type_name -> finfocus.v1.FieldMapping
-	24,  // 103: finfocus.v1.BatchCostRequest.resources:type_name -> finfocus.v1.ResourceDescriptor
-	101, // 104: finfocus.v1.BatchCostRequest.query_type:type_name -> finfocus.v1.CostQueryType
-	93,  // 105: finfocus.v1.BatchCostRequest.start:type_name -> google.protobuf.Timestamp
-	93,  // 106: finfocus.v1.BatchCostRequest.end:type_name -> google.protobuf.Timestamp
-	68,  // 107: finfocus.v1.BatchCostResponse.results:type_name -> finfocus.v1.ResourceCostResult
-	24,  // 108: finfocus.v1.ResourceCostResult.resource:type_name -> finfocus.v1.ResourceDescriptor
-	69,  // 109: finfocus.v1.ResourceCostResult.cost_data:type_name -> finfocus.v1.CostData
-	71,  // 110: finfocus.v1.ResourceCostResult.error:type_name -> finfocus.v1.ResourceError
-	70,  // 111: finfocus.v1.CostData.actual_cost:type_name -> finfocus.v1.ActualCostData
-	21,  // 112: finfocus.v1.CostData.projected_cost:type_name -> finfocus.v1.GetProjectedCostResponse
-	44,  // 113: finfocus.v1.CostData.estimate:type_name -> finfocus.v1.EstimateCostResponse
-	65,  // 114: finfocus.v1.CostData.dry_run_result:type_name -> finfocus.v1.DryRunResponse
-	25,  // 115: finfocus.v1.ActualCostData.results:type_name -> finfocus.v1.ActualCostResult
-	1,   // 116: finfocus.v1.ActualCostData.fallback_hint:type_name -> finfocus.v1.FallbackHint
-	13,  // 117: finfocus.v1.CostSourceService.Name:input_type -> finfocus.v1.NameRequest
-	16,  // 118: finfocus.v1.CostSourceService.Supports:input_type -> finfocus.v1.SupportsRequest
-	18,  // 119: finfocus.v1.CostSourceService.GetActualCost:input_type -> finfocus.v1.GetActualCostRequest
-	20,  // 120: finfocus.v1.CostSourceService.GetProjectedCost:input_type -> finfocus.v1.GetProjectedCostRequest
-	22,  // 121: finfocus.v1.CostSourceService.GetPricingSpec:input_type -> finfocus.v1.GetPricingSpecRequest
-	43,  // 122: finfocus.v1.CostSourceService.EstimateCost:input_type -> finfocus.v1.EstimateCostRequest
-	45,  // 123: finfocus.v1.CostSourceService.GetRecommendations:input_type -> finfocus.v1.GetRecommendationsRequest
-	59,  // 124: finfocus.v1.CostSourceService.DismissRecommendation:input_type -> finfocus.v1.DismissRecommendationRequest
-	102, // 125: finfocus.v1.CostSourceService.GetBudgets:input_type -> finfocus.v1.GetBudgetsRequest
-	61,  // 126: finfocus.v1.CostSourceService.GetPluginInfo:input_type -> finfocus.v1.GetPluginInfoRequest
-	64,  // 127: finfocus.v1.CostSourceService.DryRun:input_type -> finfocus.v1.DryRunRequest
-	66,  // 128: finfocus.v1.CostSourceService.BatchCost:input_type -> finfocus.v1.BatchCostRequest
-	30,  // 129: finfocus.v1.ObservabilityService.HealthCheck:input_type -> finfocus.v1.HealthCheckRequest
-	32,  // 130: finfocus.v1.ObservabilityService.GetMetrics:input_type -> finfocus.v1.GetMetricsRequest
-	36,  // 131: finfocus.v1.ObservabilityService.GetServiceLevelIndicators:input_type -> finfocus.v1.GetServiceLevelIndicatorsRequest
-	14,  // 132: finfocus.v1.CostSourceService.Name:output_type -> finfocus.v1.NameResponse
-	17,  // 133: finfocus.v1.CostSourceService.Supports:output_type -> finfocus.v1.SupportsResponse
-	19,  // 134: finfocus.v1.CostSourceService.GetActualCost:output_type -> finfocus.v1.GetActualCostResponse
-	21,  // 135: finfocus.v1.CostSourceService.GetProjectedCost:output_type -> finfocus.v1.GetProjectedCostResponse
-	23,  // 136: finfocus.v1.CostSourceService.GetPricingSpec:output_type -> finfocus.v1.GetPricingSpecResponse
-	44,  // 137: finfocus.v1.CostSourceService.EstimateCost:output_type -> finfocus.v1.EstimateCostResponse
-	46,  // 138: finfocus.v1.CostSourceService.GetRecommendations:output_type -> finfocus.v1.GetRecommendationsResponse
-	60,  // 139: finfocus.v1.CostSourceService.DismissRecommendation:output_type -> finfocus.v1.DismissRecommendationResponse
-	103, // 140: finfocus.v1.CostSourceService.GetBudgets:output_type -> finfocus.v1.GetBudgetsResponse
-	62,  // 141: finfocus.v1.CostSourceService.GetPluginInfo:output_type -> finfocus.v1.GetPluginInfoResponse
-	65,  // 142: finfocus.v1.CostSourceService.DryRun:output_type -> finfocus.v1.DryRunResponse
-	67,  // 143: finfocus.v1.CostSourceService.BatchCost:output_type -> finfocus.v1.BatchCostResponse
-	31,  // 144: finfocus.v1.ObservabilityService.HealthCheck:output_type -> finfocus.v1.HealthCheckResponse
-	33,  // 145: finfocus.v1.ObservabilityService.GetMetrics:output_type -> finfocus.v1.GetMetricsResponse
-	37,  // 146: finfocus.v1.ObservabilityService.GetServiceLevelIndicators:output_type -> finfocus.v1.GetServiceLevelIndicatorsResponse
-	132, // [132:147] is the sub-list for method output_type
-	117, // [117:132] is the sub-list for method input_type
-	117, // [117:117] is the sub-list for extension type_name
-	117, // [117:117] is the sub-list for extension extendee
-	0,   // [0:117] is the sub-list for field type_name
+	93,  // 54: finfocus.v1.EstimateCostResponse.expires_at:type_name -> google.protobuf.Timestamp
+	47,  // 55: finfocus.v1.GetRecommendationsRequest.filter:type_name -> finfocus.v1.RecommendationFilter
+	24,  // 56: finfocus.v1.GetRecommendationsRequest.target_resources:type_name -> finfocus.v1.ResourceDescriptor
+	95,  // 57: finfocus.v1.GetRecommendationsRequest.usage_profile:type_name -> finfocus.v1.UsageProfile
+	48,  // 58: finfocus.v1.GetRecommendationsResponse.recommendations:type_name -> finfocus.v1.Recommendation
+	58,  // 59: finfocus.v1.GetRecommendationsResponse.summary:type_name -> finfocus.v1.RecommendationSummary
+	6,   // 60: finfocus.v1.RecommendationFilter.category:type_name -> finfocus.v1.RecommendationCategory
+	7,   // 61: finfocus.v1.RecommendationFilter.action_type:type_name -> finfocus.v1.RecommendationActionType
+	80,  // 62: finfocus.v1.RecommendationFilter.tags:type_name -> finfocus.v1.RecommendationFilter.TagsEntry
+	8,   // 63: finfocus.v1.RecommendationFilter.priority:type_name -> finfocus.v1.RecommendationPriority
+	9,   // 64: finfocus.v1.RecommendationFilter.sort_by:type_name -> finfocus.v1.RecommendationSortBy
+	10,  // 65: finfocus.v1.RecommendationFilter.sort_order:type_name -> finfocus.v1.SortOrder
+	6,   // 66: finfocus.v1.Recommendation.category:type_name -> finfocus.v1.RecommendationCategory
+	7,   // 67: finfocus.v1.Recommendation.action_type:type_name -> finfocus.v1.RecommendationActionType
+	49,  // 68: finfocus.v1.Recommendation.resource:type_name -> finfocus.v1.ResourceRecommendationInfo
+	51,  // 69: finfocus.v1.Recommendation.rightsize:type_name -> finfocus.v1.RightsizeAction
+	52,  // 70: finfocus.v1.Recommendation.terminate:type_name -> finfocus.v1.TerminateAction
+	53,  // 71: finfocus.v1.Recommendation.commitment:type_name -> finfocus.v1.CommitmentAction
+	54,  // 72: finfocus.v1.Recommendation.kubernetes:type_name -> finfocus.v1.KubernetesAction
+	56,  // 73: finfocus.v1.Recommendation.modify:type_name -> finfocus.v1.ModifyAction
+	57,  // 74: finfocus.v1.Recommendation.impact:type_name -> finfocus.v1.RecommendationImpact
+	8,   // 75: finfocus.v1.Recommendation.priority:type_name -> finfocus.v1.RecommendationPriority
+	93,  // 76: finfocus.v1.Recommendation.created_at:type_name -> google.protobuf.Timestamp
+	81,  // 77: finfocus.v1.Recommendation.metadata:type_name -> finfocus.v1.Recommendation.MetadataEntry
+	99,  // 78: finfocus.v1.Recommendation.primary_reason:type_name -> finfocus.v1.RecommendationReason
+	99,  // 79: finfocus.v1.Recommendation.secondary_reasons:type_name -> finfocus.v1.RecommendationReason
+	82,  // 80: finfocus.v1.ResourceRecommendationInfo.tags:type_name -> finfocus.v1.ResourceRecommendationInfo.TagsEntry
+	50,  // 81: finfocus.v1.ResourceRecommendationInfo.utilization:type_name -> finfocus.v1.ResourceUtilization
+	83,  // 82: finfocus.v1.ResourceUtilization.custom_metrics:type_name -> finfocus.v1.ResourceUtilization.CustomMetricsEntry
+	50,  // 83: finfocus.v1.RightsizeAction.projected_utilization:type_name -> finfocus.v1.ResourceUtilization
+	55,  // 84: finfocus.v1.KubernetesAction.current_requests:type_name -> finfocus.v1.KubernetesResources
+	55,  // 85: finfocus.v1.KubernetesAction.recommended_requests:type_name -> finfocus.v1.KubernetesResources
+	55,  // 86: finfocus.v1.KubernetesAction.current_limits:type_name -> finfocus.v1.KubernetesResources
+	55,  // 87: finfocus.v1.KubernetesAction.recommended_limits:type_name -> finfocus.v1.KubernetesResources
+	84,  // 88: finfocus.v1.ModifyAction.current_config:type_name -> finfocus.v1.ModifyAction.CurrentConfigEntry
+	85,  // 89: finfocus.v1.ModifyAction.recommended_config:type_name -> finfocus.v1.ModifyAction.RecommendedConfigEntry
+	86,  // 90: finfocus.v1.RecommendationSummary.count_by_category:type_name -> finfocus.v1.RecommendationSummary.CountByCategoryEntry
+	87,  // 91: finfocus.v1.RecommendationSummary.savings_by_category:type_name -> finfocus.v1.RecommendationSummary.SavingsByCategoryEntry
+	88,  // 92: finfocus.v1.RecommendationSummary.count_by_action_type:type_name -> finfocus.v1.RecommendationSummary.CountByActionTypeEntry
+	89,  // 93: finfocus.v1.RecommendationSummary.savings_by_action_type:type_name -> finfocus.v1.RecommendationSummary.SavingsByActionTypeEntry
+	11,  // 94: finfocus.v1.DismissRecommendationRequest.reason:type_name -> finfocus.v1.DismissalReason
+	93,  // 95: finfocus.v1.DismissRecommendationRequest.expires_at:type_name -> google.protobuf.Timestamp
+	93,  // 96: finfocus.v1.DismissRecommendationResponse.dismissed_at:type_name -> google.protobuf.Timestamp
+	93,  // 97: finfocus.v1.DismissRecommendationResponse.expires_at:type_name -> google.protobuf.Timestamp
+	90,  // 98: finfocus.v1.GetPluginInfoResponse.metadata:type_name -> finfocus.v1.GetPluginInfoResponse.MetadataEntry
+	92,  // 99: finfocus.v1.GetPluginInfoResponse.capabilities:type_name -> finfocus.v1.PluginCapability
+	100, // 100: finfocus.v1.FieldMapping.support_status:type_name -> finfocus.v1.FieldSupportStatus
+	24,  // 101: finfocus.v1.DryRunRequest.resource:type_name -> finfocus.v1.ResourceDescriptor
+	91,  // 102: finfocus.v1.DryRunRequest.simulation_parameters:type_name -> finfocus.v1.DryRunRequest.SimulationParametersEntry
+	63,  // 103: finfocus.v1.DryRunResponse.field_mappings:type_name -> finfocus.v1.FieldMapping
+	24,  // 104: finfocus.v1.BatchCostRequest.resources:type_name -> finfocus.v1.ResourceDescriptor
+	101, // 105: finfocus.v1.BatchCostRequest.query_type:type_name -> finfocus.v1.CostQueryType
+	93,  // 106: finfocus.v1.BatchCostRequest.start:type_name -> google.protobuf.Timestamp
+	93,  // 107: finfocus.v1.BatchCostRequest.end:type_name -> google.protobuf.Timestamp
+	68,  // 108: finfocus.v1.BatchCostResponse.results:type_name -> finfocus.v1.ResourceCostResult
+	24,  // 109: finfocus.v1.ResourceCostResult.resource:type_name -> finfocus.v1.ResourceDescriptor
+	69,  // 110: finfocus.v1.ResourceCostResult.cost_data:type_name -> finfocus.v1.CostData
+	71,  // 111: finfocus.v1.ResourceCostResult.error:type_name -> finfocus.v1.ResourceError
+	70,  // 112: finfocus.v1.CostData.actual_cost:type_name -> finfocus.v1.ActualCostData
+	21,  // 113: finfocus.v1.CostData.projected_cost:type_name -> finfocus.v1.GetProjectedCostResponse
+	44,  // 114: finfocus.v1.CostData.estimate:type_name -> finfocus.v1.EstimateCostResponse
+	65,  // 115: finfocus.v1.CostData.dry_run_result:type_name -> finfocus.v1.DryRunResponse
+	25,  // 116: finfocus.v1.ActualCostData.results:type_name -> finfocus.v1.ActualCostResult
+	1,   // 117: finfocus.v1.ActualCostData.fallback_hint:type_name -> finfocus.v1.FallbackHint
+	13,  // 118: finfocus.v1.CostSourceService.Name:input_type -> finfocus.v1.NameRequest
+	16,  // 119: finfocus.v1.CostSourceService.Supports:input_type -> finfocus.v1.SupportsRequest
+	18,  // 120: finfocus.v1.CostSourceService.GetActualCost:input_type -> finfocus.v1.GetActualCostRequest
+	20,  // 121: finfocus.v1.CostSourceService.GetProjectedCost:input_type -> finfocus.v1.GetProjectedCostRequest
+	22,  // 122: finfocus.v1.CostSourceService.GetPricingSpec:input_type -> finfocus.v1.GetPricingSpecRequest
+	43,  // 123: finfocus.v1.CostSourceService.EstimateCost:input_type -> finfocus.v1.EstimateCostRequest
+	45,  // 124: finfocus.v1.CostSourceService.GetRecommendations:input_type -> finfocus.v1.GetRecommendationsRequest
+	59,  // 125: finfocus.v1.CostSourceService.DismissRecommendation:input_type -> finfocus.v1.DismissRecommendationRequest
+	102, // 126: finfocus.v1.CostSourceService.GetBudgets:input_type -> finfocus.v1.GetBudgetsRequest
+	61,  // 127: finfocus.v1.CostSourceService.GetPluginInfo:input_type -> finfocus.v1.GetPluginInfoRequest
+	64,  // 128: finfocus.v1.CostSourceService.DryRun:input_type -> finfocus.v1.DryRunRequest
+	66,  // 129: finfocus.v1.CostSourceService.BatchCost:input_type -> finfocus.v1.BatchCostRequest
+	30,  // 130: finfocus.v1.ObservabilityService.HealthCheck:input_type -> finfocus.v1.HealthCheckRequest
+	32,  // 131: finfocus.v1.ObservabilityService.GetMetrics:input_type -> finfocus.v1.GetMetricsRequest
+	36,  // 132: finfocus.v1.ObservabilityService.GetServiceLevelIndicators:input_type -> finfocus.v1.GetServiceLevelIndicatorsRequest
+	14,  // 133: finfocus.v1.CostSourceService.Name:output_type -> finfocus.v1.NameResponse
+	17,  // 134: finfocus.v1.CostSourceService.Supports:output_type -> finfocus.v1.SupportsResponse
+	19,  // 135: finfocus.v1.CostSourceService.GetActualCost:output_type -> finfocus.v1.GetActualCostResponse
+	21,  // 136: finfocus.v1.CostSourceService.GetProjectedCost:output_type -> finfocus.v1.GetProjectedCostResponse
+	23,  // 137: finfocus.v1.CostSourceService.GetPricingSpec:output_type -> finfocus.v1.GetPricingSpecResponse
+	44,  // 138: finfocus.v1.CostSourceService.EstimateCost:output_type -> finfocus.v1.EstimateCostResponse
+	46,  // 139: finfocus.v1.CostSourceService.GetRecommendations:output_type -> finfocus.v1.GetRecommendationsResponse
+	60,  // 140: finfocus.v1.CostSourceService.DismissRecommendation:output_type -> finfocus.v1.DismissRecommendationResponse
+	103, // 141: finfocus.v1.CostSourceService.GetBudgets:output_type -> finfocus.v1.GetBudgetsResponse
+	62,  // 142: finfocus.v1.CostSourceService.GetPluginInfo:output_type -> finfocus.v1.GetPluginInfoResponse
+	65,  // 143: finfocus.v1.CostSourceService.DryRun:output_type -> finfocus.v1.DryRunResponse
+	67,  // 144: finfocus.v1.CostSourceService.BatchCost:output_type -> finfocus.v1.BatchCostResponse
+	31,  // 145: finfocus.v1.ObservabilityService.HealthCheck:output_type -> finfocus.v1.HealthCheckResponse
+	33,  // 146: finfocus.v1.ObservabilityService.GetMetrics:output_type -> finfocus.v1.GetMetricsResponse
+	37,  // 147: finfocus.v1.ObservabilityService.GetServiceLevelIndicators:output_type -> finfocus.v1.GetServiceLevelIndicatorsResponse
+	133, // [133:148] is the sub-list for method output_type
+	118, // [118:133] is the sub-list for method input_type
+	118, // [118:118] is the sub-list for extension type_name
+	118, // [118:118] is the sub-list for extension extendee
+	0,   // [0:118] is the sub-list for field type_name
 }
 
 func init() { file_finfocus_v1_costsource_proto_init() }

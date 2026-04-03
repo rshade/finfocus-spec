@@ -285,3 +285,127 @@ func TestWithProjectedCostExpiresAt(t *testing.T) {
 			"ExpiresAt should be nil for zero time.Time")
 	})
 }
+
+func TestIsEstimateCostExpired(t *testing.T) {
+	now := time.Now()
+
+	tests := []struct {
+		name     string
+		resp     *pbc.EstimateCostResponse
+		now      time.Time
+		expected bool
+	}{
+		{
+			name:     "nil response",
+			resp:     nil,
+			now:      now,
+			expected: false,
+		},
+		{
+			name:     "nil expires_at",
+			resp:     &pbc.EstimateCostResponse{},
+			now:      now,
+			expected: false,
+		},
+		{
+			name: "future timestamp",
+			resp: &pbc.EstimateCostResponse{
+				ExpiresAt: timestamppb.New(now.Add(time.Hour)),
+			},
+			now:      now,
+			expected: false,
+		},
+		{
+			name: "past timestamp",
+			resp: &pbc.EstimateCostResponse{
+				ExpiresAt: timestamppb.New(now.Add(-time.Hour)),
+			},
+			now:      now,
+			expected: true,
+		},
+		{
+			name: "exact boundary",
+			resp: &pbc.EstimateCostResponse{
+				ExpiresAt: timestamppb.New(now),
+			},
+			now:      now,
+			expected: false, // Before is strict: now.Before(now) == false
+		},
+		{
+			name: "unix epoch",
+			resp: &pbc.EstimateCostResponse{
+				ExpiresAt: timestamppb.New(time.Unix(0, 0)),
+			},
+			now:      now,
+			expected: true, // Unix epoch is always in the past
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := pluginsdk.IsEstimateCostExpired(tt.resp, tt.now)
+			require.Equal(t, tt.expected, got)
+		})
+	}
+}
+
+func TestEstimateCostExpiresAt(t *testing.T) {
+	futureTime := time.Date(2030, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		name       string
+		resp       *pbc.EstimateCostResponse
+		expectedOk bool
+	}{
+		{
+			name:       "nil response",
+			resp:       nil,
+			expectedOk: false,
+		},
+		{
+			name:       "nil expires_at",
+			resp:       &pbc.EstimateCostResponse{},
+			expectedOk: false,
+		},
+		{
+			name: "has expires_at",
+			resp: &pbc.EstimateCostResponse{
+				ExpiresAt: timestamppb.New(futureTime),
+			},
+			expectedOk: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := pluginsdk.EstimateCostExpiresAt(tt.resp)
+			require.Equal(t, tt.expectedOk, ok)
+			if tt.expectedOk {
+				require.Equal(t, futureTime, got)
+			}
+		})
+	}
+}
+
+func TestWithEstimateCostExpiresAt(t *testing.T) {
+	futureTime := time.Date(2030, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	t.Run("sets non-zero time", func(t *testing.T) {
+		resp := pluginsdk.NewEstimateCostResponse(
+			pluginsdk.WithEstimateCostExpiresAt(futureTime),
+		)
+		require.NotNil(t, resp.GetExpiresAt(), "ExpiresAt should be set for non-zero time")
+		actualTime := resp.GetExpiresAt().AsTime()
+		diff := actualTime.Sub(futureTime).Abs()
+		require.LessOrEqual(t, diff, time.Millisecond,
+			"ExpiresAt should match input time (diff=%v)", diff)
+	})
+
+	t.Run("zero time sets nil", func(t *testing.T) {
+		resp := pluginsdk.NewEstimateCostResponse(
+			pluginsdk.WithEstimateCostExpiresAt(time.Time{}),
+		)
+		require.Nil(t, resp.GetExpiresAt(),
+			"ExpiresAt should be nil for zero time.Time")
+	})
+}

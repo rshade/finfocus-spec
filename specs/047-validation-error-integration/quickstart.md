@@ -1,8 +1,6 @@
-# Quickstart: ValidationError Integration
+# Quick Start: ValidationError Integration
 
 **Feature**: 047-validation-error-integration
-
-## Before (Current Behavior)
 
 ```go
 // Validate a FOCUS cost record

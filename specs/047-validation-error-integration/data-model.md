@@ -82,7 +82,7 @@ Mapping of each error return site to its `ValidationError` field values:
 | ErrCapacityReservationIDMissing | capacity_reservation_id | required when capacity_reservation_status set |
 | ErrPricingUnitMissing | pricing_unit | required when pricing_quantity > 0 |
 
-### Ad-Hoc Error Conversion (17 sites)
+### Ad-Hoc Error Conversion (19 sites)
 
 | Current Error | FieldName | Constraint | Err (wrapped) |
 |---------------|-----------|------------|---------------|
@@ -91,9 +91,11 @@ Mapping of each error return site to its `ValidationError` field values:
 | "{name} cannot be NaN" | {name} | must be a number | nil |
 | "provider_name is required" | provider_name | required | nil |
 | "billing_account_id is required" | billing_account_id | required | nil |
-| "billing_period (start/end) is required" | billing_period | start and end required | nil |
+| "billing_period_start is required" | billing_period.start | required | nil |
+| "billing_period_end is required" | billing_period.end | required | nil |
 | "billing_currency is required" | billing_currency | required | nil |
-| "charge_period (start/end) is required" | charge_period | start and end required | nil |
+| "charge_period_start is required" | charge_period.start | required | nil |
+| "charge_period_end is required" | charge_period.end | required | nil |
 | "charge_category is required" | charge_category | required | nil |
 | "charge_class is required" | charge_class | required | nil |
 | "charge_description is required" | charge_description | required | nil |

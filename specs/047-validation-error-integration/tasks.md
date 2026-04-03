@@ -19,10 +19,12 @@ and testing of each story.
 **Purpose**: Extend `ValidationError` with error chain support. MUST complete before
 any user story work begins.
 
+**⚠️ CRITICAL**: No user story work can begin until this phase is complete.
+
 - [x] T001 Add failing tests for `Unwrap()`, `errors.Is` chain traversal, and
   `NewValidationErrorWithCause` in `sdk/go/pluginsdk/validation_error_test.go`
-- [x] T002 Add `Err` field and `Unwrap()` method to `ValidationError` struct in
-  `sdk/go/pluginsdk/validation_error.go`
+- [x] T002 Add unexported `err` field and `Unwrap()` method to `ValidationError`
+  struct in `sdk/go/pluginsdk/validation_error.go`
 - [x] T003 Add `NewValidationErrorWithCause` constructor in
   `sdk/go/pluginsdk/validation_error.go`
 
@@ -31,9 +33,9 @@ Run `go test ./sdk/go/pluginsdk/ -run TestValidationError` to verify.
 
 ---
 
-## Phase 2: User Story 1 - Extract Structured Error Details (Priority: P1)
+## Phase 2: User Story 1 - Extract Structured Error Details (Priority: P1) 🎯 MVP
 
-**Goal**: All validation errors returned by `ValidateFocusRecord` and
+**Goal**: All 24 validation errors returned by `ValidateFocusRecord` and
 `ValidateFocusRecordWithOptions` are `*ValidationError` instances extractable
 via `errors.As`.
 
@@ -55,19 +57,20 @@ hierarchy rules, then use `errors.As(err, &valErr)` to extract field-level detai
 
 - [x] T006 [US1] Convert 7 sentinel error return sites to `*ValidationError` wrapping
   sentinels via `NewValidationErrorWithCause` in
-  `sdk/go/pluginsdk/focus_conformance.go` (see data-model.md Sentinel Error Wrapping table)
-- [x] T007 [US1] Convert 10 mandatory field error sites to `*ValidationError` in
-  `sdk/go/pluginsdk/focus_conformance.go` function `validateMandatoryFields`
+  `sdk/go/pluginsdk/focus_conformance.go` (see data-model.md Sentinel Error Wrapping
+  table for field mappings)
+- [x] T007 [US1] Convert 12 mandatory field error sites to `*ValidationError` via
+  `NewValidationError` in `sdk/go/pluginsdk/focus_conformance.go` function
+  `validateMandatoryFields`
 - [x] T008 [US1] Convert 2 cost value error sites (NaN/Inf) to `*ValidationError` in
   `sdk/go/pluginsdk/focus_conformance.go` function `checkCostValue`
 - [x] T009 [US1] Convert 5 remaining error sites to `*ValidationError` in
-  `sdk/go/pluginsdk/focus_conformance.go`: "record is nil" guard in
-  `ValidateFocusRecordWithOptions`, plus `validateContractedCostRule`,
-  `validateAllocationRule`, `validateCurrency`, and `validateBusinessRulesWithOptions`
+  `sdk/go/pluginsdk/focus_conformance.go`: `ValidateFocusRecordWithOptions` nil guard,
+  `validateContractedCostRule`, `validateAllocationRule`, `validateCurrency`, and
+  consumed quantity check in `validateBusinessRulesWithOptions`
 - [x] T010 [US1] Update existing test assertions in
-  `sdk/go/pluginsdk/focus_conformance_test.go` and review
-  `sdk/go/pluginsdk/validation_test.go` for new `Error()` format
-  (ValidationError format replaces bare sentinel/string messages)
+  `sdk/go/pluginsdk/focus_conformance_test.go` for new `Error()` format
+  (ValidationError structured format replaces bare sentinel/string messages)
 
 **Checkpoint**: All `ValidateFocusRecord` errors support `errors.As` extraction.
 Run `go test ./sdk/go/pluginsdk/ -run TestValidateFocusRecord` to verify.
@@ -77,7 +80,7 @@ Run `go test ./sdk/go/pluginsdk/ -run TestValidateFocusRecord` to verify.
 ## Phase 3: User Story 2 - Aggregate Mode Rich Error Collection (Priority: P2)
 
 **Goal**: Aggregate validation mode returns `*ValidationError` for every failure,
-enabling programmatic categorization by field name.
+enabling programmatic categorization by field name without string parsing.
 
 **Independent Test**: Call `ValidateFocusRecordWithOptions` in aggregate mode with
 a record containing multiple violations; verify each error unwraps to `ValidationError`.
@@ -103,7 +106,7 @@ Run `go test ./sdk/go/pluginsdk/ -run TestValidateFocusRecordWithOptions` to ver
 ## Phase 4: User Story 3 - Error Chain Unwrapping (Priority: P2)
 
 **Goal**: `errors.Is(err, sentinel)` works on `*ValidationError` returned by
-validation functions, preserving backward compatibility.
+validation functions, preserving backward compatibility for all 7 sentinel errors.
 
 **Independent Test**: Validate a record with a cost hierarchy violation, then verify
 both `errors.Is(err, ErrEffectiveCostExceedsBilledCost)` and `errors.As(err, &valErr)`
@@ -129,7 +132,7 @@ Run `go test ./sdk/go/pluginsdk/ -run TestValidationError` to verify.
 
 ## Phase 5: Polish and Cross-Cutting Concerns
 
-**Purpose**: Performance validation, documentation, and final quality checks
+**Purpose**: Performance validation, documentation, and final quality checks.
 
 - [x] T015 [P] Add benchmark for `ValidationError` creation and `Unwrap()` in
   `sdk/go/pluginsdk/validation_error_test.go` (target: < 100 ns/op, 1 alloc/op)
@@ -148,7 +151,7 @@ Run `go test ./sdk/go/pluginsdk/ -run TestValidationError` to verify.
 
 ### Phase Dependencies
 
-- **Foundational (Phase 1)**: No dependencies - start immediately
+- **Foundational (Phase 1)**: No dependencies — start immediately
 - **US1 (Phase 2)**: Depends on Phase 1 completion (needs `Unwrap()` and new constructor)
 - **US2 (Phase 3)**: Depends on Phase 2 completion (needs converted error sites)
 - **US3 (Phase 4)**: Depends on Phase 2 T006 (needs sentinel wrapping)
@@ -164,15 +167,15 @@ Run `go test ./sdk/go/pluginsdk/ -run TestValidationError` to verify.
 ### Within Each User Story
 
 - Tests MUST be written and FAIL before implementation
-- Sentinel conversion (T006) before ad-hoc conversion (T007-T009)
+- Sentinel conversion (T006) before ad-hoc conversion (T007–T009)
 - Implementation before test assertion updates (T010)
 
 ### Parallel Opportunities
 
-- T001 and T002 modify the same file sequentially, but T003 (tests) can start
-  after both complete
+- T001 can start immediately (tests for foundational type)
 - T004 and T005 (US1 tests) can be written in parallel (different test functions)
-- T006, T007, T008, T009 are sequential (same file, different functions)
+- T006–T009 are sequential (same file, different functions within focus_conformance.go)
+- T011 (US2 test) and T013 (US3 test) can start once T006 is complete
 - T015, T016, T017 (Polish) can all run in parallel (different files)
 
 ---
@@ -200,18 +203,18 @@ Task T010: "Update test assertions for new Error() format"
 
 ### MVP First (User Story 1 Only)
 
-1. Complete Phase 1: Foundational (T001-T003)
-2. Complete Phase 2: User Story 1 (T004-T010)
+1. Complete Phase 1: Foundational (T001–T003)
+2. Complete Phase 2: User Story 1 (T004–T010)
 3. **STOP and VALIDATE**: `errors.As` works on all validation errors
 4. This alone delivers the core value proposition
 
 ### Incremental Delivery
 
-1. Phase 1: Foundational (T001-T003) -> `ValidationError` has `Unwrap()`
-2. Phase 2: US1 (T004-T010) -> All errors are `*ValidationError` (MVP)
-3. Phase 3: US2 (T011-T012) -> Aggregate mode verified
-4. Phase 4: US3 (T013-T014) -> `errors.Is` backward compat verified
-5. Phase 5: Polish (T015-T020) -> Benchmarks, docs, final validation
+1. Phase 1: Foundational (T001–T003) → `ValidationError` has `Unwrap()`
+2. Phase 2: US1 (T004–T010) → All errors are `*ValidationError` (MVP)
+3. Phase 3: US2 (T011–T012) → Aggregate mode verified
+4. Phase 4: US3 (T013–T014) → `errors.Is` backward compat verified
+5. Phase 5: Polish (T015–T020) → Benchmarks, docs, final validation
 
 ---
 
@@ -220,7 +223,7 @@ Task T010: "Update test assertions for new Error() format"
 - [P] tasks = different files, no dependencies
 - [Story] label maps task to specific user story for traceability
 - Constitution V (Test-First) requires tests before implementation
-- 24 total error return sites to convert (see data-model.md for complete mapping)
-- `manifest.go` uses `pbc.ValidationError` (protobuf type) - NOT affected by these changes
+- 24 total error return sites to convert (7 sentinel + 17 ad-hoc, see data-model.md)
+- `manifest.go` uses `pbc.ValidationError` (protobuf type) — NOT affected by these changes
 - Commit after each phase completion
 - Stop at any checkpoint to validate independently
