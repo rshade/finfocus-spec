@@ -30,7 +30,7 @@
     "express": "^5.2.1",
     "fastify": "^5.8.4",
     "@nestjs/core": "^11.1.17",
-    "@nestjs/common": "^11.1.17"
+    "@nestjs/common": "^11.1.28"
   },
   "files": [
     "dist"
