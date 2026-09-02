@@ -18,7 +18,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.25.8'
+          go-version: '1.27.1'
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -79,7 +79,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.25.8'
+          go-version: '1.27.1'
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -98,7 +98,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.11.4
+          version: v2.13.2
           args: --timeout=9m
 
       - name: Run buf lint
