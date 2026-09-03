@@ -17,12 +17,12 @@
     "finfocus-client": "*"
   },
   "devDependencies": {
-    "@types/node": "^24.12.0",
+    "@types/node": "^24.13.3",
     "@types/express": "^5.0.6",
     "express": "^5.2.1",
     "fastify": "^5.8.4",
     "@nestjs/core": "^11.1.17",
-    "@nestjs/common": "^11.1.17",
+    "@nestjs/common": "^11.2.3",
     "reflect-metadata": "^0.2.2",
     "tsup": "^8.5.1"
   },
