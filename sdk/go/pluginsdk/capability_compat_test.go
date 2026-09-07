@@ -125,3 +125,21 @@ func TestCapabilitiesToLegacyMetadataWithWarnings(t *testing.T) {
 		t.Errorf("expected supports_dry_run=true")
 	}
 }
+
+func TestLegacyMetadata_ResolveResourceTypes(t *testing.T) {
+	name := pluginsdk.CapabilityToLegacyName(
+		pbc.PluginCapability_PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES,
+	)
+	if name != "supports_resolve_resource_types" {
+		t.Errorf("expected supports_resolve_resource_types, got %q", name)
+	}
+
+	caps := []pbc.PluginCapability{
+		pbc.PluginCapability_PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES,
+	}
+	metadata := pluginsdk.CapabilitiesToLegacyMetadata(caps)
+	if metadata["supports_resolve_resource_types"] != "true" {
+		t.Errorf("expected supports_resolve_resource_types=true, got %q",
+			metadata["supports_resolve_resource_types"])
+	}
+}

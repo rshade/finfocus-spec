@@ -193,8 +193,8 @@ const (
 
 	// optionalCapabilities is the number of capabilities from optional
 	// interfaces: RecommendationsProvider, BudgetsProvider, DismissProvider,
-	// DryRunHandler, BatchCostHandler.
-	optionalCapabilities = 5
+	// DryRunHandler, BatchCostHandler, ResolveResourceTypesProvider.
+	optionalCapabilities = 6
 
 	// maxCapabilities is the total maximum number of capabilities a plugin
 	// can have. Used for pre-allocation to minimize allocations during
@@ -214,7 +214,7 @@ const (
 
 	// maxValidCapability is the maximum valid PluginCapability enum value.
 	// This should be updated when new capabilities are added to the proto definition.
-	maxValidCapability = pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST // 12
+	maxValidCapability = pbc.PluginCapability_PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES // 13
 )
 
 // IsValidCapability reports whether a PluginCapability value is within the
@@ -266,6 +266,9 @@ func inferCapabilities(plugin Plugin) []pbc.PluginCapability {
 	}
 	if _, ok := plugin.(BatchCostHandler); ok {
 		capabilities = append(capabilities, pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST)
+	}
+	if _, ok := plugin.(ResolveResourceTypesProvider); ok {
+		capabilities = append(capabilities, pbc.PluginCapability_PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES)
 	}
 
 	return capabilities

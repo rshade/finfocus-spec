@@ -17,8 +17,6 @@ import (
 	"connectrpc.com/connect"
 	"connectrpc.com/grpchealth"
 	"github.com/rs/zerolog"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
@@ -212,6 +210,15 @@ type PluginInfoProvider interface {
 		*pbc.GetPluginInfoResponse, error)
 }
 
+// ResolveResourceTypesProvider is an optional interface that plugins can implement
+// to translate IaC-format resource type strings into Pulumi type tokens.
+// Plugins that do not implement this interface return an empty response
+// (not an error), enabling the core to fall back to heuristic type conversion.
+type ResolveResourceTypesProvider interface {
+	ResolveResourceTypes(ctx context.Context, req *pbc.ResolveResourceTypesRequest) (
+		*pbc.ResolveResourceTypesResponse, error)
+}
+
 // BatchCostHandler is an optional interface that plugins can implement
 // for optimized batch processing. Plugins that do not implement this
 // interface are served via SDK fallback processing.
@@ -267,6 +274,10 @@ type Server struct {
 	// batchWorkers controls fallback concurrency when the plugin does not
 	// implement BatchCostHandler. Defaults to DefaultBatchWorkers.
 	batchWorkers int
+
+	// typeRegistry is an optional declarative type mapping registry for
+	// ResolveResourceTypes RPC fallback.
+	typeRegistry *TypeRegistry
 }
 
 // NewServer creates a Server that wraps the provided Plugin and initializes sensible defaults.
@@ -845,6 +856,74 @@ func (s *Server) BatchCost(
 	return resp, nil
 }
 
+// ResolveResourceTypes handles ResolveResourceTypes RPC requests.
+// If the plugin implements ResolveResourceTypesProvider, delegates to it.
+// Otherwise returns an empty response (not an error) per FR-006.
+func (s *Server) ResolveResourceTypes(
+	ctx context.Context,
+	req *pbc.ResolveResourceTypesRequest,
+) (*pbc.ResolveResourceTypesResponse, error) {
+	s.logger.Debug().
+		Str("source_format", req.GetSourceFormat().String()).
+		Int("source_types_count", len(req.GetSourceTypes())).
+		Msg("ResolveResourceTypes request received")
+
+	// Check if plugin implements ResolveResourceTypesProvider
+	provider, ok := s.plugin.(ResolveResourceTypesProvider)
+	if !ok {
+		// Fallback: check if TypeRegistry is configured
+		if s.typeRegistry != nil {
+			resp := s.typeRegistry.Resolve(req)
+			resolved := len(resp.GetMappings())
+			s.logger.Debug().
+				Int("resolved_count", resolved).
+				Msg("ResolveResourceTypes served from TypeRegistry")
+			return resp, nil
+		}
+		s.logger.Debug().
+			Int("resolved_count", 0).
+			Msg("ResolveResourceTypes returning empty response (not implemented)")
+		return &pbc.ResolveResourceTypesResponse{}, nil
+	}
+
+	// Delegate to plugin's ResolveResourceTypes method
+	resp, err := provider.ResolveResourceTypes(ctx, req)
+	if err != nil {
+		s.logger.Error().
+			Err(err).
+			Str("source_format", req.GetSourceFormat().String()).
+			Msg("ResolveResourceTypes handler error")
+		return nil, status.Error(codes.Internal, "plugin failed to execute ResolveResourceTypes")
+	}
+
+	// Guard against nil response from plugin
+	if resp == nil {
+		s.logger.Error().
+			Str("source_format", req.GetSourceFormat().String()).
+			Msg("ResolveResourceTypes handler returned a nil response")
+		return nil, status.Error(codes.Internal, "plugin returned a nil response")
+	}
+
+	// Log resolution summary
+	resolved := len(resp.GetMappings())
+	requested := len(req.GetSourceTypes())
+	unresolvedNames := make([]string, 0, requested-resolved)
+	mappings := resp.GetMappings()
+	for _, st := range req.GetSourceTypes() {
+		if _, found := mappings[st]; !found {
+			unresolvedNames = append(unresolvedNames, st)
+		}
+	}
+
+	s.logger.Debug().
+		Int("requested_count", requested).
+		Int("resolved_count", resolved).
+		Strs("unresolved_types", unresolvedNames).
+		Msg("ResolveResourceTypes completed")
+
+	return resp, nil
+}
+
 // ServeConfig holds configuration for serving a plugin.
 type ServeConfig struct {
 	// Plugin is the implementation of the cost source service.
@@ -888,6 +967,12 @@ type ServeConfig struct {
 	// does not implement BatchCostHandler.
 	// Values <= 0 default to DefaultBatchWorkers.
 	BatchWorkers int
+
+	// TypeRegistry is an optional declarative type mapping registry for the
+	// ResolveResourceTypes RPC. When set and the plugin does not implement
+	// ResolveResourceTypesProvider, the server delegates to the registry's
+	// Resolve() method. When both are set, the interface takes precedence.
+	TypeRegistry *TypeRegistry
 }
 
 // resolvePort determines the port to use with the following priority:
@@ -1034,6 +1119,7 @@ func Serve(ctx context.Context, config ServeConfig) error {
 	server := NewServerWithOptions(config.Plugin, config.Registry, config.Logger, config.PluginInfo)
 	server.maxBatchSize = resolveBatchSize(config.MaxBatchSize)
 	server.batchWorkers = resolveBatchWorkers(config.BatchWorkers)
+	server.typeRegistry = config.TypeRegistry
 
 	// Choose serving mode based on WebConfig
 	if config.Web.Enabled {
@@ -1088,7 +1174,8 @@ func serveGRPC(ctx context.Context, listener net.Listener, server *Server, confi
 	return nil
 }
 
-// serveConnect starts an HTTP server that exposes the plugin over Connect, gRPC-Web, and gRPC (using h2c).
+// serveConnect starts an HTTP server that exposes the plugin over Connect, gRPC-Web, and gRPC
+// (using cleartext HTTP/2).
 // It registers the CostSource service and the gRPC health service, optionally exposes a /healthz endpoint,
 // applies CORS when configured, enforces a 1MB request payload limit, and uses the provided timeouts.
 // The server shuts down gracefully when ctx is canceled.
@@ -1125,13 +1212,10 @@ func serveConnect(ctx context.Context, listener net.Listener, server *Server, co
 		mux.Handle("/healthz", HealthHandler(customChecker))
 	}
 
-	// Wrap with h2c for HTTP/2 cleartext support (required for gRPC protocol)
-	h2cHandler := h2c.NewHandler(mux, &http2.Server{})
-
 	// Apply CORS if configured
-	finalHandler := h2cHandler
+	finalHandler := http.Handler(mux)
 	if len(config.Web.AllowedOrigins) > 0 {
-		finalHandler = corsMiddleware(h2cHandler, config.Web)
+		finalHandler = corsMiddleware(mux, config.Web)
 	}
 
 	// Apply payload size limit (1MB) to prevent DoS
@@ -1143,9 +1227,16 @@ func serveConnect(ctx context.Context, listener net.Listener, server *Server, co
 		timeouts = config.Timeouts.applyDefaults()
 	}
 
+	// Accept HTTP/1.1 (Connect, gRPC-Web) and cleartext HTTP/2 (gRPC) on the same
+	// listener, replacing the deprecated golang.org/x/net/http2/h2c wrapper.
+	protocols := new(http.Protocols)
+	protocols.SetHTTP1(true)
+	protocols.SetUnencryptedHTTP2(true)
+
 	// Create HTTP server with timeouts and limits to prevent DoS attacks
 	httpServer := &http.Server{
 		Handler:           finalHandler,
+		Protocols:         protocols,
 		ReadHeaderTimeout: timeouts.ReadHeaderTimeout,
 		ReadTimeout:       timeouts.ReadTimeout,
 		WriteTimeout:      timeouts.WriteTimeout,

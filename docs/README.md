@@ -134,6 +134,6 @@ When adding or updating documentation:
 ## Version Information
 
 - **Specification Version**: v0.4.7
-- **Go SDK**: go 1.25.5
+- **Go SDK**: go 1.27.1
 - **Node.js**: v24.11.1 (see .nvmrc)
 - **FOCUS Version**: 1.2

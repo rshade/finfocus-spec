@@ -70,6 +70,9 @@ const (
 	// CostSourceServiceBatchCostProcedure is the fully-qualified name of the CostSourceService's
 	// BatchCost RPC.
 	CostSourceServiceBatchCostProcedure = "/finfocus.v1.CostSourceService/BatchCost"
+	// CostSourceServiceResolveResourceTypesProcedure is the fully-qualified name of the
+	// CostSourceService's ResolveResourceTypes RPC.
+	CostSourceServiceResolveResourceTypesProcedure = "/finfocus.v1.CostSourceService/ResolveResourceTypes"
 	// ObservabilityServiceHealthCheckProcedure is the fully-qualified name of the
 	// ObservabilityService's HealthCheck RPC.
 	ObservabilityServiceHealthCheckProcedure = "/finfocus.v1.ObservabilityService/HealthCheck"
@@ -226,6 +229,19 @@ type CostSourceServiceClient interface {
 	//
 	// Returns INVALID_ARGUMENT if the batch exceeds the plugin's maximum size.
 	BatchCost(context.Context, *connect.Request[v1.BatchCostRequest]) (*connect.Response[v1.BatchCostResponse], error)
+	// ResolveResourceTypes translates IaC-format resource type strings
+	// (e.g., Terraform resource types) into Pulumi type tokens.
+	//
+	// This RPC is optional. Plugins that do not support type resolution
+	// return an empty response (not an error), enabling the core to fall
+	// back to heuristic type conversion.
+	//
+	// Response time should be <100ms (local lookup, no external API calls).
+	//
+	// Error cases:
+	//   - InvalidArgument: Malformed request (should not normally occur)
+	//   - Internal: Unexpected error during type resolution
+	ResolveResourceTypes(context.Context, *connect.Request[v1.ResolveResourceTypesRequest]) (*connect.Response[v1.ResolveResourceTypesResponse], error)
 }
 
 // NewCostSourceServiceClient constructs a client for the finfocus.v1.CostSourceService service. By
@@ -311,6 +327,12 @@ func NewCostSourceServiceClient(httpClient connect.HTTPClient, baseURL string, o
 			connect.WithSchema(costSourceServiceMethods.ByName("BatchCost")),
 			connect.WithClientOptions(opts...),
 		),
+		resolveResourceTypes: connect.NewClient[v1.ResolveResourceTypesRequest, v1.ResolveResourceTypesResponse](
+			httpClient,
+			baseURL+CostSourceServiceResolveResourceTypesProcedure,
+			connect.WithSchema(costSourceServiceMethods.ByName("ResolveResourceTypes")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -328,6 +350,7 @@ type costSourceServiceClient struct {
 	getPluginInfo         *connect.Client[v1.GetPluginInfoRequest, v1.GetPluginInfoResponse]
 	dryRun                *connect.Client[v1.DryRunRequest, v1.DryRunResponse]
 	batchCost             *connect.Client[v1.BatchCostRequest, v1.BatchCostResponse]
+	resolveResourceTypes  *connect.Client[v1.ResolveResourceTypesRequest, v1.ResolveResourceTypesResponse]
 }
 
 // Name calls finfocus.v1.CostSourceService.Name.
@@ -388,6 +411,11 @@ func (c *costSourceServiceClient) DryRun(ctx context.Context, req *connect.Reque
 // BatchCost calls finfocus.v1.CostSourceService.BatchCost.
 func (c *costSourceServiceClient) BatchCost(ctx context.Context, req *connect.Request[v1.BatchCostRequest]) (*connect.Response[v1.BatchCostResponse], error) {
 	return c.batchCost.CallUnary(ctx, req)
+}
+
+// ResolveResourceTypes calls finfocus.v1.CostSourceService.ResolveResourceTypes.
+func (c *costSourceServiceClient) ResolveResourceTypes(ctx context.Context, req *connect.Request[v1.ResolveResourceTypesRequest]) (*connect.Response[v1.ResolveResourceTypesResponse], error) {
+	return c.resolveResourceTypes.CallUnary(ctx, req)
 }
 
 // CostSourceServiceHandler is an implementation of the finfocus.v1.CostSourceService service.
@@ -535,6 +563,19 @@ type CostSourceServiceHandler interface {
 	//
 	// Returns INVALID_ARGUMENT if the batch exceeds the plugin's maximum size.
 	BatchCost(context.Context, *connect.Request[v1.BatchCostRequest]) (*connect.Response[v1.BatchCostResponse], error)
+	// ResolveResourceTypes translates IaC-format resource type strings
+	// (e.g., Terraform resource types) into Pulumi type tokens.
+	//
+	// This RPC is optional. Plugins that do not support type resolution
+	// return an empty response (not an error), enabling the core to fall
+	// back to heuristic type conversion.
+	//
+	// Response time should be <100ms (local lookup, no external API calls).
+	//
+	// Error cases:
+	//   - InvalidArgument: Malformed request (should not normally occur)
+	//   - Internal: Unexpected error during type resolution
+	ResolveResourceTypes(context.Context, *connect.Request[v1.ResolveResourceTypesRequest]) (*connect.Response[v1.ResolveResourceTypesResponse], error)
 }
 
 // NewCostSourceServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -616,6 +657,12 @@ func NewCostSourceServiceHandler(svc CostSourceServiceHandler, opts ...connect.H
 		connect.WithSchema(costSourceServiceMethods.ByName("BatchCost")),
 		connect.WithHandlerOptions(opts...),
 	)
+	costSourceServiceResolveResourceTypesHandler := connect.NewUnaryHandler(
+		CostSourceServiceResolveResourceTypesProcedure,
+		svc.ResolveResourceTypes,
+		connect.WithSchema(costSourceServiceMethods.ByName("ResolveResourceTypes")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/finfocus.v1.CostSourceService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case CostSourceServiceNameProcedure:
@@ -642,6 +689,8 @@ func NewCostSourceServiceHandler(svc CostSourceServiceHandler, opts ...connect.H
 			costSourceServiceDryRunHandler.ServeHTTP(w, r)
 		case CostSourceServiceBatchCostProcedure:
 			costSourceServiceBatchCostHandler.ServeHTTP(w, r)
+		case CostSourceServiceResolveResourceTypesProcedure:
+			costSourceServiceResolveResourceTypesHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -697,6 +746,10 @@ func (UnimplementedCostSourceServiceHandler) DryRun(context.Context, *connect.Re
 
 func (UnimplementedCostSourceServiceHandler) BatchCost(context.Context, *connect.Request[v1.BatchCostRequest]) (*connect.Response[v1.BatchCostResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("finfocus.v1.CostSourceService.BatchCost is not implemented"))
+}
+
+func (UnimplementedCostSourceServiceHandler) ResolveResourceTypes(context.Context, *connect.Request[v1.ResolveResourceTypesRequest]) (*connect.Response[v1.ResolveResourceTypesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("finfocus.v1.CostSourceService.ResolveResourceTypes is not implemented"))
 }
 
 // ObservabilityServiceClient is a client for the finfocus.v1.ObservabilityService service.

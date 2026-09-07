@@ -32,7 +32,10 @@ import {
   NameResponse,
   SupportsRequest,
   SupportsRequestSchema,
-  SupportsResponse
+  SupportsResponse,
+  ResolveResourceTypesRequest,
+  ResolveResourceTypesRequestSchema,
+  ResolveResourceTypesResponse
 } from "../generated/finfocus/v1/costsource_pb.js";
 import {
   GetBudgetsRequest,
@@ -117,5 +120,11 @@ export class CostSourceClient {
     }
 
     return this.client.batchCost(req);
+  }
+
+  async resolveResourceTypes(
+    req: ResolveResourceTypesRequest = create(ResolveResourceTypesRequestSchema),
+  ): Promise<ResolveResourceTypesResponse> {
+    return this.client.resolveResourceTypes(req);
   }
 }

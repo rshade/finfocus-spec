@@ -87,6 +87,14 @@ func (m *mockCapabilityPlugin) BatchCost(
 	return &pbc.BatchCostResponse{}, nil
 }
 
+// Implement ResolveResourceTypesProvider.
+func (m *mockCapabilityPlugin) ResolveResourceTypes(
+	_ context.Context,
+	_ *pbc.ResolveResourceTypesRequest,
+) (*pbc.ResolveResourceTypesResponse, error) {
+	return &pbc.ResolveResourceTypesResponse{}, nil
+}
+
 func TestGetPluginInfo_AutoDiscovery(t *testing.T) {
 	plugin := &mockCapabilityPlugin{}
 	// Create server with minimal PluginInfo to trigger default logic
@@ -103,6 +111,7 @@ func TestGetPluginInfo_AutoDiscovery(t *testing.T) {
 	assert.Contains(t, caps, pbc.PluginCapability_PLUGIN_CAPABILITY_DISMISS_RECOMMENDATIONS)
 	assert.Contains(t, caps, pbc.PluginCapability_PLUGIN_CAPABILITY_DRY_RUN)
 	assert.Contains(t, caps, pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST)
+	assert.Contains(t, caps, pbc.PluginCapability_PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES)
 	// Core capabilities
 	assert.Contains(t, caps, pbc.PluginCapability_PLUGIN_CAPABILITY_PROJECTED_COSTS)
 	assert.Contains(t, caps, pbc.PluginCapability_PLUGIN_CAPABILITY_ACTUAL_COSTS)
@@ -114,5 +123,18 @@ func TestGetPluginInfo_AutoDiscovery(t *testing.T) {
 	assert.Equal(t, "true", meta["supports_dismiss_recommendations"])
 	assert.Equal(t, "true", meta["supports_dry_run"])
 	assert.Equal(t, "true", meta["supports_batch_cost"])
+	assert.Equal(t, "true", meta["supports_resolve_resource_types"])
 	assert.Equal(t, strconv.Itoa(DefaultMaxBatchSize), meta["max_batch_size"])
+}
+
+func TestInferCapabilities_ResolveResourceTypes(t *testing.T) {
+	plugin := &mockCapabilityPlugin{}
+	caps := inferCapabilities(plugin)
+	assert.Contains(t, caps, pbc.PluginCapability_PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES)
+}
+
+func TestInferCapabilities_NoResolveResourceTypes(t *testing.T) {
+	plugin := &mockPlugin{name: "basic-plugin"}
+	caps := inferCapabilities(plugin)
+	assert.NotContains(t, caps, pbc.PluginCapability_PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES)
 }

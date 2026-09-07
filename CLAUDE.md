@@ -793,6 +793,9 @@ parallel subtests complete.
 
 ## Active Technologies
 
+- Go 1.25.8 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1 (049-resolve-resource-types)
+- N/A (stateless type mappings held in-memory after initialization) (049-resolve-resource-types)
+
 - Go 1.25.8 (per go.mod) + `github.com/stretchr/testify`,
   `google.golang.org/protobuf` (existing, unchanged) (048-test-descriptor-helper)
 - N/A (test-only refactoring) (048-test-descriptor-helper)
@@ -888,7 +891,7 @@ See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable doc
 
 ## Recent Changes
 
-- 047-validation-error-integration: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+- 049-resolve-resource-types: Added Go 1.25.8 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1
 
 - 048-test-descriptor-helper: Added Go 1.25.8 (per go.mod) +
   `github.com/stretchr/testify`, `google.golang.org/protobuf` (existing, unchanged)

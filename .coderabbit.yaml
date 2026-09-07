@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 language: "en-US"
-tone_instructions: "Senior Go engineer reviewing PulumiCost ecosystem code (Go 1.24+, gRPC/proto, JSON schemas). Provide concrete, implementable fixes with clear rationale for Claude Code automation."
+tone_instructions: "Senior Go engineer reviewing PulumiCost ecosystem code (Go 1.27+, gRPC/proto, JSON schemas). Provide concrete, implementable fixes with clear rationale for Claude Code automation."
 reviews:
   profile: "assertive"  # Use assertive for production-quality code
   high_level_summary: true
@@ -39,15 +39,15 @@ reviews:
   path_instructions:
     - path: "**/*.go"
       instructions: |
-        IMPORTANT: This project uses Go 1.24+ (go.mod specifies go 1.24.6 with toolchain go1.25.0).
-        Before reviewing, please consult the latest Go 1.24+ documentation and release notes for:
+        IMPORTANT: This project uses Go 1.27+ (go.mod specifies go 1.27.1).
+        Before reviewing, please consult the latest Go 1.27+ documentation and release notes for:
         - New language features, syntax, and standard library additions
         - Updated best practices and idiomatic patterns
         - New compiler optimizations and behavior changes
         - Deprecated patterns or functions
 
         When reviewing Go code, ensure that:
-        - Code follows Go 1.24+ idioms and latest best practices
+        - Code follows Go 1.27+ idioms and latest best practices
         - Error handling follows current Go patterns (return error as last value)
         - Proper use of context.Context for cancellation
         - No dot imports are used (except in tests for specific packages)
@@ -59,8 +59,8 @@ reviews:
         - No unnecessary type assertions or conversions
         - Proper use of defer for cleanup operations
         - Check for potential nil pointer dereferences
-        - Use latest Go 1.24+ features appropriately (check release notes)
-        - Avoid patterns deprecated in Go 1.24+
+        - Use latest Go 1.27+ features appropriately (check release notes)
+        - Avoid patterns deprecated in Go 1.27+
     - path: "**/*_test.go"
       instructions: |
         For Go test files, verify:

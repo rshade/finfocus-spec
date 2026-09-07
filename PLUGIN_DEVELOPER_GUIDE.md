@@ -1474,7 +1474,7 @@ func main() {
 ```go
 module github.com/yourorg/my-cost-plugin
 
-go 1.25
+go 1.27
 
 require (
  github.com/rshade/finfocus-spec/sdk/go v0.4.6

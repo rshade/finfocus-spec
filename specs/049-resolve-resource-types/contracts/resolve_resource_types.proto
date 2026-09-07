@@ -1,0 +1,101 @@
+// Copyright 2024-2026 Richard Shade
+// Licensed under the Apache License, Version 2.0
+//
+// Contract definition for the ResolveResourceTypes RPC.
+// This file documents the proto additions required for spec 049.
+// The actual changes are applied to the existing proto files:
+//   - proto/finfocus/v1/enums.proto (SourceFormat enum, PluginCapability value)
+//   - proto/finfocus/v1/costsource.proto (RPC, request/response messages)
+//
+// This contract file is for design review only and is NOT compiled.
+
+syntax = "proto3";
+package finfocus.v1;
+
+// ============================================================================
+// Addition to enums.proto
+// ============================================================================
+
+// SourceFormat identifies the Infrastructure-as-Code tool that produced
+// the resource type strings being resolved.
+enum SourceFormat {
+  // Protobuf default. Plugins return empty mappings for this value.
+  SOURCE_FORMAT_UNSPECIFIED = 0;
+  // Terraform / OpenTofu resource types (e.g., "aws_instance", "google_compute_instance").
+  SOURCE_FORMAT_TERRAFORM = 1;
+  // AWS CloudFormation logical resource types (e.g., "AWS::EC2::Instance").
+  // Reserved for future use; no plugin implements this initially.
+  SOURCE_FORMAT_CLOUDFORMATION = 2;
+}
+
+// Addition to PluginCapability enum:
+//   PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES = 13;
+//   // Plugin implements ResolveResourceTypes RPC for IaC type translation
+
+// ============================================================================
+// Addition to costsource.proto - Service RPC
+// ============================================================================
+
+// Addition to CostSourceService:
+//
+//   // ResolveResourceTypes translates IaC-format resource type strings
+//   // (e.g., Terraform resource types) into Pulumi type tokens.
+//   //
+//   // This RPC is optional. Plugins that do not support type resolution
+//   // return an empty response (not an error), enabling the core to fall
+//   // back to heuristic type conversion.
+//   //
+//   // Response time should be <100ms (local lookup, no external API calls).
+//   //
+//   // Error cases:
+//   //   - InvalidArgument: Malformed request (should not normally occur)
+//   //   - Internal: Unexpected error during type resolution
+//   rpc ResolveResourceTypes(ResolveResourceTypesRequest)
+//       returns (ResolveResourceTypesResponse);
+
+// ============================================================================
+// Addition to costsource.proto - Messages
+// ============================================================================
+
+// ResolveResourceTypesRequest is the input for the ResolveResourceTypes RPC.
+message ResolveResourceTypesRequest {
+  // source_format identifies the IaC tool that produced the type strings.
+  // SOURCE_FORMAT_UNSPECIFIED results in an empty response.
+  SourceFormat source_format = 1;
+
+  // source_types is the list of resource type strings to resolve.
+  // Example for Terraform: ["aws_instance", "aws_s3_bucket", "google_compute_instance"]
+  // An empty list results in an empty response with no error.
+  repeated string source_types = 2;
+}
+
+// ResolveResourceTypesResponse contains the resolved type mappings.
+// Only types the plugin can map are included; unknown types are omitted.
+message ResolveResourceTypesResponse {
+  // mappings maps source type strings to their resolved Pulumi type mappings.
+  // Keys are from the request's source_types list.
+  // Types the plugin cannot resolve are NOT present in this map.
+  map<string, ResourceTypeMapping> mappings = 1;
+}
+
+// ResourceTypeMapping describes how a single source-format resource type
+// maps to a Pulumi type token.
+message ResourceTypeMapping {
+  // pulumi_token is the fully-qualified Pulumi type token.
+  // Example: "aws:ec2/instance:Instance"
+  string pulumi_token = 1;
+
+  // supported indicates whether the plugin can price this resource type.
+  // true = the plugin has pricing data for this type.
+  // false = the plugin knows the mapping but cannot price it
+  //         (useful for display/UI purposes).
+  bool supported = 2;
+
+  // property_mappings provides optional property name translation overrides.
+  // Key = source property name (e.g., "instance_type")
+  // Value = Pulumi property name (e.g., "instanceType")
+  //
+  // When empty, the core uses mechanical snake_to_camel conversion.
+  // This field is reserved for future use; plugins leave it empty initially.
+  map<string, string> property_mappings = 3;
+}

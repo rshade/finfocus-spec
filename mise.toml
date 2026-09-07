@@ -1,0 +1,7 @@
+# Developer toolchain for this repo. Run `mise install`.
+
+[tools]
+
+# Pinned to the `go` line in go.mod, which is also what CI resolves via
+# actions/setup-go's `go-version` input. Bump both together, not just this one.
+go = "1.27.1"
