@@ -17,8 +17,6 @@ import (
 	"connectrpc.com/connect"
 	"connectrpc.com/grpchealth"
 	"github.com/rs/zerolog"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
@@ -1176,7 +1174,8 @@ func serveGRPC(ctx context.Context, listener net.Listener, server *Server, confi
 	return nil
 }
 
-// serveConnect starts an HTTP server that exposes the plugin over Connect, gRPC-Web, and gRPC (using h2c).
+// serveConnect starts an HTTP server that exposes the plugin over Connect, gRPC-Web, and gRPC
+// (using cleartext HTTP/2).
 // It registers the CostSource service and the gRPC health service, optionally exposes a /healthz endpoint,
 // applies CORS when configured, enforces a 1MB request payload limit, and uses the provided timeouts.
 // The server shuts down gracefully when ctx is canceled.
@@ -1213,13 +1212,10 @@ func serveConnect(ctx context.Context, listener net.Listener, server *Server, co
 		mux.Handle("/healthz", HealthHandler(customChecker))
 	}
 
-	// Wrap with h2c for HTTP/2 cleartext support (required for gRPC protocol)
-	h2cHandler := h2c.NewHandler(mux, &http2.Server{})
-
 	// Apply CORS if configured
-	finalHandler := h2cHandler
+	finalHandler := http.Handler(mux)
 	if len(config.Web.AllowedOrigins) > 0 {
-		finalHandler = corsMiddleware(h2cHandler, config.Web)
+		finalHandler = corsMiddleware(mux, config.Web)
 	}
 
 	// Apply payload size limit (1MB) to prevent DoS
@@ -1231,9 +1227,16 @@ func serveConnect(ctx context.Context, listener net.Listener, server *Server, co
 		timeouts = config.Timeouts.applyDefaults()
 	}
 
+	// Accept HTTP/1.1 (Connect, gRPC-Web) and cleartext HTTP/2 (gRPC) on the same
+	// listener, replacing the deprecated golang.org/x/net/http2/h2c wrapper.
+	protocols := new(http.Protocols)
+	protocols.SetHTTP1(true)
+	protocols.SetUnencryptedHTTP2(true)
+
 	// Create HTTP server with timeouts and limits to prevent DoS attacks
 	httpServer := &http.Server{
 		Handler:           finalHandler,
+		Protocols:         protocols,
 		ReadHeaderTimeout: timeouts.ReadHeaderTimeout,
 		ReadTimeout:       timeouts.ReadTimeout,
 		WriteTimeout:      timeouts.WriteTimeout,
