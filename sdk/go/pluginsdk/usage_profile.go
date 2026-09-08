@@ -47,7 +47,7 @@ var allUsageProfiles = []pbc.UsageProfile{
 //
 //nolint:gochecknoglobals // Intentional optimization for zero-allocation lookup
 var usageProfileStringMap = map[pbc.UsageProfile]string{
-	pbc.UsageProfile_USAGE_PROFILE_UNSPECIFIED: "unspecified",
+	pbc.UsageProfile_USAGE_PROFILE_UNSPECIFIED: usageProfileUnspecifiedLabel,
 	pbc.UsageProfile_USAGE_PROFILE_PROD:        "prod",
 	pbc.UsageProfile_USAGE_PROFILE_DEV:         "dev",
 	pbc.UsageProfile_USAGE_PROFILE_BURST:       "burst",
@@ -59,12 +59,12 @@ var usageProfileStringMap = map[pbc.UsageProfile]string{
 //nolint:gochecknoglobals // Intentional optimization for zero-allocation lookup
 var usageProfileParseMap = map[string]pbc.UsageProfile{
 	// Lowercase
-	"unspecified": pbc.UsageProfile_USAGE_PROFILE_UNSPECIFIED,
-	"prod":        pbc.UsageProfile_USAGE_PROFILE_PROD,
-	"production":  pbc.UsageProfile_USAGE_PROFILE_PROD,
-	"dev":         pbc.UsageProfile_USAGE_PROFILE_DEV,
-	"development": pbc.UsageProfile_USAGE_PROFILE_DEV,
-	"burst":       pbc.UsageProfile_USAGE_PROFILE_BURST,
+	usageProfileUnspecifiedLabel: pbc.UsageProfile_USAGE_PROFILE_UNSPECIFIED,
+	"prod":                       pbc.UsageProfile_USAGE_PROFILE_PROD,
+	"production":                 pbc.UsageProfile_USAGE_PROFILE_PROD,
+	"dev":                        pbc.UsageProfile_USAGE_PROFILE_DEV,
+	"development":                pbc.UsageProfile_USAGE_PROFILE_DEV,
+	"burst":                      pbc.UsageProfile_USAGE_PROFILE_BURST,
 }
 
 // AllUsageProfiles returns the pre-allocated slice of all valid UsageProfile values
@@ -149,6 +149,9 @@ const (
 	HoursDev = 160
 	// HoursBurst represents plugin discretion for batch/load-test scenarios.
 	HoursBurst = 200
+
+	// usageProfileUnspecifiedLabel is the string label for USAGE_PROFILE_UNSPECIFIED.
+	usageProfileUnspecifiedLabel = "unspecified"
 )
 
 // DefaultMonthlyHours returns the default monthly hours for the given UsageProfile:

@@ -369,7 +369,7 @@ func createBaselineVarianceTest() func(*TestHarness) TestResult {
 		// Check if variance is within 10%
 		if result.VariancePercent > MaxVariancePercent {
 			return TestResult{
-				Method:   "Performance",
+				Method:   performanceLevel,
 				Category: CategoryPerformance,
 				Success:  false,
 				Error: fmt.Errorf(
@@ -383,7 +383,7 @@ func createBaselineVarianceTest() func(*TestHarness) TestResult {
 		}
 
 		return TestResult{
-			Method:   "Performance",
+			Method:   performanceLevel,
 			Category: CategoryPerformance,
 			Success:  true,
 			Duration: duration,

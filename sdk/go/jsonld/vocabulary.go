@@ -6,6 +6,9 @@ package jsonld
 // used in JSON-LD output. Terms without Schema.org equivalents use the
 // FOCUS namespace for proper RDF semantics.
 const (
+	// JSON-LD keywords.
+	JSONLDTypeKey = "@type"
+
 	// FocusNamespace is the base IRI for FOCUS vocabulary terms.
 	FocusNamespace = "https://focus.finops.org/v1#"
 

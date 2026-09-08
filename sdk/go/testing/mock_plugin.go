@@ -33,6 +33,26 @@ const (
 	cloudStorageResourceType   = "cloud_storage"
 	lambdaResourceType         = "lambda"
 
+	// Provider constants.
+	providerAWS = "aws"
+
+	// Resource type constants.
+	resourceTypeCompute = "compute"
+
+	// Currency constants.
+	currencyUSD = "USD"
+
+	// Billing mode constants.
+	billingModeSpot = "spot"
+
+	// Error message constants.
+	errResourceDescriptorRequired = "resource descriptor is required"
+	errResponseValidationFailed   = "Response validation failed"
+	errRPCCallFailed              = "RPC call failed"
+
+	// Usage unit constants.
+	usageUnitHour = "hour"
+
 	// Time and performance constants.
 	defaultDataPoints    = 24   // 24 hours of hourly data
 	defaultBaseRate      = 0.05 // Default hourly rate
@@ -201,15 +221,16 @@ type MockPlugin struct {
 func NewMockPlugin() *MockPlugin {
 	p := &MockPlugin{
 		PluginName:         "mock-test-plugin",
-		SupportedProviders: []string{"aws", "azure", "gcp", "kubernetes"},
+		SupportedProviders: []string{providerAWS, providerAzure, providerGCP, providerKubernetes},
 		SupportedResources: map[string][]string{
-			"aws":        {ec2ResourceType, "s3", lambdaResourceType, "rds"},
-			"azure":      {"vm", blobStorageResourceType, "sql_database", "compute"},
-			"gcp":        {computeEngineResourceType, cloudStorageResourceType, cloudFunctionsResourceType, "compute"},
-			"kubernetes": {namespaceResourceType, "pod", "service"},
+			providerAWS:   {ec2ResourceType, "s3", lambdaResourceType, "rds"},
+			providerAzure: {"vm", blobStorageResourceType, resourceTypeSQLDB, resourceTypeCompute},
+			providerGCP: {computeEngineResourceType, cloudStorageResourceType, cloudFunctionsResourceType,
+				resourceTypeCompute},
+			providerKubernetes: {namespaceResourceType, "pod", "service"},
 		},
 		BaseHourlyRate:                defaultBaseRate,
-		Currency:                      "USD",
+		Currency:                      currencyUSD,
 		UnsupportedBatchResourceTypes: make(map[string]bool),
 		// Pre-populate with sample recommendations for filtering tests
 		RecommendationsConfig: RecommendationsConfig{
@@ -235,8 +256,8 @@ func NewMockPlugin() *MockPlugin {
 		DefaultPricingCategory:           pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_STANDARD,
 		DefaultSpotInterruptionRiskScore: 0.0,
 		PricingCategoryByResourceType: map[string]pbc.FocusPricingCategory{
-			"spot":        pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_DYNAMIC,
-			"preemptible": pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_DYNAMIC,
+			billingModeSpot: pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_DYNAMIC,
+			"preemptible":   pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_DYNAMIC,
 		},
 		SpotRiskScoreByResourceType: map[string]float64{
 			"spot":        defaultSpotRiskScore,
@@ -422,7 +443,7 @@ func (m *MockPlugin) DryRun(
 		return &pbc.DryRunResponse{
 			ResourceTypeSupported: false,
 			ConfigurationValid:    false,
-			ConfigurationErrors:   []string{"resource descriptor is required"},
+			ConfigurationErrors:   []string{errResourceDescriptorRequired},
 		}, nil
 	}
 
@@ -1051,7 +1072,7 @@ func (m *MockPlugin) GetActualCost(
 			Timestamp:   timestamppb.New(timestamp),
 			Cost:        cost,
 			UsageAmount: usageAmount,
-			UsageUnit:   "hour",
+			UsageUnit:   usageUnitHour,
 			Source:      m.PluginName,
 		}
 
@@ -1259,11 +1280,11 @@ func getBillingModeAndUnit(resourceType string) (string, string) {
 	case lambdaResourceType, cloudFunctionsResourceType:
 		return "per_invocation", "request"
 	case namespaceResourceType:
-		return "per_cpu_hour", "hour"
-	case "sql_database":
+		return "per_cpu_hour", usageUnitHour
+	case resourceTypeSQLDB:
 		return "per_dtu", "DTU"
 	default:
-		return "per_hour", "hour"
+		return "per_hour", usageUnitHour
 	}
 }
 
@@ -1306,8 +1327,8 @@ func getMetricHints(resourceType string) []*pbc.UsageMetricHint {
 	switch resourceType {
 	case ec2ResourceType, "vm", computeEngineResourceType, "compute":
 		return []*pbc.UsageMetricHint{
-			{Metric: "vcpu_hours", Unit: "hour"},
-			{Metric: "memory_gb_hours", Unit: "hour"},
+			{Metric: "vcpu_hours", Unit: usageUnitHour},
+			{Metric: "memory_gb_hours", Unit: usageUnitHour},
 		}
 	case "s3", blobStorageResourceType, cloudStorageResourceType:
 		return []*pbc.UsageMetricHint{

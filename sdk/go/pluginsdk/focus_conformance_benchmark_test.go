@@ -19,7 +19,7 @@ func createBenchmarkRecord() *pbc.FocusCostRecord {
 	billingEnd := billingStart.AddDate(0, 1, 0)
 
 	return &pbc.FocusCostRecord{
-		ProviderName:        "AWS",
+		ProviderName:        "AWS", //nolint:staticcheck // SA1019: Testing deprecated provider_name backward compatibility
 		BillingAccountId:    "123456789012",
 		BillingAccountName:  "Production Account",
 		BillingCurrency:     "USD",
