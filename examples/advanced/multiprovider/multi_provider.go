@@ -36,19 +36,19 @@ func extractComputeDetails(provider string, props map[string]string) ComputeDeta
 	details := ComputeDetails{Provider: provider}
 
 	switch provider {
-	case "aws":
+	case providerAWS:
 		details.SKU = mapping.ExtractAWSSKU(props)
 		details.Region = mapping.ExtractAWSRegion(props)
 		details.InstanceFamily = extractInstanceFamily(details.SKU)
 		details.IsSpot = props["instanceLifecycle"] == "spot"
 
-	case "azure":
+	case providerAzure:
 		details.SKU = mapping.ExtractAzureSKU(props)
 		details.Region = mapping.ExtractAzureRegion(props)
 		details.InstanceFamily = extractAzureFamily(details.SKU)
 		details.IsSpot = props["priority"] == "Spot"
 
-	case "gcp":
+	case providerGCP:
 		details.SKU = mapping.ExtractGCPSKU(props)
 		details.Region = mapping.ExtractGCPRegion(props)
 		details.InstanceFamily = extractGCPFamily(details.SKU)
@@ -57,7 +57,7 @@ func extractComputeDetails(provider string, props map[string]string) ComputeDeta
 	default:
 		// Use generic extractors for custom providers
 		details.SKU = mapping.ExtractSKU(props, "sku", "type", "size", "machineType")
-		details.Region = mapping.ExtractRegion(props, "region", "location", "zone")
+		details.Region = mapping.ExtractRegion(props, regionPropertyKey, "location", "zone")
 	}
 
 	return details
@@ -74,6 +74,25 @@ func extractInstanceFamily(instanceType string) string {
 
 // azureStandardPrefix is the prefix for standard Azure VM sizes.
 const azureStandardPrefix = "Standard_"
+
+const (
+	providerAWS   = "aws"
+	providerAzure = "azure"
+	providerGCP   = "gcp"
+
+	// regionPropertyKey is the property/log-field name used to carry a region value.
+	regionPropertyKey = "region"
+
+	regionEUWest1     = "eu-west-1"
+	regionEastUS      = "eastus"
+	regionWestEurope  = "westeurope"
+	regionEuropeWest1 = "europe-west1"
+
+	canonicalUSEast        = "us-east"
+	canonicalUSWest        = "us-west"
+	canonicalEuropeWest    = "europe-west"
+	canonicalAsiaNortheast = "asia-northeast"
+)
 
 // extractAzureFamily extracts Azure VM family from VM size.
 // Example: Standard_D2s_v3 -> D, Standard_E8_v4 -> E.
@@ -123,9 +142,9 @@ func NewMultiProviderMatcher() *MultiProviderMatcher {
 	}
 
 	// Add supported providers
-	m.matcher.AddProvider("aws")
-	m.matcher.AddProvider("azure")
-	m.matcher.AddProvider("gcp")
+	m.matcher.AddProvider(providerAWS)
+	m.matcher.AddProvider(providerAzure)
+	m.matcher.AddProvider(providerGCP)
 
 	// Add supported resource types per provider
 	// AWS compute resources
@@ -158,40 +177,40 @@ func demonstrateAWSExtraction(logger *slog.Logger) {
 		"instanceLifecycle": "on-demand",
 	}
 
-	details := extractComputeDetails("aws", ec2Props)
+	details := extractComputeDetails(providerAWS, ec2Props)
 	logger.Info("EC2 Instance",
 		slog.String("sku", details.SKU),
 		slog.String("family", details.InstanceFamily),
-		slog.String("region", details.Region),
+		slog.String(regionPropertyKey, details.Region),
 		slog.Bool("is_spot", details.IsSpot),
 	)
 
 	// Spot instance example
 	spotProps := map[string]string{
 		"instanceType":      "m5.xlarge",
-		"region":            "us-west-2",
+		regionPropertyKey:   "us-west-2",
 		"instanceLifecycle": "spot",
 	}
 
-	spotDetails := extractComputeDetails("aws", spotProps)
+	spotDetails := extractComputeDetails(providerAWS, spotProps)
 	logger.Info("EC2 Spot Instance",
 		slog.String("sku", spotDetails.SKU),
 		slog.String("family", spotDetails.InstanceFamily),
-		slog.String("region", spotDetails.Region),
+		slog.String(regionPropertyKey, spotDetails.Region),
 		slog.Bool("is_spot", spotDetails.IsSpot),
 	)
 
 	// RDS instance example
 	rdsProps := map[string]string{
-		"instanceClass": "db.t3.micro",
-		"region":        "eu-west-1",
+		"instanceClass":   "db.t3.micro",
+		regionPropertyKey: "eu-west-1",
 	}
 
 	sku := mapping.ExtractAWSSKU(rdsProps)
 	region := mapping.ExtractAWSRegion(rdsProps)
 	logger.Info("RDS Instance",
 		slog.String("sku", sku),
-		slog.String("region", region),
+		slog.String(regionPropertyKey, region),
 	)
 }
 
@@ -202,44 +221,44 @@ func demonstrateAzureExtraction(logger *slog.Logger) {
 	// Virtual Machine properties
 	vmProps := map[string]string{
 		"vmSize":   "Standard_D2s_v3",
-		"location": "eastus",
+		"location": regionEastUS,
 		"priority": "Regular",
 	}
 
-	details := extractComputeDetails("azure", vmProps)
+	details := extractComputeDetails(providerAzure, vmProps)
 	logger.Info("Virtual Machine",
 		slog.String("sku", details.SKU),
 		slog.String("family", details.InstanceFamily),
-		slog.String("region", details.Region),
+		slog.String(regionPropertyKey, details.Region),
 		slog.Bool("is_spot", details.IsSpot),
 	)
 
 	// Spot VM example
 	spotVMProps := map[string]string{
 		"vmSize":   "Standard_E8_v4",
-		"location": "westeurope",
+		"location": regionWestEurope,
 		"priority": "Spot",
 	}
 
-	spotDetails := extractComputeDetails("azure", spotVMProps)
+	spotDetails := extractComputeDetails(providerAzure, spotVMProps)
 	logger.Info("Spot Virtual Machine",
 		slog.String("sku", spotDetails.SKU),
 		slog.String("family", spotDetails.InstanceFamily),
-		slog.String("region", spotDetails.Region),
+		slog.String(regionPropertyKey, spotDetails.Region),
 		slog.Bool("is_spot", spotDetails.IsSpot),
 	)
 
 	// Alternative property names
 	altProps := map[string]string{
-		"sku":    "Standard_B2s",
-		"region": "northeurope",
+		"sku":             "Standard_B2s",
+		regionPropertyKey: "northeurope",
 	}
 
 	sku := mapping.ExtractAzureSKU(altProps)
 	region := mapping.ExtractAzureRegion(altProps)
 	logger.Info("VM with alternative property names",
 		slog.String("sku", sku),
-		slog.String("region", region),
+		slog.String(regionPropertyKey, region),
 	)
 }
 
@@ -254,11 +273,11 @@ func demonstrateGCPExtraction(logger *slog.Logger) {
 		"scheduling.preemptible": "false",
 	}
 
-	details := extractComputeDetails("gcp", instanceProps)
+	details := extractComputeDetails(providerGCP, instanceProps)
 	logger.Info("Compute Engine Instance",
 		slog.String("sku", details.SKU),
 		slog.String("family", details.InstanceFamily),
-		slog.String("region", details.Region),
+		slog.String(regionPropertyKey, details.Region),
 		slog.Bool("is_preemptible", details.IsPreemptible),
 	)
 
@@ -269,21 +288,21 @@ func demonstrateGCPExtraction(logger *slog.Logger) {
 		"scheduling.preemptible": "true",
 	}
 
-	preemptibleDetails := extractComputeDetails("gcp", preemptibleProps)
+	preemptibleDetails := extractComputeDetails(providerGCP, preemptibleProps)
 	logger.Info("Preemptible Instance",
 		slog.String("sku", preemptibleDetails.SKU),
 		slog.String("family", preemptibleDetails.InstanceFamily),
-		slog.String("region", preemptibleDetails.Region),
+		slog.String(regionPropertyKey, preemptibleDetails.Region),
 		slog.Bool("is_preemptible", preemptibleDetails.IsPreemptible),
 	)
 
 	// Region validation
 	logger.Info("GCP Region Validation")
-	testRegions := []string{"us-central1", "europe-west1", "invalid-region", "asia-east1"}
+	testRegions := []string{"us-central1", regionEuropeWest1, "invalid-region", "asia-east1"}
 	for _, r := range testRegions {
 		isValid := mapping.IsValidGCPRegion(r)
 		logger.Info("Region check",
-			slog.String("region", r),
+			slog.String(regionPropertyKey, r),
 			slog.Bool("valid", isValid),
 		)
 	}
@@ -309,27 +328,27 @@ func demonstrateGenericExtraction(logger *slog.Logger) {
 	)
 
 	region := mapping.ExtractRegion(customProps,
-		"deploymentZone", // Custom key
-		"region",         // Standard fallback
-		"location",       // Azure fallback
+		"deploymentZone",  // Custom key
+		regionPropertyKey, // Standard fallback
+		"location",        // Azure fallback
 	)
 
 	logger.Info("Custom Resource",
 		slog.String("sku", sku),
-		slog.String("region", region),
+		slog.String(regionPropertyKey, region),
 	)
 
 	// Kubernetes resource example
 	k8sProps := map[string]string{
-		"type":    "Standard_D4s_v3", // Node pool VM size
-		"region":  "eastus",
-		"cluster": "aks-prod-01",
+		"type":            "Standard_D4s_v3", // Node pool VM size
+		regionPropertyKey: regionEastUS,
+		"cluster":         "aks-prod-01",
 	}
 
 	details := extractComputeDetails("kubernetes", k8sProps)
 	logger.Info("Kubernetes Node Pool",
 		slog.String("sku", details.SKU),
-		slog.String("region", details.Region),
+		slog.String(regionPropertyKey, details.Region),
 	)
 }
 
@@ -344,12 +363,12 @@ func demonstrateMultiProviderMatcher(logger *slog.Logger) {
 		provider     string
 		resourceType string
 	}{
-		{"aws", "aws:ec2/instance:Instance"},
-		{"aws", "aws:s3/bucket:Bucket"},
-		{"azure", "azure:compute/virtualMachine:VirtualMachine"},
-		{"azure", "azure:storage/account:Account"},
-		{"gcp", "gcp:compute/instance:Instance"},
-		{"gcp", "gcp:bigtable/instance:Instance"},
+		{providerAWS, "aws:ec2/instance:Instance"},
+		{providerAWS, "aws:s3/bucket:Bucket"},
+		{providerAzure, "azure:compute/virtualMachine:VirtualMachine"},
+		{providerAzure, "azure:storage/account:Account"},
+		{providerGCP, "gcp:compute/instance:Instance"},
+		{providerGCP, "gcp:bigtable/instance:Instance"},
 		{"custom", "custom:resource/type:Type"},
 	}
 
@@ -370,23 +389,23 @@ func demonstrateRegionNormalization(logger *slog.Logger) {
 
 	// Mapping of provider-specific regions to canonical names
 	regionMappings := map[string]map[string]string{
-		"aws": {
-			"us-east-1":      "us-east",
-			"us-west-2":      "us-west",
-			"eu-west-1":      "europe-west",
-			"ap-northeast-1": "asia-northeast",
+		providerAWS: {
+			"us-east-1":      canonicalUSEast,
+			"us-west-2":      canonicalUSWest,
+			regionEUWest1:    canonicalEuropeWest,
+			"ap-northeast-1": canonicalAsiaNortheast,
 		},
-		"azure": {
-			"eastus":     "us-east",
-			"westus2":    "us-west",
-			"westeurope": "europe-west",
-			"japaneast":  "asia-northeast",
+		providerAzure: {
+			regionEastUS:     canonicalUSEast,
+			"westus2":        canonicalUSWest,
+			regionWestEurope: canonicalEuropeWest,
+			"japaneast":      canonicalAsiaNortheast,
 		},
-		"gcp": {
-			"us-east1":        "us-east",
-			"us-west1":        "us-west",
-			"europe-west1":    "europe-west",
-			"asia-northeast1": "asia-northeast",
+		providerGCP: {
+			"us-east1":        canonicalUSEast,
+			"us-west1":        canonicalUSWest,
+			regionEuropeWest1: canonicalEuropeWest,
+			"asia-northeast1": canonicalAsiaNortheast,
 		},
 	}
 
@@ -395,12 +414,12 @@ func demonstrateRegionNormalization(logger *slog.Logger) {
 		provider string
 		region   string
 	}{
-		{"aws", "us-east-1"},
-		{"azure", "eastus"},
-		{"gcp", "us-east1"},
-		{"aws", "eu-west-1"},
-		{"azure", "westeurope"},
-		{"gcp", "europe-west1"},
+		{providerAWS, "us-east-1"},
+		{providerAzure, regionEastUS},
+		{providerGCP, "us-east1"},
+		{providerAWS, regionEUWest1},
+		{providerAzure, regionWestEurope},
+		{providerGCP, regionEuropeWest1},
 	}
 
 	for _, tc := range testCases {
@@ -412,7 +431,7 @@ func demonstrateRegionNormalization(logger *slog.Logger) {
 		}
 		logger.Info("Region normalization",
 			slog.String("provider", tc.provider),
-			slog.String("region", tc.region),
+			slog.String(regionPropertyKey, tc.region),
 			slog.String("canonical", canonical),
 		)
 	}

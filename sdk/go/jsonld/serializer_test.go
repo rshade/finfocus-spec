@@ -504,8 +504,9 @@ func TestSerializerOptions_WithDeprecated(t *testing.T) {
 		ChargePeriodStart: &timestamppb.Timestamp{
 			Seconds: 1735689600,
 		},
-		BilledCost:          100.0,
-		BillingCurrency:     "USD",
+		BilledCost:      100.0,
+		BillingCurrency: "USD",
+		//nolint:staticcheck // SA1019: intentionally testing deprecated field serialization
 		ProviderName:        "AWS", // Deprecated field
 		ServiceProviderName: "AWS", // New field
 	}

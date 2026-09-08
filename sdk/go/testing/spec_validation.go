@@ -50,7 +50,7 @@ var ValidBillingModes = []string{
 	"per_license", "per_seat", "per_user",
 
 	// Pricing models
-	"on_demand", "reserved", "spot", "savings_plan",
+	"on_demand", "reserved", spotResourceKey, "savings_plan",
 
 	// Composite billing
 	"flat_rate", "tiered", "volume", "graduated",
@@ -280,19 +280,19 @@ func createSpecValidationValidTest() func(*TestHarness) TestResult {
 
 		if err != nil {
 			return TestResult{
-				Method:   "GetPricingSpec",
+				Method:   MethodGetPricingSpec,
 				Category: CategorySpecValidation,
 				Success:  false,
 				Error:    err,
 				Duration: duration,
-				Details:  "RPC call failed",
+				Details:  detailsRPCCallFailed,
 			}
 		}
 
 		validationErrors := validatePricingSpecSchema(resp.GetSpec())
 		if len(validationErrors) > 0 {
 			return TestResult{
-				Method:   "GetPricingSpec",
+				Method:   MethodGetPricingSpec,
 				Category: CategorySpecValidation,
 				Success:  false,
 				Error:    validationErrors[0], // Return first error
@@ -302,7 +302,7 @@ func createSpecValidationValidTest() func(*TestHarness) TestResult {
 		}
 
 		return TestResult{
-			Method:   "GetPricingSpec",
+			Method:   MethodGetPricingSpec,
 			Category: CategorySpecValidation,
 			Success:  true,
 			Duration: duration,
@@ -325,19 +325,19 @@ func createBillingModeEnumTest() func(*TestHarness) TestResult {
 
 		if err != nil {
 			return TestResult{
-				Method:   "GetPricingSpec",
+				Method:   MethodGetPricingSpec,
 				Category: CategorySpecValidation,
 				Success:  false,
 				Error:    err,
 				Duration: duration,
-				Details:  "RPC call failed",
+				Details:  detailsRPCCallFailed,
 			}
 		}
 
 		billingMode := resp.GetSpec().GetBillingMode()
 		if err := validateBillingModeEnum(billingMode); err != nil {
 			return TestResult{
-				Method:   "GetPricingSpec",
+				Method:   MethodGetPricingSpec,
 				Category: CategorySpecValidation,
 				Success:  false,
 				Error:    *err,
@@ -347,7 +347,7 @@ func createBillingModeEnumTest() func(*TestHarness) TestResult {
 		}
 
 		return TestResult{
-			Method:   "GetPricingSpec",
+			Method:   MethodGetPricingSpec,
 			Category: CategorySpecValidation,
 			Success:  true,
 			Duration: duration,
@@ -370,19 +370,19 @@ func createRequiredFieldsTest() func(*TestHarness) TestResult {
 
 		if err != nil {
 			return TestResult{
-				Method:   "GetPricingSpec",
+				Method:   MethodGetPricingSpec,
 				Category: CategorySpecValidation,
 				Success:  false,
 				Error:    err,
 				Duration: duration,
-				Details:  "RPC call failed",
+				Details:  detailsRPCCallFailed,
 			}
 		}
 
 		validationErrors := validateRequiredFields(resp.GetSpec())
 		if len(validationErrors) > 0 {
 			return TestResult{
-				Method:   "GetPricingSpec",
+				Method:   MethodGetPricingSpec,
 				Category: CategorySpecValidation,
 				Success:  false,
 				Error:    validationErrors[0],
@@ -392,7 +392,7 @@ func createRequiredFieldsTest() func(*TestHarness) TestResult {
 		}
 
 		return TestResult{
-			Method:   "GetPricingSpec",
+			Method:   MethodGetPricingSpec,
 			Category: CategorySpecValidation,
 			Success:  true,
 			Duration: duration,

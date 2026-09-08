@@ -19,7 +19,7 @@ func createBenchmarkRecord() *pbc.FocusCostRecord {
 	billingEnd := billingStart.AddDate(0, 1, 0)
 
 	return &pbc.FocusCostRecord{
-		ProviderName:        "AWS",
+		ServiceProviderName: "AWS",
 		BillingAccountId:    "123456789012",
 		BillingAccountName:  "Production Account",
 		BillingCurrency:     "USD",

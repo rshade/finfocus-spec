@@ -21,6 +21,15 @@ const (
 	NanosecondsToMilliseconds = 1000000.0 // Convert ns to ms
 )
 
+// ServiceLevelIndicator unit values.
+const (
+	SLIUnitPercentage = "percentage"
+	SLIUnitSeconds    = "seconds"
+)
+
+// featureHealthCheck is a standard observability feature name required at all conformance levels.
+const featureHealthCheck = "health_check"
+
 // MetricType represents the different types of metrics that can be collected.
 type MetricType string
 
@@ -128,25 +137,25 @@ var StandardSLIs = struct {
 	Availability: ServiceLevelIndicator{
 		Name:        "availability",
 		Description: "Percentage of successful requests over total requests",
-		Unit:        "percentage",
+		Unit:        SLIUnitPercentage,
 		Target:      DefaultAvailabilityTarget,
 	},
 	ErrorRate: ServiceLevelIndicator{
 		Name:        "error_rate",
 		Description: "Percentage of requests that result in errors",
-		Unit:        "percentage",
+		Unit:        SLIUnitPercentage,
 		Target:      DefaultErrorRateTarget,
 	},
 	LatencyP99: ServiceLevelIndicator{
 		Name:        "latency_p99",
 		Description: "99th percentile response latency",
-		Unit:        "seconds",
+		Unit:        SLIUnitSeconds,
 		Target:      DefaultLatencyP99Target,
 	},
 	LatencyP95: ServiceLevelIndicator{
 		Name:        "latency_p95",
 		Description: "95th percentile response latency",
-		Unit:        "seconds",
+		Unit:        SLIUnitSeconds,
 		Target:      1.0, // <1 second
 	},
 	Throughput: ServiceLevelIndicator{
@@ -271,7 +280,7 @@ func ValidateMetricLabels(labels map[string]string) ValidationResult {
 // ValidateSLIValue checks if an SLI value is within acceptable ranges.
 func ValidateSLIValue(sli ServiceLevelIndicator, value float64) error {
 	switch sli.Unit {
-	case "percentage":
+	case SLIUnitPercentage:
 		if value < 0 || value > 100 {
 			return fmt.Errorf(
 				"percentage SLI '%s' must be between 0 and 100, got %f",
@@ -279,7 +288,7 @@ func ValidateSLIValue(sli ServiceLevelIndicator, value float64) error {
 				value,
 			)
 		}
-	case "seconds":
+	case SLIUnitSeconds:
 		if value < 0 {
 			return fmt.Errorf("time-based SLI '%s' cannot be negative, got %f", sli.Name, value)
 		}
@@ -364,7 +373,7 @@ func GetObservabilityRequirements(level ConformanceLevel) ObservabilityRequireme
 				StandardSLIs.ErrorRate.Name,
 			},
 			RequiredFeatures: []string{
-				"health_check",
+				featureHealthCheck,
 				"basic_metrics",
 			},
 		}
@@ -386,7 +395,7 @@ func GetObservabilityRequirements(level ConformanceLevel) ObservabilityRequireme
 				StandardSLIs.Throughput.Name,
 			},
 			RequiredFeatures: []string{
-				"health_check",
+				featureHealthCheck,
 				"metrics_endpoint",
 				"structured_logging",
 				"basic_tracing",
@@ -416,7 +425,7 @@ func GetObservabilityRequirements(level ConformanceLevel) ObservabilityRequireme
 				StandardSLIs.DataFreshness.Name,
 			},
 			RequiredFeatures: []string{
-				"health_check",
+				featureHealthCheck,
 				"metrics_endpoint",
 				"structured_logging",
 				"distributed_tracing",

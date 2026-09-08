@@ -582,26 +582,26 @@ func (s *ErrorHandlingTestSuite) TestTransientErrorRetry(t *testing.T, method st
 	testFunc := func() error {
 		attempts++
 		switch method {
-		case "Name":
+		case MethodName:
 			_, err := s.client.Name(ctx, &pbc.NameRequest{})
 			lastError = err
-		case "Supports":
+		case MethodSupports:
 			resource := CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1")
 			_, err := s.client.Supports(ctx, &pbc.SupportsRequest{Resource: resource})
 			lastError = err
-		case "GetActualCost":
+		case MethodGetActualCost:
 			start, end := CreateTimeRange(HoursPerDay)
 			_, err := s.client.GetActualCost(ctx, &pbc.GetActualCostRequest{
-				ResourceId: "test-resource",
+				ResourceId: testResourceID,
 				Start:      start,
 				End:        end,
 			})
 			lastError = err
-		case "GetProjectedCost":
+		case MethodGetProjectedCost:
 			resource := CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1")
 			_, err := s.client.GetProjectedCost(ctx, &pbc.GetProjectedCostRequest{Resource: resource})
 			lastError = err
-		case "GetPricingSpec":
+		case MethodGetPricingSpec:
 			resource := CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1")
 			_, err := s.client.GetPricingSpec(ctx, &pbc.GetPricingSpecRequest{Resource: resource})
 			lastError = err
@@ -651,22 +651,22 @@ func (s *ErrorHandlingTestSuite) TestTimeoutBehavior(t *testing.T, method string
 	var err error
 
 	switch method {
-	case "Name":
+	case MethodName:
 		_, err = s.client.Name(ctx, &pbc.NameRequest{})
-	case "Supports":
+	case MethodSupports:
 		resource := CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1")
 		_, err = s.client.Supports(ctx, &pbc.SupportsRequest{Resource: resource})
-	case "GetActualCost":
+	case MethodGetActualCost:
 		startTime, endTime := CreateTimeRange(HoursPerDay)
 		_, err = s.client.GetActualCost(ctx, &pbc.GetActualCostRequest{
-			ResourceId: "test-resource",
+			ResourceId: testResourceID,
 			Start:      startTime,
 			End:        endTime,
 		})
-	case "GetProjectedCost":
+	case MethodGetProjectedCost:
 		resource := CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1")
 		_, err = s.client.GetProjectedCost(ctx, &pbc.GetProjectedCostRequest{Resource: resource})
-	case "GetPricingSpec":
+	case MethodGetPricingSpec:
 		resource := CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1")
 		_, err = s.client.GetPricingSpec(ctx, &pbc.GetPricingSpecRequest{Resource: resource})
 	}

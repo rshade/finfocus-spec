@@ -32,6 +32,20 @@ const (
 	namespaceResourceType      = "namespace"
 	cloudStorageResourceType   = "cloud_storage"
 	lambdaResourceType         = "lambda"
+	computeResourceKey         = "compute"
+	spotResourceKey            = "spot"
+	sqlDatabaseResourceType    = "sql_database"
+	vmResourceType             = "vm"
+	s3ResourceType             = "s3"
+
+	// currencyUSD is the default mock currency code.
+	currencyUSD = "USD"
+
+	// hourUnit is the usage/metric unit for hourly-billed resources.
+	hourUnit = "hour"
+
+	// errMsgResourceDescriptorRequired is returned when a request is missing its resource descriptor.
+	errMsgResourceDescriptorRequired = "resource descriptor is required"
 
 	// Time and performance constants.
 	defaultDataPoints    = 24   // 24 hours of hourly data
@@ -201,15 +215,25 @@ type MockPlugin struct {
 func NewMockPlugin() *MockPlugin {
 	p := &MockPlugin{
 		PluginName:         "mock-test-plugin",
-		SupportedProviders: []string{"aws", "azure", "gcp", "kubernetes"},
+		SupportedProviders: []string{awsProviderName, azureProviderName, gcpProviderName, kubernetesProviderName},
 		SupportedResources: map[string][]string{
-			"aws":        {ec2ResourceType, "s3", lambdaResourceType, "rds"},
-			"azure":      {"vm", blobStorageResourceType, "sql_database", "compute"},
-			"gcp":        {computeEngineResourceType, cloudStorageResourceType, cloudFunctionsResourceType, "compute"},
-			"kubernetes": {namespaceResourceType, "pod", "service"},
+			awsProviderName: {ec2ResourceType, s3ResourceType, lambdaResourceType, "rds"},
+			azureProviderName: {
+				vmResourceType,
+				blobStorageResourceType,
+				sqlDatabaseResourceType,
+				computeResourceKey,
+			},
+			gcpProviderName: {
+				computeEngineResourceType,
+				cloudStorageResourceType,
+				cloudFunctionsResourceType,
+				computeResourceKey,
+			},
+			kubernetesProviderName: {namespaceResourceType, "pod", "service"},
 		},
 		BaseHourlyRate:                defaultBaseRate,
-		Currency:                      "USD",
+		Currency:                      currencyUSD,
 		UnsupportedBatchResourceTypes: make(map[string]bool),
 		// Pre-populate with sample recommendations for filtering tests
 		RecommendationsConfig: RecommendationsConfig{
@@ -235,12 +259,12 @@ func NewMockPlugin() *MockPlugin {
 		DefaultPricingCategory:           pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_STANDARD,
 		DefaultSpotInterruptionRiskScore: 0.0,
 		PricingCategoryByResourceType: map[string]pbc.FocusPricingCategory{
-			"spot":        pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_DYNAMIC,
-			"preemptible": pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_DYNAMIC,
+			spotResourceKey: pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_DYNAMIC,
+			"preemptible":   pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_DYNAMIC,
 		},
 		SpotRiskScoreByResourceType: map[string]float64{
-			"spot":        defaultSpotRiskScore,
-			"preemptible": defaultPreemptibleRisk,
+			spotResourceKey: defaultSpotRiskScore,
+			"preemptible":   defaultPreemptibleRisk,
 		},
 	}
 	p.actualCostDataPoints.Store(defaultDataPoints)
@@ -422,7 +446,7 @@ func (m *MockPlugin) DryRun(
 		return &pbc.DryRunResponse{
 			ResourceTypeSupported: false,
 			ConfigurationValid:    false,
-			ConfigurationErrors:   []string{"resource descriptor is required"},
+			ConfigurationErrors:   []string{errMsgResourceDescriptorRequired},
 		}, nil
 	}
 
@@ -577,7 +601,7 @@ func (m *MockPlugin) batchSingleResource(
 			Result: &pbc.ResourceCostResult_Error{
 				Error: &pbc.ResourceError{
 					Code:    grpcconv.CodeToInt32(codes.InvalidArgument),
-					Message: "resource descriptor is required",
+					Message: errMsgResourceDescriptorRequired,
 				},
 			},
 		}
@@ -932,7 +956,7 @@ func (m *MockPlugin) Supports(_ context.Context, req *pbc.SupportsRequest) (*pbc
 	if resource == nil {
 		return &pbc.SupportsResponse{
 			Supported: false,
-			Reason:    "resource descriptor is required",
+			Reason:    errMsgResourceDescriptorRequired,
 		}, nil
 	}
 
@@ -1051,7 +1075,7 @@ func (m *MockPlugin) GetActualCost(
 			Timestamp:   timestamppb.New(timestamp),
 			Cost:        cost,
 			UsageAmount: usageAmount,
-			UsageUnit:   "hour",
+			UsageUnit:   hourUnit,
 			Source:      m.PluginName,
 		}
 
@@ -1211,7 +1235,7 @@ func (m *MockPlugin) GetProjectedCost(
 
 	resource := req.GetResource()
 	if resource == nil {
-		return nil, status.Error(codes.InvalidArgument, "resource descriptor is required")
+		return nil, status.Error(codes.InvalidArgument, errMsgResourceDescriptorRequired)
 	}
 
 	// Calculate cost based on resource type (keep in sync with GetPricingSpec).
@@ -1254,24 +1278,24 @@ func (m *MockPlugin) GetProjectedCost(
 // getBillingModeAndUnit returns billing mode and unit for a resource type.
 func getBillingModeAndUnit(resourceType string) (string, string) {
 	switch resourceType {
-	case "s3", blobStorageResourceType, cloudStorageResourceType:
+	case s3ResourceType, blobStorageResourceType, cloudStorageResourceType:
 		return "per_gb_month", "GB-month"
 	case lambdaResourceType, cloudFunctionsResourceType:
 		return "per_invocation", "request"
 	case namespaceResourceType:
-		return "per_cpu_hour", "hour"
-	case "sql_database":
+		return "per_cpu_hour", hourUnit
+	case sqlDatabaseResourceType:
 		return "per_dtu", "DTU"
 	default:
-		return "per_hour", "hour"
+		return "per_hour", hourUnit
 	}
 }
 
 // isKnownResourceType returns true if the resource type is known/supported.
 func isKnownResourceType(resourceType string) bool {
 	knownTypes := []string{
-		ec2ResourceType, "s3", lambdaResourceType, "rds",
-		"vm", blobStorageResourceType, "sql_database",
+		ec2ResourceType, s3ResourceType, lambdaResourceType, "rds",
+		vmResourceType, blobStorageResourceType, sqlDatabaseResourceType,
 		computeEngineResourceType, cloudStorageResourceType, cloudFunctionsResourceType,
 		namespaceResourceType, "pod", "service",
 	}
@@ -1286,15 +1310,15 @@ func isKnownResourceType(resourceType string) bool {
 // getRateMultiplier returns the rate multiplier for a resource type.
 func getRateMultiplier(resourceType string) float64 {
 	switch resourceType {
-	case ec2ResourceType, "vm", computeEngineResourceType, "compute":
+	case ec2ResourceType, vmResourceType, computeEngineResourceType, computeResourceKey:
 		return computeRateMultiplier
-	case "s3", blobStorageResourceType, cloudStorageResourceType:
+	case s3ResourceType, blobStorageResourceType, cloudStorageResourceType:
 		return storageRateMultiplier
 	case lambdaResourceType, cloudFunctionsResourceType:
 		return serverlessRateMultiplier
 	case namespaceResourceType:
 		return namespaceRateMultiplier
-	case "sql_database":
+	case sqlDatabaseResourceType:
 		return databaseRateMultiplier
 	default:
 		return 1.0
@@ -1304,12 +1328,12 @@ func getRateMultiplier(resourceType string) float64 {
 // getMetricHints returns metric hints for a resource type.
 func getMetricHints(resourceType string) []*pbc.UsageMetricHint {
 	switch resourceType {
-	case ec2ResourceType, "vm", computeEngineResourceType, "compute":
+	case ec2ResourceType, vmResourceType, computeEngineResourceType, computeResourceKey:
 		return []*pbc.UsageMetricHint{
-			{Metric: "vcpu_hours", Unit: "hour"},
-			{Metric: "memory_gb_hours", Unit: "hour"},
+			{Metric: "vcpu_hours", Unit: hourUnit},
+			{Metric: "memory_gb_hours", Unit: hourUnit},
 		}
-	case "s3", blobStorageResourceType, cloudStorageResourceType:
+	case s3ResourceType, blobStorageResourceType, cloudStorageResourceType:
 		return []*pbc.UsageMetricHint{
 			{Metric: "storage_gb", Unit: "GB"},
 			{Metric: "requests", Unit: "count"},
@@ -1321,8 +1345,8 @@ func getMetricHints(resourceType string) []*pbc.UsageMetricHint {
 		}
 	case namespaceResourceType:
 		return []*pbc.UsageMetricHint{
-			{Metric: "cpu_cores", Unit: "hour"},
-			{Metric: "memory_gb", Unit: "hour"},
+			{Metric: "cpu_cores", Unit: hourUnit},
+			{Metric: "memory_gb", Unit: hourUnit},
 		}
 	default:
 		return []*pbc.UsageMetricHint{}
@@ -1344,7 +1368,7 @@ func (m *MockPlugin) GetPricingSpec(
 
 	resource := req.GetResource()
 	if resource == nil {
-		return nil, status.Error(codes.InvalidArgument, "resource descriptor is required")
+		return nil, status.Error(codes.InvalidArgument, errMsgResourceDescriptorRequired)
 	}
 
 	// Validate required fields (FR-011)
@@ -1513,7 +1537,7 @@ func generateAnomalyRecommendation(index int, baseInfo *pbc.ResourceRecommendati
 		Resource:    baseInfo,
 		Impact: &pbc.RecommendationImpact{
 			EstimatedSavings: savings,
-			Currency:         "USD",
+			Currency:         currencyUSD,
 			ProjectionPeriod: "12_months",
 		},
 		ConfidenceScore: &confidence,
@@ -1552,7 +1576,7 @@ func GenerateSampleRecommendations(count int) []*pbc.Recommendation {
 		pbc.RecommendationPriority_RECOMMENDATION_PRIORITY_LOW,
 	}
 
-	providers := []string{"aws", "azure", "gcp", "kubernetes"}
+	providers := []string{awsProviderName, azureProviderName, gcpProviderName, kubernetesProviderName}
 	regions := []string{"us-east-1", "us-west-2", "eu-west-1", "asia-pacific-1"}
 
 	recs := make([]*pbc.Recommendation, count)
@@ -1592,7 +1616,7 @@ func GenerateSampleRecommendations(count int) []*pbc.Recommendation {
 			Resource:    baseInfo,
 			Impact: &pbc.RecommendationImpact{
 				EstimatedSavings: savings,
-				Currency:         "USD",
+				Currency:         currencyUSD,
 				ProjectionPeriod: "12_months",
 			},
 			ConfidenceScore: &confidence,

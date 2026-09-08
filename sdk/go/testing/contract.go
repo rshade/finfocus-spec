@@ -14,6 +14,14 @@ import (
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
 
+// Canonical provider name values shared across contract validation and mock data.
+const (
+	awsProviderName        = "aws"
+	azureProviderName      = "azure"
+	gcpProviderName        = "gcp"
+	kubernetesProviderName = "kubernetes"
+)
+
 // Contract validation constants defining the limits and constraints
 // for data exchange between Core and Plugin components. These constants
 // ensure resource consumption is bounded and data formats are consistent.
@@ -86,7 +94,7 @@ var (
 // ValidProviders is the list of valid provider values.
 //
 //nolint:gochecknoglobals // Intentional: shared validation data for contract testing.
-var ValidProviders = []string{"aws", "azure", "gcp", "kubernetes", "custom"}
+var ValidProviders = []string{awsProviderName, azureProviderName, gcpProviderName, kubernetesProviderName, "custom"}
 
 // ValidProjectionPeriods is the list of valid projection period values.
 //
@@ -492,7 +500,7 @@ func registerResourceDescriptorTests(suite *ContractTestSuite) {
 		TestFunc: func() error {
 			err := ValidateResourceDescriptor(&pbc.ResourceDescriptor{
 				Provider:     "",
-				ResourceType: "ec2",
+				ResourceType: ec2ResourceType,
 			})
 			if err == nil {
 				return errors.New("expected error for empty provider")
@@ -507,7 +515,7 @@ func registerResourceDescriptorTests(suite *ContractTestSuite) {
 		TestFunc: func() error {
 			err := ValidateResourceDescriptor(&pbc.ResourceDescriptor{
 				Provider:     "invalid-provider",
-				ResourceType: "ec2",
+				ResourceType: ec2ResourceType,
 			})
 			if err == nil {
 				return errors.New("expected error for invalid provider")
@@ -521,8 +529,8 @@ func registerResourceDescriptorTests(suite *ContractTestSuite) {
 		Description: "Valid ResourceDescriptor should be accepted",
 		TestFunc: func() error {
 			return ValidateResourceDescriptor(&pbc.ResourceDescriptor{
-				Provider:     "aws",
-				ResourceType: "ec2",
+				Provider:     awsProviderName,
+				ResourceType: ec2ResourceType,
 				Sku:          "t3.micro",
 				Region:       "us-east-1",
 			})

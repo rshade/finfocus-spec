@@ -12,15 +12,31 @@ import (
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
 
-// RPC method name constants for concurrency tests.
+// RPC method name constants used across the conformance test suite.
 const (
 	MethodName             = "Name"
 	MethodSupports         = "Supports"
+	MethodGetActualCost    = "GetActualCost"
 	MethodGetProjectedCost = "GetProjectedCost"
 	MethodGetPricingSpec   = "GetPricingSpec"
 	MethodGetBudgets       = "GetBudgets"
 	MethodGetPluginInfo    = "GetPluginInfo"
 	MethodConcurrency      = "Concurrency"
+	MethodPerformance      = "Performance"
+)
+
+// Shared test fixture and result-detail constants used across the conformance test suite.
+const (
+	// testResourceID is the ResourceId used by RPC correctness/error-handling tests
+	// that don't require a specific resource identity.
+	testResourceID = "test-resource"
+
+	// detailsResponseValidationFailed is the TestResult.Details message used when
+	// an RPC response fails schema/field validation.
+	detailsResponseValidationFailed = "Response validation failed"
+
+	// detailsRPCCallFailed is the TestResult.Details message used when an RPC call itself errors.
+	detailsRPCCallFailed = "RPC call failed"
 )
 
 // ConcurrencyConfig configures concurrency test execution.

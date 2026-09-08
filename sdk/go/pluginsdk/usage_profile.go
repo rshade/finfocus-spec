@@ -31,6 +31,10 @@ import (
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
 
+// usageProfileUnspecifiedStr is the lowercase string representation of
+// pbc.UsageProfile_USAGE_PROFILE_UNSPECIFIED.
+const usageProfileUnspecifiedStr = "unspecified"
+
 // allUsageProfiles is a package-level slice containing all valid UsageProfile values.
 // This is allocated once at package initialization for zero-allocation validation.
 //
@@ -47,7 +51,7 @@ var allUsageProfiles = []pbc.UsageProfile{
 //
 //nolint:gochecknoglobals // Intentional optimization for zero-allocation lookup
 var usageProfileStringMap = map[pbc.UsageProfile]string{
-	pbc.UsageProfile_USAGE_PROFILE_UNSPECIFIED: "unspecified",
+	pbc.UsageProfile_USAGE_PROFILE_UNSPECIFIED: usageProfileUnspecifiedStr,
 	pbc.UsageProfile_USAGE_PROFILE_PROD:        "prod",
 	pbc.UsageProfile_USAGE_PROFILE_DEV:         "dev",
 	pbc.UsageProfile_USAGE_PROFILE_BURST:       "burst",
@@ -59,12 +63,12 @@ var usageProfileStringMap = map[pbc.UsageProfile]string{
 //nolint:gochecknoglobals // Intentional optimization for zero-allocation lookup
 var usageProfileParseMap = map[string]pbc.UsageProfile{
 	// Lowercase
-	"unspecified": pbc.UsageProfile_USAGE_PROFILE_UNSPECIFIED,
-	"prod":        pbc.UsageProfile_USAGE_PROFILE_PROD,
-	"production":  pbc.UsageProfile_USAGE_PROFILE_PROD,
-	"dev":         pbc.UsageProfile_USAGE_PROFILE_DEV,
-	"development": pbc.UsageProfile_USAGE_PROFILE_DEV,
-	"burst":       pbc.UsageProfile_USAGE_PROFILE_BURST,
+	usageProfileUnspecifiedStr: pbc.UsageProfile_USAGE_PROFILE_UNSPECIFIED,
+	"prod":                     pbc.UsageProfile_USAGE_PROFILE_PROD,
+	"production":               pbc.UsageProfile_USAGE_PROFILE_PROD,
+	"dev":                      pbc.UsageProfile_USAGE_PROFILE_DEV,
+	"development":              pbc.UsageProfile_USAGE_PROFILE_DEV,
+	"burst":                    pbc.UsageProfile_USAGE_PROFILE_BURST,
 }
 
 // AllUsageProfiles returns the pre-allocated slice of all valid UsageProfile values

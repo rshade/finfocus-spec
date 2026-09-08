@@ -647,6 +647,7 @@ func createValidFocusRecord() *pbc.FocusCostRecord {
 	chargeEnd := now
 
 	return &pbc.FocusCostRecord{
+		//nolint:staticcheck // SA1019: provider_name is mandatory for FOCUS 1.2 conformance (see validateMandatoryFields)
 		ProviderName:       "AWS",
 		BillingAccountId:   "123456789012",
 		BillingAccountName: "Production Account",

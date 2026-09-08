@@ -6,6 +6,9 @@ package jsonld
 // This package defines constants for Schema.org types and properties used in
 // FOCUS cost data serialization where natural mappings exist.
 const (
+	// JSONLDTypeKey is the reserved JSON-LD keyword for a node's type.
+	JSONLDTypeKey = "@type"
+
 	// SchemaNamespace is the Schema.org namespace IRI.
 	SchemaNamespace = "https://schema.org/"
 
@@ -27,10 +30,10 @@ const (
 // MonetaryAmountTypeCoercion returns a JSON-LD type coercion for Schema.org MonetaryAmount.
 func MonetaryAmountTypeCoercion() map[string]interface{} {
 	return map[string]interface{}{
-		"@type": MonetaryAmountType,
+		JSONLDTypeKey: MonetaryAmountType,
 		"schema:value": map[string]interface{}{
-			"@id":   SchemaValue,
-			"@type": "http://www.w3.org/2001/XMLSchema#decimal",
+			"@id":         SchemaValue,
+			JSONLDTypeKey: "http://www.w3.org/2001/XMLSchema#decimal",
 		},
 		"schema:currency": SchemaCurrency,
 	}
@@ -39,8 +42,8 @@ func MonetaryAmountTypeCoercion() map[string]interface{} {
 // DateTimeTypeCoercion returns a JSON-LD type coercion for ISO 8601 dates.
 func DateTimeTypeCoercion() map[string]interface{} {
 	return map[string]interface{}{
-		"@id":   "schema:DateTime",
-		"@type": "http://www.w3.org/2001/XMLSchema#dateTime",
+		"@id":         "schema:DateTime",
+		JSONLDTypeKey: "http://www.w3.org/2001/XMLSchema#dateTime",
 	}
 }
 

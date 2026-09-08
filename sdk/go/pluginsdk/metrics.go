@@ -127,7 +127,7 @@ func NewPluginMetrics(pluginName string) *PluginMetrics {
 			Name:      "requests_total",
 			Help:      "Total gRPC requests",
 		},
-		[]string{"grpc_method", "grpc_code", "plugin_name"},
+		[]string{"grpc_method", "grpc_code", FieldPluginName},
 	)
 
 	requestDuration := prometheus.NewHistogramVec(
@@ -138,7 +138,7 @@ func NewPluginMetrics(pluginName string) *PluginMetrics {
 			Help:      "Request duration histogram",
 			Buckets:   DefaultHistogramBuckets,
 		},
-		[]string{"grpc_method", "plugin_name"},
+		[]string{"grpc_method", FieldPluginName},
 	)
 
 	recommendationsTotal := prometheus.NewCounterVec(
@@ -148,7 +148,7 @@ func NewPluginMetrics(pluginName string) *PluginMetrics {
 			Name:      "recommendations_returned_total",
 			Help:      "Total recommendations returned by GetRecommendations",
 		},
-		[]string{"plugin_name", "category", "action_type"},
+		[]string{FieldPluginName, "category", "action_type"},
 	)
 
 	recommendationsPerResponse := prometheus.NewHistogramVec(
@@ -159,7 +159,7 @@ func NewPluginMetrics(pluginName string) *PluginMetrics {
 			Help:      "Number of recommendations per GetRecommendations response",
 			Buckets:   []float64{1, 5, 10, 25, 50, 100, 250, 500, 1000},
 		},
-		[]string{"plugin_name"},
+		[]string{FieldPluginName},
 	)
 
 	resolveResourceTypesResolved := prometheus.NewCounterVec(
@@ -169,7 +169,7 @@ func NewPluginMetrics(pluginName string) *PluginMetrics {
 			Name:      "resolve_resource_types_resolved_total",
 			Help:      "Total source_types successfully resolved by ResolveResourceTypes",
 		},
-		[]string{"plugin_name"},
+		[]string{FieldPluginName},
 	)
 
 	resolveResourceTypesUnresolved := prometheus.NewCounterVec(
@@ -179,7 +179,7 @@ func NewPluginMetrics(pluginName string) *PluginMetrics {
 			Name:      "resolve_resource_types_unresolved_total",
 			Help:      "Total source_types requested but not resolved by ResolveResourceTypes",
 		},
-		[]string{"plugin_name"},
+		[]string{FieldPluginName},
 	)
 
 	reg.MustRegister(requestsTotal)
