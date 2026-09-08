@@ -3,6 +3,12 @@ name: CI
 permissions:
   contents: read
 
+env:
+  # Pin mise itself. Its release tag is advertised as "latest" before the
+  # release assets finish uploading, so an unpinned mise-action can resolve a
+  # version whose binaries still 404 (this broke CI on v2026.9.3).
+  MISE_VERSION: '2026.9.2'
+
 on:
   push:
     branches: [main, pricing-2]
@@ -18,15 +24,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Set up Go
-        uses: actions/setup-go@v6
+      - name: Set up toolchain
+        uses: jdx/mise-action@v4
         with:
-          go-version: '1.27.1'
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
+          version: ${{ env.MISE_VERSION }}
 
       - name: Install npm dependencies
         run: npm ci
@@ -79,15 +80,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Set up Go
-        uses: actions/setup-go@v6
+      - name: Set up toolchain
+        uses: jdx/mise-action@v4
         with:
-          go-version: '1.27.1'
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
+          version: ${{ env.MISE_VERSION }}
 
       - name: Install npm dependencies
         run: npm ci
@@ -101,7 +97,9 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.13.2
+          # Binary is provided by mise (see mise.toml); the action only runs it,
+          # which keeps its result caching and inline PR annotations.
+          install-mode: none
           args: --timeout=9m
 
       - name: Run buf lint
@@ -118,10 +116,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup buf
-        uses: bufbuild/buf-setup-action@v1
+      - name: Set up toolchain
+        uses: jdx/mise-action@v4
         with:
-          version: '1.32.1'
+          version: ${{ env.MISE_VERSION }}
+          install_args: buf
 
       - name: Buf lint
         run: buf lint
@@ -140,10 +139,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
+      - name: Set up toolchain
+        uses: jdx/mise-action@v4
         with:
-          node-version-file: '.nvmrc'
+          version: ${{ env.MISE_VERSION }}
+          install_args: node
 
       - name: Install npm dependencies
         run: npm ci
@@ -165,10 +165,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
+      - name: Set up toolchain
+        uses: jdx/mise-action@v4
         with:
-          node-version-file: '.nvmrc'
+          version: ${{ env.MISE_VERSION }}
+          install_args: node
 
       - name: Install npm dependencies
         run: npm ci

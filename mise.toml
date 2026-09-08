@@ -1,11 +1,18 @@
-# Developer toolchain for this repo. Run `mise install`.
+# Single source of truth for this repo's toolchain versions.
+#
+# CI (.github/workflows/ci.yml) provisions these same versions via
+# jdx/mise-action, so a bump here propagates to local dev and CI together.
+# Run `mise install` to sync your machine.
 
 [tools]
 
-# Pinned to the `go` line in go.mod, which is also what CI resolves via
-# actions/setup-go's `go-version` input. Bump both together, not just this one.
+# Must stay >= the `go` line in go.mod.
 go = "1.27.1"
 
-# Pinned to match .github/workflows/ci.yml's golangci-lint-action `version`
-# input. Bump both together, not just this one.
-"aqua:golangci/golangci-lint" = "2.13.2"
+# Must satisfy BOTH `engines.node` and `engines.npm` in package.json.
+# 24.15.0 is the earliest 24.x LTS bundling npm >= 11.12.1.
+node = "24.15.0"
+
+golangci-lint = "2.13.2"
+
+buf = "1.32.1"

@@ -135,5 +135,5 @@ When adding or updating documentation:
 
 - **Specification Version**: v0.4.7
 - **Go SDK**: go 1.27.1
-- **Node.js**: v24.11.1 (see .nvmrc)
+- **Node.js**: v24.15.0 (see mise.toml)
 - **FOCUS Version**: 1.2
