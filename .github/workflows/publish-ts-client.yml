@@ -82,9 +82,24 @@ jobs:
         with:
           ref: ${{ steps.determine_tag.outputs.tag }}
 
+      # setup-node is kept here rather than mise-action because it also writes the
+      # scoped .npmrc that NODE_AUTH_TOKEN relies on. Only the version is sourced
+      # from mise.toml, so there is still one place to bump it.
+      - name: Resolve Node version from mise.toml
+        id: node_version
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's/^node = "\(.*\)"/\1/p' mise.toml 2>/dev/null || true)
+          if [ -z "$version" ]; then
+            # Tags published before mise.toml carried the node pin.
+            version=24.15.0
+            echo "::warning::mise.toml has no node pin at this tag; falling back to $version"
+          fi
+          echo "version=$version" >>"$GITHUB_OUTPUT"
+
       - uses: actions/setup-node@v6
         with:
-          node-version: "24.20.0"
+          node-version: ${{ steps.node_version.outputs.version }}
           registry-url: "https://npm.pkg.github.com"
           scope: "@rshade"
           cache: 'npm'
