@@ -3,6 +3,12 @@ name: CI
 permissions:
   contents: read
 
+env:
+  # Pin mise itself. Its release tag is advertised as "latest" before the
+  # release assets finish uploading, so an unpinned mise-action can resolve a
+  # version whose binaries still 404 (this broke CI on v2026.9.3).
+  MISE_VERSION: '2026.9.2'
+
 on:
   push:
     branches: [main, pricing-2]
@@ -20,6 +26,8 @@ jobs:
 
       - name: Set up toolchain
         uses: jdx/mise-action@v4
+        with:
+          version: ${{ env.MISE_VERSION }}
 
       - name: Install npm dependencies
         run: npm ci
@@ -74,6 +82,8 @@ jobs:
 
       - name: Set up toolchain
         uses: jdx/mise-action@v4
+        with:
+          version: ${{ env.MISE_VERSION }}
 
       - name: Install npm dependencies
         run: npm ci
@@ -109,6 +119,7 @@ jobs:
       - name: Set up toolchain
         uses: jdx/mise-action@v4
         with:
+          version: ${{ env.MISE_VERSION }}
           install_args: buf
 
       - name: Buf lint
@@ -131,6 +142,7 @@ jobs:
       - name: Set up toolchain
         uses: jdx/mise-action@v4
         with:
+          version: ${{ env.MISE_VERSION }}
           install_args: node
 
       - name: Install npm dependencies
@@ -156,6 +168,7 @@ jobs:
       - name: Set up toolchain
         uses: jdx/mise-action@v4
         with:
+          version: ${{ env.MISE_VERSION }}
           install_args: node
 
       - name: Install npm dependencies
