@@ -3,6 +3,12 @@
 //
 // This example shows how to use the FocusRecordBuilder to construct
 // a complete cost record with all mandatory, recommended, and conditional columns.
+// It is not a gRPC plugin binary. Plugin mains should call pluginsdk.Run():
+//
+//	os.Exit(pluginsdk.Run(pluginsdk.ServeConfig{
+//	    Plugin:     &MyPlugin{},
+//	    PluginInfo: pluginsdk.NewPluginInfo("my-plugin", "v1.0.0"),
+//	}))
 //
 // Reference: https://focus.finops.org/focus-specification/v1-2/
 package main

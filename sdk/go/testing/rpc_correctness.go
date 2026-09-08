@@ -22,28 +22,28 @@ func testNameRPC(harness *TestHarness) TestResult {
 
 	if err != nil {
 		return TestResult{
-			Method:   "Name",
+			Method:   MethodName,
 			Category: CategoryRPCCorrectness,
 			Success:  false,
 			Error:    err,
 			Duration: duration,
-			Details:  "Name RPC failed",
+			Details:  MethodName + " RPC failed",
 		}
 	}
 
 	if valErr := ValidateNameResponse(resp); valErr != nil {
 		return TestResult{
-			Method:   "Name",
+			Method:   MethodName,
 			Category: CategoryRPCCorrectness,
 			Success:  false,
 			Error:    valErr,
 			Duration: duration,
-			Details:  "Response validation failed",
+			Details:  errResponseValidationFailed,
 		}
 	}
 
 	return TestResult{
-		Method:   "Name",
+		Method:   MethodName,
 		Category: CategoryRPCCorrectness,
 		Success:  true,
 		Duration: duration,
@@ -54,7 +54,7 @@ func testNameRPC(harness *TestHarness) TestResult {
 // testSupportsRPC tests the Supports RPC method with valid input.
 func testSupportsRPC(harness *TestHarness) TestResult {
 	start := time.Now()
-	resource := CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1")
+	resource := CreateResourceDescriptor(providerAWS, ec2ResourceType, "t3.micro", "us-east-1")
 	resp, err := harness.Client().Supports(context.Background(), &pbc.SupportsRequest{
 		Resource: resource,
 	})
@@ -62,28 +62,28 @@ func testSupportsRPC(harness *TestHarness) TestResult {
 
 	if err != nil {
 		return TestResult{
-			Method:   "Supports",
+			Method:   MethodSupports,
 			Category: CategoryRPCCorrectness,
 			Success:  false,
 			Error:    err,
 			Duration: duration,
-			Details:  "Supports RPC failed",
+			Details:  MethodSupports + " RPC failed",
 		}
 	}
 
 	if valErr := ValidateSupportsResponse(resp); valErr != nil {
 		return TestResult{
-			Method:   "Supports",
+			Method:   MethodSupports,
 			Category: CategoryRPCCorrectness,
 			Success:  false,
 			Error:    valErr,
 			Duration: duration,
-			Details:  "Response validation failed",
+			Details:  errResponseValidationFailed,
 		}
 	}
 
 	return TestResult{
-		Method:   "Supports",
+		Method:   MethodSupports,
 		Category: CategoryRPCCorrectness,
 		Success:  true,
 		Duration: duration,
@@ -96,7 +96,7 @@ func testGetActualCostRPC(harness *TestHarness) TestResult {
 	start := time.Now()
 	timeStart, timeEnd := CreateTimeRange(HoursPerDay)
 	resp, err := harness.Client().GetActualCost(context.Background(), &pbc.GetActualCostRequest{
-		ResourceId: "test-resource",
+		ResourceId: testResourceID,
 		Start:      timeStart,
 		End:        timeEnd,
 	})
@@ -107,7 +107,7 @@ func testGetActualCostRPC(harness *TestHarness) TestResult {
 		st, ok := status.FromError(err)
 		if ok && (st.Code() == codes.NotFound || st.Code() == codes.Unavailable) {
 			return TestResult{
-				Method:   "GetActualCost",
+				Method:   MethodGetActualCost,
 				Category: CategoryRPCCorrectness,
 				Success:  true,
 				Duration: duration,
@@ -116,28 +116,28 @@ func testGetActualCostRPC(harness *TestHarness) TestResult {
 		}
 
 		return TestResult{
-			Method:   "GetActualCost",
+			Method:   MethodGetActualCost,
 			Category: CategoryRPCCorrectness,
 			Success:  false,
 			Error:    err,
 			Duration: duration,
-			Details:  "GetActualCost RPC failed",
+			Details:  MethodGetActualCost + " RPC failed",
 		}
 	}
 
 	if valErr := ValidateActualCostResponse(resp); valErr != nil {
 		return TestResult{
-			Method:   "GetActualCost",
+			Method:   MethodGetActualCost,
 			Category: CategoryRPCCorrectness,
 			Success:  false,
 			Error:    valErr,
 			Duration: duration,
-			Details:  "Response validation failed",
+			Details:  errResponseValidationFailed,
 		}
 	}
 
 	return TestResult{
-		Method:   "GetActualCost",
+		Method:   MethodGetActualCost,
 		Category: CategoryRPCCorrectness,
 		Success:  true,
 		Duration: duration,
@@ -148,7 +148,7 @@ func testGetActualCostRPC(harness *TestHarness) TestResult {
 // testGetProjectedCostRPC tests the GetProjectedCost RPC method.
 func testGetProjectedCostRPC(harness *TestHarness) TestResult {
 	start := time.Now()
-	resource := CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1")
+	resource := CreateResourceDescriptor(providerAWS, ec2ResourceType, "t3.micro", "us-east-1")
 	resp, err := harness.Client().GetProjectedCost(context.Background(), &pbc.GetProjectedCostRequest{
 		Resource: resource,
 	})
@@ -156,28 +156,28 @@ func testGetProjectedCostRPC(harness *TestHarness) TestResult {
 
 	if err != nil {
 		return TestResult{
-			Method:   "GetProjectedCost",
+			Method:   MethodGetProjectedCost,
 			Category: CategoryRPCCorrectness,
 			Success:  false,
 			Error:    err,
 			Duration: duration,
-			Details:  "GetProjectedCost RPC failed",
+			Details:  MethodGetProjectedCost + " RPC failed",
 		}
 	}
 
 	if valErr := ValidateProjectedCostResponse(resp); valErr != nil {
 		return TestResult{
-			Method:   "GetProjectedCost",
+			Method:   MethodGetProjectedCost,
 			Category: CategoryRPCCorrectness,
 			Success:  false,
 			Error:    valErr,
 			Duration: duration,
-			Details:  "Response validation failed",
+			Details:  errResponseValidationFailed,
 		}
 	}
 
 	return TestResult{
-		Method:   "GetProjectedCost",
+		Method:   MethodGetProjectedCost,
 		Category: CategoryRPCCorrectness,
 		Success:  true,
 		Duration: duration,
@@ -188,7 +188,7 @@ func testGetProjectedCostRPC(harness *TestHarness) TestResult {
 // testGetPricingSpecRPC tests the GetPricingSpec RPC method.
 func testGetPricingSpecRPC(harness *TestHarness) TestResult {
 	start := time.Now()
-	resource := CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1")
+	resource := CreateResourceDescriptor(providerAWS, ec2ResourceType, "t3.micro", "us-east-1")
 	resp, err := harness.Client().GetPricingSpec(context.Background(), &pbc.GetPricingSpecRequest{
 		Resource: resource,
 	})
@@ -196,28 +196,28 @@ func testGetPricingSpecRPC(harness *TestHarness) TestResult {
 
 	if err != nil {
 		return TestResult{
-			Method:   "GetPricingSpec",
+			Method:   MethodGetPricingSpec,
 			Category: CategoryRPCCorrectness,
 			Success:  false,
 			Error:    err,
 			Duration: duration,
-			Details:  "GetPricingSpec RPC failed",
+			Details:  MethodGetPricingSpec + " RPC failed",
 		}
 	}
 
 	if valErr := ValidatePricingSpecResponse(resp); valErr != nil {
 		return TestResult{
-			Method:   "GetPricingSpec",
+			Method:   MethodGetPricingSpec,
 			Category: CategoryRPCCorrectness,
 			Success:  false,
 			Error:    valErr,
 			Duration: duration,
-			Details:  "Response validation failed",
+			Details:  errResponseValidationFailed,
 		}
 	}
 
 	return TestResult{
-		Method:   "GetPricingSpec",
+		Method:   MethodGetPricingSpec,
 		Category: CategoryRPCCorrectness,
 		Success:  true,
 		Duration: duration,
@@ -240,7 +240,7 @@ func testGetBudgetsRPC(harness *TestHarness) TestResult {
 		st, ok := status.FromError(err)
 		if ok && st.Code() == codes.Unimplemented {
 			return TestResult{
-				Method:   "GetBudgets",
+				Method:   MethodGetBudgets,
 				Category: CategoryRPCCorrectness,
 				Success:  true,
 				Duration: duration,
@@ -249,19 +249,19 @@ func testGetBudgetsRPC(harness *TestHarness) TestResult {
 		}
 		// Unexpected error
 		return TestResult{
-			Method:   "GetBudgets",
+			Method:   MethodGetBudgets,
 			Category: CategoryRPCCorrectness,
 			Success:  false,
 			Error:    err,
 			Duration: duration,
-			Details:  "GetBudgets RPC failed with unexpected error",
+			Details:  MethodGetBudgets + " RPC failed with unexpected error",
 		}
 	}
 
 	// Plugin supports budgets - validate response
 	if valErr := ValidateBudgetsResponse(resp); valErr != nil {
 		return TestResult{
-			Method:   "GetBudgets",
+			Method:   MethodGetBudgets,
 			Category: CategoryRPCCorrectness,
 			Success:  false,
 			Error:    valErr,
@@ -271,7 +271,7 @@ func testGetBudgetsRPC(harness *TestHarness) TestResult {
 	}
 
 	return TestResult{
-		Method:   "GetBudgets",
+		Method:   MethodGetBudgets,
 		Category: CategoryRPCCorrectness,
 		Success:  true,
 		Duration: duration,
@@ -296,7 +296,7 @@ func testNilResourceHandling(harness *TestHarness) TestResult {
 		st, ok := status.FromError(err)
 		if ok && st.Code() == codes.InvalidArgument {
 			return TestResult{
-				Method:   "Supports",
+				Method:   MethodSupports,
 				Category: CategoryRPCCorrectness,
 				Success:  true,
 				Duration: duration,
@@ -305,7 +305,7 @@ func testNilResourceHandling(harness *TestHarness) TestResult {
 		}
 		// Any error is acceptable for nil resource
 		return TestResult{
-			Method:   "Supports",
+			Method:   MethodSupports,
 			Category: CategoryRPCCorrectness,
 			Success:  true,
 			Duration: duration,
@@ -347,7 +347,7 @@ func testInvalidTimeRangeHandling(harness *TestHarness) TestResult {
 
 	if err == nil {
 		return TestResult{
-			Method:   "GetActualCost",
+			Method:   MethodGetActualCost,
 			Category: CategoryRPCCorrectness,
 			Success:  false,
 			Error:    errors.New("plugin accepted invalid time range"),
@@ -359,7 +359,7 @@ func testInvalidTimeRangeHandling(harness *TestHarness) TestResult {
 	st, ok := status.FromError(err)
 	if ok && st.Code() == codes.InvalidArgument {
 		return TestResult{
-			Method:   "GetActualCost",
+			Method:   MethodGetActualCost,
 			Category: CategoryRPCCorrectness,
 			Success:  true,
 			Duration: duration,
@@ -368,7 +368,7 @@ func testInvalidTimeRangeHandling(harness *TestHarness) TestResult {
 	}
 
 	return TestResult{
-		Method:   "GetActualCost",
+		Method:   MethodGetActualCost,
 		Category: CategoryRPCCorrectness,
 		Success:  true,
 		Duration: duration,

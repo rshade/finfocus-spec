@@ -86,7 +86,7 @@ var (
 // ValidProviders is the list of valid provider values.
 //
 //nolint:gochecknoglobals // Intentional: shared validation data for contract testing.
-var ValidProviders = []string{"aws", "azure", "gcp", "kubernetes", "custom"}
+var ValidProviders = []string{providerAWS, providerAzure, providerGCP, providerKubernetes, "custom"}
 
 // ValidProjectionPeriods is the list of valid projection period values.
 //
@@ -492,7 +492,7 @@ func registerResourceDescriptorTests(suite *ContractTestSuite) {
 		TestFunc: func() error {
 			err := ValidateResourceDescriptor(&pbc.ResourceDescriptor{
 				Provider:     "",
-				ResourceType: "ec2",
+				ResourceType: ec2ResourceType,
 			})
 			if err == nil {
 				return errors.New("expected error for empty provider")

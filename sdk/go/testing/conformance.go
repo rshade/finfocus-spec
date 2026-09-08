@@ -67,7 +67,7 @@ func (c TestCategory) String() string {
 	case CategoryRPCCorrectness:
 		return "RPC Correctness"
 	case CategoryPerformance:
-		return "Performance"
+		return performanceLevel
 	case CategoryConcurrency:
 		return "Concurrency"
 	default:

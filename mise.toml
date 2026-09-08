@@ -5,3 +5,7 @@
 # Pinned to the `go` line in go.mod, which is also what CI resolves via
 # actions/setup-go's `go-version` input. Bump both together, not just this one.
 go = "1.27.1"
+
+# Pinned to match .github/workflows/ci.yml's golangci-lint-action `version`
+# input. Bump both together, not just this one.
+"aqua:golangci/golangci-lint" = "2.13.2"

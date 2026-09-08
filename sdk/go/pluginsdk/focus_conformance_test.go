@@ -647,7 +647,7 @@ func createValidFocusRecord() *pbc.FocusCostRecord {
 	chargeEnd := now
 
 	return &pbc.FocusCostRecord{
-		ProviderName:       "AWS",
+		ProviderName:       "AWS", //nolint:staticcheck // SA1019: Testing deprecated provider_name backward compatibility
 		BillingAccountId:   "123456789012",
 		BillingAccountName: "Production Account",
 		BillingCurrency:    "USD",

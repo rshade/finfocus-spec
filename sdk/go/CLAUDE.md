@@ -72,11 +72,23 @@ cd ../../ && make test && make lint
 - Performance: 5-12 ns/op, 0 allocs/op across all validation functions
 - Pattern: Package-level slice variables for zero-allocation validation
 
+**Plugin CLI (`Run()` vs `Serve()`)**:
+
+- `pluginsdk.Run(config)` is the plugin-binary entry point. It returns a process
+  exit code. Handshake invocations (`--port`, `serve`, or no args) call `Serve()`
+  directly so stdout stays `PORT=<n>` only — the same constraint as
+  `finfocus`'s Pulumi analyzer path staying outside `ax.Execute`.
+- `--help`, `--version`, `dry-run`, and `__schema` go through `ax.Execute`.
+- `ServeConfig.Logger` stays `*zerolog.Logger`. Do not change it to `ax.Logger`;
+  gRPC trace-ID metadata (`TraceIDMetadataKey`) is separate from CLI process logging.
+- `ParsePortFlag()` remains for legacy `flag.Parse()` + `Serve()` mains.
+
 **`pluginsdk/` Package - Plugin Development SDK**
 
-- `README.md` - **Comprehensive documentation** for `pluginsdk.Serve()` function, port resolution,
+- `README.md` - **Comprehensive documentation** for `pluginsdk.Run()` / `Serve()`, port resolution,
   environment variables, and plugin development
 - `sdk.go` - gRPC server setup with `Serve()` function and `ServeConfig` options
+- `cli.go` - ax-go CLI entry point (`Run()`): `--version`, `--help`, `dry-run`, handshake-safe serve
 - `env.go` - Centralized environment variable handling for all FinFocus plugins
 - `env_test.go` - Comprehensive tests for environment variable functions
 - `tracing.go` - Distributed tracing utilities with `TracingUnaryServerInterceptor()`

@@ -16,11 +16,20 @@ import (
 const (
 	MethodName             = "Name"
 	MethodSupports         = "Supports"
+	MethodGetActualCost    = "GetActualCost"
 	MethodGetProjectedCost = "GetProjectedCost"
 	MethodGetPricingSpec   = "GetPricingSpec"
 	MethodGetBudgets       = "GetBudgets"
 	MethodGetPluginInfo    = "GetPluginInfo"
 	MethodConcurrency      = "Concurrency"
+	testResourceID         = "test-resource"
+	performanceLevel       = "Performance"
+
+	// Other constants.
+	providerAzure      = "azure"
+	providerGCP        = "gcp"
+	providerKubernetes = "kubernetes"
+	resourceTypeSQLDB  = "sql_database"
 )
 
 // ConcurrencyConfig configures concurrency test execution.

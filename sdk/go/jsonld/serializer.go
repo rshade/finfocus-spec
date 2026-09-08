@@ -301,7 +301,7 @@ func (s *Serializer) SerializeCommitment(record *pbc.ContractCommitment) ([]byte
 	doc["@context"] = s.context.Build()
 
 	// Add @type with namespace prefix for proper RDF semantics
-	doc["@type"] = ContractCommitmentType
+	doc[JSONLDTypeKey] = ContractCommitmentType
 
 	// Add @id
 	doc["@id"] = s.idGenerator.GenerateCommitment(record)
@@ -375,7 +375,7 @@ func (s *Serializer) Serialize(record *pbc.FocusCostRecord) ([]byte, error) {
 	doc["@context"] = s.context.Build()
 
 	// Add @type with namespace prefix for proper RDF semantics
-	doc["@type"] = FocusCostRecordType
+	doc[JSONLDTypeKey] = FocusCostRecordType
 
 	// Add @id
 	doc["@id"] = s.idGenerator.Generate(record)
@@ -578,9 +578,9 @@ func (s *Serializer) addCostField(doc map[string]interface{}, name string, value
 	// If we have a currency, serialize as Schema.org MonetaryAmount
 	if currency != "" {
 		doc[name] = map[string]interface{}{
-			"@type":    "schema:MonetaryAmount",
-			"value":    value,
-			"currency": currency,
+			JSONLDTypeKey: "schema:MonetaryAmount",
+			"value":       value,
+			"currency":    currency,
 		}
 	} else {
 		doc[name] = value

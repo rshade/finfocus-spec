@@ -517,7 +517,7 @@ func (b *FocusRecordBuilder) WithProfileDefaults(profile pbc.UsageProfile) *Focu
 
 	// Set extended column to track which profile was applied
 	profileStr := UsageProfileString(normalizedProfile)
-	if profileStr != "unspecified" {
+	if profileStr != usageProfileUnspecifiedLabel {
 		if b.record.ExtendedColumns == nil {
 			b.record.ExtendedColumns = make(map[string]string)
 		}
