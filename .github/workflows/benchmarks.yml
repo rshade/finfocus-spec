@@ -1,5 +1,9 @@
 name: Performance Benchmarks
 
+env:
+  # Keep in step with .github/workflows/ci.yml; see the comment there.
+  MISE_VERSION: '2026.9.2'
+
 on:
   push:
     branches: [main]
@@ -19,10 +23,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Set up Go
-        uses: actions/setup-go@v6
+      - name: Set up toolchain
+        uses: jdx/mise-action@v4
         with:
-          go-version: '1.27.1'
+          version: ${{ env.MISE_VERSION }}
+          # buf is needed by `make generate`, which previously fell back to the
+          # Makefile's own pinned download.
+          install_args: go buf
 
       - name: Generate Go SDK
         run: make generate
