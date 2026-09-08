@@ -170,3 +170,49 @@ func WithEstimateCostExpiresAt(expiresAt time.Time) EstimateCostResponseOption {
 		resp.ExpiresAt = timestamppb.New(expiresAt)
 	}
 }
+
+// IsResolveResourceTypesExpired returns true if the type-resolution response has an
+// expires_at timestamp that is before the given reference time.
+//
+// Returns false if the response is nil or expires_at is nil/unset.
+func IsResolveResourceTypesExpired(resp *pbc.ResolveResourceTypesResponse, now time.Time) bool {
+	if resp == nil {
+		return false
+	}
+	ts := resp.GetExpiresAt()
+	if ts == nil {
+		return false
+	}
+	return ts.AsTime().Before(now)
+}
+
+// ResolveResourceTypesExpiresAt returns the expiration time for a type-resolution response.
+// The second return value is false if the response is nil or expires_at is nil/unset.
+func ResolveResourceTypesExpiresAt(resp *pbc.ResolveResourceTypesResponse) (time.Time, bool) {
+	if resp == nil {
+		return time.Time{}, false
+	}
+	ts := resp.GetExpiresAt()
+	if ts == nil {
+		return time.Time{}, false
+	}
+	return ts.AsTime(), true
+}
+
+// WithResolveResourceTypesExpiresAt returns a ResolveResourceTypesResponseOption that
+// sets the expires_at caching hint on the response.
+//
+// A zero time.Time results in a nil expires_at (no caching guidance).
+//
+// This integrates with NewResolveResourceTypesResponse for fluent configuration.
+// Plugins using TypeRegistry can configure a registry-wide default instead via
+// WithDefaultTTL().
+func WithResolveResourceTypesExpiresAt(expiresAt time.Time) ResolveResourceTypesResponseOption {
+	return func(resp *pbc.ResolveResourceTypesResponse) {
+		if expiresAt.IsZero() {
+			resp.ExpiresAt = nil
+			return
+		}
+		resp.ExpiresAt = timestamppb.New(expiresAt)
+	}
+}

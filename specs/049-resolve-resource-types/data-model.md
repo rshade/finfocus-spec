@@ -62,7 +62,7 @@
 | Field | Type | Number | Required | Description |
 |-------|------|--------|----------|-------------|
 | `source_format` | SourceFormat | 1 | Yes | The IaC tool that produced the type strings. |
-| `source_types` | repeated string | 2 | Yes | List of source-format resource type strings to resolve. |
+| `source_types` | repeated string | 2 | Yes | List of source-format resource type strings to resolve. Example for Terraform: `aws_instance`. Example for CloudFormation: `AWS::EC2::Instance`. |
 
 **Validation Rules**:
 

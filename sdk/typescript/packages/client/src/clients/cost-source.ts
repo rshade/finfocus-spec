@@ -43,7 +43,7 @@ import {
   GetBudgetsResponse
 } from "../generated/finfocus/v1/budget_pb.js";
 import { ValidationError } from "../errors/validation-error.js";
-import { MAX_BATCH_SIZE } from "../utils/batch.js";
+import { MAX_BATCH_SIZE, MAX_SOURCE_TYPES } from "../utils/batch.js";
 
 export interface CostSourceClientConfig {
   baseUrl: string;
@@ -125,6 +125,14 @@ export class CostSourceClient {
   async resolveResourceTypes(
     req: ResolveResourceTypesRequest = create(ResolveResourceTypesRequestSchema),
   ): Promise<ResolveResourceTypesResponse> {
+    const sourceTypesCount = req.sourceTypes?.length ?? 0;
+    if (sourceTypesCount > MAX_SOURCE_TYPES) {
+      throw new ValidationError(
+        `source_types count ${sourceTypesCount} exceeds maximum supported size ${MAX_SOURCE_TYPES}`,
+        "sourceTypes",
+      );
+    }
+
     return this.client.resolveResourceTypes(req);
   }
 }

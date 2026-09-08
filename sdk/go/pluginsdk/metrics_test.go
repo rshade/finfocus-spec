@@ -18,6 +18,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
+	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
 
 // ============================================================================
@@ -585,6 +586,65 @@ func TestMetrics_CountAccuracy(t *testing.T) {
 		"counter should be 1000 within 1%% tolerance (990-1010)")
 }
 
+// TestMetricsInterceptor_ResolveResourceTypesHitMiss verifies the resolved/unresolved
+// hit-miss counters for ResolveResourceTypes.
+func TestMetricsInterceptor_ResolveResourceTypesHitMiss(t *testing.T) {
+	t.Run("mixed resolved and unresolved increments both counters", func(t *testing.T) {
+		metrics := pluginsdk.NewPluginMetrics("resolve-test-plugin")
+		interceptor := pluginsdk.MetricsInterceptorWithRegistry(metrics)
+
+		req := &pbc.ResolveResourceTypesRequest{
+			SourceFormat: pbc.SourceFormat_SOURCE_FORMAT_TERRAFORM,
+			SourceTypes:  []string{"aws_instance", "aws_s3_bucket", "unknown_type"},
+		}
+		handler := func(_ context.Context, _ interface{}) (interface{}, error) {
+			return &pbc.ResolveResourceTypesResponse{
+				Mappings: map[string]*pbc.ResourceTypeMapping{
+					"aws_instance":  {PulumiToken: "aws:ec2/instance:Instance", Supported: true},
+					"aws_s3_bucket": {PulumiToken: "aws:s3/bucket:Bucket", Supported: true},
+				},
+			}, nil
+		}
+		info := &grpc.UnaryServerInfo{FullMethod: "/finfocus.v1.CostSource/ResolveResourceTypes"}
+
+		_, err := interceptor(context.Background(), req, info, handler)
+		require.NoError(t, err)
+
+		resolved, err := getSingleLabelCounterValue(metrics.ResolveResourceTypesResolved, "resolve-test-plugin")
+		require.NoError(t, err)
+		assert.InDelta(t, float64(2), resolved, 0.01)
+
+		unresolved, err := getSingleLabelCounterValue(metrics.ResolveResourceTypesUnresolved, "resolve-test-plugin")
+		require.NoError(t, err)
+		assert.InDelta(t, float64(1), unresolved, 0.01)
+	})
+
+	t.Run("error response does not increment either counter", func(t *testing.T) {
+		metrics := pluginsdk.NewPluginMetrics("resolve-error-plugin")
+		interceptor := pluginsdk.MetricsInterceptorWithRegistry(metrics)
+
+		req := &pbc.ResolveResourceTypesRequest{
+			SourceFormat: pbc.SourceFormat_SOURCE_FORMAT_TERRAFORM,
+			SourceTypes:  []string{"aws_instance"},
+		}
+		handler := func(_ context.Context, _ interface{}) (interface{}, error) {
+			return nil, status.Error(codes.Unavailable, "unavailable")
+		}
+		info := &grpc.UnaryServerInfo{FullMethod: "/finfocus.v1.CostSource/ResolveResourceTypes"}
+
+		_, err := interceptor(context.Background(), req, info, handler)
+		require.Error(t, err)
+
+		resolved, err := getSingleLabelCounterValue(metrics.ResolveResourceTypesResolved, "resolve-error-plugin")
+		require.NoError(t, err)
+		assert.InDelta(t, float64(0), resolved, 0.01)
+
+		unresolved, err := getSingleLabelCounterValue(metrics.ResolveResourceTypesUnresolved, "resolve-error-plugin")
+		require.NoError(t, err)
+		assert.InDelta(t, float64(0), unresolved, 0.01)
+	})
+}
+
 // ============================================================================
 // Helper Functions
 // ============================================================================
@@ -593,6 +653,16 @@ func TestMetrics_CountAccuracy(t *testing.T) {
 func getCounterValue(counter *prometheus.CounterVec, method, code, plugin string) (float64, error) {
 	metric := &dto.Metric{}
 	err := counter.WithLabelValues(method, code, plugin).Write(metric)
+	if err != nil {
+		return 0, err
+	}
+	return metric.GetCounter().GetValue(), nil
+}
+
+// getSingleLabelCounterValue retrieves the value of a counter labeled only by plugin_name.
+func getSingleLabelCounterValue(counter *prometheus.CounterVec, plugin string) (float64, error) {
+	metric := &dto.Metric{}
+	err := counter.WithLabelValues(plugin).Write(metric)
 	if err != nil {
 		return 0, err
 	}

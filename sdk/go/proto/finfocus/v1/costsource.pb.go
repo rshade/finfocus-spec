@@ -3655,36 +3655,10 @@ type EstimateCostResponse struct {
 	//   - Use DYNAMIC for spot/preemptible/interruptible resources
 	PricingCategory FocusPricingCategory `protobuf:"varint,3,opt,name=pricing_category,json=pricingCategory,proto3,enum=finfocus.v1.FocusPricingCategory" json:"pricing_category,omitempty"`
 	// spot_interruption_risk_score indicates the probability of spot instance interruption.
-	//
-	// Value constraints:
-	//   - MUST be between 0.0 and 1.0 (inclusive)
-	//   - MUST NOT be NaN or Inf
-	//   - Validation uses epsilon tolerance (1e-9) for floating-point comparison
-	//   - Values in range [1.0, 1.0 + epsilon] are accepted as valid 1.0
-	//   - 0.0 indicates no interruption risk, zero probability, OR risk data unavailable
-	//     (proto3 cannot distinguish between "not set" and "explicitly zero")
-	//   - When not set by plugin, defaults to 0.0 (treated as "no risk or unknown")
-	//   - 1.0 indicates certain/guaranteed interruption
-	//
-	// Semantic requirements:
-	//   - Non-zero values (> epsilon) MUST only appear when pricing_category is DYNAMIC
-	//   - Zero value (0.0, or within epsilon) is valid for ALL categories including UNSPECIFIED
-	//   - UNSPECIFIED category with 0.0 score indicates legacy plugin (fields not populated)
-	//     This combination MUST remain valid for backward compatibility
-	//   - Non-zero values with non-DYNAMIC categories will fail validation
-	//   - Represents historical interruption probability or provider-published rates
-	//   - Plugins may use percentile data (e.g., 95th percentile) for risk calculation
-	//
-	// Backward compatibility:
-	//   - Legacy plugins that don't populate these fields default to UNSPECIFIED + 0.0
-	//   - This combination passes validation and produces no warnings
-	//   - Core systems should treat UNSPECIFIED + 0.0 as "pricing tier unknown"
-	//
-	// Plugin implementation guidance for handling proto3 zero-value ambiguity:
-	//   - Risk data unavailable: Set score to 0.0 with pricing_category UNSPECIFIED/STANDARD
-	//   - Risk is truly zero: Set score to 0.0 with pricing_category DYNAMIC (unusual but valid)
-	//   - Risk unknown for DYNAMIC resource: Set score to 0.0 and log a warning for operators
-	//   - Use CheckSpotRiskConsistency() to detect potentially missing risk data
+	// Same constraints and semantics as GetProjectedCostResponse.spot_interruption_risk_score
+	// (see above): MUST be in [0.0, 1.0] with epsilon tolerance, MUST NOT be NaN/Inf, non-zero
+	// values are valid only when pricing_category is DYNAMIC, and UNSPECIFIED+0.0 is the valid
+	// legacy-plugin default.
 	//
 	// Validation: Use pluginsdk.ValidateEstimateCostResponse() to verify all constraints.
 	SpotInterruptionRiskScore float64 `protobuf:"fixed64,4,opt,name=spot_interruption_risk_score,json=spotInterruptionRiskScore,proto3" json:"spot_interruption_risk_score,omitempty"`
@@ -6464,7 +6438,23 @@ type ResolveResourceTypesResponse struct {
 	// mappings maps source type strings to their resolved Pulumi type mappings.
 	// Keys are from the request's source_types list.
 	// Types the plugin cannot resolve are NOT present in this map.
-	Mappings      map[string]*ResourceTypeMapping `protobuf:"bytes,1,rep,name=mappings,proto3" json:"mappings,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Mappings map[string]*ResourceTypeMapping `protobuf:"bytes,1,rep,name=mappings,proto3" json:"mappings,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// expires_at is an advisory caching hint (see spec 045-caching-hint-expires-at
+	// for the cross-RPC convention this follows):
+	//   - nil/unset: no caching guidance; callers MUST NOT assume any TTL and
+	//     should treat the response as immediately re-fetchable if needed.
+	//   - a timestamp in the past: the response is already stale.
+	//   - a timestamp in the future: the response is valid until that time.
+	//
+	// Advisory only -- callers MAY apply their own maximum-TTL policy regardless
+	// of what the plugin sets here.
+	//
+	// Type mappings are near-static (they change only when a plugin's own
+	// mapping data or version changes), so plugins are encouraged to set a long
+	// TTL (hours to days) rather than leaving this unset. Plugins using the
+	// SDK's TypeRegistry can configure a registry-wide default via
+	// WithDefaultTTL() instead of setting this per response.
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6502,6 +6492,13 @@ func (*ResolveResourceTypesResponse) Descriptor() ([]byte, []int) {
 func (x *ResolveResourceTypesResponse) GetMappings() map[string]*ResourceTypeMapping {
 	if x != nil {
 		return x.Mappings
+	}
+	return nil
+}
+
+func (x *ResolveResourceTypesResponse) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
 	}
 	return nil
 }
@@ -7068,9 +7065,11 @@ const file_finfocus_v1_costsource_proto_rawDesc = "" +
 	"\x19resource_type_unsupported\x18\x03 \x01(\bR\x17resourceTypeUnsupported\"\x80\x01\n" +
 	"\x1bResolveResourceTypesRequest\x12>\n" +
 	"\rsource_format\x18\x01 \x01(\x0e2\x19.finfocus.v1.SourceFormatR\fsourceFormat\x12!\n" +
-	"\fsource_types\x18\x02 \x03(\tR\vsourceTypes\"\xd2\x01\n" +
+	"\fsource_types\x18\x02 \x03(\tR\vsourceTypes\"\x8d\x02\n" +
 	"\x1cResolveResourceTypesResponse\x12S\n" +
-	"\bmappings\x18\x01 \x03(\v27.finfocus.v1.ResolveResourceTypesResponse.MappingsEntryR\bmappings\x1a]\n" +
+	"\bmappings\x18\x01 \x03(\v27.finfocus.v1.ResolveResourceTypesResponse.MappingsEntryR\bmappings\x129\n" +
+	"\n" +
+	"expires_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x1a]\n" +
 	"\rMappingsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x126\n" +
 	"\x05value\x18\x02 \x01(\v2 .finfocus.v1.ResourceTypeMappingR\x05value:\x028\x01\"\x80\x02\n" +
@@ -7444,45 +7443,46 @@ var file_finfocus_v1_costsource_proto_depIdxs = []int32{
 	1,   // 117: finfocus.v1.ActualCostData.fallback_hint:type_name -> finfocus.v1.FallbackHint
 	107, // 118: finfocus.v1.ResolveResourceTypesRequest.source_format:type_name -> finfocus.v1.SourceFormat
 	95,  // 119: finfocus.v1.ResolveResourceTypesResponse.mappings:type_name -> finfocus.v1.ResolveResourceTypesResponse.MappingsEntry
-	96,  // 120: finfocus.v1.ResourceTypeMapping.property_mappings:type_name -> finfocus.v1.ResourceTypeMapping.PropertyMappingsEntry
-	74,  // 121: finfocus.v1.ResolveResourceTypesResponse.MappingsEntry.value:type_name -> finfocus.v1.ResourceTypeMapping
-	13,  // 122: finfocus.v1.CostSourceService.Name:input_type -> finfocus.v1.NameRequest
-	16,  // 123: finfocus.v1.CostSourceService.Supports:input_type -> finfocus.v1.SupportsRequest
-	18,  // 124: finfocus.v1.CostSourceService.GetActualCost:input_type -> finfocus.v1.GetActualCostRequest
-	20,  // 125: finfocus.v1.CostSourceService.GetProjectedCost:input_type -> finfocus.v1.GetProjectedCostRequest
-	22,  // 126: finfocus.v1.CostSourceService.GetPricingSpec:input_type -> finfocus.v1.GetPricingSpecRequest
-	43,  // 127: finfocus.v1.CostSourceService.EstimateCost:input_type -> finfocus.v1.EstimateCostRequest
-	45,  // 128: finfocus.v1.CostSourceService.GetRecommendations:input_type -> finfocus.v1.GetRecommendationsRequest
-	59,  // 129: finfocus.v1.CostSourceService.DismissRecommendation:input_type -> finfocus.v1.DismissRecommendationRequest
-	108, // 130: finfocus.v1.CostSourceService.GetBudgets:input_type -> finfocus.v1.GetBudgetsRequest
-	61,  // 131: finfocus.v1.CostSourceService.GetPluginInfo:input_type -> finfocus.v1.GetPluginInfoRequest
-	64,  // 132: finfocus.v1.CostSourceService.DryRun:input_type -> finfocus.v1.DryRunRequest
-	66,  // 133: finfocus.v1.CostSourceService.BatchCost:input_type -> finfocus.v1.BatchCostRequest
-	72,  // 134: finfocus.v1.CostSourceService.ResolveResourceTypes:input_type -> finfocus.v1.ResolveResourceTypesRequest
-	30,  // 135: finfocus.v1.ObservabilityService.HealthCheck:input_type -> finfocus.v1.HealthCheckRequest
-	32,  // 136: finfocus.v1.ObservabilityService.GetMetrics:input_type -> finfocus.v1.GetMetricsRequest
-	36,  // 137: finfocus.v1.ObservabilityService.GetServiceLevelIndicators:input_type -> finfocus.v1.GetServiceLevelIndicatorsRequest
-	14,  // 138: finfocus.v1.CostSourceService.Name:output_type -> finfocus.v1.NameResponse
-	17,  // 139: finfocus.v1.CostSourceService.Supports:output_type -> finfocus.v1.SupportsResponse
-	19,  // 140: finfocus.v1.CostSourceService.GetActualCost:output_type -> finfocus.v1.GetActualCostResponse
-	21,  // 141: finfocus.v1.CostSourceService.GetProjectedCost:output_type -> finfocus.v1.GetProjectedCostResponse
-	23,  // 142: finfocus.v1.CostSourceService.GetPricingSpec:output_type -> finfocus.v1.GetPricingSpecResponse
-	44,  // 143: finfocus.v1.CostSourceService.EstimateCost:output_type -> finfocus.v1.EstimateCostResponse
-	46,  // 144: finfocus.v1.CostSourceService.GetRecommendations:output_type -> finfocus.v1.GetRecommendationsResponse
-	60,  // 145: finfocus.v1.CostSourceService.DismissRecommendation:output_type -> finfocus.v1.DismissRecommendationResponse
-	109, // 146: finfocus.v1.CostSourceService.GetBudgets:output_type -> finfocus.v1.GetBudgetsResponse
-	62,  // 147: finfocus.v1.CostSourceService.GetPluginInfo:output_type -> finfocus.v1.GetPluginInfoResponse
-	65,  // 148: finfocus.v1.CostSourceService.DryRun:output_type -> finfocus.v1.DryRunResponse
-	67,  // 149: finfocus.v1.CostSourceService.BatchCost:output_type -> finfocus.v1.BatchCostResponse
-	73,  // 150: finfocus.v1.CostSourceService.ResolveResourceTypes:output_type -> finfocus.v1.ResolveResourceTypesResponse
-	31,  // 151: finfocus.v1.ObservabilityService.HealthCheck:output_type -> finfocus.v1.HealthCheckResponse
-	33,  // 152: finfocus.v1.ObservabilityService.GetMetrics:output_type -> finfocus.v1.GetMetricsResponse
-	37,  // 153: finfocus.v1.ObservabilityService.GetServiceLevelIndicators:output_type -> finfocus.v1.GetServiceLevelIndicatorsResponse
-	138, // [138:154] is the sub-list for method output_type
-	122, // [122:138] is the sub-list for method input_type
-	122, // [122:122] is the sub-list for extension type_name
-	122, // [122:122] is the sub-list for extension extendee
-	0,   // [0:122] is the sub-list for field type_name
+	98,  // 120: finfocus.v1.ResolveResourceTypesResponse.expires_at:type_name -> google.protobuf.Timestamp
+	96,  // 121: finfocus.v1.ResourceTypeMapping.property_mappings:type_name -> finfocus.v1.ResourceTypeMapping.PropertyMappingsEntry
+	74,  // 122: finfocus.v1.ResolveResourceTypesResponse.MappingsEntry.value:type_name -> finfocus.v1.ResourceTypeMapping
+	13,  // 123: finfocus.v1.CostSourceService.Name:input_type -> finfocus.v1.NameRequest
+	16,  // 124: finfocus.v1.CostSourceService.Supports:input_type -> finfocus.v1.SupportsRequest
+	18,  // 125: finfocus.v1.CostSourceService.GetActualCost:input_type -> finfocus.v1.GetActualCostRequest
+	20,  // 126: finfocus.v1.CostSourceService.GetProjectedCost:input_type -> finfocus.v1.GetProjectedCostRequest
+	22,  // 127: finfocus.v1.CostSourceService.GetPricingSpec:input_type -> finfocus.v1.GetPricingSpecRequest
+	43,  // 128: finfocus.v1.CostSourceService.EstimateCost:input_type -> finfocus.v1.EstimateCostRequest
+	45,  // 129: finfocus.v1.CostSourceService.GetRecommendations:input_type -> finfocus.v1.GetRecommendationsRequest
+	59,  // 130: finfocus.v1.CostSourceService.DismissRecommendation:input_type -> finfocus.v1.DismissRecommendationRequest
+	108, // 131: finfocus.v1.CostSourceService.GetBudgets:input_type -> finfocus.v1.GetBudgetsRequest
+	61,  // 132: finfocus.v1.CostSourceService.GetPluginInfo:input_type -> finfocus.v1.GetPluginInfoRequest
+	64,  // 133: finfocus.v1.CostSourceService.DryRun:input_type -> finfocus.v1.DryRunRequest
+	66,  // 134: finfocus.v1.CostSourceService.BatchCost:input_type -> finfocus.v1.BatchCostRequest
+	72,  // 135: finfocus.v1.CostSourceService.ResolveResourceTypes:input_type -> finfocus.v1.ResolveResourceTypesRequest
+	30,  // 136: finfocus.v1.ObservabilityService.HealthCheck:input_type -> finfocus.v1.HealthCheckRequest
+	32,  // 137: finfocus.v1.ObservabilityService.GetMetrics:input_type -> finfocus.v1.GetMetricsRequest
+	36,  // 138: finfocus.v1.ObservabilityService.GetServiceLevelIndicators:input_type -> finfocus.v1.GetServiceLevelIndicatorsRequest
+	14,  // 139: finfocus.v1.CostSourceService.Name:output_type -> finfocus.v1.NameResponse
+	17,  // 140: finfocus.v1.CostSourceService.Supports:output_type -> finfocus.v1.SupportsResponse
+	19,  // 141: finfocus.v1.CostSourceService.GetActualCost:output_type -> finfocus.v1.GetActualCostResponse
+	21,  // 142: finfocus.v1.CostSourceService.GetProjectedCost:output_type -> finfocus.v1.GetProjectedCostResponse
+	23,  // 143: finfocus.v1.CostSourceService.GetPricingSpec:output_type -> finfocus.v1.GetPricingSpecResponse
+	44,  // 144: finfocus.v1.CostSourceService.EstimateCost:output_type -> finfocus.v1.EstimateCostResponse
+	46,  // 145: finfocus.v1.CostSourceService.GetRecommendations:output_type -> finfocus.v1.GetRecommendationsResponse
+	60,  // 146: finfocus.v1.CostSourceService.DismissRecommendation:output_type -> finfocus.v1.DismissRecommendationResponse
+	109, // 147: finfocus.v1.CostSourceService.GetBudgets:output_type -> finfocus.v1.GetBudgetsResponse
+	62,  // 148: finfocus.v1.CostSourceService.GetPluginInfo:output_type -> finfocus.v1.GetPluginInfoResponse
+	65,  // 149: finfocus.v1.CostSourceService.DryRun:output_type -> finfocus.v1.DryRunResponse
+	67,  // 150: finfocus.v1.CostSourceService.BatchCost:output_type -> finfocus.v1.BatchCostResponse
+	73,  // 151: finfocus.v1.CostSourceService.ResolveResourceTypes:output_type -> finfocus.v1.ResolveResourceTypesResponse
+	31,  // 152: finfocus.v1.ObservabilityService.HealthCheck:output_type -> finfocus.v1.HealthCheckResponse
+	33,  // 153: finfocus.v1.ObservabilityService.GetMetrics:output_type -> finfocus.v1.GetMetricsResponse
+	37,  // 154: finfocus.v1.ObservabilityService.GetServiceLevelIndicators:output_type -> finfocus.v1.GetServiceLevelIndicatorsResponse
+	139, // [139:155] is the sub-list for method output_type
+	123, // [123:139] is the sub-list for method input_type
+	123, // [123:123] is the sub-list for extension type_name
+	123, // [123:123] is the sub-list for extension extendee
+	0,   // [0:123] is the sub-list for field type_name
 }
 
 func init() { file_finfocus_v1_costsource_proto_init() }

@@ -278,6 +278,10 @@ type Server struct {
 	// typeRegistry is an optional declarative type mapping registry for
 	// ResolveResourceTypes RPC fallback.
 	typeRegistry *TypeRegistry
+
+	// maxSourceTypes is the configured per-plugin source_types size limit for
+	// ResolveResourceTypes RPC. Defaults to DefaultMaxSourceTypes when not configured.
+	maxSourceTypes int32
 }
 
 // NewServer creates a Server that wraps the provided Plugin and initializes sensible defaults.
@@ -293,6 +297,7 @@ func NewServer(plugin Plugin) *Server {
 		globalCapabilities: inferCapabilities(plugin),
 		maxBatchSize:       DefaultMaxBatchSize,
 		batchWorkers:       DefaultBatchWorkers,
+		maxSourceTypes:     DefaultMaxSourceTypes,
 	}
 }
 
@@ -337,6 +342,7 @@ func NewServerWithOptions(plugin Plugin, registry RegistryLookup, logger *zerolo
 		globalCapabilities: caps,
 		maxBatchSize:       DefaultMaxBatchSize,
 		batchWorkers:       DefaultBatchWorkers,
+		maxSourceTypes:     DefaultMaxSourceTypes,
 	}
 }
 
@@ -868,6 +874,10 @@ func (s *Server) ResolveResourceTypes(
 		Int("source_types_count", len(req.GetSourceTypes())).
 		Msg("ResolveResourceTypes request received")
 
+	if err := ValidateResolveResourceTypesRequest(req, s.maxSourceTypes); err != nil {
+		return nil, err
+	}
+
 	// Check if plugin implements ResolveResourceTypesProvider
 	provider, ok := s.plugin.(ResolveResourceTypesProvider)
 	if !ok {
@@ -973,6 +983,11 @@ type ServeConfig struct {
 	// ResolveResourceTypesProvider, the server delegates to the registry's
 	// Resolve() method. When both are set, the interface takes precedence.
 	TypeRegistry *TypeRegistry
+
+	// MaxSourceTypes is the per-plugin source_types size limit for the
+	// ResolveResourceTypes RPC. Values <= 0 default to DefaultMaxSourceTypes.
+	// Values > MaxSourceTypes are clamped.
+	MaxSourceTypes int
 }
 
 // resolvePort determines the port to use with the following priority:
@@ -1120,6 +1135,7 @@ func Serve(ctx context.Context, config ServeConfig) error {
 	server.maxBatchSize = resolveBatchSize(config.MaxBatchSize)
 	server.batchWorkers = resolveBatchWorkers(config.BatchWorkers)
 	server.typeRegistry = config.TypeRegistry
+	server.maxSourceTypes = resolveSourceTypesLimit(config.MaxSourceTypes)
 
 	// Choose serving mode based on WebConfig
 	if config.Web.Enabled {

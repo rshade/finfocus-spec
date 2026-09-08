@@ -1,0 +1,50 @@
+// Copyright 2024-2026 Richard Shade
+// Licensed under the Apache License, Version 2.0
+//
+// Contract delta for spec 050-resolve-resource-types-hardening.
+// This file documents the single proto addition required for this feature.
+// The actual change is applied to the existing file:
+//   - proto/finfocus/v1/costsource.proto (ResolveResourceTypesResponse message)
+//
+// This contract file is for design review only and is NOT compiled.
+// This is the only wire-protocol change in this feature; every other item
+// (request-size limit, TypeRegistry additions, conformance/metrics, the JSON
+// mapping-file loader, and the CloudFormation doc example) is SDK-only or
+// documentation-only and has no proto delta.
+
+syntax = "proto3";
+package finfocus.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// ============================================================================
+// Change to costsource.proto: ResolveResourceTypesResponse gains field 2
+// ============================================================================
+
+message ResolveResourceTypesResponse {
+  // mappings maps source type strings to their resolved Pulumi type mappings.
+  // Keys are from the request's source_types list.
+  // Types the plugin cannot resolve are NOT present in this map.
+  // (Unchanged from spec 049.)
+  map<string, ResourceTypeMapping> mappings = 1;
+
+  // expires_at is an advisory caching hint (see spec 045-caching-hint-expires-at
+  // for the cross-RPC convention this follows):
+  //   - nil/unset: no caching guidance; callers MUST NOT assume any TTL and
+  //     should treat the response as immediately re-fetchable if needed.
+  //   - a timestamp in the past: the response is already stale.
+  //   - a timestamp in the future: the response is valid until that time.
+  //
+  // Advisory only -- callers MAY apply their own maximum-TTL policy regardless
+  // of what the plugin sets here.
+  //
+  // Type mappings are near-static (they change only when a plugin's own
+  // mapping data or version changes), so plugins are encouraged to set a long
+  // TTL (hours to days) rather than leaving this unset. Plugins using the SDK's
+  // TypeRegistry can configure a registry-wide default via WithDefaultTTL()
+  // instead of setting this per response.
+  //
+  // NEW in spec 050 (field number 2 -- the next available number on this
+  // message, which previously defined only `mappings = 1`).
+  google.protobuf.Timestamp expires_at = 2;
+}

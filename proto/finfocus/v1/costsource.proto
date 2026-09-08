@@ -1117,36 +1117,10 @@ message EstimateCostResponse {
   FocusPricingCategory pricing_category = 3;
 
   // spot_interruption_risk_score indicates the probability of spot instance interruption.
-  //
-  // Value constraints:
-  //  - MUST be between 0.0 and 1.0 (inclusive)
-  //  - MUST NOT be NaN or Inf
-  //  - Validation uses epsilon tolerance (1e-9) for floating-point comparison
-  //  - Values in range [1.0, 1.0 + epsilon] are accepted as valid 1.0
-  //  - 0.0 indicates no interruption risk, zero probability, OR risk data unavailable
-  //    (proto3 cannot distinguish between "not set" and "explicitly zero")
-  //  - When not set by plugin, defaults to 0.0 (treated as "no risk or unknown")
-  //  - 1.0 indicates certain/guaranteed interruption
-  //
-  // Semantic requirements:
-  //  - Non-zero values (> epsilon) MUST only appear when pricing_category is DYNAMIC
-  //  - Zero value (0.0, or within epsilon) is valid for ALL categories including UNSPECIFIED
-  //  - UNSPECIFIED category with 0.0 score indicates legacy plugin (fields not populated)
-  //    This combination MUST remain valid for backward compatibility
-  //  - Non-zero values with non-DYNAMIC categories will fail validation
-  //  - Represents historical interruption probability or provider-published rates
-  //  - Plugins may use percentile data (e.g., 95th percentile) for risk calculation
-  //
-  // Backward compatibility:
-  //  - Legacy plugins that don't populate these fields default to UNSPECIFIED + 0.0
-  //  - This combination passes validation and produces no warnings
-  //  - Core systems should treat UNSPECIFIED + 0.0 as "pricing tier unknown"
-  //
-  // Plugin implementation guidance for handling proto3 zero-value ambiguity:
-  //  - Risk data unavailable: Set score to 0.0 with pricing_category UNSPECIFIED/STANDARD
-  //  - Risk is truly zero: Set score to 0.0 with pricing_category DYNAMIC (unusual but valid)
-  //  - Risk unknown for DYNAMIC resource: Set score to 0.0 and log a warning for operators
-  //  - Use CheckSpotRiskConsistency() to detect potentially missing risk data
+  // Same constraints and semantics as GetProjectedCostResponse.spot_interruption_risk_score
+  // (see above): MUST be in [0.0, 1.0] with epsilon tolerance, MUST NOT be NaN/Inf, non-zero
+  // values are valid only when pricing_category is DYNAMIC, and UNSPECIFIED+0.0 is the valid
+  // legacy-plugin default.
   //
   // Validation: Use pluginsdk.ValidateEstimateCostResponse() to verify all constraints.
   double spot_interruption_risk_score = 4;
@@ -1696,22 +1670,22 @@ message GetPluginInfoResponse {
   // compiled against (e.g., "v0.4.11"). Must be a valid SemVer string.
   // Required field - used for compatibility verification.
   string spec_version = 3;
-    // providers lists the cloud providers supported by this plugin (e.g., ["aws"]).
-    // At least one provider should be listed for functional plugins.
-    repeated string providers = 4;
-    // metadata contains optional key-value pairs for additional information
-    // such as build hash, commit ID, or plugin-specific configuration.
-    // Legacy metadata format for backward compatibility with older hosts.
-    // Contains string-based capability flags: {"supports_xyz": "true"}.
-    // SDK auto-populates this from capabilities for backward compatibility.
-    // DEPRECATION: New integrations should use capabilities field instead.
-    map<string, string> metadata = 5;
-    // Explicit capability declarations using type-safe enum
-    // Modern capability format using strongly-typed enums.
-    // Prefer this field for capability queries on newer clients.
-    // SDK auto-populates this based on implemented interfaces.
-    repeated PluginCapability capabilities = 6;
-  }
+  // providers lists the cloud providers supported by this plugin (e.g., ["aws"]).
+  // At least one provider should be listed for functional plugins.
+  repeated string providers = 4;
+  // metadata contains optional key-value pairs for additional information
+  // such as build hash, commit ID, or plugin-specific configuration.
+  // Legacy metadata format for backward compatibility with older hosts.
+  // Contains string-based capability flags: {"supports_xyz": "true"}.
+  // SDK auto-populates this from capabilities for backward compatibility.
+  // DEPRECATION: New integrations should use capabilities field instead.
+  map<string, string> metadata = 5;
+  // Explicit capability declarations using type-safe enum
+  // Modern capability format using strongly-typed enums.
+  // Prefer this field for capability queries on newer clients.
+  // SDK auto-populates this based on implemented interfaces.
+  repeated PluginCapability capabilities = 6;
+}
 
 // =============================================================================
 // DryRun RPC - Plugin Capability Introspection
@@ -1923,6 +1897,23 @@ message ResolveResourceTypesResponse {
   // Keys are from the request's source_types list.
   // Types the plugin cannot resolve are NOT present in this map.
   map<string, ResourceTypeMapping> mappings = 1;
+
+  // expires_at is an advisory caching hint (see spec 045-caching-hint-expires-at
+  // for the cross-RPC convention this follows):
+  //   - nil/unset: no caching guidance; callers MUST NOT assume any TTL and
+  //     should treat the response as immediately re-fetchable if needed.
+  //   - a timestamp in the past: the response is already stale.
+  //   - a timestamp in the future: the response is valid until that time.
+  //
+  // Advisory only -- callers MAY apply their own maximum-TTL policy regardless
+  // of what the plugin sets here.
+  //
+  // Type mappings are near-static (they change only when a plugin's own
+  // mapping data or version changes), so plugins are encouraged to set a long
+  // TTL (hours to days) rather than leaving this unset. Plugins using the
+  // SDK's TypeRegistry can configure a registry-wide default via
+  // WithDefaultTTL() instead of setting this per response.
+  google.protobuf.Timestamp expires_at = 2;
 }
 
 // ResourceTypeMapping describes how a single source-format resource type

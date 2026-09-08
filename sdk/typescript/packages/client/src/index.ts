@@ -23,6 +23,8 @@ export { recommendationsIterator } from "./utils/pagination.js";
 export {
   DEFAULT_MAX_BATCH_SIZE,
   MAX_BATCH_SIZE,
+  DEFAULT_MAX_SOURCE_TYPES,
+  MAX_SOURCE_TYPES,
   isBatchSupported,
 } from "./utils/batch.js";
 export {
