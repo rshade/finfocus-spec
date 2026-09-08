@@ -18,15 +18,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Set up Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: '1.27.1'
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
+      - name: Set up toolchain
+        uses: jdx/mise-action@v4
 
       - name: Install npm dependencies
         run: npm ci
@@ -79,15 +72,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Set up Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: '1.27.1'
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
+      - name: Set up toolchain
+        uses: jdx/mise-action@v4
 
       - name: Install npm dependencies
         run: npm ci
@@ -101,7 +87,9 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.13.2
+          # Binary is provided by mise (see mise.toml); the action only runs it,
+          # which keeps its result caching and inline PR annotations.
+          install-mode: none
           args: --timeout=9m
 
       - name: Run buf lint
@@ -118,10 +106,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup buf
-        uses: bufbuild/buf-setup-action@v1
+      - name: Set up toolchain
+        uses: jdx/mise-action@v4
         with:
-          version: '1.32.1'
+          install_args: buf
 
       - name: Buf lint
         run: buf lint
@@ -140,10 +128,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
+      - name: Set up toolchain
+        uses: jdx/mise-action@v4
         with:
-          node-version-file: '.nvmrc'
+          install_args: node
 
       - name: Install npm dependencies
         run: npm ci
@@ -165,10 +153,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
+      - name: Set up toolchain
+        uses: jdx/mise-action@v4
         with:
-          node-version-file: '.nvmrc'
+          install_args: node
 
       - name: Install npm dependencies
         run: npm ci

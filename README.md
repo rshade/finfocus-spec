@@ -781,23 +781,27 @@ Plugins can be certified at three levels:
 
 ### Prerequisites
 
-This project requires specific Node.js and Go versions for consistent builds:
+This project requires specific Node.js, Go, and linter versions for consistent
+builds. All of them are pinned in `mise.toml`:
 
 ```bash
-# Install nvm (Node Version Manager) if not installed
-# See: https://github.com/nvm-sh/nvm#installing-and-updating
+# Install mise if not installed
+# See: https://mise.jdx.dev/getting-started.html
 
-# Use the project's Node.js version (reads from .nvmrc)
-nvm install    # First time only
-nvm use        # Each session
+# Install every pinned tool (go, node, golangci-lint, buf)
+mise install
 
 # Verify versions
-node --version  # Should match .nvmrc (24.11.1)
-go version      # Should be 1.25.5+
+mise ls        # Each tool should resolve to the mise.toml pin
+node --version # 24.15.0
+go version     # 1.27.1
 ```
 
-**Why nvm?** Using `.nvmrc` ensures all developers and CI use the same Node.js
-version, preventing `package-lock.json` drift from npm version differences.
+**Why mise?** `mise.toml` is the single source of truth for tool versions, and
+`.github/workflows/ci.yml` provisions the exact same file via `jdx/mise-action`.
+That keeps local builds and CI byte-identical, and prevents `package-lock.json`
+drift from npm version differences. Bump a version in `mise.toml` and both
+follow.
 
 ### Development Workflow
 

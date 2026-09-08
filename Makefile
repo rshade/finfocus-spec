@@ -1,6 +1,16 @@
 PROTO_OUT=sdk/go/proto
-BUF_VERSION=1.32.1
-BUF_BIN=bin/buf
+
+# Tool versions are read straight out of mise.toml so there is exactly one
+# place to bump them (see .github/workflows/ci.yml, which uses the same file).
+BUF_VERSION := $(shell sed -n 's/^buf = "\(.*\)"/\1/p' mise.toml)
+GOLANGCI_LINT_VERSION := $(shell sed -n 's/^golangci-lint = "\(.*\)"/\1/p' mise.toml)
+
+# Prefer the mise-managed binaries. Falling back to a pinned local download
+# (buf) or a bare PATH lookup (golangci-lint) keeps non-mise contributors
+# working. `mise which` is used instead of `command -v` so a stray system buf
+# of the wrong version can never be picked up silently.
+BUF_BIN := $(shell mise which buf 2>/dev/null || echo bin/buf)
+GOLANGCI_LINT := $(shell mise which golangci-lint 2>/dev/null || echo golangci-lint)
 
 all: generate
 
@@ -44,7 +54,7 @@ buf-lint: $(BUF_BIN)
 lint: $(BUF_BIN) lint-go lint-markdown lint-yaml
 
 lint-go: $(BUF_BIN)
-	PATH=~/go/bin:$$PATH golangci-lint run
+	PATH=~/go/bin:$$PATH $(GOLANGCI_LINT) run
 	$(BUF_BIN) lint
 
 lint-markdown:
@@ -72,7 +82,7 @@ validate: test lint validate-npm
 
 depend: install-lefthook
 	@echo "Installing Go development tools..."
-	@go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.2
+	@go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v$(GOLANGCI_LINT_VERSION)
 	@go install golang.org/x/tools/cmd/goimports@latest
 	@go install github.com/fatih/gomodifytags@latest
 	@go install github.com/josharian/impl@latest
