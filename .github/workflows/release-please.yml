@@ -15,10 +15,44 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
+      # A plain `${{ secrets.A || secrets.B }}` is NOT sufficient here: the `||`
+      # operator falls back only when the left side is an EMPTY string, but an
+      # expired PAT is a perfectly non-empty string that fails later, at API
+      # call time, with "Bad credentials". Probe the token first so an expired
+      # PAT degrades loudly instead of failing the whole release.
+      - name: Resolve release token
+        id: token
+        env:
+          RELEASE_PLEASE_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+        run: |
+          set -uo pipefail
+
+          fallback_note="The release PR and GitHub Release will still be created \
+          under GITHUB_TOKEN, but the 'release: published' event will NOT trigger \
+          publish-ts-client.yml, so the npm package will not publish \
+          automatically. Rotate the PAT, or run the 'Publish TypeScript SDK' \
+          workflow manually."
+
+          use_pat=false
+          if [ -z "${RELEASE_PLEASE_TOKEN}" ]; then
+            echo "::warning title=RELEASE_PLEASE_TOKEN is not set::${fallback_note}"
+          # GH_TOKEN is passed via the environment rather than a curl -H flag so
+          # the token never appears in the process argument list.
+          elif GH_TOKEN="${RELEASE_PLEASE_TOKEN}" gh api /user --jq .login >/dev/null 2>/tmp/gh_err; then
+            use_pat=true
+            echo "RELEASE_PLEASE_TOKEN authenticated successfully."
+          else
+            reason=$(tr '\n' ' ' </tmp/gh_err | head -c 200)
+            echo "::warning title=RELEASE_PLEASE_TOKEN is invalid or expired::${reason} ${fallback_note}"
+          fi
+
+          echo "use_pat=${use_pat}" >>"$GITHUB_OUTPUT"
+
       - uses: googleapis/release-please-action@v4.4.1
         with:
-          # Use PAT to allow release events to trigger other workflows (e.g., publish-ts-client)
-          # GITHUB_TOKEN events don't trigger other workflows by design
+          # Prefer a PAT so the release event can trigger other workflows (e.g.
+          # publish-ts-client). GITHUB_TOKEN events don't trigger other
+          # workflows by design.
           # See: https://github.com/googleapis/release-please-action#github-credentials
           #
           # Required token scopes for RELEASE_PLEASE_TOKEN:
@@ -26,7 +60,10 @@ jobs:
           #   - pull_requests: write (create and update release PRs)
           #
           # IMPORTANT: Do NOT grant additional scopes like admin:org or packages:write
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          token: >-
+            ${{ steps.token.outputs.use_pat == 'true'
+                && secrets.RELEASE_PLEASE_TOKEN
+                || secrets.GITHUB_TOKEN }}
           # Note: Using manifest-based configuration
           # The release-please-config.json and .release-please-manifest.json files
           # in the repo root will be used automatically
