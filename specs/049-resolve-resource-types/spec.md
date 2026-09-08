@@ -3,7 +3,8 @@
 **Feature Branch**: `049-resolve-resource-types`
 **Created**: 2026-04-01
 **Status**: Draft
-**Input**: User description: "Add ResolveResourceTypes RPC, SourceFormat enum, TypeRegistry helper, and capability inference for mapping Terraform/CloudFormation types to Pulumi tokens"
+**Input**: User description: "Add ResolveResourceTypes RPC, SourceFormat enum, TypeRegistry helper,
+and capability inference for mapping Terraform/CloudFormation types to Pulumi tokens"
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -187,9 +188,14 @@ the TypeRegistry/response correctly serializes and deserializes it when populate
 
 ## Dependencies
 
-- **Upstream**: Approved design in `docs/superpowers/specs/2026-03-26-terraform-state-ingestion-design.md` (Section 1) from the finfocus core repository.
-- **Downstream consumers**: finfocus core (`resolveResourceTypes()` in `internal/cli/common_execution.go`), finfocus-plugin-aws-public (first plugin to implement mappings).
-- **Cross-repo execution order**: (1) finfocus-spec (this feature), (2) finfocus core (parallel, uses capability detection), (3) finfocus-plugin-aws-public (requires spec release).
+- **Upstream**: Approved design in
+  `docs/superpowers/specs/2026-03-26-terraform-state-ingestion-design.md` (Section 1) from the
+  finfocus core repository.
+- **Downstream consumers**: finfocus core (`resolveResourceTypes()` in
+  `internal/cli/common_execution.go`), finfocus-plugin-aws-public (first plugin to implement
+  mappings).
+- **Cross-repo execution order**: (1) finfocus-spec (this feature), (2) finfocus core (parallel,
+  uses capability detection), (3) finfocus-plugin-aws-public (requires spec release).
 
 ## Scope Boundaries
 

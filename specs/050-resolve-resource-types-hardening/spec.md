@@ -3,7 +3,12 @@
 **Feature Branch**: `050-resolve-resource-types-hardening`
 **Created**: 2026-09-07
 **Status**: Draft
-**Input**: User description: "Harden the ResolveResourceTypes RPC shipped in spec 049-resolve-resource-types. Six follow-up items: (1) batch API + docs for property_mappings, (2) request size limit on source_types, (3) CloudFormation example in data-model docs, (4) expires_at caching hint on the response, (5) conformance/MockPlugin coverage plus hit/miss metrics, (6) a JSON mapping-file loader for TypeRegistry. All additive/backward-compatible; only item 4 touches the proto."
+**Input**: User description: "Harden the ResolveResourceTypes RPC shipped in spec
+049-resolve-resource-types. Six follow-up items: (1) batch API + docs for property_mappings,
+(2) request size limit on source_types, (3) CloudFormation example in data-model docs,
+(4) expires_at caching hint on the response, (5) conformance/MockPlugin coverage plus hit/miss
+metrics, (6) a JSON mapping-file loader for TypeRegistry. All additive/backward-compatible; only
+item 4 touches the proto."
 
 ## User Scenarios & Testing *(mandatory)*
 
