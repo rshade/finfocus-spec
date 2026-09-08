@@ -171,6 +171,19 @@ func addBasicConformanceTests(suite *plugintesting.PluginConformanceSuite) {
 		Description: "Plugin must return summary that matches individual recommendations",
 		TestFunc:    createGetRecommendationsSummaryTest(),
 	})
+
+	// ResolveResourceTypes Basic tests
+	suite.AddTest(plugintesting.ConformanceTest{
+		Name:        "ResolveResourceTypes_EmptyPlugin",
+		Description: "Plugin must return empty mappings (not an error) when not implementing ResolveResourceTypesProvider",
+		TestFunc:    createResolveResourceTypesEmptyPluginTest(),
+	})
+
+	suite.AddTest(plugintesting.ConformanceTest{
+		Name:        "ResolveResourceTypes_Basic",
+		Description: "Plugin must resolve known source_types to mappings with a non-empty pulumi_token and omit unknown types.",
+		TestFunc:    createResolveResourceTypesBasicTest(),
+	})
 }
 
 func runConformanceTestSuite(
@@ -1541,6 +1554,105 @@ func createGetRecommendationsBasicTest() func(*plugintesting.TestHarness) plugin
 			Details: fmt.Sprintf(
 				"All %d recommendations have valid required fields",
 				len(resp.GetRecommendations()),
+			),
+		}
+	}
+}
+
+// createResolveResourceTypesEmptyPluginTest validates the graceful-degradation
+// contract: a plugin without type-resolution support (or without a matching
+// mapping) must return an empty response, never an error.
+func createResolveResourceTypesEmptyPluginTest() func(*plugintesting.TestHarness) plugintesting.TestResult {
+	return func(harness *plugintesting.TestHarness) plugintesting.TestResult {
+		start := time.Now()
+		resp, err := harness.Client().ResolveResourceTypes(context.Background(), &pbc.ResolveResourceTypesRequest{
+			SourceFormat: pbc.SourceFormat_SOURCE_FORMAT_TERRAFORM,
+			SourceTypes:  []string{"aws_instance", "definitely_unknown_type_xyz"},
+		})
+		duration := time.Since(start)
+
+		if err != nil {
+			return plugintesting.TestResult{
+				Method:   "ResolveResourceTypes",
+				Success:  false,
+				Error:    err,
+				Duration: duration,
+				Details:  "RPC call failed",
+			}
+		}
+
+		if resp == nil {
+			return plugintesting.TestResult{
+				Method:   "ResolveResourceTypes",
+				Success:  false,
+				Error:    errors.New("response is nil"),
+				Duration: duration,
+				Details:  "Response should not be nil even when the plugin has no type-resolution support",
+			}
+		}
+
+		return plugintesting.TestResult{
+			Method:   "ResolveResourceTypes",
+			Success:  true,
+			Duration: duration,
+			Details: fmt.Sprintf(
+				"Returned %d mappings (empty is a valid outcome for plugins without type-resolution support)",
+				len(resp.GetMappings()),
+			),
+		}
+	}
+}
+
+// createResolveResourceTypesBasicTest validates that resolved mappings are
+// well-formed and that unmapped types are omitted, not returned as empty entries.
+func createResolveResourceTypesBasicTest() func(*plugintesting.TestHarness) plugintesting.TestResult {
+	return func(harness *plugintesting.TestHarness) plugintesting.TestResult {
+		start := time.Now()
+		resp, err := harness.Client().ResolveResourceTypes(context.Background(), &pbc.ResolveResourceTypesRequest{
+			SourceFormat: pbc.SourceFormat_SOURCE_FORMAT_TERRAFORM,
+			SourceTypes:  []string{"aws_instance", "definitely_unknown_type_xyz"},
+		})
+		duration := time.Since(start)
+
+		if err != nil {
+			return plugintesting.TestResult{
+				Method:   "ResolveResourceTypes",
+				Success:  false,
+				Error:    err,
+				Duration: duration,
+				Details:  "RPC call failed",
+			}
+		}
+
+		for sourceType, mapping := range resp.GetMappings() {
+			if mapping.GetPulumiToken() == "" {
+				return plugintesting.TestResult{
+					Method:   "ResolveResourceTypes",
+					Success:  false,
+					Error:    fmt.Errorf("mapping for %q missing pulumi_token", sourceType),
+					Duration: duration,
+					Details:  "All returned mappings must have a non-empty pulumi_token",
+				}
+			}
+		}
+
+		if _, exists := resp.GetMappings()["definitely_unknown_type_xyz"]; exists {
+			return plugintesting.TestResult{
+				Method:   "ResolveResourceTypes",
+				Success:  false,
+				Error:    errors.New("unknown type should be omitted, not present in mappings"),
+				Duration: duration,
+				Details:  "Unmapped types must be omitted from the response, not returned as empty entries",
+			}
+		}
+
+		return plugintesting.TestResult{
+			Method:   "ResolveResourceTypes",
+			Success:  true,
+			Duration: duration,
+			Details: fmt.Sprintf(
+				"All %d resolved mappings are well-formed; unknown types correctly omitted",
+				len(resp.GetMappings()),
 			),
 		}
 	}

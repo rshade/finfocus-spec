@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -187,6 +188,94 @@ func TestTypeRegistry_PropertyMappings_EmptyByDefault(t *testing.T) {
 	resp := registry.Resolve(req)
 	mapping := resp.GetMappings()["aws_instance"]
 	assert.Empty(t, mapping.GetPropertyMappings())
+}
+
+func TestTypeRegistry_RegisterMappingsWithProperties(t *testing.T) {
+	registry := NewTypeRegistry()
+	registry.RegisterMappingsWithProperties(pbc.SourceFormat_SOURCE_FORMAT_TERRAFORM, map[string]TypeMapping{
+		"aws_instance": {
+			PulumiToken: "aws:ec2/instance:Instance",
+			PropertyMappings: map[string]string{
+				"instance_type": "instanceType",
+			},
+		},
+		"aws_s3_bucket": {
+			PulumiToken: "aws:s3/bucket:Bucket",
+			// No overrides -- mechanical snake_to_camel is sufficient.
+		},
+		"aws_lambda_function": {
+			PulumiToken:      "aws:lambda/function:Function",
+			PropertyMappings: map[string]string{},
+		},
+	})
+
+	req := &pbc.ResolveResourceTypesRequest{
+		SourceFormat: pbc.SourceFormat_SOURCE_FORMAT_TERRAFORM,
+		SourceTypes:  []string{"aws_instance", "aws_s3_bucket", "aws_lambda_function"},
+	}
+	resp := registry.Resolve(req)
+	require.Len(t, resp.GetMappings(), 3)
+
+	instance := resp.GetMappings()["aws_instance"]
+	assert.Equal(t, "aws:ec2/instance:Instance", instance.GetPulumiToken())
+	assert.True(t, instance.GetSupported(), "batch registration must default to supported=true")
+	require.Len(t, instance.GetPropertyMappings(), 1)
+	assert.Equal(t, "instanceType", instance.GetPropertyMappings()["instance_type"])
+
+	bucket := resp.GetMappings()["aws_s3_bucket"]
+	assert.Equal(t, "aws:s3/bucket:Bucket", bucket.GetPulumiToken())
+	assert.True(t, bucket.GetSupported())
+	assert.Empty(t, bucket.GetPropertyMappings())
+
+	lambda := resp.GetMappings()["aws_lambda_function"]
+	assert.Equal(t, "aws:lambda/function:Function", lambda.GetPulumiToken())
+	assert.Empty(t, lambda.GetPropertyMappings())
+}
+
+func TestNewTypeRegistry_WithDefaultTTL(t *testing.T) {
+	t.Run("stamps expires_at when configured", func(t *testing.T) {
+		registry := NewTypeRegistry(WithDefaultTTL(24 * time.Hour))
+		registry.RegisterMappings(pbc.SourceFormat_SOURCE_FORMAT_TERRAFORM, map[string]string{
+			"aws_instance": "aws:ec2/instance:Instance",
+		})
+
+		before := time.Now()
+		resp := registry.Resolve(&pbc.ResolveResourceTypesRequest{
+			SourceFormat: pbc.SourceFormat_SOURCE_FORMAT_TERRAFORM,
+			SourceTypes:  []string{"aws_instance"},
+		})
+		after := time.Now()
+
+		require.NotNil(t, resp.GetExpiresAt())
+		expiresAt := resp.GetExpiresAt().AsTime()
+		assert.True(t, expiresAt.After(before.Add(24*time.Hour).Add(-time.Second)))
+		assert.True(t, expiresAt.Before(after.Add(24*time.Hour).Add(time.Second)))
+	})
+
+	t.Run("leaves expires_at nil when not configured", func(t *testing.T) {
+		registry := NewTypeRegistry()
+		registry.RegisterMappings(pbc.SourceFormat_SOURCE_FORMAT_TERRAFORM, map[string]string{
+			"aws_instance": "aws:ec2/instance:Instance",
+		})
+
+		resp := registry.Resolve(&pbc.ResolveResourceTypesRequest{
+			SourceFormat: pbc.SourceFormat_SOURCE_FORMAT_TERRAFORM,
+			SourceTypes:  []string{"aws_instance"},
+		})
+
+		assert.Nil(t, resp.GetExpiresAt())
+	})
+
+	t.Run("empty response for unspecified format is not stamped", func(t *testing.T) {
+		registry := NewTypeRegistry(WithDefaultTTL(24 * time.Hour))
+
+		resp := registry.Resolve(&pbc.ResolveResourceTypesRequest{
+			SourceFormat: pbc.SourceFormat_SOURCE_FORMAT_UNSPECIFIED,
+			SourceTypes:  []string{"aws_instance"},
+		})
+
+		assert.Nil(t, resp.GetExpiresAt())
+	})
 }
 
 func BenchmarkTypeRegistry_Resolve(b *testing.B) {

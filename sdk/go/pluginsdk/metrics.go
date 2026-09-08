@@ -72,6 +72,16 @@ type PluginMetrics struct {
 	// Labels: plugin_name
 	RecommendationsPerResponse *prometheus.HistogramVec
 
+	// ResolveResourceTypesResolved is the counter for source_types that were
+	// successfully resolved to a mapping by ResolveResourceTypes.
+	// Labels: plugin_name
+	ResolveResourceTypesResolved *prometheus.CounterVec
+
+	// ResolveResourceTypesUnresolved is the counter for source_types that were
+	// requested but NOT resolved (omitted from the response) by ResolveResourceTypes.
+	// Labels: plugin_name
+	ResolveResourceTypesUnresolved *prometheus.CounterVec
+
 	// Registry is the Prometheus registry containing these metrics.
 	Registry *prometheus.Registry
 
@@ -152,18 +162,42 @@ func NewPluginMetrics(pluginName string) *PluginMetrics {
 		[]string{"plugin_name"},
 	)
 
+	resolveResourceTypesResolved := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: MetricNamespace,
+			Subsystem: MetricSubsystem,
+			Name:      "resolve_resource_types_resolved_total",
+			Help:      "Total source_types successfully resolved by ResolveResourceTypes",
+		},
+		[]string{"plugin_name"},
+	)
+
+	resolveResourceTypesUnresolved := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: MetricNamespace,
+			Subsystem: MetricSubsystem,
+			Name:      "resolve_resource_types_unresolved_total",
+			Help:      "Total source_types requested but not resolved by ResolveResourceTypes",
+		},
+		[]string{"plugin_name"},
+	)
+
 	reg.MustRegister(requestsTotal)
 	reg.MustRegister(requestDuration)
 	reg.MustRegister(recommendationsTotal)
 	reg.MustRegister(recommendationsPerResponse)
+	reg.MustRegister(resolveResourceTypesResolved)
+	reg.MustRegister(resolveResourceTypesUnresolved)
 
 	return &PluginMetrics{
-		RequestsTotal:              requestsTotal,
-		RequestDuration:            requestDuration,
-		RecommendationsTotal:       recommendationsTotal,
-		RecommendationsPerResponse: recommendationsPerResponse,
-		Registry:                   reg,
-		pluginName:                 pluginName,
+		RequestsTotal:                  requestsTotal,
+		RequestDuration:                requestDuration,
+		RecommendationsTotal:           recommendationsTotal,
+		RecommendationsPerResponse:     recommendationsPerResponse,
+		ResolveResourceTypesResolved:   resolveResourceTypesResolved,
+		ResolveResourceTypesUnresolved: resolveResourceTypesUnresolved,
+		Registry:                       reg,
+		pluginName:                     pluginName,
 	}
 }
 
@@ -234,6 +268,15 @@ func MetricsInterceptorWithRegistry(metrics *PluginMetrics) grpc.UnaryServerInte
 			}
 		}
 
+		// Record hit/miss metrics for ResolveResourceTypes
+		if method == "finfocus.v1.CostSource/ResolveResourceTypes" && err == nil {
+			if resolveReq, reqOK := req.(*pbc.ResolveResourceTypesRequest); reqOK {
+				if resolveResp, respOK := resp.(*pbc.ResolveResourceTypesResponse); respOK {
+					recordResolveResourceTypesMetrics(metrics, resolveReq, resolveResp)
+				}
+			}
+		}
+
 		return resp, err
 	}
 }
@@ -258,6 +301,29 @@ func recordRecommendationMetrics(metrics *PluginMetrics, resp *pbc.GetRecommenda
 			category,
 			actionType,
 		).Inc()
+	}
+}
+
+// recordResolveResourceTypesMetrics records hit/miss metrics for ResolveResourceTypes:
+// how many requested source_types were resolved (present in the response mappings)
+// versus unresolved (omitted).
+func recordResolveResourceTypesMetrics(
+	metrics *PluginMetrics,
+	req *pbc.ResolveResourceTypesRequest,
+	resp *pbc.ResolveResourceTypesResponse,
+) {
+	resolved := len(resp.GetMappings())
+	requested := len(req.GetSourceTypes())
+	unresolved := requested - resolved
+	if unresolved < 0 {
+		unresolved = 0
+	}
+
+	if resolved > 0 {
+		metrics.ResolveResourceTypesResolved.WithLabelValues(metrics.pluginName).Add(float64(resolved))
+	}
+	if unresolved > 0 {
+		metrics.ResolveResourceTypesUnresolved.WithLabelValues(metrics.pluginName).Add(float64(unresolved))
 	}
 }
 

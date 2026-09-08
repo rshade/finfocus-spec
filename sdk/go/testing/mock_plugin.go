@@ -138,6 +138,9 @@ type MockPlugin struct {
 	// Recommendations configuration
 	RecommendationsConfig RecommendationsConfig
 
+	// ResolveResourceTypes configuration
+	ResolveResourceTypesConfig ResolveResourceTypesConfig
+
 	// Budgets configuration
 	ShouldErrorOnBudgets bool
 	MockBudgets          []*pbc.Budget
@@ -211,6 +214,17 @@ func NewMockPlugin() *MockPlugin {
 		// Pre-populate with sample recommendations for filtering tests
 		RecommendationsConfig: RecommendationsConfig{
 			Recommendations: GenerateSampleRecommendations(defaultRecommendationCount),
+		},
+		// Pre-populate with one default type mapping so conformance/basic-usage
+		// tests have non-empty data without per-test setup.
+		//nolint:gosec // G101: PulumiToken is a Pulumi resource type token, not a credential
+		ResolveResourceTypesConfig: ResolveResourceTypesConfig{
+			Mappings: map[string]*pbc.ResourceTypeMapping{
+				"aws_instance": {
+					PulumiToken: "aws:ec2/instance:Instance",
+					Supported:   true,
+				},
+			},
 		},
 		// GetPluginInfo defaults
 		PluginVersion: "v1.0.0",
@@ -2184,3 +2198,49 @@ func NewActualCostResponseWithHint(
 // NOTE: getUtilization was removed. Use github.com/rshade/finfocus-spec/sdk/go/internal/utilization.Get()
 // which is the shared implementation. The circular dependency that previously prevented this
 // import has been resolved by creating the internal/utilization package.
+
+// =============================================================================
+// ResolveResourceTypes Support
+// =============================================================================
+
+// ResolveResourceTypesConfig holds configuration for mock type resolution.
+type ResolveResourceTypesConfig struct {
+	Mappings     map[string]*pbc.ResourceTypeMapping
+	ShouldError  bool
+	ErrorMessage string
+}
+
+// SetResolveResourceTypesConfig configures the ResolveResourceTypes response.
+//
+// Thread Safety: This method is NOT safe for concurrent use. All calls to
+// SetResolveResourceTypesConfig must complete before the plugin begins serving
+// requests. Typical usage is to configure the mock during test setup, before
+// calling harness.Start() or benchmark.ResetTimer().
+func (m *MockPlugin) SetResolveResourceTypesConfig(config ResolveResourceTypesConfig) {
+	m.ResolveResourceTypesConfig = config
+}
+
+// ResolveResourceTypes implements pluginsdk.ResolveResourceTypesProvider, returning
+// configured mappings for requested source types. Unknown types are omitted, matching
+// the same contract TypeRegistry.Resolve() follows.
+func (m *MockPlugin) ResolveResourceTypes(
+	_ context.Context,
+	req *pbc.ResolveResourceTypesRequest,
+) (*pbc.ResolveResourceTypesResponse, error) {
+	if m.ResolveResourceTypesConfig.ShouldError {
+		msg := m.ResolveResourceTypesConfig.ErrorMessage
+		if msg == "" {
+			msg = "mock error: resource type resolution unavailable"
+		}
+		return nil, status.Error(codes.Unavailable, msg)
+	}
+
+	result := make(map[string]*pbc.ResourceTypeMapping)
+	for _, st := range req.GetSourceTypes() {
+		if mapping, ok := m.ResolveResourceTypesConfig.Mappings[st]; ok {
+			result[st] = mapping
+		}
+	}
+
+	return &pbc.ResolveResourceTypesResponse{Mappings: result}, nil
+}

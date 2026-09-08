@@ -5,6 +5,15 @@ export const DEFAULT_MAX_BATCH_SIZE = 100;
 /** Hard upper limit for maximum batch size configuration. */
 export const MAX_BATCH_SIZE = 1000;
 
+/**
+ * Default maximum number of `source_types` entries per ResolveResourceTypes request.
+ * Deliberately higher than {@link DEFAULT_MAX_BATCH_SIZE}: `source_types` is a
+ * de-duplicated type list, not a per-resource list.
+ */
+export const DEFAULT_MAX_SOURCE_TYPES = 200;
+/** Hard upper limit for max source types configuration. */
+export const MAX_SOURCE_TYPES = 2000;
+
 type BatchCapabilitySource = {
   capabilities?: PluginCapability[];
   metadata?: Record<string, string | boolean>;

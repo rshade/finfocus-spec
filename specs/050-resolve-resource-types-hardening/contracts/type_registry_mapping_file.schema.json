@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rshade/finfocus-spec/specs/050-resolve-resource-types-hardening/contracts/type_registry_mapping_file.schema.json",
+  "title": "TypeRegistry Mapping File",
+  "description": "Contract for the JSON document accepted by TypeRegistry.LoadMappingsFromJSON/LoadMappingsFromFile (sdk/go/pluginsdk/type_registry_loader.go). This schema is a mechanism definition only -- finfocus-spec does not ship or maintain any mapping file conforming to it; files conforming to this schema live in plugin repositories or community-maintained data repositories. Not wired into buf/proto generation -- this is a Go-package-internal convention, not a wire contract. One source_format per file.",
+  "type": "object",
+  "required": ["source_format", "mappings"],
+  "additionalProperties": false,
+  "properties": {
+    "source_format": {
+      "type": "string",
+      "description": "Case-insensitive match against the SourceFormat proto enum names.",
+      "enum": ["TERRAFORM", "CLOUDFORMATION", "terraform", "cloudformation"]
+    },
+    "mappings": {
+      "type": "object",
+      "description": "Keyed by source-format resource type string (e.g. a Terraform resource type or CloudFormation logical resource type).",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["pulumi_token"],
+        "additionalProperties": false,
+        "properties": {
+          "pulumi_token": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Fully-qualified Pulumi type token, e.g. \"aws:ec2/instance:Instance\"."
+          },
+          "supported": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether the plugin can price this resource type. Matches ResourceTypeMapping.supported."
+          },
+          "property_mappings": {
+            "type": "object",
+            "description": "Optional property name overrides: source property name -> Pulumi property name.",
+            "additionalProperties": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "source_format": "TERRAFORM",
+      "mappings": {
+        "aws_instance": {
+          "pulumi_token": "aws:ec2/instance:Instance",
+          "supported": true,
+          "property_mappings": {
+            "instance_type": "instanceType"
+          }
+        },
+        "aws_s3_bucket": {
+          "pulumi_token": "aws:s3/bucket:Bucket",
+          "supported": true
+        }
+      }
+    }
+  ]
+}

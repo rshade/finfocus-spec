@@ -828,6 +828,130 @@ type ResolveResourceTypesProvider interface {
 Plugins that implement neither return an empty response (not an error),
 allowing the core to fall back to heuristic type conversion.
 
+#### Limits
+
+`ResolveResourceTypesRequest.source_types` is capped at `pluginsdk.DefaultMaxSourceTypes`
+(200) by default, with a hard ceiling of `pluginsdk.MaxSourceTypes` (2000). A request
+exceeding the configured limit is rejected with `InvalidArgument` before any custom
+provider or `TypeRegistry` code runs. Configure a different default via
+`ServeConfig.MaxSourceTypes`:
+
+```go
+pluginsdk.Serve(ctx, pluginsdk.ServeConfig{
+    Plugin:         &MyPlugin{},
+    TypeRegistry:   registry,
+    MaxSourceTypes: 500, // optional; defaults to pluginsdk.DefaultMaxSourceTypes
+})
+```
+
+The limit is deliberately higher than `BatchCost`'s (`DefaultMaxBatchSize` = 100):
+`source_types` is a de-duplicated list of type strings, not a per-resource list, so
+even large Terraform states have a much smaller distinct-type count.
+
+#### Caching hint
+
+`ResolveResourceTypesResponse` carries an advisory `expires_at` timestamp, following
+the same convention as the `expires_at` fields on `GetActualCost`, `GetProjectedCost`,
+and `EstimateCost` responses: unset means no caching guidance (always refetch), a past
+timestamp means stale, and a future timestamp means valid until then.
+
+Type mappings are near-static -- they change only when a plugin's own mapping data or
+version changes -- so `TypeRegistry` supports a registry-wide default instead of
+requiring a per-response setting:
+
+```go
+registry := pluginsdk.NewTypeRegistry(
+    pluginsdk.WithDefaultTTL(24 * time.Hour),
+)
+registry.RegisterMappings(pbc.SourceFormat_SOURCE_FORMAT_TERRAFORM, map[string]string{
+    "aws_instance": "aws:ec2/instance:Instance",
+})
+// Every Resolve() response now carries expires_at = now + 24h automatically.
+```
+
+Plugins implementing `ResolveResourceTypesProvider` directly can set it per response
+instead:
+
+```go
+resp := pluginsdk.NewResolveResourceTypesResponse(
+    pluginsdk.WithResolveResourceTypesExpiresAt(time.Now().Add(24 * time.Hour)),
+)
+resp.Mappings = mappings
+```
+
+Callers check it with `pluginsdk.IsResolveResourceTypesExpired(resp, time.Now())` or
+`pluginsdk.ResolveResourceTypesExpiresAt(resp)`, mirroring the equivalent helpers for
+the other three cost RPCs.
+
+#### Property name overrides
+
+Most Terraform-to-Pulumi property renames are mechanical (`snake_case` to `camelCase`)
+and need no special handling -- the core applies that conversion automatically when
+`property_mappings` is empty. Register those types with the plain `RegisterMappings`
+shown above.
+
+For a genuinely non-mechanical rename -- one `snake_to_camel` would get wrong -- use
+`RegisterMappingWithProperties` (single) or `RegisterMappingsWithProperties` (batch) to
+attach overrides:
+
+```go
+registry.RegisterMappingsWithProperties(pbc.SourceFormat_SOURCE_FORMAT_TERRAFORM, map[string]pluginsdk.TypeMapping{
+    "aws_instance": {
+        PulumiToken: "aws:ec2/instance:Instance",
+        // Mechanical conversion handles this fine -- no override needed.
+    },
+    "aws_some_resource": {
+        PulumiToken: "aws:service/someResource:SomeResource",
+        PropertyMappings: map[string]string{
+            // A hypothetical non-mechanical rename plain snake_to_camel would miss.
+            "legacy_field_name": "modernFieldName",
+        },
+    },
+})
+```
+
+`property_mappings` is stored and round-trips over the wire correctly, but
+finfocus-spec only stores this data -- applying it during resource-shape translation
+remains the core's responsibility (unchanged from spec 049).
+
+#### Option 1b: Loading mappings from a data file
+
+For plugins with large mapping tables, `TypeRegistry` can load entries from an
+externally-maintained JSON file instead of hardcoded `RegisterMapping` calls:
+
+```go
+registry := pluginsdk.NewTypeRegistry()
+if err := registry.LoadMappingsFromFile("mappings/terraform-aws.json"); err != nil {
+    log.Fatal(err)
+}
+```
+
+`mappings/terraform-aws.json`:
+
+```json
+{
+  "source_format": "TERRAFORM",
+  "mappings": {
+    "aws_instance": {
+      "pulumi_token": "aws:ec2/instance:Instance",
+      "supported": true
+    }
+  }
+}
+```
+
+**finfocus-spec does not ship or maintain any mapping data file of its own.** This is
+purely a loading mechanism for plugin- or community-maintained files, consistent with
+this project's separation of concerns: mapping data lives outside finfocus-spec (spec
+049), and this loader adds no exception to that -- it ships zero provider-specific
+data, only a deserializer.
+
+One `source_format` per file; a plugin supporting both Terraform and CloudFormation
+loads two files, one per format, both calling `LoadMappingsFromJSON`/`LoadMappingsFromFile`
+on the same registry. Unrecognized `source_format` values or entries missing
+`pulumi_token` fail loudly (a descriptive error, nothing registered) rather than
+silently loading partial data.
+
 ## Environment Variables
 
 Plugins can be configured using standard environment variables. The SDK provides backward compatibility

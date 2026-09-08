@@ -41,6 +41,14 @@ const (
 	MinBatchWorkers = 1
 	// MaxBatchWorkers is the maximum allowed fallback worker count.
 	MaxBatchWorkers = 50
+
+	// DefaultMaxSourceTypes is the default max number of source_types entries per
+	// ResolveResourceTypesRequest. Deliberately higher than DefaultMaxBatchSize:
+	// source_types is a de-duplicated type list, not a per-resource list, so even
+	// very large Terraform states have a much smaller distinct-type count.
+	DefaultMaxSourceTypes = 200
+	// MaxSourceTypes is the hard upper limit for max source types configuration.
+	MaxSourceTypes = 2000
 )
 
 // DoS-guard limits for ResourceDescriptor field validation.
@@ -401,19 +409,68 @@ func resourceErrorUnsupported(resourceType string) *pbc.ResourceError {
 	return NewResourceError(codes.Unimplemented, message, true)
 }
 
+// clampInt32 clamps configured to [1, maxVal], substituting defaultVal when
+// configured is less than or equal to zero.
+func clampInt32(configured int, defaultVal, maxVal int32) int32 {
+	switch {
+	case configured <= 0:
+		return defaultVal
+	case configured > int(maxVal):
+		return maxVal
+	default:
+		return int32(configured) //nolint:gosec // configured is bounds-checked against maxVal above
+	}
+}
+
 // resolveBatchSize returns the configured batch size adjusted to the package limits.
 // If configured is less than or equal to zero, DefaultMaxBatchSize is returned.
 // If configured is greater than MaxBatchSize, MaxBatchSize is returned.
 // Otherwise the configured value is returned as an int32.
 func resolveBatchSize(configured int) int32 {
-	switch {
-	case configured <= 0:
-		return DefaultMaxBatchSize
-	case configured > MaxBatchSize:
-		return MaxBatchSize
-	default:
-		return int32(configured)
+	return clampInt32(configured, DefaultMaxBatchSize, MaxBatchSize)
+}
+
+// resolveSourceTypesLimit returns the max source_types count to enforce.
+// If configured is <= 0, returns DefaultMaxSourceTypes. Values above MaxSourceTypes
+// are clamped to MaxSourceTypes; otherwise the configured value is returned as-is.
+func resolveSourceTypesLimit(configured int) int32 {
+	return clampInt32(configured, DefaultMaxSourceTypes, MaxSourceTypes)
+}
+
+// ValidateResolveResourceTypesRequest validates a ResolveResourceTypesRequest against
+// maxSourceTypes. If maxSourceTypes <= 0, DefaultMaxSourceTypes is applied (mirroring
+// ValidateBatchCostRequest's identical defensive fallback). Returns nil for a nil
+// request, empty source_types, or SOURCE_FORMAT_UNSPECIFIED -- those are handled as
+// empty-response cases downstream, not validation errors. Returns InvalidArgument if
+// len(source_types) exceeds maxSourceTypes.
+func ValidateResolveResourceTypesRequest(req *pbc.ResolveResourceTypesRequest, maxSourceTypes int32) error {
+	if req == nil {
+		return nil
 	}
+
+	if maxSourceTypes <= 0 {
+		maxSourceTypes = DefaultMaxSourceTypes
+	}
+
+	if req.GetSourceFormat() == pbc.SourceFormat_SOURCE_FORMAT_UNSPECIFIED {
+		return nil
+	}
+
+	sourceTypesCount := len(req.GetSourceTypes())
+	if sourceTypesCount == 0 {
+		return nil
+	}
+
+	if int64(sourceTypesCount) > int64(maxSourceTypes) {
+		return status.Errorf(
+			codes.InvalidArgument,
+			"source_types count %d exceeds max_source_types %d",
+			sourceTypesCount,
+			maxSourceTypes,
+		)
+	}
+
+	return nil
 }
 
 // resolveBatchWorkers returns the number of workers to use for batching.

@@ -409,3 +409,119 @@ func TestWithEstimateCostExpiresAt(t *testing.T) {
 			"ExpiresAt should be nil for zero time.Time")
 	})
 }
+
+func TestIsResolveResourceTypesExpired(t *testing.T) {
+	now := time.Now()
+
+	tests := []struct {
+		name     string
+		resp     *pbc.ResolveResourceTypesResponse
+		now      time.Time
+		expected bool
+	}{
+		{
+			name:     "nil response",
+			resp:     nil,
+			now:      now,
+			expected: false,
+		},
+		{
+			name:     "nil expires_at",
+			resp:     &pbc.ResolveResourceTypesResponse{},
+			now:      now,
+			expected: false,
+		},
+		{
+			name: "future timestamp",
+			resp: &pbc.ResolveResourceTypesResponse{
+				ExpiresAt: timestamppb.New(now.Add(time.Hour)),
+			},
+			now:      now,
+			expected: false,
+		},
+		{
+			name: "past timestamp",
+			resp: &pbc.ResolveResourceTypesResponse{
+				ExpiresAt: timestamppb.New(now.Add(-time.Hour)),
+			},
+			now:      now,
+			expected: true,
+		},
+		{
+			name: "exact boundary",
+			resp: &pbc.ResolveResourceTypesResponse{
+				ExpiresAt: timestamppb.New(now),
+			},
+			now:      now,
+			expected: false, // Before is strict: now.Before(now) == false
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := pluginsdk.IsResolveResourceTypesExpired(tt.resp, tt.now)
+			require.Equal(t, tt.expected, got)
+		})
+	}
+}
+
+func TestResolveResourceTypesExpiresAt(t *testing.T) {
+	futureTime := time.Date(2030, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		name       string
+		resp       *pbc.ResolveResourceTypesResponse
+		expectedOk bool
+	}{
+		{
+			name:       "nil response",
+			resp:       nil,
+			expectedOk: false,
+		},
+		{
+			name:       "nil expires_at",
+			resp:       &pbc.ResolveResourceTypesResponse{},
+			expectedOk: false,
+		},
+		{
+			name: "has expires_at",
+			resp: &pbc.ResolveResourceTypesResponse{
+				ExpiresAt: timestamppb.New(futureTime),
+			},
+			expectedOk: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := pluginsdk.ResolveResourceTypesExpiresAt(tt.resp)
+			require.Equal(t, tt.expectedOk, ok)
+			if tt.expectedOk {
+				require.Equal(t, futureTime, got)
+			}
+		})
+	}
+}
+
+func TestWithResolveResourceTypesExpiresAt(t *testing.T) {
+	futureTime := time.Date(2030, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	t.Run("sets non-zero time", func(t *testing.T) {
+		resp := pluginsdk.NewResolveResourceTypesResponse(
+			pluginsdk.WithResolveResourceTypesExpiresAt(futureTime),
+		)
+		require.NotNil(t, resp.GetExpiresAt(), "ExpiresAt should be set for non-zero time")
+		actualTime := resp.GetExpiresAt().AsTime()
+		diff := actualTime.Sub(futureTime).Abs()
+		require.LessOrEqual(t, diff, time.Millisecond,
+			"ExpiresAt should match input time (diff=%v)", diff)
+	})
+
+	t.Run("zero time sets nil", func(t *testing.T) {
+		resp := pluginsdk.NewResolveResourceTypesResponse(
+			pluginsdk.WithResolveResourceTypesExpiresAt(time.Time{}),
+		)
+		require.Nil(t, resp.GetExpiresAt(),
+			"ExpiresAt should be nil for zero time.Time")
+	})
+}
