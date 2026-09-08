@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"net"
 	"strings"
 	"sync"
 	"testing"
@@ -90,6 +91,7 @@ func TestIsCLIInvocation(t *testing.T) {
 		{name: "schema command is CLI", args: []string{"__schema"}, want: true},
 		{name: "format flag is CLI", args: []string{"--format=json"}, want: true},
 		{name: "global dry-run flag is CLI", args: []string{"--dry-run"}, want: true},
+		{name: "unknown command is CLI", args: []string{"nope"}, want: true},
 	}
 
 	for _, tt := range tests {
@@ -264,6 +266,10 @@ func TestRunDryRunHandlerError(t *testing.T) {
 func TestRunHandshakeStdoutIsPortOnly(t *testing.T) {
 	plugin := &mockPlugin{name: "handshake-plugin"}
 	cfg := testServeConfig(plugin, "v1.0.0")
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	defer ln.Close()
+	cfg.Listener = ln
 
 	var stdout syncBuffer
 	var stderr syncBuffer
@@ -272,7 +278,7 @@ func TestRunHandshakeStdoutIsPortOnly(t *testing.T) {
 
 	done := make(chan int, 1)
 	go func() {
-		done <- runCLI(ctx, cfg, []string{"--port", "0"}, &stdout, &stderr, bytes.NewReader(nil))
+		done <- runCLI(ctx, cfg, nil, &stdout, &stderr, bytes.NewReader(nil))
 	}()
 
 	require.Eventually(t, func() bool {
@@ -296,6 +302,10 @@ func TestRunHandshakeStdoutIsPortOnly(t *testing.T) {
 func TestRunHandshakeServeSubcommand(t *testing.T) {
 	plugin := &mockPlugin{name: "serve-plugin"}
 	cfg := testServeConfig(plugin, "v1.0.0")
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	defer ln.Close()
+	cfg.Listener = ln
 
 	var stdout syncBuffer
 	var stderr syncBuffer
@@ -304,7 +314,7 @@ func TestRunHandshakeServeSubcommand(t *testing.T) {
 
 	done := make(chan int, 1)
 	go func() {
-		done <- runCLI(ctx, cfg, []string{"serve", "--port", "0"}, &stdout, &stderr, bytes.NewReader(nil))
+		done <- runCLI(ctx, cfg, []string{"serve"}, &stdout, &stderr, bytes.NewReader(nil))
 	}()
 
 	require.Eventually(t, func() bool {

@@ -21,15 +21,8 @@ import (
 )
 
 const (
-	cliCommandServe   = "serve"
-	cliCommandDryRun  = "dry-run"
-	cliCommandSchema  = "__schema"
-	cliCommandHelp    = "help"
-	cliCommandVersion = "version"
-	// cliCommandCompletion has no registered Cobra command (CompletionOptions.DisableDefaultCmd
-	// disables it below); routing it here still sends "completion" through ax.Execute so it gets
-	// a JSON "unknown command" error instead of being misparsed as a handshake positional arg.
-	cliCommandCompletion = "completion"
+	cliCommandServe  = "serve"
+	cliCommandDryRun = "dry-run"
 )
 
 const (
@@ -129,8 +122,7 @@ func pluginCLIName(config ServeConfig) string {
 }
 
 func isCLIInvocation(args []string) bool {
-	switch firstPositional(args) {
-	case cliCommandDryRun, cliCommandVersion, cliCommandHelp, cliCommandSchema, cliCommandCompletion:
+	if cmd := firstPositional(args); cmd != "" && cmd != cliCommandServe {
 		return true
 	}
 

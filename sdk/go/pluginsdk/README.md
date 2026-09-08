@@ -138,10 +138,12 @@ Plugin authors who only need `Serve()` as a library should keep calling
 ```go
 // Before
 flag.Parse()
-_ = pluginsdk.Serve(ctx, pluginsdk.ServeConfig{
+if err := pluginsdk.Serve(ctx, pluginsdk.ServeConfig{
     Plugin: &MyPlugin{},
     Port:   pluginsdk.ParsePortFlag(),
-})
+}); err != nil && !errors.Is(err, context.Canceled) {
+    log.Fatal(err)
+}
 
 // After
 os.Exit(pluginsdk.Run(pluginsdk.ServeConfig{
