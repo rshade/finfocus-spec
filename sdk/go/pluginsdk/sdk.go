@@ -6,6 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -41,7 +42,12 @@ var portFlag = flag.Int("port", 0, "TCP port for gRPC server (overrides FINFOCUS
 //
 // IMPORTANT: The caller must call flag.Parse() before calling this function.
 //
-// Example usage in plugin main():
+// New plugin binaries should call Run() instead of flag.Parse + ParsePortFlag +
+// Serve. Run parses --port itself on the handshake path and does not require
+// this helper. ParsePortFlag remains for existing plugins that still manage
+// their own main() lifecycle.
+//
+// Example usage in plugin main() (legacy):
 //
 //	func main() {
 //	    flag.Parse()  // Must be called first
@@ -988,6 +994,11 @@ type ServeConfig struct {
 	// ResolveResourceTypes RPC. Values <= 0 default to DefaultMaxSourceTypes.
 	// Values > MaxSourceTypes are clamped.
 	MaxSourceTypes int
+
+	// handshakeWriter receives the PORT=<n> announcement line. When nil,
+	// announcePort writes to os.Stdout. Run() sets this to its stdout writer
+	// so tests can capture the handshake without replacing os.Stdout.
+	handshakeWriter io.Writer
 }
 
 // resolvePort determines the port to use with the following priority:
@@ -1031,8 +1042,11 @@ func listenOnLoopback(ctx context.Context, port int) (net.Listener, *net.TCPAddr
 	return listener, tcpAddr, nil
 }
 
-func announcePort(listener net.Listener, addr *net.TCPAddr) error {
-	if _, err := fmt.Fprintf(os.Stdout, "PORT=%d\n", addr.Port); err != nil {
+func announcePort(listener net.Listener, addr *net.TCPAddr, w io.Writer) error {
+	if w == nil {
+		w = os.Stdout
+	}
+	if _, err := fmt.Fprintf(w, "PORT=%d\n", addr.Port); err != nil {
 		closeErr := listener.Close()
 		if closeErr != nil {
 			return errors.Join(
@@ -1126,7 +1140,7 @@ func Serve(ctx context.Context, config ServeConfig) error {
 		}
 	}
 
-	if announceErr := announcePort(listener, tcpAddr); announceErr != nil {
+	if announceErr := announcePort(listener, tcpAddr, config.handshakeWriter); announceErr != nil {
 		return announceErr
 	}
 

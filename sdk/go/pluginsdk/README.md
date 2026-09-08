@@ -8,6 +8,7 @@ utilities for plugin development.
 
 - [Installation](#installation)
 - [Quick Start](#quick-start)
+- [CLI Surface (ax-go)](#cli-surface-ax-go)
 - [Server Configuration](#server-configuration)
 - [Multi-Protocol Support](#multi-protocol-support-grpc-grpc-web-connect)
 - [Go Client SDK](#go-client-sdk)
@@ -40,18 +41,16 @@ import "github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
 
 ## Quick Start
 
-The simplest possible plugin implementation:
+The simplest possible plugin implementation. `Run()` gives every plugin binary
+`--version`, `--help`, `dry-run`, and structured JSON errors with no extra CLI
+code. Host launches (`--port` or no args) still print only `PORT=<n>` on stdout.
 
 ```go
 package main
 
 import (
     "context"
-    "flag"
-    "log"
     "os"
-    "os/signal"
-    "syscall"
 
     "github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
     pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
@@ -97,34 +96,71 @@ func (p *MyPlugin) EstimateCost(
 }
 
 func main() {
-    // Parse command-line flags (required before ParsePortFlag)
-    flag.Parse()
-
-    // Create cancellable context for graceful shutdown
-    ctx, cancel := context.WithCancel(context.Background())
-    defer cancel()
-
-    // Handle SIGINT and SIGTERM for graceful shutdown
-    sigCh := make(chan os.Signal, 1)
-    signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
-    go func() {
-        <-sigCh
-        cancel()
-    }()
-
-    // Start the gRPC server
-    if err := pluginsdk.Serve(ctx, pluginsdk.ServeConfig{
-        Plugin: &MyPlugin{},
-        Port:   pluginsdk.ParsePortFlag(), // Uses --port flag if provided
-    }); err != nil {
-        log.Fatalf("Server error: %v", err)
-    }
+    os.Exit(pluginsdk.Run(pluginsdk.ServeConfig{
+        Plugin:     &MyPlugin{},
+        PluginInfo: pluginsdk.NewPluginInfo("my-cost-plugin", "v1.0.0"),
+    }))
 }
 ```
 
+## CLI Surface (ax-go)
+
+`pluginsdk.Run()` wraps [ax-go](https://github.com/rshade/ax-go) v0.6.0 so plugin
+binaries share the same agent-safety conventions as the `finfocus` host CLI.
+
+| Invocation | Behavior |
+| --- | --- |
+| `myplugin` / `myplugin --port 50051` / `myplugin serve --port 50051` | Handshake path: starts gRPC via `Serve()`, stdout is `PORT=<n>` only |
+| `myplugin --help` / `myplugin --version` | Cobra/ax help and version |
+| `myplugin dry-run --provider aws --resource-type ec2 --format=json` | In-process `DryRunHandler`; prints an `ax.Envelope` on stdout |
+| `myplugin __schema` | ax-go command schema for agents |
+| Unknown commands / invalid flags | `ax.Error` JSON envelope on stderr, never on stdout |
+
+The handshake path is **outside** `ax.Execute`, matching `finfocus`'s Pulumi
+analyzer serve path: flag-mounting and mode resolution must not write to stdout
+when the host is parsing `PORT=<n>`.
+
+`ServeConfig.Logger` remains `*zerolog.Logger`. gRPC trace-ID metadata
+(`x-finfocus-trace-id`) is unchanged; ax-go logging applies only to the CLI
+process, not per-RPC propagation.
+
+### Binary size
+
+The root `ax` package (needed for `ax.Execute`) links Cobra and the OTel SDK.
+Isolated `ax-go/logging` is much smaller but does not provide the CLI shell.
+Plugin authors who only need `Serve()` as a library should keep calling
+`Serve()` directly.
+
+### Migrating existing plugins
+
+`flag.Parse()` + `ParsePortFlag()` + `Serve()` still works. Prefer `Run()`:
+
+```go
+// Before
+flag.Parse()
+_ = pluginsdk.Serve(ctx, pluginsdk.ServeConfig{
+    Plugin: &MyPlugin{},
+    Port:   pluginsdk.ParsePortFlag(),
+})
+
+// After
+os.Exit(pluginsdk.Run(pluginsdk.ServeConfig{
+    Plugin:     &MyPlugin{},
+    PluginInfo: pluginsdk.NewPluginInfo("my-plugin", "v1.0.0"),
+}))
+```
+
+`ParsePortFlag()` is kept for that legacy `main()`. `Run()` parses `--port`
+itself and does not require `flag.Parse()`.
+
+`Serve()` is unchanged for tests and programmatic hosts: inject
+`ServeConfig.Listener` and cancel the context to stop.
+
 ## Server Configuration
 
-The `pluginsdk.Serve()` function is the entry point for running your plugin as a gRPC server.
+The `pluginsdk.Serve()` function starts the plugin gRPC (or Connect) server.
+Plugin binaries should call `Run()`, which invokes `Serve()` on the handshake
+path. Tests and custom process managers may call `Serve()` directly.
 
 ### Function Signature
 
@@ -198,7 +234,8 @@ This allows the parent process (e.g., finfocus-core) to discover the ephemeral p
 
 ### ParsePortFlag
 
-The `pluginsdk` package provides a standard helper for the `--port` flag:
+The `pluginsdk` package still provides a helper for the stdlib `--port` flag used by
+legacy `main()` functions that call `Serve()` themselves:
 
 ```go
 // Returns value of --port flag (or 0 if not set)
@@ -206,6 +243,7 @@ port := pluginsdk.ParsePortFlag()
 ```
 
 **Important**: You MUST call `flag.Parse()` before calling `pluginsdk.ParsePortFlag()`.
+`Run()` parses `--port` itself and does not use this helper.
 
 ### Configuration Examples
 
@@ -479,7 +517,8 @@ if err := pluginsdk.Serve(ctx, config); err != nil {
 - **context.Canceled**: The server shut down gracefully due to context cancellation.
 
 **Common Mistake**: Calling `ParsePortFlag()` before `flag.Parse()` will always return 0,
-causing the server to use an ephemeral port (or env var) unexpectedly. Always call `flag.Parse()` first.
+causing the server to use an ephemeral port (or env var) unexpectedly. Always call `flag.Parse()` first
+when using the legacy `main()`. New binaries should call `Run()` instead, which parses `--port` itself.
 
 ## Plugin Info (GetPluginInfo RPC)
 
@@ -2349,6 +2388,18 @@ resp := pluginsdk.NewDryRunResponse(
 )
 ```
 
+### CLI dry-run
+
+Plugins that implement `DryRunHandler` can be queried without starting the gRPC
+server:
+
+```bash
+myplugin dry-run --provider aws --resource-type ec2 --format=json
+```
+
+Stdout is an `ax.Envelope` whose `data` field is the `DryRunResponse` JSON
+(proto field names). Errors are `ax.Error` envelopes on stderr.
+
 ### DryRun RPC
 
 The `DryRun` RPC allows hosts to query a plugin's field mapping capabilities:
@@ -3126,6 +3177,7 @@ The `pbc` alias remains the same, so no other code changes are required.
 | `NewServer(plugin)`                                    | Create server with default registry |
 | `NewServerWithRegistry(plugin, registry)`              | Create server with custom registry  |
 | `NewServerWithOptions(plugin, registry, logger, info)` | Create server with all options      |
+| `Run(config)`                                          | Plugin CLI entry (ax-go + Serve)    |
 | `Serve(ctx, config)`                                   | Start gRPC server                   |
 | `NewLogWriter()`                                       | Get log writer respecting env var   |
 | `NewPluginLogger(name, version, level, writer)`        | Create configured logger            |

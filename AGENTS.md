@@ -66,6 +66,9 @@
 - `pluginsdk.Serve`: Tests dealing with `Serve` should prefer injecting a `net.Listener` (via
   `ServeConfig.Listener`) rather than relying on `Port` and `listenOnLoopback` to avoid race
   conditions and ensure predictable port binding.
+- `pluginsdk.Run`: Plugin binary entry point. Handshake (`--port` / `serve` / no args) calls
+  `Serve()` outside `ax.Execute` so stdout stays `PORT=<n>`. `ServeConfig.Logger` remains
+  `*zerolog.Logger`. `ParsePortFlag()` is legacy-only.
 
 ## CI Variance
 

@@ -137,10 +137,10 @@ info := pluginsdk.NewPluginInfo("my-plugin", "v1.0.0",
     pluginsdk.WithProviders("aws", "azure"),
     pluginsdk.WithMetadata("build_date", "2024-01-15"),
 )
-pluginsdk.Serve(ctx, pluginsdk.ServeConfig{
+os.Exit(pluginsdk.Run(pluginsdk.ServeConfig{
     Plugin:     &MyPlugin{},
     PluginInfo: info,
-})
+}))
 
 // Pattern 2: Dynamic metadata via PluginInfoProvider interface
 // Use when metadata must be computed at runtime
@@ -770,6 +770,9 @@ cd schemas && /init            # JSON Schema validation
 - `pluginsdk.Serve`: Tests dealing with `Serve` should prefer injecting a `net.Listener` (via
   `ServeConfig.Listener`) rather than relying on `Port` and `listenOnLoopback` to avoid race
   conditions and ensure predictable port binding.
+- `pluginsdk.Run`: Plugin binary entry point (ax-go CLI). Handshake (`--port` / `serve` / no args)
+  calls `Serve()` outside `ax.Execute` so stdout stays `PORT=<n>`. `ServeConfig.Logger` remains
+  `*zerolog.Logger`; do not switch it to `ax.Logger`. `ParsePortFlag()` is legacy-only.
 
 ### Usage Profile SDK Pattern (042-usage-profile-context)
 
@@ -793,11 +796,20 @@ parallel subtests complete.
 
 ## Active Technologies
 
-- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1 (050-resolve-resource-types-hardening)
-- N/A (stateless in-memory type mappings and metrics counters) (050-resolve-resource-types-hardening)
+- Go 1.27.1 (per go.mod) + github.com/rshade/ax-go v0.6.0 (Cobra CLI) (494-ax-go-plugin-cli)
+- N/A (stateless CLI wrapper around Serve; handshake stdout stays PORT=n) (494-ax-go-plugin-cli)
 
-- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1 (049-resolve-resource-types)
-- N/A (stateless type mappings held in-memory after initialization) (049-resolve-resource-types)
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
+  google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1
+  (050-resolve-resource-types-hardening)
+- N/A (stateless in-memory type mappings and metrics counters)
+  (050-resolve-resource-types-hardening)
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
+  google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1
+  (049-resolve-resource-types)
+- N/A (stateless type mappings held in-memory after initialization)
+  (049-resolve-resource-types)
 
 - Go 1.25.8 (per go.mod) + `github.com/stretchr/testify`,
   `google.golang.org/protobuf` (existing, unchanged) (048-test-descriptor-helper)
@@ -894,9 +906,15 @@ See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable doc
 
 ## Recent Changes
 
-- 050-resolve-resource-types-hardening: Added Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1
+- 494-ax-go-plugin-cli: Added pluginsdk.Run() ax-go CLI (handshake-safe Serve, dry-run subcommand)
 
-- 049-resolve-resource-types: Added Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1
+- 050-resolve-resource-types-hardening: Added Go 1.27.1 (per go.mod) + Protocol
+  Buffers v3, TypeScript (SDK) + google.golang.org/protobuf,
+  google.golang.org/grpc, buf v1.32.1
+
+- 049-resolve-resource-types: Added Go 1.27.1 (per go.mod) + Protocol Buffers v3,
+  TypeScript (SDK) + google.golang.org/protobuf, google.golang.org/grpc,
+  buf v1.32.1
 
 - 048-test-descriptor-helper: Added Go 1.25.8 (per go.mod) +
   `github.com/stretchr/testify`, `google.golang.org/protobuf` (existing, unchanged)

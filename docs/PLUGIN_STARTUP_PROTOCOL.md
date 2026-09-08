@@ -40,23 +40,24 @@ The `--port` flag is the recommended way for orchestrators to assign ports:
 
 ```go
 import (
-    "flag"
+    "os"
+
     "github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
 )
 
 func main() {
-    flag.Parse()  // MUST be called before ParsePortFlag()
-
-    port := pluginsdk.ParsePortFlag()  // Returns --port value or 0
-
-    if err := pluginsdk.Serve(ctx, pluginsdk.ServeConfig{
-        Plugin: &MyPlugin{},
-        Port:   port,
-    }); err != nil {
-        log.Fatal(err)
-    }
+    os.Exit(pluginsdk.Run(pluginsdk.ServeConfig{
+        Plugin:     &MyPlugin{},
+        PluginInfo: pluginsdk.NewPluginInfo("my-plugin", "v1.0.0"),
+    }))
 }
 ```
+
+`Run()` parses `--port` on the handshake path and calls `Serve()`. `--help`,
+`--version`, and `dry-run` go through ax-go and never write `PORT=<n>`.
+
+Legacy binaries that still call `flag.Parse()`, `ParsePortFlag()`, and `Serve()`
+keep working; new plugins should use `Run()`.
 
 ### Environment Variable: `FINFOCUS_PLUGIN_PORT`
 
@@ -245,10 +246,10 @@ FINFOCUS_PLUGIN_PORT=50053 ./gcp-plugin &
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  1. Parse command-line flags                                │
-│     └─ flag.Parse()                                         │
+│     └─ pluginsdk.Run() handshake path (--port / serve)      │
 │                                                             │
 │  2. Resolve port (--port → env var → ephemeral)            │
-│     └─ pluginsdk.ParsePortFlag() or ServeConfig.Port       │
+│     └─ ServeConfig.Port (set from --port) or env var       │
 │                                                             │
 │  3. Create TCP listener on 127.0.0.1:port                  │
 │     └─ Binds to loopback only for security                 │
@@ -347,7 +348,7 @@ func main() {
 |-------|-------|----------|
 | `failed to listen: address already in use` | Port is taken | Use different port or ephemeral |
 | `failed to listen: permission denied` | Port < 1024 requires root | Use port ≥ 1024 |
-| `ParsePortFlag() returns 0 unexpectedly` | `flag.Parse()` not called | Call `flag.Parse()` first |
+| `ParsePortFlag() returns 0 unexpectedly` | `flag.Parse()` not called | Call `flag.Parse()` first, or use `Run()` |
 
 ### Debugging Port Issues
 
@@ -428,7 +429,7 @@ When plugins fail to start or connect, verify:
 1. **Port availability**: `netstat -tlnp | grep <port>` (Linux) or `netstat -an | findstr <port>` (Windows)
 2. **Address resolution**: Ensure both sides use `127.0.0.1` explicitly
 3. **Environment variables**: `env | grep FINFOCUS` to check for conflicting settings
-4. **Flag parsing**: Ensure `flag.Parse()` is called before `ParsePortFlag()`
+4. **Flag parsing**: Prefer `pluginsdk.Run()`; legacy mains must call `flag.Parse()` before `ParsePortFlag()`
 5. **Firewall rules**: On Windows, check Windows Defender Firewall for localhost exceptions
 
 ## Quick Reference
@@ -440,11 +441,7 @@ package main
 
 import (
     "context"
-    "flag"
-    "log"
     "os"
-    "os/signal"
-    "syscall"
 
     "github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
     pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
@@ -452,7 +449,7 @@ import (
 
 type MyPlugin struct{}
 
-func (p *MyPlugin) Name() string { return "my-plugin" }
+func (p *MyPlugin) Name() string { return "my-cost-plugin" }
 
 func (p *MyPlugin) GetProjectedCost(ctx context.Context, req *pbc.GetProjectedCostRequest) (
     *pbc.GetProjectedCostResponse, error) {
@@ -475,17 +472,10 @@ func (p *MyPlugin) EstimateCost(ctx context.Context, req *pbc.EstimateCostReques
 }
 
 func main() {
-    flag.Parse()
-
-    ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-    defer cancel()
-
-    if err := pluginsdk.Serve(ctx, pluginsdk.ServeConfig{
-        Plugin: &MyPlugin{},
-        Port:   pluginsdk.ParsePortFlag(),
-    }); err != nil && err != context.Canceled {
-        log.Fatalf("Server error: %v", err)
-    }
+    os.Exit(pluginsdk.Run(pluginsdk.ServeConfig{
+        Plugin:     &MyPlugin{},
+        PluginInfo: pluginsdk.NewPluginInfo("my-cost-plugin", "v1.0.0"),
+    }))
 }
 ```
 
