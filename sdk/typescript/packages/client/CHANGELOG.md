@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.5](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.6.4...finfocus-client-v0.6.5) (2026-09-08)
+
+
+### Features
+
+* **proto:** add expires_at cache-hint to EstimateCostResponse ([#460](https://github.com/rshade/finfocus-spec/issues/460)) ([d258c1b](https://github.com/rshade/finfocus-spec/commit/d258c1b2cb3f15a20f4ad887aba9c339ead0c6f9)), closes [#434](https://github.com/rshade/finfocus-spec/issues/434)
+* **sdk:** harden ResolveResourceTypes RPC ([#493](https://github.com/rshade/finfocus-spec/issues/493)) ([50f73d9](https://github.com/rshade/finfocus-spec/commit/50f73d985d3485fb1c59ad4889d1a3021073562a))
+
 ## [0.6.4](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.6.3...finfocus-client-v0.6.4) (2026-03-13)
 
 
