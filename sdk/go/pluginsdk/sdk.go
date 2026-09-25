@@ -13,6 +13,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"connectrpc.com/connect"
@@ -22,6 +23,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 	"github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1/pbcconnect"
@@ -209,6 +211,13 @@ type DismissProvider interface {
 //
 // This interface is useful when plugins need dynamic metadata that can't
 // be determined at startup, such as runtime-computed values.
+//
+// Capabilities: leave GetPluginInfoResponse.Capabilities empty to inherit the
+// capabilities the SDK infers from the plugin's implemented interfaces (see
+// Server.GetGlobalCapabilities). A non-empty list replaces the inferred set
+// entirely; the two are never merged. In both cases the server adds the legacy
+// supports_* metadata keys that are missing, keeping any the provider set.
+// The returned response is copied, never modified.
 type PluginInfoProvider interface {
 	// GetPluginInfo returns metadata about the plugin including name, version,
 	// spec version, supported providers, and optional key-value metadata.
@@ -284,6 +293,10 @@ type Server struct {
 	// typeRegistry is an optional declarative type mapping registry for
 	// ResolveResourceTypes RPC fallback.
 	typeRegistry *TypeRegistry
+
+	// capabilityDriftOnce limits the PluginInfoProvider capability drift log to
+	// one entry per server.
+	capabilityDriftOnce sync.Once
 
 	// maxSourceTypes is the configured per-plugin source_types size limit for
 	// ResolveResourceTypes RPC. Defaults to DefaultMaxSourceTypes when not configured.
@@ -401,6 +414,10 @@ func (s *Server) Name(_ context.Context, _ *pbc.NameRequest) (*pbc.NameResponse,
 //  2. If PluginInfo was configured via ServeConfig, return it
 //  3. Return Unimplemented error (enables graceful degradation for legacy plugins)
 //
+// In paths 1 and 2, an empty capability list inherits the server's inferred
+// capabilities, and a non-empty list replaces them. Legacy supports_* metadata
+// keys and max_batch_size are derived from the final list.
+//
 // When calling GetPluginInfo on potentially legacy plugins, consumers should handle
 // the Unimplemented error gracefully:
 //
@@ -466,18 +483,20 @@ func (s *Server) handleProviderPluginInfo(
 		return nil, status.Error(codes.Internal, "plugin reported an invalid specification version")
 	}
 
-	// Enrich response with server-side batch metadata when the plugin supports batch cost.
-	// Create a new map to avoid mutating the plugin-returned response in place.
-	if containsCapability(resp.GetCapabilities(), pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST) {
-		meta := make(map[string]string, len(resp.GetMetadata())+1)
-		for k, v := range resp.GetMetadata() {
-			meta[k] = v
-		}
-		meta["max_batch_size"] = strconv.Itoa(int(s.maxBatchSize))
-		resp.Metadata = meta
+	// Work on a copy: the provider may cache or share the response it returns.
+	out, ok := proto.Clone(resp).(*pbc.GetPluginInfoResponse)
+	if !ok {
+		return nil, status.Error(codes.Internal, "unable to copy plugin metadata")
 	}
 
-	return resp, nil
+	if len(out.GetCapabilities()) == 0 {
+		out.Capabilities = slices.Clone(s.globalCapabilities)
+	} else {
+		s.logCapabilityDrift(out.GetCapabilities())
+	}
+	out.Metadata = s.withLegacyCapabilityMetadata(out.GetCapabilities(), out.GetMetadata(), false)
+
+	return out, nil
 }
 
 // handleConfiguredPluginInfo handles GetPluginInfo using the server's configured PluginInfo.
@@ -501,30 +520,7 @@ func (s *Server) handleConfiguredPluginInfo() (*pbc.GetPluginInfoResponse, error
 		capabilities = append([]pbc.PluginCapability{}, s.globalCapabilities...)
 	}
 
-	// Add legacy capability metadata for backward compatibility
-	// Use warning-aware function to detect and log invalid/unmapped capabilities
-	if len(capabilities) > 0 {
-		legacyMeta, warnings := CapabilitiesToLegacyMetadataWithWarnings(capabilities)
-
-		// Log any warnings about unmapped capabilities
-		for _, w := range warnings {
-			s.logger.Warn().
-				Int32("capability", int32(w.Capability)).
-				Str("reason", w.Reason).
-				Msg("Capability has no legacy metadata mapping")
-		}
-
-		if metadata == nil {
-			metadata = make(map[string]string, len(legacyMeta))
-		}
-		for key, val := range legacyMeta {
-			metadata[key] = val
-		}
-
-		if containsCapability(capabilities, pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST) {
-			metadata["max_batch_size"] = strconv.Itoa(int(s.maxBatchSize))
-		}
-	}
+	metadata = s.withLegacyCapabilityMetadata(capabilities, metadata, true)
 
 	return &pbc.GetPluginInfoResponse{
 		Name:         s.pluginInfo.Name,
@@ -534,6 +530,76 @@ func (s *Server) handleConfiguredPluginInfo() (*pbc.GetPluginInfoResponse, error
 		Metadata:     metadata,
 		Capabilities: capabilities,
 	}, nil
+}
+
+// withLegacyCapabilityMetadata adds the legacy supports_* keys derived from
+// capabilities, plus max_batch_size when BATCH_COST is present, to metadata and
+// returns it. With overwrite false, legacy keys already in metadata are kept so a
+// PluginInfoProvider's explicit values win. metadata must be owned by the caller;
+// it is allocated when nil.
+func (s *Server) withLegacyCapabilityMetadata(
+	capabilities []pbc.PluginCapability,
+	metadata map[string]string,
+	overwrite bool,
+) map[string]string {
+	if len(capabilities) == 0 {
+		return metadata
+	}
+
+	legacyMeta, warnings := CapabilitiesToLegacyMetadataWithWarnings(capabilities)
+	for _, w := range warnings {
+		s.logger.Warn().
+			Int32("capability", int32(w.Capability)).
+			Str("reason", w.Reason).
+			Msg("Capability has no legacy metadata mapping")
+	}
+
+	if metadata == nil {
+		metadata = make(map[string]string, len(legacyMeta)+1)
+	}
+	for key, val := range legacyMeta {
+		if _, exists := metadata[key]; overwrite || !exists {
+			metadata[key] = val
+		}
+	}
+
+	if containsCapability(capabilities, pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST) {
+		metadata["max_batch_size"] = strconv.Itoa(int(s.maxBatchSize))
+	}
+	return metadata
+}
+
+// logCapabilityDrift logs, once per server, the inferred capabilities that a
+// PluginInfoProvider's explicit capability list leaves out. Omitting them can be
+// deliberate (for example, methods that only return Unimplemented), so this is
+// Debug-level guidance rather than a warning.
+func (s *Server) logCapabilityDrift(explicit []pbc.PluginCapability) {
+	s.capabilityDriftOnce.Do(func() {
+		var omitted []string
+		for _, c := range s.globalCapabilities {
+			if !slices.Contains(explicit, c) {
+				omitted = append(omitted, c.String())
+			}
+		}
+		if len(omitted) > 0 {
+			s.logger.Debug().
+				Strs("omitted_capabilities", omitted).
+				Msg("PluginInfoProvider capabilities omit inferred capabilities")
+		}
+	})
+}
+
+// setTypeRegistry installs the ResolveResourceTypes fallback registry. When the
+// server's capabilities were inferred rather than explicitly configured, it also
+// advertises RESOLVE_RESOURCE_TYPES: inferCapabilities only inspects the plugin's
+// method set, so it cannot see a registry supplied through ServeConfig.
+func (s *Server) setTypeRegistry(registry *TypeRegistry, capabilitiesExplicit bool) {
+	s.typeRegistry = registry
+	resolve := pbc.PluginCapability_PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES
+	if registry == nil || capabilitiesExplicit || containsCapability(s.globalCapabilities, resolve) {
+		return
+	}
+	s.globalCapabilities = append(s.globalCapabilities, resolve)
 }
 
 // containsCapability reports whether target is present in capabilities.
@@ -1148,7 +1214,8 @@ func Serve(ctx context.Context, config ServeConfig) error {
 	server := NewServerWithOptions(config.Plugin, config.Registry, config.Logger, config.PluginInfo)
 	server.maxBatchSize = resolveBatchSize(config.MaxBatchSize)
 	server.batchWorkers = resolveBatchWorkers(config.BatchWorkers)
-	server.typeRegistry = config.TypeRegistry
+	server.setTypeRegistry(config.TypeRegistry,
+		config.PluginInfo != nil && len(config.PluginInfo.Capabilities) > 0)
 	server.maxSourceTypes = resolveSourceTypesLimit(config.MaxSourceTypes)
 
 	// Choose serving mode based on WebConfig
