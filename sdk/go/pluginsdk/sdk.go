@@ -604,6 +604,35 @@ func (s *Server) setTypeRegistry(registry *TypeRegistry, capabilitiesExplicit bo
 	s.globalCapabilities = append(s.globalCapabilities, resolve)
 }
 
+// DryRun implements the gRPC DryRun method by delegating to the plugin's
+// DryRunHandler. Plugins that do not implement DryRunHandler return
+// Unimplemented, matching the other optional-capability RPCs.
+func (s *Server) DryRun(ctx context.Context, req *pbc.DryRunRequest) (*pbc.DryRunResponse, error) {
+	if req.GetResource() == nil {
+		return nil, status.Error(codes.InvalidArgument, "resource descriptor is required")
+	}
+
+	handler, ok := s.plugin.(DryRunHandler)
+	if !ok {
+		s.logger.Debug().Msg("DryRun returning Unimplemented (not supported by plugin)")
+		return nil, status.Error(codes.Unimplemented, "plugin does not support DryRun")
+	}
+
+	resp, err := handler.HandleDryRun(ctx, req)
+	if err != nil {
+		s.logger.Error().
+			Err(err).
+			Str(FieldResourceType, req.GetResource().GetResourceType()).
+			Msg("DryRun handler error")
+		return nil, status.Error(codes.Internal, "plugin failed to execute DryRun")
+	}
+	if resp == nil {
+		s.logger.Error().Msg("DryRun handler returned a nil response")
+		return nil, status.Error(codes.Internal, "plugin returned a nil response")
+	}
+	return resp, nil
+}
+
 // hasRegistry reports whether a real RegistryLookup was configured, as opposed to
 // none (nil) or the DefaultRegistryLookup placeholder.
 func (s *Server) hasRegistry() bool {

@@ -3,8 +3,10 @@ package pluginsdk
 
 import (
 	"context"
+	"errors"
 
 	"connectrpc.com/connect"
+	"google.golang.org/grpc/status"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 	"github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1/pbcconnect"
@@ -35,7 +37,7 @@ func (h *ConnectHandler) Name(
 ) (*connect.Response[pbc.NameResponse], error) {
 	resp, err := h.server.Name(ctx, req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -47,7 +49,7 @@ func (h *ConnectHandler) Supports(
 ) (*connect.Response[pbc.SupportsResponse], error) {
 	resp, err := h.server.Supports(ctx, req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -59,7 +61,7 @@ func (h *ConnectHandler) GetActualCost(
 ) (*connect.Response[pbc.GetActualCostResponse], error) {
 	resp, err := h.server.GetActualCost(ctx, req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -71,7 +73,7 @@ func (h *ConnectHandler) GetProjectedCost(
 ) (*connect.Response[pbc.GetProjectedCostResponse], error) {
 	resp, err := h.server.GetProjectedCost(ctx, req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -83,7 +85,7 @@ func (h *ConnectHandler) GetPricingSpec(
 ) (*connect.Response[pbc.GetPricingSpecResponse], error) {
 	resp, err := h.server.GetPricingSpec(ctx, req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -95,7 +97,7 @@ func (h *ConnectHandler) EstimateCost(
 ) (*connect.Response[pbc.EstimateCostResponse], error) {
 	resp, err := h.server.EstimateCost(ctx, req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -107,7 +109,7 @@ func (h *ConnectHandler) GetRecommendations(
 ) (*connect.Response[pbc.GetRecommendationsResponse], error) {
 	resp, err := h.server.GetRecommendations(ctx, req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -119,7 +121,7 @@ func (h *ConnectHandler) DismissRecommendation(
 ) (*connect.Response[pbc.DismissRecommendationResponse], error) {
 	resp, err := h.server.DismissRecommendation(ctx, req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -131,7 +133,7 @@ func (h *ConnectHandler) GetBudgets(
 ) (*connect.Response[pbc.GetBudgetsResponse], error) {
 	resp, err := h.server.GetBudgets(ctx, req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -143,7 +145,7 @@ func (h *ConnectHandler) GetPluginInfo(
 ) (*connect.Response[pbc.GetPluginInfoResponse], error) {
 	resp, err := h.server.GetPluginInfo(ctx, req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -155,7 +157,48 @@ func (h *ConnectHandler) BatchCost(
 ) (*connect.Response[pbc.BatchCostResponse], error) {
 	resp, err := h.server.BatchCost(ctx, req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(resp), nil
+}
+
+// DryRun implements pbcconnect.CostSourceServiceHandler.
+func (h *ConnectHandler) DryRun(
+	ctx context.Context,
+	req *connect.Request[pbc.DryRunRequest],
+) (*connect.Response[pbc.DryRunResponse], error) {
+	resp, err := h.server.DryRun(ctx, req.Msg)
+	if err != nil {
+		return nil, toConnectError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+// ResolveResourceTypes implements pbcconnect.CostSourceServiceHandler.
+func (h *ConnectHandler) ResolveResourceTypes(
+	ctx context.Context,
+	req *connect.Request[pbc.ResolveResourceTypesRequest],
+) (*connect.Response[pbc.ResolveResourceTypesResponse], error) {
+	resp, err := h.server.ResolveResourceTypes(ctx, req.Msg)
+	if err != nil {
+		return nil, toConnectError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+// toConnectError converts a gRPC status error returned by Server into a
+// connect.Error with the same code. connect-go does not understand gRPC status
+// errors and would otherwise report every one of them as CodeUnknown. Errors
+// that are not gRPC statuses (including context errors, which connect-go maps
+// itself) are returned unchanged.
+func toConnectError(err error) error {
+	var connectErr *connect.Error
+	if errors.As(err, &connectErr) {
+		return err
+	}
+	st, ok := status.FromError(err)
+	if !ok {
+		return err
+	}
+	return connect.NewError(connect.Code(st.Code()), errors.New(st.Message()))
 }

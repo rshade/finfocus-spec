@@ -101,7 +101,7 @@ type MyPlugin struct {
     proto.UnimplementedCostSourceServiceServer
 }
 
-func (p *MyPlugin) HandleDryRun(req *pbc.DryRunRequest) (*pbc.DryRunResponse, error) {
+func (p *MyPlugin) HandleDryRun(ctx context.Context, req *pbc.DryRunRequest) (*pbc.DryRunResponse, error) {
     return pluginsdk.NewDryRunResponse(
         pluginsdk.WithResourceTypeSupported(true),
     ), nil

@@ -2417,18 +2417,20 @@ Stdout is an `ax.Envelope` whose `data` field is the `DryRunResponse` JSON
 
 ### DryRun RPC
 
-The `DryRun` RPC allows hosts to query a plugin's field mapping capabilities:
+The `DryRun` RPC allows hosts to query a plugin's field mapping capabilities.
+Implement `DryRunHandler`; the SDK serves the `DryRun` RPC over gRPC and Connect
+by calling `HandleDryRun`, and advertises `PLUGIN_CAPABILITY_DRY_RUN`. Plugins
+without `DryRunHandler` answer `Unimplemented`.
 
 ```go
-// Implement the DryRun RPC on your plugin
-func (p *MyPlugin) DryRun(
+func (p *MyPlugin) HandleDryRun(
     ctx context.Context,
     req *pbc.DryRunRequest,
 ) (*pbc.DryRunResponse, error) {
     resource := req.GetResource()
 
     // Check if resource type is supported
-    if !p.supports(resource.GetType()) {
+    if !p.supports(resource.GetResourceType()) {
         return pluginsdk.NewDryRunResponse(
             pluginsdk.WithResourceTypeSupported(false),
         ), nil
