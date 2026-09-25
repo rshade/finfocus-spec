@@ -180,7 +180,9 @@ codebase.
   errors: `wrapIfUncoded` (`error.go:278`) wraps anything that is not a `*connect.Error` as
   `CodeUnknown`. Without the helper, every `PermissionDenied` or `InvalidArgument` from a usage
   source would reach Connect clients as `Unknown`, violating FR-008/009 and SC-002.
-- **Scope boundary**: The existing `ConnectHandler` (`connect.go`) returns errors raw and has the
+- **Scope boundary (superseded 2026-09-25)**: The user chose to fix `ConnectHandler` in this
+  feature instead of a follow-up; all its methods now use `toConnectError` (T045). Original note:
+  the existing `ConnectHandler` (`connect.go`) returns errors raw and has the
   same defect for every `CostSourceService` RPC. Fixing it changes the observable behavior of
   existing RPCs, so it is tracked as a separate bug; 051 only introduces the helper and uses it in
   the usage adapter. `toConnectError` is written so the follow-up fix is a one-line change per

@@ -13,6 +13,7 @@ import (
 // ConnectHandler adapts a Server to the pbcconnect.CostSourceServiceHandler interface.
 // This enables the plugin to be served via connect-go, supporting gRPC, gRPC-Web,
 // and Connect protocols simultaneously.
+// Errors carrying a gRPC status keep their code and message over every protocol.
 type ConnectHandler struct {
 	pbcconnect.UnimplementedCostSourceServiceHandler
 
@@ -35,7 +36,7 @@ func (h *ConnectHandler) Name(
 ) (*connect.Response[pbc.NameResponse], error) {
 	resp, err := h.server.Name(ctx, req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -47,7 +48,7 @@ func (h *ConnectHandler) Supports(
 ) (*connect.Response[pbc.SupportsResponse], error) {
 	resp, err := h.server.Supports(ctx, req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -59,7 +60,7 @@ func (h *ConnectHandler) GetActualCost(
 ) (*connect.Response[pbc.GetActualCostResponse], error) {
 	resp, err := h.server.GetActualCost(ctx, req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -71,7 +72,7 @@ func (h *ConnectHandler) GetProjectedCost(
 ) (*connect.Response[pbc.GetProjectedCostResponse], error) {
 	resp, err := h.server.GetProjectedCost(ctx, req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -83,7 +84,7 @@ func (h *ConnectHandler) GetPricingSpec(
 ) (*connect.Response[pbc.GetPricingSpecResponse], error) {
 	resp, err := h.server.GetPricingSpec(ctx, req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -95,7 +96,7 @@ func (h *ConnectHandler) EstimateCost(
 ) (*connect.Response[pbc.EstimateCostResponse], error) {
 	resp, err := h.server.EstimateCost(ctx, req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -107,7 +108,7 @@ func (h *ConnectHandler) GetRecommendations(
 ) (*connect.Response[pbc.GetRecommendationsResponse], error) {
 	resp, err := h.server.GetRecommendations(ctx, req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -119,7 +120,7 @@ func (h *ConnectHandler) DismissRecommendation(
 ) (*connect.Response[pbc.DismissRecommendationResponse], error) {
 	resp, err := h.server.DismissRecommendation(ctx, req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -131,7 +132,7 @@ func (h *ConnectHandler) GetBudgets(
 ) (*connect.Response[pbc.GetBudgetsResponse], error) {
 	resp, err := h.server.GetBudgets(ctx, req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -143,7 +144,7 @@ func (h *ConnectHandler) GetPluginInfo(
 ) (*connect.Response[pbc.GetPluginInfoResponse], error) {
 	resp, err := h.server.GetPluginInfo(ctx, req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(resp), nil
 }
@@ -155,7 +156,7 @@ func (h *ConnectHandler) BatchCost(
 ) (*connect.Response[pbc.BatchCostResponse], error) {
 	resp, err := h.server.BatchCost(ctx, req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(resp), nil
 }

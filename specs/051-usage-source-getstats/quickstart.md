@@ -47,7 +47,7 @@ go test ./sdk/go/pluginsdk/ -run 'UsageSource|ToConnectError' -v
 ## 3. Capability discovery (US3, SC-005)
 
 ```bash
-go test ./sdk/go/pluginsdk/ -run 'Capabilit|IsValidCapability|UsageSourceWarning' -v
+go test ./sdk/go/pluginsdk/ -run 'Capabilit|IsValidCapability|UsageSourceWarning|LegacyMetadata_UsageStats|UsageStatsRoundTrip' -v
 ```
 
 **Expected**:
@@ -85,12 +85,16 @@ go test ./sdk/go/pluginsdk/ -run 'SubjectVocabulary' -v   # drift guard
 ## 5. TypeScript (US5, SC-006)
 
 ```bash
-cd sdk/typescript/packages/client && npx vitest run test/usage-source.test.ts && npm run build
+cd sdk/typescript/packages/client && npx vitest run test/usage-source.test.ts && npx tsc --noEmit
 ```
 
 **Expected**: The msw handler at `/finfocus.v1.UsageSourceService/GetStats` receives the request.
-`UsageSourceClient.getStats` returns rows, priceable entries, and `StatsMode.RUN_RATE`. The build
-succeeds.
+`UsageSourceClient.getStats` returns rows, priceable entries, and `StatsMode.RUN_RATE`. The type
+check is clean.
+
+`npm run build` bundles ESM/CJS successfully but fails at tsup's DTS step with TS5101 (`baseUrl`
+deprecated under TypeScript 6). The failure is the same on `main`, so it is not caused by this
+feature; `npx tsc --noEmit` is the type-check gate.
 
 ## 6. Full regression
 

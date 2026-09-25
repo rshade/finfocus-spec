@@ -12,6 +12,7 @@ error handling.
 - **Automatic Pagination** - AsyncIterator support for large result sets
 - **Comprehensive Error Handling** - Validation errors and Connect RPC error handling
 - **Framework Integration** - Ready-to-use adapters for Express, Fastify, and NestJS
+- **Usage Sources** - `UsageSourceClient` for workload CPU/memory usage (`UsageSourceService.GetStats`)
 
 ## Packages
 
@@ -150,6 +151,51 @@ try {
   }
 }
 ```
+
+### UsageSourceClient
+
+Calls plugins that serve `UsageSourceService`, which reports per-workload and per-node CPU and
+memory usage plus the priceable resources (nodes, control planes) that the workloads run on. See
+[docs/usage-source.md](../../docs/usage-source.md) for the row and subject semantics.
+
+```typescript
+import { create } from "@bufbuild/protobuf";
+import { Code, ConnectError } from "@connectrpc/connect";
+import {
+  UsageSourceClient,
+  GetStatsRequestSchema,
+  StatsMode,
+  SUBJECT_KIND,
+  SUBJECT_NAMESPACE,
+  KIND_WORKLOAD,
+  METRIC_CPU_REQUEST,
+} from "@rshade/finfocus-client";
+
+const usage = new UsageSourceClient({ baseUrl: "https://usage-plugin.example.com" });
+
+try {
+  const resp = await usage.getStats(
+    create(GetStatsRequestSchema, { scope: "prod-cluster", selector: { namespace: "payments" } }),
+  );
+  if (resp.mode === StatsMode.RUN_RATE) {
+    for (const row of resp.rows) {
+      if (row.subject[SUBJECT_KIND] === KIND_WORKLOAD && row.metric === METRIC_CPU_REQUEST) {
+        console.log(`${row.subject[SUBJECT_NAMESPACE]}: ${row.amount} ${row.unit}`);
+      }
+    }
+  }
+  console.log(`Priceable nodes: ${resp.priceable.map((r) => r.id).join(", ")}`);
+} catch (error) {
+  if (error instanceof ConnectError && error.code === Code.PermissionDenied) {
+    console.error(`Usage source lacks permissions: ${error.rawMessage}`);
+  } else {
+    throw error;
+  }
+}
+```
+
+Errors arrive as `ConnectError` with the code the source returned. The client does no request
+validation. The `SUBJECT_*`, `KIND_*`, `METRIC_*`, and `UNIT_*` constants mirror the Go SDK.
 
 ### Pagination
 

@@ -35,6 +35,11 @@ and SDK. Use this guide to navigate to the appropriate documentation for your ne
   - Health check implementation
   - Graceful shutdown
 
+- **[Usage Source Service](usage-source.md)** - `UsageSourceService.GetStats` semantics
+  - Subject keys, kinds, metrics, and units per mode
+  - Priceable node and control-plane tagging (AWS, Azure, GCP)
+  - Error codes and the usage-only capability rule
+
 - **[Plugin Migration Guide](PLUGIN_MIGRATION_GUIDE.md)** - Breaking change migrations
   - Version upgrade paths
   - Backwards compatibility

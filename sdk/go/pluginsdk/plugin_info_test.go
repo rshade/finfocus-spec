@@ -581,3 +581,31 @@ func TestWithCapabilitiesOverride(t *testing.T) {
 		t.Errorf("Expected DryRun capability")
 	}
 }
+
+type mockUsageStatsPlugin struct {
+	*pluginsdk.BasePlugin
+}
+
+func (m *mockUsageStatsPlugin) GetStats(context.Context, *pbc.GetStatsRequest) (*pbc.GetStatsResponse, error) {
+	return &pbc.GetStatsResponse{Mode: pbc.StatsMode_STATS_MODE_RUN_RATE}, nil
+}
+
+func TestGetPluginInfo_UsageStatsRoundTrip(t *testing.T) {
+	plugin := &mockUsageStatsPlugin{BasePlugin: pluginsdk.NewBasePlugin("usage")}
+	info := pluginsdk.NewPluginInfo("usage", "v1.0.0",
+		pluginsdk.WithCapabilities(pbc.PluginCapability_PLUGIN_CAPABILITY_USAGE_STATS),
+	)
+	server := pluginsdk.NewServerWithOptions(plugin, nil, nil, info)
+
+	resp, err := server.GetPluginInfo(context.Background(), &pbc.GetPluginInfoRequest{})
+	if err != nil {
+		t.Fatalf("GetPluginInfo() error = %v", err)
+	}
+	caps := resp.GetCapabilities()
+	if len(caps) != 1 || caps[0] != pbc.PluginCapability_PLUGIN_CAPABILITY_USAGE_STATS {
+		t.Errorf("Capabilities = %v, want [PLUGIN_CAPABILITY_USAGE_STATS]", caps)
+	}
+	if got := resp.GetMetadata()["supports_usage_stats"]; got != "true" {
+		t.Errorf("Metadata[supports_usage_stats] = %q, want \"true\"", got)
+	}
+}

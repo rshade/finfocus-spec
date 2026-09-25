@@ -45,19 +45,19 @@ independently.
 **Purpose**: Land the wire contract first (Constitution I) and regenerate both SDKs so every later
 task compiles against real generated types.
 
-- [ ] T001 Create `proto/finfocus/v1/usage.proto` with the content of
+- [X] T001 Create `proto/finfocus/v1/usage.proto` with the content of
   `specs/051-usage-source-getstats/contracts/usage.proto`, keeping the Apache header, `syntax`, `package finfocus.v1`,
   `go_package`, both imports, `UsageSourceService`, `StatsMode`, `GetStatsRequest`, `GetStatsResponse`, and `UsageRow`
   with all inline comments exactly as written. Remove only the contract-note comment block that starts
   `// Contract for proto/finfocus/v1/usage.proto` and ends with the `PLUGIN_CAPABILITY_USAGE_STATS = 14;` example
-- [ ] T002 [P] In `proto/finfocus/v1/enums.proto`, add `PLUGIN_CAPABILITY_USAGE_STATS = 14;` to `enum PluginCapability`
+- [X] T002 [P] In `proto/finfocus/v1/enums.proto`, add `PLUGIN_CAPABILITY_USAGE_STATS = 14;` to `enum PluginCapability`
   immediately after `PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES = 13;`, preceded by the comment
   `// Plugin implements UsageSourceService.GetStats for workload usage`
-- [ ] T003 Run `make generate` from the repo root and confirm these files exist and compile with `go build ./...`:
+- [X] T003 Run `make generate` from the repo root and confirm these files exist and compile with `go build ./...`:
   `sdk/go/proto/finfocus/v1/usage.pb.go`, `sdk/go/proto/finfocus/v1/usage_grpc.pb.go`,
   `sdk/go/proto/finfocus/v1/pbcconnect/usage.connect.go`, and that `sdk/go/proto/finfocus/v1/enums.pb.go` defines
   `PluginCapability_PLUGIN_CAPABILITY_USAGE_STATS` (depends on T001, T002)
-- [ ] T004 Regenerate TypeScript bindings for only the changed files:
+- [X] T004 Regenerate TypeScript bindings for only the changed files:
   `cd sdk/typescript && ../../bin/buf generate ../../proto --template buf.gen.yaml` with
   `--path ../../proto/finfocus/v1/usage.proto --path ../../proto/finfocus/v1/enums.proto`.
   Confirm `sdk/typescript/packages/client/src/generated/finfocus/v1/usage_pb.ts` exports `UsageSourceService`,
@@ -66,7 +66,7 @@ task compiles against real generated types.
   missing `protoc-gen-connect-es` plugin, generate with a temporary template in the scratchpad that lists only
   `protoc-gen-es` (`out: packages/client/src/generated`, `opt: target=ts`), and do not commit template changes. No other
   generated files may change (depends on T003)
-- [ ] T005 Run `bin/buf lint` and `bin/buf breaking --against '.git#branch=main'` and confirm both are clean (FR-007,
+- [X] T005 Run `bin/buf lint` and `bin/buf breaking --against '.git#branch=main'` and confirm both are clean (FR-007,
   SC-004) (depends on T003)
 
 **Checkpoint**: Contract generated in Go and TypeScript; lint and breaking-change detection pass.
@@ -79,7 +79,7 @@ task compiles against real generated types.
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T006 [P] Create `sdk/go/pluginsdk/subjects.go` with one exported `const` block, each constant godoc'd, with
+- [X] T006 [P] Create `sdk/go/pluginsdk/subjects.go` with one exported `const` block, each constant godoc'd, with
   exactly these values: `SubjectCluster = "cluster"`, `SubjectNamespace = "namespace"`,
   `SubjectControllerKind = "controller_kind"`, `SubjectController = "controller"`, `SubjectPod = "pod"`,
   `SubjectNode = "node"`, `SubjectKind = "kind"`, `SubjectLabelPrefix = "label."`, `KindWorkload = "workload"`,
@@ -88,19 +88,19 @@ task compiles against real generated types.
   `MetricCPUAllocatable = "cpu_allocatable"`, `MetricMemAllocatable = "mem_allocatable"`,
   `MetricCPUUsage = "cpu_usage"`, `MetricMemUsage = "mem_usage"`, `UnitCore = "core"`, `UnitGiB = "GiB"`,
   `UnitCoreHours = "core-hours"`, `UnitGiBHours = "GiB-hours"` (FR-014)
-- [ ] T007 [P] In `sdk/go/pluginsdk/sdk.go`, directly after the `ResolveResourceTypesProvider` interface, declare the
+- [X] T007 [P] In `sdk/go/pluginsdk/sdk.go`, directly after the `ResolveResourceTypesProvider` interface, declare the
   exported `UsageSourceProvider` interface with the single method
   `GetStats(ctx context.Context, req *pbc.GetStatsRequest) (*pbc.GetStatsResponse, error)` and the godoc from
   `contracts/go-sdk-api.md` ("…Serve registers the service in gRPC and Connect modes and PLUGIN_CAPABILITY_USAGE_STATS
   is inferred. Usage-only plugins should set PluginInfo.Capabilities explicitly.")
-- [ ] T046 [P] In `sdk/go/testing/contract_test.go`, add table-driven `TestValidateGetStatsRequest` (research R11,
+- [X] T046 [P] In `sdk/go/testing/contract_test.go`, add table-driven `TestValidateGetStatsRequest` (research R11,
   data-model rules Q1–Q3). Rejecting cases: `nil` → `errors.Is(err, plugintesting.ErrNilRequest)`; only `Start` set →
   `errors.Is(err, plugintesting.ErrNilEndTime)` with a `*ContractError` whose `Field` is `end`; only `End` set →
   `ErrNilStartTime` with `Field` `start`; `Start` one hour after `End` → `plugintesting.ErrInvertedStatsWindow`.
   Accepting cases (`nil` error): neither set (run-rate); `Start` before `End`; `Start` equal to `End`; a 5-minute
   window (no 1-hour minimum); empty `Scope`; an unknown name in `Metrics`; a `Selector` with `namespace` and a label key
   (FR-020, SC-003)
-- [ ] T047 In `sdk/go/testing/contract.go`, add the sentinel
+- [X] T047 In `sdk/go/testing/contract.go`, add the sentinel
   `ErrInvertedStatsWindow = errors.New("start time must not be after end time")` to the existing error `var` block and
   `ValidateGetStatsRequest(req *pbc.GetStatsRequest) error` after `ValidateGetRecommendationsRequest`, with the godoc
   from `contracts/go-sdk-api.md`. Check in order: `nil` → `ErrNilRequest`; neither timestamp set → `nil`; only `Start`
@@ -108,7 +108,7 @@ task compiles against real generated types.
   `Start.AsTime().After(End.AsTime())` → `NewContractError("time_range", …, ErrInvertedStatsWindow)`. Do not call
   `ValidateTimeRange` (it adds 1-hour, 365-day, and future-start rules the spec does not have) (depends on T046). Make
   T046 pass
-- [ ] T008 Create the shared test fixture file `sdk/go/pluginsdk/usage_source_fixtures_test.go` (package `pluginsdk`)
+- [X] T008 Create the shared test fixture file `sdk/go/pluginsdk/usage_source_fixtures_test.go` (package `pluginsdk`)
   with: (a) `usageTestPlugin`, a struct embedding `*BasePlugin` (from `helpers.go`, built via `NewBasePlugin`) that
   implements `GetStats` by returning a configurable `*pbc.GetStatsResponse` or error; (b) `fixtureStatsResponse()`, a
   two-node cluster in `STATS_MODE_RUN_RATE` with per-workload `cpu_request` (`UnitCore`) and `mem_request` (`UnitGiB`)
@@ -144,13 +144,13 @@ must equal the Connect `connect.CodeOf`/`Message`.
 
 ### Tests for User Story 1 (write first, confirm failing) ⚠️
 
-- [ ] T009 [P] [US1] Create `sdk/go/pluginsdk/connect_errors_test.go` with a table-driven `TestToConnectError` covering:
+- [X] T009 [P] [US1] Create `sdk/go/pluginsdk/connect_errors_test.go` with a table-driven `TestToConnectError` covering:
   `nil` → `nil`; an existing `connect.NewError(connect.CodeNotFound, …)` returned unchanged (same pointer); each gRPC
   code 1–16 via `status.Error(code, "msg")` → a `*connect.Error` whose `connect.CodeOf` equals `connect.Code(code)` and
   whose `Message()` equals `"msg"`; a plain `errors.New("boom")` returned unchanged (research R8). Also add
   `BenchmarkToConnectError` over a `status.Error(codes.PermissionDenied, "cannot list pods")` input, calling
   `b.ReportAllocs()` (Constitution VIII: benchmarks for all new core SDK logic)
-- [ ] T010 [P] [US1] Create `sdk/go/pluginsdk/usage_source_test.go` with `TestUsageSourceServeTransportParity`: for each
+- [X] T010 [P] [US1] Create `sdk/go/pluginsdk/usage_source_test.go` with `TestUsageSourceServeTransportParity`: for each
   of gRPC mode (`ServeConfig{Plugin: usageTestPlugin, Listener: <net.Listen on 127.0.0.1:0>, Web.Enabled: false}`,
   client from `grpc.NewClient` + `pbc.NewUsageSourceServiceClient`) and Connect mode (`Web.Enabled: true`, client
   `pbcconnect.NewUsageSourceServiceClient(http.DefaultClient, "http://"+addr)`), call `GetStats` with an empty request
@@ -158,42 +158,42 @@ must equal the Connect `connect.CodeOf`/`Message`.
   `Mode == STATS_MODE_RUN_RATE`; then assert
   the gRPC and Connect responses are `proto.Equal` to each other (US1-1, US1-6, SC-002). Serve in a goroutine with a
   cancellable context and cancel it in `t.Cleanup` (depends on T008)
-- [ ] T011 [US1] In `sdk/go/pluginsdk/usage_source_test.go`, add `TestUsageSourceErrorParity`, table-driven over the
+- [X] T011 [US1] In `sdk/go/pluginsdk/usage_source_test.go`, add `TestUsageSourceErrorParity`, table-driven over the
   `referenceUsageSource` cases: only `Start` set, `Start` after `End`, both set (historical on run-rate-only source) →
   `codes.InvalidArgument`; RBAC failure → `codes.PermissionDenied` with message `cannot list pods`; no credentials →
   `codes.Unauthenticated`. For each case, serve over both transports and assert the gRPC `status.Code(err)` and
   `status.Convert(err).Message()` equal the Connect `connect.CodeOf(err)` (as `codes.Code`) and `connectErr.Message()`,
   and that neither is `Unknown` (US1-4, US1-5, FR-008, FR-009, SC-002) (depends on T010)
-- [ ] T012 [US1] In `sdk/go/pluginsdk/usage_source_test.go`, add `TestUsageSourceSelectorNamespace`: serve
+- [X] T012 [US1] In `sdk/go/pluginsdk/usage_source_test.go`, add `TestUsageSourceSelectorNamespace`: serve
   `referenceUsageSource` and request `Selector: map[string]string{"namespace": "payments"}`; assert every returned
   `kind=workload` row has `subject["namespace"] == "payments"` and at least one such row is returned (US1-3) (depends on
   T010)
-- [ ] T048 [US1] In `sdk/go/pluginsdk/usage_source_test.go`, add `TestUsageSourceInterceptors`: serve `usageTestPlugin`
+- [X] T048 [US1] In `sdk/go/pluginsdk/usage_source_test.go`, add `TestUsageSourceInterceptors`: serve `usageTestPlugin`
   in gRPC mode with `ServeConfig.UnaryInterceptors` set to one counting interceptor that records `info.FullMethod`; call
   `GetStats` once and assert the interceptor ran exactly once with `/finfocus.v1.UsageSourceService/GetStats`. Connect
   mode needs no case, because the cost service has no Connect interceptors either (FR-010, research R2) (depends on
   T012)
-- [ ] T049 [US1] In `sdk/go/pluginsdk/usage_source_test.go`, add `TestUsageSourceHistoricalParity`: serve a
+- [X] T049 [US1] In `sdk/go/pluginsdk/usage_source_test.go`, add `TestUsageSourceHistoricalParity`: serve a
   `referenceUsageSource` with `historical: true` over both transports and request a 2-hour window; assert
   `Mode == STATS_MODE_HISTORICAL`, every row (including `cpu_allocatable`/`mem_allocatable`) has unit `core-hours` or
   `GiB-hours`, and the gRPC and Connect responses are `proto.Equal` (US1-2, FR-004, SC-002) (depends on T048)
-- [ ] T050 [US1] In `sdk/go/pluginsdk/usage_source_test.go`, add `TestUsageSourceUnknownMetric`: request
+- [X] T050 [US1] In `sdk/go/pluginsdk/usage_source_test.go`, add `TestUsageSourceUnknownMetric`: request
   `Metrics: []string{"cpu_request", "gpu_seconds"}` from `referenceUsageSource`; assert no error and that `Warnings`
   contains exactly one entry naming `gpu_seconds` (edge case "unknown metric requested") (depends on T049)
 
 ### Implementation for User Story 1
 
-- [ ] T013 [P] [US1] Create `sdk/go/pluginsdk/connect_errors.go` with the unexported
+- [X] T013 [P] [US1] Create `sdk/go/pluginsdk/connect_errors.go` with the unexported
   `func toConnectError(err error) error` and the godoc from `contracts/go-sdk-api.md`: `nil` → `nil`; `errors.As` a
   `*connect.Error` → return unchanged; `status.FromError(err)` succeeds with code ≠ `codes.OK` →
   `connect.NewError(connect.Code(st.Code()), errors.New(st.Message()))`; anything else → unchanged. Make T009 pass,
   including `BenchmarkToConnectError`
-- [ ] T014 [US1] Create `sdk/go/pluginsdk/usage_source.go` with two unexported adapters: `usageSourceGRPCServer` (embeds
+- [X] T014 [US1] Create `sdk/go/pluginsdk/usage_source.go` with two unexported adapters: `usageSourceGRPCServer` (embeds
   `pbc.UnimplementedUsageSourceServiceServer`, holds a `UsageSourceProvider`, `GetStats` delegates and returns the error
   unchanged) and `usageSourceConnectHandler` (implements `pbcconnect.UsageSourceServiceHandler`;
   `GetStats(ctx, *connect.Request[pbc.GetStatsRequest])` delegates with `req.Msg`, wraps the result in
   `connect.NewResponse`, and returns errors through `toConnectError`) (depends on T013)
-- [ ] T015 [US1] In `sdk/go/pluginsdk/sdk.go`, in `Serve`, evaluate
+- [X] T015 [US1] In `sdk/go/pluginsdk/sdk.go`, in `Serve`, evaluate
   `usage, hasUsage := config.Plugin.(UsageSourceProvider)` once and pass it to `serveGRPC` and `serveConnect` (add a
   parameter to each). In `serveGRPC`, when present, call
   `pbc.RegisterUsageSourceServiceServer(grpcServer, &usageSourceGRPCServer{…})` next to the existing cost-service
@@ -217,15 +217,15 @@ point yields a served, health-checked usage source. Plugins without `GetStats` a
 
 ### Tests for User Story 2 (write first, confirm failing) ⚠️
 
-- [ ] T016 [US2] In `sdk/go/pluginsdk/usage_source_test.go`, add `TestUsageSourceHealth`: serve `usageTestPlugin` with
+- [X] T016 [US2] In `sdk/go/pluginsdk/usage_source_test.go`, add `TestUsageSourceHealth`: serve `usageTestPlugin` with
   `Web.Enabled=true` and call `grpc.health.v1.Health/Check` over Connect (for example `grpchealth`'s client or a
   `connect.NewClient[healthpb.HealthCheckRequest, healthpb.HealthCheckResponse]` against `/grpc.health.v1.Health/Check`)
   with `Service: pbcconnect.UsageSourceServiceName`; assert `SERVING` (US2-1, FR-010) (depends on T015)
-- [ ] T017 [US2] In `sdk/go/pluginsdk/usage_source_test.go`, add `TestUsageSourceNotRegistered`: serve a plugin that
+- [X] T017 [US2] In `sdk/go/pluginsdk/usage_source_test.go`, add `TestUsageSourceNotRegistered`: serve a plugin that
   embeds `*BasePlugin` but has **no** `GetStats`, over both transports; assert `GetStats` returns `codes.Unimplemented`
   over gRPC and `connect.CodeUnimplemented` over Connect, and the Connect health check for
   `pbcconnect.UsageSourceServiceName` returns `NOT_FOUND` (US2-2, research R2) (depends on T015)
-- [ ] T018 [P] [US2] In `sdk/go/pluginsdk/example_test.go`, add a compiled example function (for example
+- [X] T018 [P] [US2] In `sdk/go/pluginsdk/example_test.go`, add a compiled example function (for example
   `Example_usageSource`) showing a struct that embeds `*pluginsdk.BasePlugin`, implements only `GetStats` returning one
   `KindWorkload` row with `SubjectNamespace`, `SubjectPod`, `SubjectNode`, `SubjectKind`, `MetricCPURequest`,
   `UnitCore`, and one `KindNode` row, and builds
@@ -234,7 +234,7 @@ point yields a served, health-checked usage source. Plugins without `GetStats` a
 
 ### Implementation for User Story 2
 
-- [ ] T019 [US2] In `sdk/go/pluginsdk/sdk.go` `serveConnect`, append `pbcconnect.UsageSourceServiceName` to the
+- [X] T019 [US2] In `sdk/go/pluginsdk/sdk.go` `serveConnect`, append `pbcconnect.UsageSourceServiceName` to the
   `grpchealth.NewStaticChecker(…)` arguments only when the plugin implements `UsageSourceProvider` (gRPC mode registers
   no health service today; do not add one) (depends on T015). Make T016 and T017 pass
 
@@ -252,22 +252,22 @@ inference get a startup warning.
 
 ### Tests for User Story 3 (write first, confirm failing) ⚠️
 
-- [ ] T020 [P] [US3] In `sdk/go/pluginsdk/capabilities_test.go`, add cases: a plugin implementing `GetStats` with no
+- [X] T020 [P] [US3] In `sdk/go/pluginsdk/capabilities_test.go`, add cases: a plugin implementing `GetStats` with no
   explicit capabilities → inferred list contains `PLUGIN_CAPABILITY_USAGE_STATS` and the legacy metadata contains
   `supports_usage_stats` = `"true"` (US3-1); a plugin with `WithCapabilities(PLUGIN_CAPABILITY_USAGE_STATS)` only →
   capabilities are exactly `[PLUGIN_CAPABILITY_USAGE_STATS]` with no pricing capabilities (US3-2, SC-005). Keep the
   existing capability tests unchanged
-- [ ] T021 [P] [US3] In `sdk/go/pluginsdk/conformance_test.go`, extend the `IsValidCapability` bounds test:
+- [X] T021 [P] [US3] In `sdk/go/pluginsdk/conformance_test.go`, extend the `IsValidCapability` bounds test:
   `PLUGIN_CAPABILITY_USAGE_STATS` (14) is valid and `pbc.PluginCapability(15)` is invalid; move any existing "13 is max
   / 14 is invalid" assertion to the new bound (US3-3, FR-012)
-- [ ] T022 [P] [US3] In `sdk/go/pluginsdk/plugin_info_test.go`, add a `GetPluginInfo` round-trip case for a usage-stats
+- [X] T022 [P] [US3] In `sdk/go/pluginsdk/plugin_info_test.go`, add a `GetPluginInfo` round-trip case for a usage-stats
   plugin that asserts both the `Capabilities` enum list and the legacy `Metadata["supports_usage_stats"] == "true"` in
   the response
-- [ ] T051 [P] [US3] In `sdk/go/pluginsdk/capability_compat_test.go`, add `TestLegacyMetadata_UsageStats` mirroring
+- [X] T051 [P] [US3] In `sdk/go/pluginsdk/capability_compat_test.go`, add `TestLegacyMetadata_UsageStats` mirroring
   `TestLegacyMetadata_ResolveResourceTypes`: `CapabilityToLegacyName(PLUGIN_CAPABILITY_USAGE_STATS)` returns
   `supports_usage_stats`, and `CapabilitiesToLegacyMetadataWithWarnings([USAGE_STATS])` yields
   `supports_usage_stats=true` with no warnings (FR-011)
-- [ ] T023 [US3] In `sdk/go/pluginsdk/usage_source_test.go`, add table-driven `TestUsageSourceWarning` using a
+- [X] T023 [US3] In `sdk/go/pluginsdk/usage_source_test.go`, add table-driven `TestUsageSourceWarning` using a
   buffer-backed `zerolog.Logger` passed via `ServeConfig.Logger`: (a) usage source with nil `PluginInfo` → served
   normally and exactly one `warn`-level entry whose message tells usage-only plugins to set `PluginInfo.Capabilities`
   explicitly; (b) `PluginInfo` with explicit `Capabilities` → no such entry; (c) plugin also implementing
@@ -276,7 +276,7 @@ inference get a startup warning.
 
 ### Implementation for User Story 3
 
-- [ ] T024 [US3] In `sdk/go/pluginsdk/plugin_info.go`: in `inferCapabilities`, append
+- [X] T024 [US3] In `sdk/go/pluginsdk/plugin_info.go`: in `inferCapabilities`, append
   `pbc.PluginCapability_PLUGIN_CAPABILITY_USAGE_STATS` when `plugin.(UsageSourceProvider)` succeeds, following the
   existing optional-interface type-assertion pattern; change `optionalCapabilities = 6` to `7` so the pre-sized slice
   stays zero-reallocation; change `maxValidCapability` to `pbc.PluginCapability_PLUGIN_CAPABILITY_USAGE_STATS // 14`
@@ -285,21 +285,21 @@ inference get a startup warning.
   "4 base + 5 optional" comment inside `inferCapabilities`, and the "currently defined capabilities (12)" count in the
   `MaxConfiguredCapabilities` comment (now 14). Leave all other inference unchanged (FR-011, FR-012, FR-013). Make
   T020–T022 pass
-- [ ] T025 [US3] In `sdk/go/pluginsdk/capability_compat.go`, add
+- [X] T025 [US3] In `sdk/go/pluginsdk/capability_compat.go`, add
   `pbc.PluginCapability_PLUGIN_CAPABILITY_USAGE_STATS: "supports_usage_stats"` to `legacyCapabilityNames`, and update
   the map's godoc from "PluginCapability values (1-13) MUST be included" to "(1-14)" (FR-011). Make T051 pass
-- [ ] T026 [US3] In `sdk/go/pluginsdk/usage_source.go`, add unexported
+- [X] T026 [US3] In `sdk/go/pluginsdk/usage_source.go`, add unexported
   `warnUsageSourceCapabilities(logger *zerolog.Logger, plugin Plugin, info *PluginInfo)` that logs one `Warn` only when
   the plugin implements `UsageSourceProvider`, `info == nil || len(info.Capabilities) == 0`, and the plugin does **not**
   implement `PluginInfoProvider`. Call it from `Serve` in `sdk/go/pluginsdk/sdk.go` after the server is constructed,
   passing `&server.logger` (the field is a `zerolog.Logger` value) (depends on T015). Make T023 pass
-- [ ] T027 [US3] In `sdk/go/pluginsdk/README.md`: add a `UsageSourceProvider` → `PLUGIN_CAPABILITY_USAGE_STATS`
+- [X] T027 [US3] In `sdk/go/pluginsdk/README.md`: add a `UsageSourceProvider` → `PLUGIN_CAPABILITY_USAGE_STATS`
   (`supports_usage_stats`) row to the capability table (around line 695), and a "Usage-only plugins" subsection that
   embeds `*pluginsdk.BasePlugin`, implements `GetStats`, sets `WithCapabilities(PLUGIN_CAPABILITY_USAGE_STATS)`
   explicitly, states that `GetStats` is the only method an author writes, and explains the startup warning. State that
   hosts can tell a usage-only plugin apart only when its capabilities are explicit (SC-005). Keep the snippet identical
   in substance to the T018 example (FR-019) (depends on T018)
-- [ ] T028 [P] [US3] In `PLUGIN_DEVELOPER_GUIDE.md`, add a "Usage source plugins" section: what a usage source is, the
+- [X] T028 [P] [US3] In `PLUGIN_DEVELOPER_GUIDE.md`, add a "Usage source plugins" section: what a usage source is, the
   `UsageSourceProvider` interface, the explicit-capabilities rule for usage-only plugins, the startup warning, and a
   link to `docs/usage-source.md` (FR-019)
 
@@ -317,7 +317,7 @@ plugin tests call `GetStats` in memory.
 
 ### Tests for User Story 4 (write first, confirm failing) ⚠️
 
-- [ ] T029 [P] [US4] Create `sdk/go/testing/usage_source_test.go` (package `testing_test`, importing
+- [X] T029 [P] [US4] Create `sdk/go/testing/usage_source_test.go` (package `testing_test`, importing
   `plugintesting "github.com/rshade/finfocus-spec/sdk/go/testing"`) with table-driven `TestValidateStatsResponse`. Each
   **rejecting** case asserts `errors.Is(err, plugintesting.ErrInvalidStatsResponse)` and that the message names the
   offending index and key or value: V1 `nil` response; V2 mode `STATS_MODE_UNSPECIFIED`; V3 row subject `{pod: a}`
@@ -330,15 +330,15 @@ plugin tests call `GetStats` in memory.
   custom metric and unit; same subject with two different metrics; amount `0`; a `STATS_MODE_HISTORICAL` response using
   `core-hours`/`GiB-hours` including allocatable rows. Use string literals, not `pluginsdk` constants (import cycle)
   (SC-003)
-- [ ] T030 [US4] In `sdk/go/testing/usage_source_test.go`, add `TestUsageSourceHarness`: define a local struct with a
+- [X] T030 [US4] In `sdk/go/testing/usage_source_test.go`, add `TestUsageSourceHarness`: define a local struct with a
   `GetStats` method returning a fixed response, `h := plugintesting.NewUsageSourceHarness(impl)`, `h.Start(t)`,
   `defer h.Stop()`, call `h.Client().GetStats(ctx, &pbc.GetStatsRequest{})`, and assert the response is `proto.Equal` to
   the fixture; also assert an implementation error is returned with its gRPC code intact (US4-10, FR-017) (depends on
   T029 file existing)
-- [ ] T031 [US4] In `sdk/go/testing/usage_source_test.go`, add `BenchmarkValidateStatsResponse` over a realistic valid
+- [X] T031 [US4] In `sdk/go/testing/usage_source_test.go`, add `BenchmarkValidateStatsResponse` over a realistic valid
   response (for example 3 nodes × 20 pods × 2 metrics plus allocatable rows and 3 priceable entries), calling
   `b.ReportAllocs()` (Constitution VIII; the helper may allocate)
-- [ ] T032 [P] [US4] Create `sdk/go/pluginsdk/subjects_test.go` with `TestSubjectVocabularyMatchesTesting`: build the
+- [X] T032 [P] [US4] Create `sdk/go/pluginsdk/subjects_test.go` with `TestSubjectVocabularyMatchesTesting`: build the
   set
   `{SubjectCluster, SubjectNamespace, SubjectControllerKind, SubjectController, SubjectPod, SubjectNode, SubjectKind}`
   and assert it equals the set from `plugintesting.KnownSubjectKeys()` using `assert.ElementsMatch`; also assert
@@ -347,7 +347,7 @@ plugin tests call `GetStats` in memory.
 
 ### Implementation for User Story 4
 
-- [ ] T033 [US4] Create `sdk/go/testing/usage_source.go` with: exported
+- [X] T033 [US4] Create `sdk/go/testing/usage_source.go` with: exported
   `var ErrInvalidStatsResponse = errors.New("invalid GetStats response")`; unexported package-level
   `knownSubjectKeys = []string{"cluster", "namespace", "controller_kind", "controller", "pod", "node", "kind"}`,
   `labelPrefix = "label."`, and valid row kinds `workload`/`node` (registry zero-alloc slice pattern); exported
@@ -360,7 +360,7 @@ plugin tests call `GetStats` in memory.
   values into a set; then per priceable in index order V8 nil entry or empty `Id`, V9 `Tags["kind"] == "node"` and `Id`
   not in the node set. Do not check unit/metric consistency or duplicate priceable IDs (spec Assumptions). Make T029,
   T031, T032 pass
-- [ ] T034 [US4] In `sdk/go/testing/usage_source.go`, add exported `UsageStatsServer` interface
+- [X] T034 [US4] In `sdk/go/testing/usage_source.go`, add exported `UsageStatsServer` interface
   (`GetStats(ctx context.Context, req *pbc.GetStatsRequest) (*pbc.GetStatsResponse, error)`), exported
   `UsageSourceHarness` struct with unexported fields,
   `NewUsageSourceHarness(impl UsageStatsServer) *UsageSourceHarness`, `Start(t testing.TB)`, `Stop()`, and
@@ -368,7 +368,7 @@ plugin tests call `GetStats` in memory.
   `bufconn.Listen(bufSize)`, the same dial pattern, and register an unexported adapter embedding
   `pbc.UnimplementedUsageSourceServiceServer` that delegates `GetStats`. Leave `NewTestHarness` untouched (SC-004)
   (depends on T033). Make T030 pass
-- [ ] T035 [P] [US4] In `sdk/go/testing/README.md`, document `ValidateGetStatsRequest` (rules Q1–Q3,
+- [X] T035 [P] [US4] In `sdk/go/testing/README.md`, document `ValidateGetStatsRequest` (rules Q1–Q3,
   `ErrInvertedStatsWindow`, run-rate requests valid), `ValidateStatsResponse` (rules V1–V10 as a table, first-error
   semantics, `ErrInvalidStatsResponse`, what is accepted), and `UsageSourceHarness` with a short usage snippet
 
@@ -385,7 +385,7 @@ vocabulary constants.
 
 ### Tests for User Story 5 (write first, confirm failing) ⚠️
 
-- [ ] T036 [P] [US5] Create `sdk/typescript/packages/client/test/usage-source.test.ts` (vitest + msw, following
+- [X] T036 [P] [US5] Create `sdk/typescript/packages/client/test/usage-source.test.ts` (vitest + msw, following
   `test/resolve-resource-types.test.ts`): an msw handler for `POST {baseUrl}/finfocus.v1.UsageSourceService/GetStats`
   that records the request and returns a JSON `GetStatsResponse` with one workload row, one node row, one priceable
   node, and `mode: "STATS_MODE_RUN_RATE"`; assert
@@ -394,25 +394,25 @@ vocabulary constants.
   reaches the handler with that scope and selector and returns rows, priceable entries, and `StatsMode.RUN_RATE`. Add a
   second case where the handler returns a Connect error with code `permission_denied` and assert the promise rejects
   with a `ConnectError` whose `code` is `Code.PermissionDenied`
-- [ ] T037 [P] [US5] Add constant-value assertions to `sdk/typescript/packages/client/test/usage-source.test.ts` (or a
+- [X] T037 [P] [US5] Add constant-value assertions to `sdk/typescript/packages/client/test/usage-source.test.ts` (or a
   sibling `test/usage-subjects.test.ts`): every constant in `src/utils/usage-subjects.ts` equals its Go counterpart
   value from `sdk/go/pluginsdk/subjects.go`
 
 ### Implementation for User Story 5
 
-- [ ] T038 [P] [US5] Create `sdk/typescript/packages/client/src/utils/usage-subjects.ts` exporting `const` strings with
+- [X] T038 [P] [US5] Create `sdk/typescript/packages/client/src/utils/usage-subjects.ts` exporting `const` strings with
   exactly the Go values: `SUBJECT_CLUSTER`, `SUBJECT_NAMESPACE`, `SUBJECT_CONTROLLER_KIND`, `SUBJECT_CONTROLLER`,
   `SUBJECT_POD`, `SUBJECT_NODE`, `SUBJECT_KIND`, `SUBJECT_LABEL_PREFIX`, `KIND_WORKLOAD`, `KIND_NODE`, `KIND_IDLE`,
   `KIND_CLUSTER`, `METRIC_CPU_REQUEST`, `METRIC_MEM_REQUEST`, `METRIC_CPU_ALLOCATABLE`, `METRIC_MEM_ALLOCATABLE`,
   `METRIC_CPU_USAGE`, `METRIC_MEM_USAGE`, `UNIT_CORE`, `UNIT_GIB`, `UNIT_CORE_HOURS`, `UNIT_GIB_HOURS`, each with a
   TSDoc comment (mirrors `src/utils/usage-profile.ts`)
-- [ ] T039 [P] [US5] Create `sdk/typescript/packages/client/src/clients/usage-source.ts` with
+- [X] T039 [P] [US5] Create `sdk/typescript/packages/client/src/clients/usage-source.ts` with
   `export class UsageSourceClient`, whose constructor takes the `ClientConfig` exported from `src/clients/auxiliary.ts`
   (`baseUrl`, optional `transport`) and builds the transport the same way `RegistryClient` does, and
   `createClient(UsageSourceService, transport)`; expose
   `async getStats(request: GetStatsRequest): Promise<GetStatsResponse>`. Errors propagate as `ConnectError` with no
   wrapping, and there is no client-side validation (research R9)
-- [ ] T040 [US5] In `sdk/typescript/packages/client/src/index.ts`, add
+- [X] T040 [US5] In `sdk/typescript/packages/client/src/index.ts`, add
   `export * from "./generated/finfocus/v1/usage_pb.js";`,
   `export { UsageSourceClient } from "./clients/usage-source.js";`, and named exports of every constant from
   `./utils/usage-subjects.js`, following the existing `usage-profile.js` export block. Resolve any export-name collision
@@ -427,7 +427,7 @@ vocabulary constants.
 
 **Purpose**: Canonical semantics doc, repo docs, and full regression.
 
-- [ ] T041 [P] Create `docs/usage-source.md` as the canonical semantics page (FR-006): purpose and relation to cost
+- [X] T041 [P] Create `docs/usage-source.md` as the canonical semantics page (FR-006): purpose and relation to cost
   sources and #506; request fields and the reserved `namespace` selector key (a label named `namespace` cannot be
   selected); run-rate vs historical modes, with the rule that every amount including allocatable is integrated in
   historical mode; subject key table; kinds (note `__idle__`/`__cluster__` are allocator-only and invalid here); metric
@@ -438,25 +438,29 @@ vocabulary constants.
   (SC-005); `ValidateGetStatsRequest` and `ValidateStatsResponse` as the author's self-checks; and that in Connect mode
   `ServeConfig.UnaryInterceptors` and tracing do not apply, exactly as for the cost service (FR-010). Link it from
   `docs/README.md`
-- [ ] T052 [P] Update the READMEs that list services and clients (FR-019, Constitution VII, research R10). In root
+- [X] T052 [P] Update the READMEs that list services and clients (FR-019, Constitution VII, research R10). In root
   `README.md`: add `usage.proto` to the `proto/finfocus/v1/` project-structure tree, add a
   "[Usage Source Service](proto/finfocus/v1/usage.proto): UsageSourceService with 1 RPC method (GetStats)" bullet
   beside the existing "gRPC Service" bullet, and add a short `UsageSourceService` subsection after the "gRPC Service
   Interface" section that links `docs/usage-source.md`. In `sdk/typescript/README.md`: add a usage-source line to
   "Features" and a `### UsageSourceClient` section under "Core API" with a `getStats` snippet whose names match T039
   and the `usage-subjects.ts` constants exactly (Constitution XIV)
-- [ ] T042 [P] Add a 051 entry to the "Active Technologies" and "Recent Changes" lists in root `CLAUDE.md` (the Active
+- [X] T042 [P] Add a 051 entry to the "Active Technologies" and "Recent Changes" lists in root `CLAUDE.md` (the Active
   Technologies entry already exists; add only what is missing), plus a short "Usage Source SDK Pattern
   (051-usage-source-getstats)" note covering `UsageSourceProvider`, the `sdk/go/testing` vocabulary duplication with its
   drift test, and `toConnectError`
-- [ ] T043 Run the full regression from quickstart.md §6: `make test`, `golangci-lint run ./...` (baseline is 0 issues,
+- [X] T043 Run the full regression from quickstart.md §6: `make test`, `golangci-lint run ./...` (baseline is 0 issues,
   so any finding comes from this change; use an extended timeout), `make lint-markdown`, and
   `bin/buf breaking --against '.git#branch=main'`. Fix all findings without editing `.golangci-lint.yml`
-- [ ] T044 Walk through every command and expected result in `specs/051-usage-source-getstats/quickstart.md` §1–§5 and
+- [X] T044 Walk through every command and expected result in `specs/051-usage-source-getstats/quickstart.md` §1–§5 and
   confirm each matches; record any deviation by fixing code or updating the quickstart
-- [ ] T045 Open a follow-up GitHub issue (with the user's approval) for the pre-existing `ConnectHandler` defect in
+- [X] T045 Open a follow-up GitHub issue (with the user's approval) for the pre-existing `ConnectHandler` defect in
   `sdk/go/pluginsdk/connect.go`, where `CostSourceService` RPC errors reach Connect clients as `Unknown`. Reference
   `toConnectError` as the one-line-per-method fix (research R8 scope boundary)
+  - **Resolved inline instead (user decision, 2026-09-25)**: all 11 `ConnectHandler` error returns now go
+    through `toConnectError`, covered by `TestConnectHandler_PreservesStatusCodes` in
+    `sdk/go/pluginsdk/connect_test.go`. No issue was filed. This is an observable fix for existing cost RPCs
+    over Connect: status codes that previously arrived as `Unknown` now arrive intact
 
 ---
 

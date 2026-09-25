@@ -242,3 +242,65 @@ func ExampleResourceMatcher() {
 
 	// Output: Resource is supported
 }
+
+// clusterUsageSource is a usage-only plugin. BasePlugin supplies the Plugin
+// cost methods, so GetStats is the only method the author writes.
+type clusterUsageSource struct {
+	*pluginsdk.BasePlugin
+}
+
+func (s *clusterUsageSource) GetStats(
+	_ context.Context, _ *pbc.GetStatsRequest,
+) (*pbc.GetStatsResponse, error) {
+	return &pbc.GetStatsResponse{
+		Mode: pbc.StatsMode_STATS_MODE_RUN_RATE,
+		Rows: []*pbc.UsageRow{
+			{
+				Subject: map[string]string{
+					pluginsdk.SubjectKind:      pluginsdk.KindWorkload,
+					pluginsdk.SubjectNamespace: "payments",
+					pluginsdk.SubjectPod:       "api-7d9f",
+					pluginsdk.SubjectNode:      "ip-10-0-1-5",
+				},
+				Metric: pluginsdk.MetricCPURequest,
+				Amount: 0.5,
+				Unit:   pluginsdk.UnitCore,
+			},
+			{
+				Subject: map[string]string{
+					pluginsdk.SubjectKind: pluginsdk.KindNode,
+					pluginsdk.SubjectNode: "ip-10-0-1-5",
+				},
+				Metric: pluginsdk.MetricCPUAllocatable,
+				Amount: 1.93,
+				Unit:   pluginsdk.UnitCore,
+			},
+		},
+	}, nil
+}
+
+// Example_usageSource shows a usage-only plugin. It declares
+// PLUGIN_CAPABILITY_USAGE_STATS explicitly so hosts do not mistake it for a
+// pricing plugin. A real main would pass config to pluginsdk.Run.
+func Example_usageSource() {
+	plugin := &clusterUsageSource{BasePlugin: pluginsdk.NewBasePlugin("k8s-usage")}
+
+	config := pluginsdk.ServeConfig{
+		Plugin: plugin,
+		PluginInfo: pluginsdk.NewPluginInfo("k8s-usage", "v1.0.0",
+			pluginsdk.WithCapabilities(pbc.PluginCapability_PLUGIN_CAPABILITY_USAGE_STATS),
+		),
+	}
+	fmt.Println(config.PluginInfo.Capabilities)
+
+	resp, _ := plugin.GetStats(context.Background(), &pbc.GetStatsRequest{})
+	for _, row := range resp.GetRows() {
+		fmt.Printf("%s %s=%.2f %s\n",
+			row.GetSubject()[pluginsdk.SubjectKind], row.GetMetric(), row.GetAmount(), row.GetUnit())
+	}
+
+	// Output:
+	// [PLUGIN_CAPABILITY_USAGE_STATS]
+	// workload cpu_request=0.50 core
+	// node cpu_allocatable=1.93 core
+}

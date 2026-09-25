@@ -81,6 +81,8 @@ var (
 	ErrTooManyTags                 = errors.New("tag count exceeds maximum")
 	ErrInvalidProjectionPeriod     = errors.New("invalid projection_period value")
 	ErrTargetResourcesExceedsLimit = errors.New("target_resources exceeds maximum")
+	// ErrInvertedStatsWindow reports a GetStatsRequest whose start is after its end.
+	ErrInvertedStatsWindow = errors.New("start time must not be after end time")
 )
 
 // ValidProviders is the list of valid provider values.
@@ -245,6 +247,32 @@ func ValidateGetRecommendationsRequest(req *pbc.GetRecommendationsRequest) error
 		return err
 	}
 
+	return nil
+}
+
+// ValidateGetStatsRequest validates a GetStatsRequest message. A request with
+// neither start nor end is a run-rate request and is valid. It returns
+// ErrNilRequest, or a *ContractError wrapping ErrNilStartTime, ErrNilEndTime,
+// or ErrInvertedStatsWindow (rules Q1–Q3 in data-model.md).
+func ValidateGetStatsRequest(req *pbc.GetStatsRequest) error {
+	if req == nil {
+		return ErrNilRequest
+	}
+
+	start, end := req.GetStart(), req.GetEnd()
+	switch {
+	case start == nil && end == nil:
+		return nil
+	case end == nil:
+		return NewContractError("end", nil, ErrNilEndTime)
+	case start == nil:
+		return NewContractError("start", nil, ErrNilStartTime)
+	}
+
+	if start.AsTime().After(end.AsTime()) {
+		return NewContractError("time_range",
+			fmt.Sprintf("start=%s end=%s", start.AsTime(), end.AsTime()), ErrInvertedStatsWindow)
+	}
 	return nil
 }
 

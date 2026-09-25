@@ -225,6 +225,14 @@ type ResolveResourceTypesProvider interface {
 		*pbc.ResolveResourceTypesResponse, error)
 }
 
+// UsageSourceProvider is an optional interface for plugins that serve
+// UsageSourceService. When ServeConfig.Plugin implements it, Serve registers
+// the service in gRPC and Connect modes and PLUGIN_CAPABILITY_USAGE_STATS is
+// inferred. Usage-only plugins should set PluginInfo.Capabilities explicitly.
+type UsageSourceProvider interface {
+	GetStats(ctx context.Context, req *pbc.GetStatsRequest) (*pbc.GetStatsResponse, error)
+}
+
 // BatchCostHandler is an optional interface that plugins can implement
 // for optimized batch processing. Plugins that do not implement this
 // interface are served via SDK fallback processing.
@@ -1150,16 +1158,22 @@ func Serve(ctx context.Context, config ServeConfig) error {
 	server.batchWorkers = resolveBatchWorkers(config.BatchWorkers)
 	server.typeRegistry = config.TypeRegistry
 	server.maxSourceTypes = resolveSourceTypesLimit(config.MaxSourceTypes)
+	warnUsageSourceCapabilities(&server.logger, config.Plugin, config.PluginInfo)
+
+	// nil when the plugin does not serve UsageSourceService.
+	usage, _ := config.Plugin.(UsageSourceProvider)
 
 	// Choose serving mode based on WebConfig
 	if config.Web.Enabled {
-		return serveConnect(ctx, listener, server, config)
+		return serveConnect(ctx, listener, server, usage, config)
 	}
-	return serveGRPC(ctx, listener, server, config)
+	return serveGRPC(ctx, listener, server, usage, config)
 }
 
 // serveGRPC starts a standard gRPC server (legacy mode).
-func serveGRPC(ctx context.Context, listener net.Listener, server *Server, config ServeConfig) error {
+func serveGRPC(
+	ctx context.Context, listener net.Listener, server *Server, usage UsageSourceProvider, config ServeConfig,
+) error {
 	// Build interceptor chain: tracing first, then user interceptors
 	interceptors := make([]grpc.UnaryServerInterceptor, 0, 1+len(config.UnaryInterceptors))
 	interceptors = append(interceptors, TracingUnaryServerInterceptor())
@@ -1170,6 +1184,9 @@ func serveGRPC(ctx context.Context, listener net.Listener, server *Server, confi
 		grpc.ChainUnaryInterceptor(interceptors...),
 	)
 	pbc.RegisterCostSourceServiceServer(grpcServer, server)
+	if usage != nil {
+		pbc.RegisterUsageSourceServiceServer(grpcServer, &usageSourceGRPCServer{provider: usage})
+	}
 	reflection.Register(grpcServer)
 
 	// Create channels for goroutine coordination
@@ -1206,11 +1223,14 @@ func serveGRPC(ctx context.Context, listener net.Listener, server *Server, confi
 
 // serveConnect starts an HTTP server that exposes the plugin over Connect, gRPC-Web, and gRPC
 // (using cleartext HTTP/2).
-// It registers the CostSource service and the gRPC health service, optionally exposes a /healthz endpoint,
+// It registers the CostSource service, the UsageSource service when usage is non-nil, and the gRPC
+// health service, optionally exposes a /healthz endpoint,
 // applies CORS when configured, enforces a 1MB request payload limit, and uses the provided timeouts.
 // The server shuts down gracefully when ctx is canceled.
 // It returns ctx.Err() if shutdown was initiated by the provided context, or the underlying serve error otherwise.
-func serveConnect(ctx context.Context, listener net.Listener, server *Server, config ServeConfig) error {
+func serveConnect(
+	ctx context.Context, listener net.Listener, server *Server, usage UsageSourceProvider, config ServeConfig,
+) error {
 	// Create HTTP mux for routing
 	mux := http.NewServeMux()
 
@@ -1222,6 +1242,12 @@ func serveConnect(ctx context.Context, listener net.Listener, server *Server, co
 	path, handler := pbcconnect.NewCostSourceServiceHandler(connectHandler, handlerOpts...)
 	mux.Handle(path, handler)
 
+	if usage != nil {
+		usagePath, usageHandler := pbcconnect.NewUsageSourceServiceHandler(
+			&usageSourceConnectHandler{provider: usage}, handlerOpts...)
+		mux.Handle(usagePath, usageHandler)
+	}
+
 	// Detect HealthChecker from plugin
 	var customChecker HealthChecker
 	if hc, ok := server.plugin.(HealthChecker); ok {
@@ -1230,10 +1256,12 @@ func serveConnect(ctx context.Context, listener net.Listener, server *Server, co
 
 	// Register gRPC health check service (grpc.health.v1.Health/Check)
 	// This provides standard gRPC health checking protocol support
-	healthChecker := grpchealth.NewStaticChecker(
-		// Report CostSourceService as serving
-		pbcconnect.CostSourceServiceName,
-	)
+	// Report CostSourceService, and UsageSourceService when served, as serving
+	healthServices := []string{pbcconnect.CostSourceServiceName}
+	if usage != nil {
+		healthServices = append(healthServices, pbcconnect.UsageSourceServiceName)
+	}
+	healthChecker := grpchealth.NewStaticChecker(healthServices...)
 	healthPath, healthHandler := grpchealth.NewHandler(healthChecker, handlerOpts...)
 	mux.Handle(healthPath, healthHandler)
 
