@@ -7,7 +7,9 @@ bin/
 CodeRabbitPrompt.md
 Github_Development_Prompt.md
 .claude/commands/
+.claude/skills/speckit-*/**
 .claude/agents/
 .claude/ralph-loop.local.md
 .specify/templates/
+.specify/extensions/
 sdk/typescript/packages/client/CHANGELOG.md
