@@ -435,6 +435,28 @@ make validate-commit     # Validate PR_MESSAGE.md or last commit
 
 Configuration: `lefthook.yml`, `commitlint.config.js`
 
+## Spec Kit
+
+Feature specs under `specs/` are driven by GitHub Spec Kit, pinned in `mise.toml` as
+`pipx:specify-cli`. Since 1.0 it installs Claude **skills** (`.claude/skills/speckit-*`,
+invoked as `/speckit-plan` etc.), not the old `.claude/commands/speckit.*.md` slash commands.
+
+```bash
+mise exec pipx:specify-cli -- specify check   # binary is `specify`, not the tool ID
+# Refresh templates/scripts/skills after bumping the pin (keeps constitution.md):
+mise exec pipx:specify-cli -- specify init --here --force --non-interactive --integration claude --script sh
+```
+
+- `init` overwrites but never deletes; remove superseded files by hand and review `git diff`
+- Extensions (`specify extension add <id>`) live in `.specify/extensions/` and add skills such as
+  `/speckit-bug-assess` → `/speckit-bug-fix` → `/speckit-bug-test` (reports in `.specify/bugs/<slug>/`)
+  and the pre-spec idea gate `/speckit-assess-intake` → `-research` → `-define` → `-shape` → `-decide`
+  (`.specify/assessments/<slug>/`; a "go" hands off to `/speckit-specify`)
+- Vendored spec-kit markdown (`.claude/skills/speckit-*`, `.specify/templates/`, `.specify/extensions/`)
+  is excluded in both `.markdownlintignore` and `.markdownlint-cli2.jsonc`; extend both when adding more
+- CI jobs pass explicit `install_args` to `jdx/mise-action` so specify-cli is never installed in CI;
+  keep that list in sync when adding tools CI actually needs
+
 ## Common Issues & Solutions
 
 ### YAML Linting Configuration
@@ -794,7 +816,36 @@ Pattern for subtests sharing a gRPC harness: Do NOT use `t.Parallel()` on subtes
 share a `TestHarness` — the deferred `harness.Stop()` can close the connection before
 parallel subtests complete.
 
+### Usage Source SDK Pattern (051-usage-source-getstats)
+
+- `UsageSourceProvider` (one method, `GetStats`) is optional. `Serve` registers `UsageSourceService`
+  through unexported adapters (`usage_source.go`) only when the plugin implements it, in gRPC and
+  Connect mode, and adds it to the Connect health checker. Plugins embed `*BasePlugin` for the
+  required cost methods.
+- Inference always adds the 4 base pricing capabilities, so usage-only plugins must use
+  `WithCapabilities(PLUGIN_CAPABILITY_USAGE_STATS)`; `Serve` warns otherwise (skipped for
+  `PluginInfoProvider` plugins).
+- Adding a capability enum value: bump `maxValidCapability`, `optionalCapabilities`,
+  `legacyCapabilityNames`, and the `IsValidCapability` bounds test (`TestLegacyCapabilityMapCompleteness`
+  fails until the legacy name exists).
+- `sdk/go/testing` cannot import `pluginsdk` (import cycle), so `testing/usage_source.go` keeps a
+  private copy of the subject keys; `pluginsdk/subjects_test.go` guards drift via `KnownSubjectKeys()`.
+- `toConnectError` (`connect_errors.go`): connect-go reports any non-`*connect.Error` as `Unknown`,
+  so every Connect handler must convert gRPC `status` errors with it. Both the usage adapter and
+  `ConnectHandler` (all cost RPCs) do; new Connect handler methods must too.
+- `ConnectHandler` does not implement `DryRun` or `ResolveResourceTypes`; over Connect they return
+  `Unimplemented` from the embedded `UnimplementedCostSourceServiceHandler`.
+- `make generate` uses unpinned remote Go plugins; regenerating can reformat doc comments in
+  untouched `*.connect.go` files. Restore unrelated generated files with `git checkout`.
+- `npm run build` in `sdk/typescript/packages/client` fails at tsup's DTS step (TS5101 `baseUrl`
+  deprecation under TypeScript 6) on main too; use `npx tsc --noEmit` to type-check.
+
 ## Active Technologies
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
+  google.golang.org/protobuf, google.golang.org/grpc, connectrpc.com/connect,
+  buf v1.32.1 (051-usage-source-getstats)
+- N/A (stateless usage-stats RPC; new `usage.proto` + UsageSourceService) (051-usage-source-getstats)
 
 - Go 1.27.1 (per go.mod) + github.com/rshade/ax-go v0.6.0 (Cobra CLI) (494-ax-go-plugin-cli)
 - N/A (stateless CLI wrapper around Serve; handshake stdout stays PORT=n) (494-ax-go-plugin-cli)
@@ -905,6 +956,10 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+
+- 051-usage-source-getstats: Added UsageSourceService.GetStats (usage.proto),
+  PLUGIN_CAPABILITY_USAGE_STATS = 14, pluginsdk.UsageSourceProvider, and a TS
+  UsageSourceClient
 
 - 494-ax-go-plugin-cli: Added pluginsdk.Run() ax-go CLI (handshake-safe Serve, dry-run subcommand)
 

@@ -714,6 +714,8 @@ const (
 	PluginCapability_PLUGIN_CAPABILITY_BATCH_COST PluginCapability = 12
 	// Plugin implements ResolveResourceTypes RPC for IaC type translation
 	PluginCapability_PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES PluginCapability = 13
+	// Plugin implements UsageSourceService.GetStats for workload usage
+	PluginCapability_PLUGIN_CAPABILITY_USAGE_STATS PluginCapability = 14
 )
 
 // Enum value maps for PluginCapability.
@@ -733,6 +735,7 @@ var (
 		11: "PLUGIN_CAPABILITY_DISMISS_RECOMMENDATIONS",
 		12: "PLUGIN_CAPABILITY_BATCH_COST",
 		13: "PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES",
+		14: "PLUGIN_CAPABILITY_USAGE_STATS",
 	}
 	PluginCapability_value = map[string]int32{
 		"PLUGIN_CAPABILITY_UNSPECIFIED":             0,
@@ -749,6 +752,7 @@ var (
 		"PLUGIN_CAPABILITY_DISMISS_RECOMMENDATIONS": 11,
 		"PLUGIN_CAPABILITY_BATCH_COST":              12,
 		"PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES":  13,
+		"PLUGIN_CAPABILITY_USAGE_STATS":             14,
 	}
 )
 
@@ -1052,7 +1056,7 @@ const file_finfocus_v1_enums_proto_rawDesc = "" +
 	"'RECOMMENDATION_REASON_UNDER_PROVISIONED\x10\x02\x12\x1e\n" +
 	"\x1aRECOMMENDATION_REASON_IDLE\x10\x03\x12#\n" +
 	"\x1fRECOMMENDATION_REASON_REDUNDANT\x10\x04\x12-\n" +
-	")RECOMMENDATION_REASON_OBSOLETE_GENERATION\x10\x05*\x86\x04\n" +
+	")RECOMMENDATION_REASON_OBSOLETE_GENERATION\x10\x05*\xa9\x04\n" +
 	"\x10PluginCapability\x12!\n" +
 	"\x1dPLUGIN_CAPABILITY_UNSPECIFIED\x10\x00\x12%\n" +
 	"!PLUGIN_CAPABILITY_PROJECTED_COSTS\x10\x01\x12\"\n" +
@@ -1068,7 +1072,8 @@ const file_finfocus_v1_enums_proto_rawDesc = "" +
 	"\x12-\n" +
 	")PLUGIN_CAPABILITY_DISMISS_RECOMMENDATIONS\x10\v\x12 \n" +
 	"\x1cPLUGIN_CAPABILITY_BATCH_COST\x10\f\x12,\n" +
-	"(PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES\x10\r*u\n" +
+	"(PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES\x10\r\x12!\n" +
+	"\x1dPLUGIN_CAPABILITY_USAGE_STATS\x10\x0e*u\n" +
 	"\fUsageProfile\x12\x1d\n" +
 	"\x19USAGE_PROFILE_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12USAGE_PROFILE_PROD\x10\x01\x12\x15\n" +

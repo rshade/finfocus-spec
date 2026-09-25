@@ -15,9 +15,11 @@
     "Github_Development_Prompt.md",
     "CodeRabbitPromptGrok.md",
     ".claude/commands/",
+    ".claude/skills/speckit-*/**",
     ".claude/agents/",
     ".claude/ralph-loop.local.md",
     ".specify/templates/",
+    ".specify/extensions/",
     ".opencode",
     "sdk/typescript/packages/client/CHANGELOG.md"
   ]

@@ -154,9 +154,9 @@ type CostSourceServiceClient interface {
 	// diagnostics, and graceful degradation handling.
 	//
 	// This RPC enables the core system to:
-	//  1. Verify plugin compatibility by checking spec_version against supported ranges
-	//  2. Display plugin information in diagnostic tools (plugin list commands)
-	//  3. Handle legacy plugins gracefully (Unimplemented error = legacy plugin)
+	//   1. Verify plugin compatibility by checking spec_version against supported ranges
+	//   2. Display plugin information in diagnostic tools (plugin list commands)
+	//   3. Handle legacy plugins gracefully (Unimplemented error = legacy plugin)
 	//
 	// The SDK provides a default implementation that returns compile-time constants.
 	// Plugins may override this to provide dynamic metadata if needed.
@@ -169,20 +169,21 @@ type CostSourceServiceClient interface {
 	//
 	// Client-side error handling example (Go):
 	//
-	//	resp, err := client.GetPluginInfo(ctx, &GetPluginInfoRequest{})
-	//	if err != nil {
-	//	    if status.Code(err) == codes.Unimplemented {
-	//	        // Legacy plugin - use fallback values
-	//	        log.Info("Plugin does not implement GetPluginInfo")
-	//	        return &PluginMetadata{Name: "unknown", Version: "unknown"}
-	//	    }
-	//	    return nil, fmt.Errorf("GetPluginInfo failed: %w", err)
-	//	}
-	//	return &PluginMetadata{
-	//	    Name:        resp.GetName(),
-	//	    Version:     resp.GetVersion(),
-	//	    SpecVersion: resp.GetSpecVersion(),
-	//	}
+	//   resp, err := client.GetPluginInfo(ctx, &GetPluginInfoRequest{})
+	//   if err != nil {
+	//       if status.Code(err) == codes.Unimplemented {
+	//           // Legacy plugin - use fallback values
+	//           log.Info("Plugin does not implement GetPluginInfo")
+	//           return &PluginMetadata{Name: "unknown", Version: "unknown"}
+	//       }
+	//       return nil, fmt.Errorf("GetPluginInfo failed: %w", err)
+	//   }
+	//   return &PluginMetadata{
+	//       Name:        resp.GetName(),
+	//       Version:     resp.GetVersion(),
+	//       SpecVersion: resp.GetSpecVersion(),
+	//   }
+	//
 	GetPluginInfo(context.Context, *connect.Request[v1.GetPluginInfoRequest]) (*connect.Response[v1.GetPluginInfoResponse], error)
 	// DryRun returns field mapping information for a resource type without
 	// performing actual cost data retrieval. Useful for debugging plugin
@@ -202,19 +203,20 @@ type CostSourceServiceClient interface {
 	//
 	// Client-side error handling example (Go):
 	//
-	//	resp, err := client.DryRun(ctx, &DryRunRequest{...})
-	//	if err != nil {
-	//	    if status.Code(err) == codes.Unimplemented {
-	//	        log.Info("Plugin does not implement DryRun RPC")
-	//	        // Fall back to inferring capabilities from Supports RPC
-	//	        return nil
-	//	    }
-	//	    return nil, fmt.Errorf("DryRun failed: %w", err)
-	//	}
-	//	// Process field mappings
-	//	for _, fm := range resp.GetFieldMappings() {
-	//	    log.Printf("%s: %v", fm.GetFieldName(), fm.GetSupportStatus())
-	//	}
+	//   resp, err := client.DryRun(ctx, &DryRunRequest{...})
+	//   if err != nil {
+	//       if status.Code(err) == codes.Unimplemented {
+	//           log.Info("Plugin does not implement DryRun RPC")
+	//           // Fall back to inferring capabilities from Supports RPC
+	//           return nil
+	//       }
+	//       return nil, fmt.Errorf("DryRun failed: %w", err)
+	//   }
+	//   // Process field mappings
+	//   for _, fm := range resp.GetFieldMappings() {
+	//       log.Printf("%s: %v", fm.GetFieldName(), fm.GetSupportStatus())
+	//   }
+	//
 	DryRun(context.Context, *connect.Request[v1.DryRunRequest]) (*connect.Response[v1.DryRunResponse], error)
 	// BatchCost queries cost data for multiple resources in a single request.
 	// Supports estimate, actual, and projected cost queries via the query_type
@@ -488,9 +490,9 @@ type CostSourceServiceHandler interface {
 	// diagnostics, and graceful degradation handling.
 	//
 	// This RPC enables the core system to:
-	//  1. Verify plugin compatibility by checking spec_version against supported ranges
-	//  2. Display plugin information in diagnostic tools (plugin list commands)
-	//  3. Handle legacy plugins gracefully (Unimplemented error = legacy plugin)
+	//   1. Verify plugin compatibility by checking spec_version against supported ranges
+	//   2. Display plugin information in diagnostic tools (plugin list commands)
+	//   3. Handle legacy plugins gracefully (Unimplemented error = legacy plugin)
 	//
 	// The SDK provides a default implementation that returns compile-time constants.
 	// Plugins may override this to provide dynamic metadata if needed.
@@ -503,20 +505,21 @@ type CostSourceServiceHandler interface {
 	//
 	// Client-side error handling example (Go):
 	//
-	//	resp, err := client.GetPluginInfo(ctx, &GetPluginInfoRequest{})
-	//	if err != nil {
-	//	    if status.Code(err) == codes.Unimplemented {
-	//	        // Legacy plugin - use fallback values
-	//	        log.Info("Plugin does not implement GetPluginInfo")
-	//	        return &PluginMetadata{Name: "unknown", Version: "unknown"}
-	//	    }
-	//	    return nil, fmt.Errorf("GetPluginInfo failed: %w", err)
-	//	}
-	//	return &PluginMetadata{
-	//	    Name:        resp.GetName(),
-	//	    Version:     resp.GetVersion(),
-	//	    SpecVersion: resp.GetSpecVersion(),
-	//	}
+	//   resp, err := client.GetPluginInfo(ctx, &GetPluginInfoRequest{})
+	//   if err != nil {
+	//       if status.Code(err) == codes.Unimplemented {
+	//           // Legacy plugin - use fallback values
+	//           log.Info("Plugin does not implement GetPluginInfo")
+	//           return &PluginMetadata{Name: "unknown", Version: "unknown"}
+	//       }
+	//       return nil, fmt.Errorf("GetPluginInfo failed: %w", err)
+	//   }
+	//   return &PluginMetadata{
+	//       Name:        resp.GetName(),
+	//       Version:     resp.GetVersion(),
+	//       SpecVersion: resp.GetSpecVersion(),
+	//   }
+	//
 	GetPluginInfo(context.Context, *connect.Request[v1.GetPluginInfoRequest]) (*connect.Response[v1.GetPluginInfoResponse], error)
 	// DryRun returns field mapping information for a resource type without
 	// performing actual cost data retrieval. Useful for debugging plugin
@@ -536,19 +539,20 @@ type CostSourceServiceHandler interface {
 	//
 	// Client-side error handling example (Go):
 	//
-	//	resp, err := client.DryRun(ctx, &DryRunRequest{...})
-	//	if err != nil {
-	//	    if status.Code(err) == codes.Unimplemented {
-	//	        log.Info("Plugin does not implement DryRun RPC")
-	//	        // Fall back to inferring capabilities from Supports RPC
-	//	        return nil
-	//	    }
-	//	    return nil, fmt.Errorf("DryRun failed: %w", err)
-	//	}
-	//	// Process field mappings
-	//	for _, fm := range resp.GetFieldMappings() {
-	//	    log.Printf("%s: %v", fm.GetFieldName(), fm.GetSupportStatus())
-	//	}
+	//   resp, err := client.DryRun(ctx, &DryRunRequest{...})
+	//   if err != nil {
+	//       if status.Code(err) == codes.Unimplemented {
+	//           log.Info("Plugin does not implement DryRun RPC")
+	//           // Fall back to inferring capabilities from Supports RPC
+	//           return nil
+	//       }
+	//       return nil, fmt.Errorf("DryRun failed: %w", err)
+	//   }
+	//   // Process field mappings
+	//   for _, fm := range resp.GetFieldMappings() {
+	//       log.Printf("%s: %v", fm.GetFieldName(), fm.GetSupportStatus())
+	//   }
+	//
 	DryRun(context.Context, *connect.Request[v1.DryRunRequest]) (*connect.Response[v1.DryRunResponse], error)
 	// BatchCost queries cost data for multiple resources in a single request.
 	// Supports estimate, actual, and projected cost queries via the query_type
