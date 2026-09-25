@@ -28,6 +28,8 @@ jobs:
         uses: jdx/mise-action@v4
         with:
           version: ${{ env.MISE_VERSION }}
+          # Explicit list keeps local-only tools (e.g. specify-cli) out of CI.
+          install_args: go node buf
 
       - name: Install npm dependencies
         run: npm ci
@@ -84,6 +86,7 @@ jobs:
         uses: jdx/mise-action@v4
         with:
           version: ${{ env.MISE_VERSION }}
+          install_args: go node buf golangci-lint
 
       - name: Install npm dependencies
         run: npm ci

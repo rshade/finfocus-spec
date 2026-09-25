@@ -435,6 +435,28 @@ make validate-commit     # Validate PR_MESSAGE.md or last commit
 
 Configuration: `lefthook.yml`, `commitlint.config.js`
 
+## Spec Kit
+
+Feature specs under `specs/` are driven by GitHub Spec Kit, pinned in `mise.toml` as
+`pipx:specify-cli`. Since 1.0 it installs Claude **skills** (`.claude/skills/speckit-*`,
+invoked as `/speckit-plan` etc.), not the old `.claude/commands/speckit.*.md` slash commands.
+
+```bash
+mise exec pipx:specify-cli -- specify check   # binary is `specify`, not the tool ID
+# Refresh templates/scripts/skills after bumping the pin (keeps constitution.md):
+mise exec pipx:specify-cli -- specify init --here --force --non-interactive --integration claude --script sh
+```
+
+- `init` overwrites but never deletes; remove superseded files by hand and review `git diff`
+- Extensions (`specify extension add <id>`) live in `.specify/extensions/` and add skills such as
+  `/speckit-bug-assess` → `/speckit-bug-fix` → `/speckit-bug-test` (reports in `.specify/bugs/<slug>/`)
+  and the pre-spec idea gate `/speckit-assess-intake` → `-research` → `-define` → `-shape` → `-decide`
+  (`.specify/assessments/<slug>/`; a "go" hands off to `/speckit-specify`)
+- Vendored spec-kit markdown (`.claude/skills/speckit-*`, `.specify/templates/`, `.specify/extensions/`)
+  is excluded in both `.markdownlintignore` and `.markdownlint-cli2.jsonc`; extend both when adding more
+- CI jobs pass explicit `install_args` to `jdx/mise-action` so specify-cli is never installed in CI;
+  keep that list in sync when adding tools CI actually needs
+
 ## Common Issues & Solutions
 
 ### YAML Linting Configuration
@@ -795,6 +817,11 @@ share a `TestHarness` — the deferred `harness.Stop()` can close the connection
 parallel subtests complete.
 
 ## Active Technologies
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
+  google.golang.org/protobuf, google.golang.org/grpc, connectrpc.com/connect,
+  buf v1.32.1 (051-usage-source-getstats)
+- N/A (stateless usage-stats RPC; new `usage.proto` + UsageSourceService) (051-usage-source-getstats)
 
 - Go 1.27.1 (per go.mod) + github.com/rshade/ax-go v0.6.0 (Cobra CLI) (494-ax-go-plugin-cli)
 - N/A (stateless CLI wrapper around Serve; handshake stdout stays PORT=n) (494-ax-go-plugin-cli)
