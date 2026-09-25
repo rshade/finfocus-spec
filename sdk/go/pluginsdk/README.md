@@ -191,7 +191,8 @@ type ServeConfig struct {
     Port int
 
     // Optional: Registry for looking up plugins (used for Supports validation).
-    // If nil, defaults to a no-op registry.
+    // If nil, Supports skips provider/region validation and delegates
+    // directly to the plugin's Supports method.
     Registry RegistryLookup
 
     // Optional: Custom logger.

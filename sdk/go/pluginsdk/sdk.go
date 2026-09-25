@@ -244,16 +244,18 @@ type BatchCostHandler interface {
 }
 
 // RegistryLookup defines the interface for looking up plugins by provider and region.
-// This is used to validate incoming Supports requests against registered plugins.
+// When configured, Supports rejects requests whose provider/region combination has
+// no registered plugin before consulting the plugin itself.
 type RegistryLookup interface {
 	// FindPlugin returns the plugin name for the given provider and region.
 	// Returns empty string if no plugin is registered for the combination.
 	FindPlugin(provider, region string) string
 }
 
-// DefaultRegistryLookup provides a no-op registry lookup that always returns empty.
-// This causes all Supports() calls to return InvalidArgument since no plugin
-// can be found. Use a real RegistryLookup implementation in production.
+// DefaultRegistryLookup represents "no registry configured". It is installed when
+// no RegistryLookup is supplied. With it, Supports skips the provider/region check
+// and delegates straight to the plugin's SupportsProvider (or returns the default
+// not-implemented response). FindPlugin always returns an empty string.
 type DefaultRegistryLookup struct{}
 
 // FindPlugin always returns empty string indicating no plugin is registered.
@@ -305,7 +307,7 @@ type Server struct {
 
 // NewServer creates a Server that wraps the provided Plugin and initializes sensible defaults.
 //
-// The returned Server uses a DefaultRegistryLookup for provider resolution, a package-default logger,
+// The returned Server uses DefaultRegistryLookup (no Supports provider/region check), a package-default logger,
 // and infers global capabilities from the plugin. Batch-related defaults are applied: maxBatchSize is
 // set to DefaultMaxBatchSize and batchWorkers to DefaultBatchWorkers.
 func NewServer(plugin Plugin) *Server {
@@ -321,14 +323,14 @@ func NewServer(plugin Plugin) *Server {
 }
 
 // NewServerWithRegistry creates a Server with a custom registry lookup.
-// If registry is nil, DefaultRegistryLookup is used.
+// If registry is nil, DefaultRegistryLookup is used and Supports skips provider/region validation.
 // GetPluginInfo will return Unimplemented (legacy plugin behavior).
 func NewServerWithRegistry(plugin Plugin, registry RegistryLookup) *Server {
 	return NewServerWithOptions(plugin, registry, nil, nil)
 }
 
 // NewServerWithOptions creates a Server with custom registry, logger, and plugin info.
-// If registry is nil, DefaultRegistryLookup is used.
+// If registry is nil, DefaultRegistryLookup is used and Supports skips provider/region validation.
 // If logger is nil, a default logger is used.
 // If info is nil, GetPluginInfo will return Unimplemented (legacy plugin behavior).
 //
@@ -602,6 +604,16 @@ func (s *Server) setTypeRegistry(registry *TypeRegistry, capabilitiesExplicit bo
 	s.globalCapabilities = append(s.globalCapabilities, resolve)
 }
 
+// hasRegistry reports whether a real RegistryLookup was configured, as opposed to
+// none (nil) or the DefaultRegistryLookup placeholder.
+func (s *Server) hasRegistry() bool {
+	if s.registry == nil {
+		return false
+	}
+	_, isDefault := s.registry.(*DefaultRegistryLookup)
+	return !isDefault
+}
+
 // containsCapability reports whether target is present in capabilities.
 func containsCapability(capabilities []pbc.PluginCapability, target pbc.PluginCapability) bool {
 	return slices.Contains(capabilities, target)
@@ -637,8 +649,10 @@ func (s *Server) EstimateCost(
 }
 
 // Supports implements the gRPC Supports method.
-// It performs two-step validation: first checks registry for plugin by provider/region,
-// then delegates to the plugin's Supports method if implemented.
+// When a RegistryLookup is configured, it first rejects provider/region combinations
+// with no registered plugin. It then delegates to the plugin's Supports method if
+// implemented. With no registry (nil or DefaultRegistryLookup), the provider/region
+// check is skipped.
 func (s *Server) Supports(ctx context.Context, req *pbc.SupportsRequest) (*pbc.SupportsResponse, error) {
 	// Validate request has resource descriptor
 	if req.GetResource() == nil {
@@ -650,8 +664,7 @@ func (s *Server) Supports(ctx context.Context, req *pbc.SupportsRequest) (*pbc.S
 	region := resource.GetRegion()
 
 	// Step 1: Registry lookup - validate provider/region combination
-	pluginName := s.registry.FindPlugin(provider, region)
-	if pluginName == "" {
+	if s.hasRegistry() && s.registry.FindPlugin(provider, region) == "" {
 		return nil, status.Errorf(
 			codes.InvalidArgument,
 			"no plugin registered for provider %q and region %q",
@@ -1011,7 +1024,9 @@ type ServeConfig struct {
 	// Plugin is the implementation of the cost source service.
 	Plugin Plugin
 
-	// Registry is an optional registry lookup for validating supports requests.
+	// Registry is an optional registry lookup for validating Supports requests.
+	// When nil, Supports skips provider/region validation and delegates directly
+	// to the plugin.
 	Registry RegistryLookup
 
 	// PluginInfo is optional plugin metadata returned by GetPluginInfo RPC.

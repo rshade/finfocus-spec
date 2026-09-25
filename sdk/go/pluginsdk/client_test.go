@@ -151,12 +151,27 @@ func TestClient_EstimateCost(t *testing.T) {
 	}
 }
 
+// supportsClientTestPlugin adds a SupportsProvider implementation to clientTestPlugin.
+type supportsClientTestPlugin struct {
+	clientTestPlugin
+}
+
+func (m *supportsClientTestPlugin) Supports(
+	_ context.Context,
+	req *pbc.SupportsRequest,
+) (*pbc.SupportsResponse, error) {
+	if req.GetResource().GetRegion() == "us-east-1" {
+		return &pbc.SupportsResponse{Supported: true}, nil
+	}
+	return &pbc.SupportsResponse{Reason: "region not compiled in"}, nil
+}
+
 func TestClient_Supports(t *testing.T) {
 	// Start server
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
 
-	plugin := &clientTestPlugin{name: "supports-test-plugin"}
+	plugin := &supportsClientTestPlugin{clientTestPlugin{name: "supports-test-plugin"}}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -179,16 +194,28 @@ func TestClient_Supports(t *testing.T) {
 	// Create client and test
 	client := pluginsdk.NewConnectClient("http://" + addr)
 
-	// The Supports method requires a registry lookup, which will fail for this test.
-	// This test verifies the client can make the call and properly receive error responses.
-	_, err = client.Supports(ctx, &pbc.ResourceDescriptor{
+	// No Registry is configured, so Supports reaches the plugin's SupportsProvider.
+	resp, err := client.Supports(ctx, &pbc.ResourceDescriptor{
 		Provider:     "aws",
 		ResourceType: "aws:ec2/instance:Instance",
 		Region:       "us-east-1",
 	})
-	// Error expected because no plugin is registered in the registry
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "no plugin registered")
+	require.NoError(t, err)
+	assert.True(t, resp.GetSupported())
+
+	resp, err = client.Supports(ctx, &pbc.ResourceDescriptor{
+		Provider:     "aws",
+		ResourceType: "aws:ec2/instance:Instance",
+		Region:       "eu-west-1",
+	})
+	require.NoError(t, err)
+	assert.False(t, resp.GetSupported())
+	assert.Equal(t, "region not compiled in", resp.GetReason())
+
+	// SupportsResourceType sends only the resource type, as hosts do today.
+	supported, err := client.SupportsResourceType(ctx, "aws:ec2/instance:Instance")
+	require.NoError(t, err)
+	assert.False(t, supported)
 
 	// Cleanup
 	cancel()

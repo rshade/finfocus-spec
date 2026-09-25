@@ -473,60 +473,6 @@ func TestSupports_NilResourceReturnsInvalidArgument(t *testing.T) {
 	assert.Contains(t, st.Message(), "resource descriptor is required")
 }
 
-// TestSupports_NewServerUsesDefaultRegistry tests that NewServer uses DefaultRegistryLookup.
-func TestSupports_NewServerUsesDefaultRegistry(t *testing.T) {
-	plugin := &mockSupportsPlugin{
-		mockPlugin: mockPlugin{name: "test-plugin"},
-		supported:  true,
-	}
-	// Use NewServer which uses DefaultRegistryLookup (always returns empty)
-	server := NewServer(plugin)
-
-	req := &pbc.SupportsRequest{
-		Resource: &pbc.ResourceDescriptor{
-			Provider:     "aws",
-			ResourceType: "ec2",
-			Region:       "us-east-1",
-		},
-	}
-
-	_, err := server.Supports(context.Background(), req)
-
-	// DefaultRegistryLookup returns "" for all lookups, so this should fail with InvalidArgument
-	require.Error(t, err)
-	st, ok := status.FromError(err)
-	require.True(t, ok)
-	assert.Equal(t, codes.InvalidArgument, st.Code())
-	assert.Contains(t, st.Message(), "no plugin registered")
-}
-
-// TestNewServerWithRegistry_NilRegistryUsesDefault tests that nil registry falls back to default.
-func TestNewServerWithRegistry_NilRegistryUsesDefault(t *testing.T) {
-	plugin := &mockSupportsPlugin{
-		mockPlugin: mockPlugin{name: "test-plugin"},
-		supported:  true,
-	}
-	// Pass nil registry - should fall back to DefaultRegistryLookup
-	server := NewServerWithRegistry(plugin, nil)
-
-	req := &pbc.SupportsRequest{
-		Resource: &pbc.ResourceDescriptor{
-			Provider:     "aws",
-			ResourceType: "ec2",
-			Region:       "us-east-1",
-		},
-	}
-
-	_, err := server.Supports(context.Background(), req)
-
-	// Should behave same as NewServer - DefaultRegistryLookup returns ""
-	require.Error(t, err)
-	st, ok := status.FromError(err)
-	require.True(t, ok)
-	assert.Equal(t, codes.InvalidArgument, st.Code())
-	assert.Contains(t, st.Message(), "no plugin registered")
-}
-
 // TestNewServerWithOptions_WithCustomLogger tests that custom logger is used.
 func TestNewServerWithOptions_WithCustomLogger(t *testing.T) {
 	plugin := &mockPlugin{name: "test-plugin"}
