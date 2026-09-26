@@ -844,6 +844,11 @@ parallel subtests complete.
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
   google.golang.org/protobuf, google.golang.org/grpc, connectrpc.com/connect,
+  buf v1.32.1; no new Go dependencies (052-allocator-allocate)
+- N/A (stateless allocation RPC contract and SDK helpers) (052-allocator-allocate)
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
+  google.golang.org/protobuf, google.golang.org/grpc, connectrpc.com/connect,
   buf v1.32.1 (051-usage-source-getstats)
 - N/A (stateless usage-stats RPC; new `usage.proto` + UsageSourceService) (051-usage-source-getstats)
 
@@ -956,6 +961,10 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+
+- 052-allocator-allocate: Adds AllocatorService.Allocate (allocation.proto),
+  PLUGIN_CAPABILITY_ALLOCATION = 15, pluginsdk.AllocatorProvider and DecodePolicy,
+  conservation/validation helpers, RunAllocatorConformance, and a TS AllocatorClient
 
 - 051-usage-source-getstats: Added UsageSourceService.GetStats (usage.proto),
   PLUGIN_CAPABILITY_USAGE_STATS = 14, pluginsdk.UsageSourceProvider, and a TS
