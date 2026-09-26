@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.2](https://github.com/rshade/finfocus-spec/compare/v0.6.1...v0.6.2) (2026-09-26)
+
+
+### Added
+
+* **proto:** add UsageSourceService.GetStats for workload usage plugins ([#508](https://github.com/rshade/finfocus-spec/issues/508)) ([d314c2a](https://github.com/rshade/finfocus-spec/commit/d314c2af06c42e05cdd76f973eb3fd6d7ed1b513)), closes [#505](https://github.com/rshade/finfocus-spec/issues/505)
+
+
+### Fixed
+
+* **pluginsdk:** make advertised capabilities reachable by hosts ([#510](https://github.com/rshade/finfocus-spec/issues/510)) ([e51f8b4](https://github.com/rshade/finfocus-spec/commit/e51f8b4b0e51901ca1071b0f700cd134528c32e4))
+
 ## [0.6.1](https://github.com/rshade/finfocus-spec/compare/v0.6.0...v0.6.1) (2026-09-08)
 
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.6](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.6.5...finfocus-client-v0.6.6) (2026-09-26)
+
+
+### Features
+
+* **proto:** add UsageSourceService.GetStats for workload usage plugins ([#508](https://github.com/rshade/finfocus-spec/issues/508)) ([d314c2a](https://github.com/rshade/finfocus-spec/commit/d314c2af06c42e05cdd76f973eb3fd6d7ed1b513)), closes [#505](https://github.com/rshade/finfocus-spec/issues/505)
+
 ## [0.6.5](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.6.4...finfocus-client-v0.6.5) (2026-09-08)
 
 
