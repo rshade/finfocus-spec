@@ -709,6 +709,7 @@ Simply implement the standard interfaces:
 | `DismissProvider`                | `DismissRecommendation`  | `PLUGIN_CAPABILITY_DISMISS_RECOMMENDATIONS`    |
 | `BatchCostHandler`               | `BatchCost`              | `PLUGIN_CAPABILITY_BATCH_COST`                 |
 | `ResolveResourceTypesProvider`   | `ResolveResourceTypes`   | `PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES`     |
+| `UsageSourceProvider`            | `GetStats`               | `PLUGIN_CAPABILITY_USAGE_STATS`                |
 
 ```go
 // Example: Implementing DryRunHandler
@@ -742,6 +743,61 @@ info := pluginsdk.NewPluginInfo("my-plugin", "v1.0.0",
 
 **Backward Compatibility**: The SDK automatically populates the legacy `metadata` map
 (e.g., `"supports_dry_run": "true"`) derived from your capabilities to support older hosts.
+
+### Usage-Only Plugins
+
+A usage source reports how much CPU and memory workloads request or consume, and serves
+`UsageSourceService.GetStats` instead of pricing. See [docs/usage-source.md](../../../docs/usage-source.md)
+for the row, subject, and priceable-resource semantics.
+
+`ServeConfig.Plugin` is typed `Plugin`, which requires the four cost methods. Embed
+`*pluginsdk.BasePlugin` to supply those stubs; `GetStats` is then the only method you write.
+When the plugin implements `UsageSourceProvider`, `Serve` registers `UsageSourceService` in both
+gRPC and Connect modes, reports it in the Connect health check, and legacy hosts see
+`supports_usage_stats=true` in the metadata.
+
+```go
+type clusterUsageSource struct {
+    *pluginsdk.BasePlugin
+}
+
+func (s *clusterUsageSource) GetStats(
+    ctx context.Context, req *pbc.GetStatsRequest,
+) (*pbc.GetStatsResponse, error) {
+    return &pbc.GetStatsResponse{
+        Mode: pbc.StatsMode_STATS_MODE_RUN_RATE,
+        Rows: []*pbc.UsageRow{{
+            Subject: map[string]string{
+                pluginsdk.SubjectKind:      pluginsdk.KindWorkload,
+                pluginsdk.SubjectNamespace: "payments",
+                pluginsdk.SubjectPod:       "api-7d9f",
+                pluginsdk.SubjectNode:      "ip-10-0-1-5",
+            },
+            Metric: pluginsdk.MetricCPURequest,
+            Amount: 0.5,
+            Unit:   pluginsdk.UnitCore,
+        }},
+    }, nil
+}
+
+func main() {
+    os.Exit(pluginsdk.Run(pluginsdk.ServeConfig{
+        Plugin: &clusterUsageSource{BasePlugin: pluginsdk.NewBasePlugin("k8s-usage")},
+        PluginInfo: pluginsdk.NewPluginInfo("k8s-usage", "v1.0.0",
+            pluginsdk.WithCapabilities(pbc.PluginCapability_PLUGIN_CAPABILITY_USAGE_STATS),
+        ),
+    }))
+}
+```
+
+**Declare capabilities explicitly.** Auto-discovery always includes the four pricing capabilities
+from the `Plugin` interface, so a usage-only plugin that relies on it advertises pricing it does not
+offer. Hosts can tell a usage-only plugin apart from a pricing plugin only when its capabilities are
+explicit. If a usage source starts with no explicit `PluginInfo.Capabilities` and does not implement
+`PluginInfoProvider`, `Serve` logs one warning at startup telling you to set them. A plugin that
+really does both pricing and usage can ignore the warning.
+
+The compiled version of this snippet is `Example_usageSource` in `example_test.go`.
 
 ### BatchCost RPC
 

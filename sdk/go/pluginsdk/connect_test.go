@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
@@ -1099,4 +1100,85 @@ type slowPlugin struct {
 func (p *slowPlugin) Name() string {
 	time.Sleep(500 * time.Millisecond)
 	return "slow-plugin"
+}
+
+// statusErrorPlugin returns a gRPC status error from every cost method.
+type statusErrorPlugin struct {
+	*pluginsdk.BasePlugin
+
+	err error
+}
+
+func (p *statusErrorPlugin) GetProjectedCost(
+	context.Context, *pbc.GetProjectedCostRequest,
+) (*pbc.GetProjectedCostResponse, error) {
+	return nil, p.err
+}
+
+func (p *statusErrorPlugin) GetActualCost(
+	context.Context, *pbc.GetActualCostRequest,
+) (*pbc.GetActualCostResponse, error) {
+	return nil, p.err
+}
+
+func (p *statusErrorPlugin) GetPricingSpec(
+	context.Context, *pbc.GetPricingSpecRequest,
+) (*pbc.GetPricingSpecResponse, error) {
+	return nil, p.err
+}
+
+func (p *statusErrorPlugin) EstimateCost(
+	context.Context, *pbc.EstimateCostRequest,
+) (*pbc.EstimateCostResponse, error) {
+	return nil, p.err
+}
+
+// TestConnectHandler_PreservesStatusCodes verifies that gRPC status errors reach
+// Connect clients with their original code instead of CodeUnknown.
+func TestConnectHandler_PreservesStatusCodes(t *testing.T) {
+	plugin := &statusErrorPlugin{
+		BasePlugin: pluginsdk.NewBasePlugin("status-errors"),
+		err:        status.Error(codes.PermissionDenied, "denied"),
+	}
+	handler := pluginsdk.NewConnectHandler(pluginsdk.NewServer(plugin))
+	ctx := context.Background()
+	resource := &pbc.ResourceDescriptor{Provider: "aws", ResourceType: "aws:ec2/instance:Instance"}
+
+	calls := map[string]func() error{
+		"GetProjectedCost": func() error {
+			_, err := handler.GetProjectedCost(
+				ctx,
+				connect.NewRequest(&pbc.GetProjectedCostRequest{Resource: resource}),
+			)
+			return err
+		},
+		"GetActualCost": func() error {
+			_, err := handler.GetActualCost(ctx, connect.NewRequest(&pbc.GetActualCostRequest{ResourceId: "i-1"}))
+			return err
+		},
+		"GetPricingSpec": func() error {
+			_, err := handler.GetPricingSpec(ctx, connect.NewRequest(&pbc.GetPricingSpecRequest{Resource: resource}))
+			return err
+		},
+		"EstimateCost": func() error {
+			_, err := handler.EstimateCost(ctx, connect.NewRequest(&pbc.EstimateCostRequest{
+				ResourceType: "aws:ec2/instance:Instance",
+			}))
+			return err
+		},
+	}
+	for name, call := range calls {
+		t.Run(name, func(t *testing.T) {
+			err := call()
+			assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
+			var connectErr *connect.Error
+			require.ErrorAs(t, err, &connectErr)
+			assert.Equal(t, "denied", connectErr.Message())
+		})
+	}
+
+	t.Run("GetPluginInfo without info", func(t *testing.T) {
+		_, err := handler.GetPluginInfo(ctx, connect.NewRequest(&pbc.GetPluginInfoRequest{}))
+		assert.Equal(t, connect.CodeUnimplemented, connect.CodeOf(err))
+	})
 }

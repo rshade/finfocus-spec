@@ -1,141 +1,62 @@
-package pluginsdk_test
+// Copyright 2026 The FinFocus Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//nolint:testpackage // Tests the unexported toConnectError helper
+package pluginsdk
 
 import (
-	"context"
-	"net"
-	"net/http"
+	"errors"
 	"testing"
-	"time"
 
 	"connectrpc.com/connect"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
-	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
-	"github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1/pbcconnect"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-// optionalRPCConnectPlugin implements DryRunHandler and ResolveResourceTypesProvider.
-type optionalRPCConnectPlugin struct {
-	connectTestPlugin
-}
-
-func (p *optionalRPCConnectPlugin) HandleDryRun(
-	_ context.Context,
-	_ *pbc.DryRunRequest,
-) (*pbc.DryRunResponse, error) {
-	return pluginsdk.NewDryRunResponse(pluginsdk.WithResourceTypeSupported(true)), nil
-}
-
-func (p *optionalRPCConnectPlugin) ResolveResourceTypes(
-	_ context.Context,
-	req *pbc.ResolveResourceTypesRequest,
-) (*pbc.ResolveResourceTypesResponse, error) {
-	mappings := make(map[string]*pbc.ResourceTypeMapping, len(req.GetSourceTypes()))
-	for _, src := range req.GetSourceTypes() {
-		mappings[src] = &pbc.ResourceTypeMapping{PulumiToken: "aws:ec2/instance:Instance", Supported: true}
-	}
-	return &pbc.ResolveResourceTypesResponse{Mappings: mappings}, nil
-}
-
-func serveConnectForTest(t *testing.T, plugin pluginsdk.Plugin) pbcconnect.CostSourceServiceClient {
-	t.Helper()
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(t, err)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	errCh := make(chan error, 1)
-	go func() {
-		errCh <- pluginsdk.Serve(ctx, pluginsdk.ServeConfig{
-			Plugin:   plugin,
-			Listener: listener,
-			Web:      pluginsdk.WebConfig{Enabled: true, EnableHealthEndpoint: true},
-		})
-	}()
-	t.Cleanup(func() {
-		cancel()
-		select {
-		case <-errCh:
-		case <-time.After(5 * time.Second):
-			t.Error("server did not shut down in time")
-		}
+func TestToConnectError(t *testing.T) {
+	t.Run("nil", func(t *testing.T) {
+		assert.NoError(t, toConnectError(nil))
 	})
 
-	addr := listener.Addr().String()
-	waitForServer(t, addr)
-	return pbcconnect.NewCostSourceServiceClient(http.DefaultClient, "http://"+addr)
-}
+	t.Run("connect error unchanged", func(t *testing.T) {
+		in := connect.NewError(connect.CodeNotFound, errors.New("missing"))
+		assert.Same(t, in, toConnectError(in))
+	})
 
-func TestConnectHandler_PreservesStatusCodes(t *testing.T) {
-	client := serveConnectForTest(t, &connectTestPlugin{name: "codes"})
-	ctx := context.Background()
+	t.Run("plain error unchanged", func(t *testing.T) {
+		in := errors.New("boom")
+		assert.Same(t, in, toConnectError(in))
+	})
 
-	tests := []struct {
-		name string
-		call func() error
-		want connect.Code
-	}{
-		{
-			name: "Supports nil resource is InvalidArgument",
-			call: func() error {
-				_, err := client.Supports(ctx, connect.NewRequest(&pbc.SupportsRequest{}))
-				return err
-			},
-			want: connect.CodeInvalidArgument,
-		},
-		{
-			name: "GetBudgets without provider is Unimplemented",
-			call: func() error {
-				_, err := client.GetBudgets(ctx, connect.NewRequest(&pbc.GetBudgetsRequest{}))
-				return err
-			},
-			want: connect.CodeUnimplemented,
-		},
-		{
-			name: "GetPluginInfo on legacy plugin is Unimplemented",
-			call: func() error {
-				_, err := client.GetPluginInfo(ctx, connect.NewRequest(&pbc.GetPluginInfoRequest{}))
-				return err
-			},
-			want: connect.CodeUnimplemented,
-		},
-		{
-			name: "DryRun without handler is Unimplemented",
-			call: func() error {
-				_, err := client.DryRun(ctx, connect.NewRequest(&pbc.DryRunRequest{
-					Resource: &pbc.ResourceDescriptor{Provider: "aws", ResourceType: "ec2"},
-				}))
-				return err
-			},
-			want: connect.CodeUnimplemented,
-		},
-	}
+	for code := codes.Canceled; code <= codes.Unauthenticated; code++ {
+		t.Run("grpc "+code.String(), func(t *testing.T) {
+			got := toConnectError(status.Error(code, "msg"))
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := tt.call()
-			require.Error(t, err)
-			assert.Equal(t, tt.want, connect.CodeOf(err), "error: %v", err)
+			var connectErr *connect.Error
+			require.ErrorAs(t, got, &connectErr)
+			assert.Equal(t, connect.Code(code), connect.CodeOf(got))
+			assert.Equal(t, "msg", connectErr.Message())
 		})
 	}
 }
 
-func TestConnectHandler_OptionalRPCsReachPlugin(t *testing.T) {
-	client := serveConnectForTest(t, &optionalRPCConnectPlugin{connectTestPlugin{name: "optional"}})
-	ctx := context.Background()
-
-	dryRun, err := client.DryRun(ctx, connect.NewRequest(&pbc.DryRunRequest{
-		Resource: &pbc.ResourceDescriptor{Provider: "aws", ResourceType: "ec2"},
-	}))
-	require.NoError(t, err)
-	assert.True(t, dryRun.Msg.GetResourceTypeSupported())
-
-	resolved, err := client.ResolveResourceTypes(ctx, connect.NewRequest(&pbc.ResolveResourceTypesRequest{
-		SourceFormat: pbc.SourceFormat_SOURCE_FORMAT_TERRAFORM,
-		SourceTypes:  []string{"aws_instance"},
-	}))
-	require.NoError(t, err)
-	require.Contains(t, resolved.Msg.GetMappings(), "aws_instance")
-	assert.Equal(t, "aws:ec2/instance:Instance", resolved.Msg.GetMappings()["aws_instance"].GetPulumiToken())
+func BenchmarkToConnectError(b *testing.B) {
+	err := status.Error(codes.PermissionDenied, "cannot list pods")
+	b.ReportAllocs()
+	for b.Loop() {
+		_ = toConnectError(err)
+	}
 }

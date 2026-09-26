@@ -278,6 +278,67 @@ err := plugintesting.ValidatePricingSpec(spec)
 err := plugintesting.ValidateActualCostResult(result)
 ```
 
+### Usage Source Testing
+
+Helpers for plugins that implement `UsageSourceService.GetStats` (see
+[docs/usage-source.md](../../../docs/usage-source.md)).
+
+#### `ValidateGetStatsRequest`
+
+`ValidateGetStatsRequest(req)` (in `contract.go`) checks the request rules. A usage source can call
+it first and return `codes.InvalidArgument` on failure.
+
+| Rule | Check | Error |
+| ---- | ----- | ----- |
+| Q1 | Request is non-nil | `ErrNilRequest` |
+| Q2 | `start` and `end` are set together or not at all | `*ContractError` wrapping `ErrNilStartTime` / `ErrNilEndTime` |
+| Q3 | `start` is not after `end` | `*ContractError` wrapping `ErrInvertedStatsWindow` |
+
+A request with neither timestamp is a run-rate request and is valid. There is no minimum or maximum
+window length, so a 5-minute window is fine. `scope`, `selector`, and `metrics` are not checked:
+unknown metrics belong in the response's `warnings`, not in an error.
+
+#### `ValidateStatsResponse`
+
+`ValidateStatsResponse(resp)` returns `nil` or the **first** violation. Every error wraps
+`ErrInvalidStatsResponse` and names the offending `rows[i]` or `priceable[i]` entry.
+
+| Rule | Check |
+| ---- | ----- |
+| V1 | Response is non-nil |
+| V2 | `mode` is not `STATS_MODE_UNSPECIFIED` |
+| V3 | Each row's subject has a `kind` key |
+| V4 | `kind` is `workload` or `node` (`__idle__` and `__cluster__` are allocator-only) |
+| V10 | A `kind=node` row has a non-empty `node` key |
+| V5 | Each subject key is documented or has the form `label.<non-empty>` |
+| V6 | `amount` is finite and non-negative |
+| V7 | Each (subject, metric) pair appears at most once |
+| V8 | Each priceable entry is non-nil with a non-empty `id` |
+| V9 | A priceable entry tagged `kind=node` has an `id` equal to some row's `node` value |
+
+Rows are checked in index order (V3, V4, V10, V5, V6, V7 per row), then priceable entries (V8,
+V9). The validator accepts node capacity rows with no priceable entry (for example Fargate), a
+`kind=cluster` control plane with no matching rows, priceable entries without a `kind` tag, custom
+metrics and units, and an empty response whose mode is set. It does not check unit/metric
+consistency or duplicate priceable IDs.
+
+#### `UsageSourceHarness`
+
+`UsageSourceHarness` serves any type with a `GetStats` method over an in-memory bufconn, so a
+usage-only plugin can be tested without `pluginsdk.Serve`:
+
+```go
+func TestMyUsageSource(t *testing.T) {
+    h := plugintesting.NewUsageSourceHarness(&MyUsageSource{})
+    h.Start(t)
+    defer h.Stop()
+
+    resp, err := h.Client().GetStats(context.Background(), &pbc.GetStatsRequest{})
+    require.NoError(t, err)
+    require.NoError(t, plugintesting.ValidateStatsResponse(resp))
+}
+```
+
 ### FOCUS Record Validation (Contextual FinOps)
 
 The `pluginsdk` package provides comprehensive FOCUS 1.2/1.3 validation for cost records:

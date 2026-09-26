@@ -1,0 +1,116 @@
+// Copyright 2026 The FinFocus Authors
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package finfocus.v1;
+
+option go_package = "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1;pbc";
+
+import "google/protobuf/timestamp.proto";
+import "finfocus/v1/costsource.proto";
+
+// UsageSourceService is implemented by usage-source plugins, which report how
+// much CPU and memory workloads request or consume, backed by the Kubernetes
+// API, Prometheus, Datadog, or similar systems. Usage sources carry no prices;
+// hosts price the returned priceable resources through CostSourceService
+// plugins and join them with usage rows on the node name.
+//
+// Error semantics:
+//   - INVALID_ARGUMENT: only one of start/end is set, start is after end, or
+//     the source cannot serve the requested mode (for example a run-rate-only
+//     source asked for a historical window).
+//   - PERMISSION_DENIED: credentials lack a required permission; the message
+//     names the missing verb and resource (for example "cannot list pods").
+//   - UNAUTHENTICATED: no usable credentials.
+service UsageSourceService {
+  // GetStats returns pre-integrated usage for workloads and nodes, and the
+  // priceable resources (nodes, control plane) that usage runs on.
+  rpc GetStats(GetStatsRequest) returns (GetStatsResponse);
+}
+
+// StatsMode states how UsageRow amounts are to be interpreted.
+enum StatsMode {
+  // Invalid in responses; amounts cannot be interpreted.
+  STATS_MODE_UNSPECIFIED = 0;
+  // Point-in-time per-hour rates (units "core", "GiB").
+  STATS_MODE_RUN_RATE = 1;
+  // Integrated over [start, end] (units "core-hours", "GiB-hours"). Applies
+  // to every row, including node allocatable rows.
+  STATS_MODE_HISTORICAL = 2;
+}
+
+// GetStatsRequest selects the scope, window, workloads, and metrics to report.
+message GetStatsRequest {
+  // Source-defined scope, such as a cluster identifier or kubeconfig context.
+  // Empty means the source's default scope.
+  string scope = 1;
+
+  // Start of the historical window. Leave both start and end unset for
+  // run-rate; setting exactly one is INVALID_ARGUMENT.
+  google.protobuf.Timestamp start = 2;
+
+  // End of the historical window. Must not be before start.
+  google.protobuf.Timestamp end = 3;
+
+  // Workload filter; all entries must match. "namespace" is a reserved key
+  // restricting workloads to that namespace; every other key is an exact-match
+  // label filter. A label literally named "namespace" cannot be selected.
+  map<string, string> selector = 4;
+
+  // Metric names to return. Empty means the source's defaults. Unknown names
+  // are ignored and reported in GetStatsResponse.warnings.
+  repeated string metrics = 5;
+}
+
+// GetStatsResponse carries usage rows, the resources that can be priced, and
+// the mode actually served.
+message GetStatsResponse {
+  // Usage rows. A (subject, metric) pair appears at most once; sources
+  // aggregate per-container data before responding.
+  repeated UsageRow rows = 1;
+
+  // Priceable resources in the form hosts already price through cost-source
+  // plugins. Nodes carry tags.kind="node", id equal to the node's "node"
+  // subject value, tags.provider_id, and tags.capacity_type ("spot" or
+  // "on-demand"). A control plane carries tags.kind="cluster". Every entry
+  // has a non-empty id. Nodes that cannot be priced (for example Fargate or
+  // an unknown provider) report capacity rows without a priceable entry.
+  repeated ResourceDescriptor priceable = 2;
+
+  // Mode actually served; never STATS_MODE_UNSPECIFIED.
+  StatsMode mode = 3;
+
+  // Human-readable, non-fatal warnings (for example an unknown metric).
+  repeated string warnings = 4;
+}
+
+// UsageRow is one measurement for one subject.
+message UsageRow {
+  // Identifies what the usage belongs to. Keys: "cluster", "namespace",
+  // "controller_kind", "controller", "pod", "node", "label.<key>", and the
+  // required "kind", which is "workload" or "node".
+  map<string, string> subject = 1;
+
+  // Metric name. Workload rows: "cpu_request", "mem_request", "cpu_usage",
+  // "mem_usage". Node rows: "cpu_allocatable", "mem_allocatable".
+  string metric = 2;
+
+  // Non-negative, finite amount: a per-hour rate in STATS_MODE_RUN_RATE, or
+  // integrated resource-hours in STATS_MODE_HISTORICAL.
+  double amount = 3;
+
+  // Unit: "core" or "GiB" for run-rate; "core-hours" or "GiB-hours" for
+  // historical.
+  string unit = 4;
+}

@@ -859,3 +859,74 @@ func BenchmarkValidateSupportsRequest(b *testing.B) {
 		_ = plugintesting.ValidateSupportsRequest(req)
 	}
 }
+
+func TestValidateGetStatsRequest(t *testing.T) {
+	base := time.Date(2026, 9, 1, 12, 0, 0, 0, time.UTC)
+	ts := timestamppb.New
+
+	tests := []struct {
+		name      string
+		req       *pbc.GetStatsRequest
+		wantErr   error
+		wantField string
+	}{
+		{name: "nil request", req: nil, wantErr: plugintesting.ErrNilRequest},
+		{
+			name:      "only start set",
+			req:       &pbc.GetStatsRequest{Start: ts(base)},
+			wantErr:   plugintesting.ErrNilEndTime,
+			wantField: "end",
+		},
+		{
+			name:      "only end set",
+			req:       &pbc.GetStatsRequest{End: ts(base)},
+			wantErr:   plugintesting.ErrNilStartTime,
+			wantField: "start",
+		},
+		{
+			name:    "start after end",
+			req:     &pbc.GetStatsRequest{Start: ts(base.Add(time.Hour)), End: ts(base)},
+			wantErr: plugintesting.ErrInvertedStatsWindow,
+		},
+		{name: "run-rate request", req: &pbc.GetStatsRequest{}},
+		{name: "start before end", req: &pbc.GetStatsRequest{Start: ts(base), End: ts(base.Add(time.Hour))}},
+		{name: "start equals end", req: &pbc.GetStatsRequest{Start: ts(base), End: ts(base)}},
+		{
+			name: "five-minute window",
+			req:  &pbc.GetStatsRequest{Start: ts(base), End: ts(base.Add(5 * time.Minute))},
+		},
+		{name: "empty scope", req: &pbc.GetStatsRequest{Scope: ""}},
+		{name: "unknown metric", req: &pbc.GetStatsRequest{Metrics: []string{"gpu_seconds"}}},
+		{
+			name: "namespace and label selector",
+			req: &pbc.GetStatsRequest{
+				Selector: map[string]string{"namespace": "payments", "app": "api"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := plugintesting.ValidateGetStatsRequest(tt.req)
+			if tt.wantErr == nil {
+				if err != nil {
+					t.Fatalf("ValidateGetStatsRequest() = %v, want nil", err)
+				}
+				return
+			}
+			if !errors.Is(err, tt.wantErr) {
+				t.Fatalf("ValidateGetStatsRequest() = %v, want %v", err, tt.wantErr)
+			}
+			if tt.wantField == "" {
+				return
+			}
+			var contractErr *plugintesting.ContractError
+			if !errors.As(err, &contractErr) {
+				t.Fatalf("error %v is not a *ContractError", err)
+			}
+			if contractErr.Field != tt.wantField {
+				t.Errorf("ContractError.Field = %q, want %q", contractErr.Field, tt.wantField)
+			}
+		})
+	}
+}

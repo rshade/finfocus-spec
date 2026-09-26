@@ -816,6 +816,30 @@ Pattern for subtests sharing a gRPC harness: Do NOT use `t.Parallel()` on subtes
 share a `TestHarness` — the deferred `harness.Stop()` can close the connection before
 parallel subtests complete.
 
+### Usage Source SDK Pattern (051-usage-source-getstats)
+
+- `UsageSourceProvider` (one method, `GetStats`) is optional. `Serve` registers `UsageSourceService`
+  through unexported adapters (`usage_source.go`) only when the plugin implements it, in gRPC and
+  Connect mode, and adds it to the Connect health checker. Plugins embed `*BasePlugin` for the
+  required cost methods.
+- Inference always adds the 4 base pricing capabilities, so usage-only plugins must use
+  `WithCapabilities(PLUGIN_CAPABILITY_USAGE_STATS)`; `Serve` warns otherwise (skipped for
+  `PluginInfoProvider` plugins).
+- Adding a capability enum value: bump `maxValidCapability`, `optionalCapabilities`,
+  `legacyCapabilityNames`, and the `IsValidCapability` bounds test (`TestLegacyCapabilityMapCompleteness`
+  fails until the legacy name exists).
+- `sdk/go/testing` cannot import `pluginsdk` (import cycle), so `testing/usage_source.go` keeps a
+  private copy of the subject keys; `pluginsdk/subjects_test.go` guards drift via `KnownSubjectKeys()`.
+- `toConnectError` (`connect_errors.go`): connect-go reports any non-`*connect.Error` as `Unknown`,
+  so every Connect handler must convert gRPC `status` errors with it. Both the usage adapter and
+  `ConnectHandler` (all cost RPCs) do; new Connect handler methods must too.
+- `ConnectHandler` implements every `CostSourceService` RPC, including `DryRun` and
+  `ResolveResourceTypes`; a new RPC needs its own method there or Connect returns `Unimplemented`.
+- `make generate` uses unpinned remote Go plugins; regenerating can reformat doc comments in
+  untouched `*.connect.go` files. Restore unrelated generated files with `git checkout`.
+- `npm run build` in `sdk/typescript/packages/client` fails at tsup's DTS step (TS5101 `baseUrl`
+  deprecation under TypeScript 6) on main too; use `npx tsc --noEmit` to type-check.
+
 ## Active Technologies
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
@@ -932,6 +956,10 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+
+- 051-usage-source-getstats: Added UsageSourceService.GetStats (usage.proto),
+  PLUGIN_CAPABILITY_USAGE_STATS = 14, pluginsdk.UsageSourceProvider, and a TS
+  UsageSourceClient
 
 - 494-ax-go-plugin-cli: Added pluginsdk.Run() ax-go CLI (handshake-safe Serve, dry-run subcommand)
 

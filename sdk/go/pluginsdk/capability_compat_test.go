@@ -143,3 +143,20 @@ func TestLegacyMetadata_ResolveResourceTypes(t *testing.T) {
 			metadata["supports_resolve_resource_types"])
 	}
 }
+
+func TestLegacyMetadata_UsageStats(t *testing.T) {
+	name := pluginsdk.CapabilityToLegacyName(pbc.PluginCapability_PLUGIN_CAPABILITY_USAGE_STATS)
+	if name != "supports_usage_stats" {
+		t.Errorf("expected supports_usage_stats, got %q", name)
+	}
+
+	metadata, warnings := pluginsdk.CapabilitiesToLegacyMetadataWithWarnings([]pbc.PluginCapability{
+		pbc.PluginCapability_PLUGIN_CAPABILITY_USAGE_STATS,
+	})
+	if metadata["supports_usage_stats"] != "true" {
+		t.Errorf("expected supports_usage_stats=true, got %q", metadata["supports_usage_stats"])
+	}
+	if len(warnings) != 0 {
+		t.Errorf("expected no warnings, got %v", warnings)
+	}
+}

@@ -138,3 +138,30 @@ func TestInferCapabilities_NoResolveResourceTypes(t *testing.T) {
 	caps := inferCapabilities(plugin)
 	assert.NotContains(t, caps, pbc.PluginCapability_PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES)
 }
+
+func TestInferCapabilities_UsageStats(t *testing.T) {
+	server := NewServerWithOptions(newUsageTestPlugin(), nil, nil,
+		&PluginInfo{Name: "usage", Version: "1.0.0", SpecVersion: "1.0.0"})
+
+	resp, err := server.GetPluginInfo(context.Background(), &pbc.GetPluginInfoRequest{})
+	require.NoError(t, err)
+	assert.Contains(t, resp.GetCapabilities(), pbc.PluginCapability_PLUGIN_CAPABILITY_USAGE_STATS)
+	assert.Equal(t, "true", resp.GetMetadata()["supports_usage_stats"])
+}
+
+func TestInferCapabilities_NoUsageStats(t *testing.T) {
+	caps := inferCapabilities(&mockPlugin{name: "basic-plugin"})
+	assert.NotContains(t, caps, pbc.PluginCapability_PLUGIN_CAPABILITY_USAGE_STATS)
+}
+
+func TestExplicitCapabilities_UsageOnly(t *testing.T) {
+	info := NewPluginInfo("usage", "v1.0.0",
+		WithCapabilities(pbc.PluginCapability_PLUGIN_CAPABILITY_USAGE_STATS))
+	server := NewServerWithOptions(newUsageTestPlugin(), nil, nil, info)
+
+	resp, err := server.GetPluginInfo(context.Background(), &pbc.GetPluginInfoRequest{})
+	require.NoError(t, err)
+	assert.Equal(t,
+		[]pbc.PluginCapability{pbc.PluginCapability_PLUGIN_CAPABILITY_USAGE_STATS},
+		resp.GetCapabilities())
+}

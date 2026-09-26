@@ -84,9 +84,10 @@ No violations; Complexity Tracking is empty.
 - A private duplicate of the subject vocabulary in `sdk/go/testing`, forced by the import
   direction. It is guarded by a drift test in `pluginsdk` (research R4).
 - An explicit gRPC-status-to-Connect error conversion in the usage adapter, because connect-go
-  reports unrecognized errors as `Unknown` (research R8). The existing `ConnectHandler` has the
-  same defect for cost RPCs; that fix is tracked separately so 051 does not change existing RPC
-  behavior (VI).
+  reports unrecognized errors as `Unknown` (research R8). The existing `ConnectHandler` had the
+  same defect for cost RPCs. It was originally deferred to keep existing RPC behavior unchanged
+  (VI), but at the user's direction it was fixed in 051 (T045). The only visible change is that
+  Connect clients now receive the intended status code instead of `Unknown`.
 
 ## Project Structure
 

@@ -187,6 +187,8 @@ enum PluginCapability {
   PLUGIN_CAPABILITY_BATCH_COST = 12;
   // Plugin implements ResolveResourceTypes RPC for IaC type translation
   PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES = 13;
+  // Plugin implements UsageSourceService.GetStats for workload usage
+  PLUGIN_CAPABILITY_USAGE_STATS = 14;
 }
 
 // UsageProfile represents the intended workload context for cost estimation.

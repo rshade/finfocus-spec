@@ -3,10 +3,8 @@ package pluginsdk
 
 import (
 	"context"
-	"errors"
 
 	"connectrpc.com/connect"
-	"google.golang.org/grpc/status"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 	"github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1/pbcconnect"
@@ -15,6 +13,7 @@ import (
 // ConnectHandler adapts a Server to the pbcconnect.CostSourceServiceHandler interface.
 // This enables the plugin to be served via connect-go, supporting gRPC, gRPC-Web,
 // and Connect protocols simultaneously.
+// Errors carrying a gRPC status keep their code and message over every protocol.
 type ConnectHandler struct {
 	pbcconnect.UnimplementedCostSourceServiceHandler
 
@@ -184,21 +183,4 @@ func (h *ConnectHandler) ResolveResourceTypes(
 		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(resp), nil
-}
-
-// toConnectError converts a gRPC status error returned by Server into a
-// connect.Error with the same code. connect-go does not understand gRPC status
-// errors and would otherwise report every one of them as CodeUnknown. Errors
-// that are not gRPC statuses (including context errors, which connect-go maps
-// itself) are returned unchanged.
-func toConnectError(err error) error {
-	var connectErr *connect.Error
-	if errors.As(err, &connectErr) {
-		return err
-	}
-	st, ok := status.FromError(err)
-	if !ok {
-		return err
-	}
-	return connect.NewError(connect.Code(st.Code()), errors.New(st.Message()))
 }

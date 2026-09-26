@@ -10,23 +10,24 @@ This guide provides comprehensive instructions for developing FinFocus plugins u
    - [Service Interface](#service-interface)
    - [Request/Response Messages](#requestresponse-messages)
    - [Implementation Requirements](#implementation-requirements)
-4. [Packaging and Manifest Format](#packaging-and-manifest-format)
+4. [Usage Source Plugins](#usage-source-plugins)
+5. [Packaging and Manifest Format](#packaging-and-manifest-format)
    - [Plugin Structure](#plugin-structure)
    - [Manifest Configuration](#manifest-configuration)
    - [Distribution](#distribution)
-5. [Example: Minimal Plugin Implementation](#example-minimal-plugin-implementation)
+6. [Example: Minimal Plugin Implementation](#example-minimal-plugin-implementation)
    - [Project Setup](#project-setup)
    - [Complete Code Example](#complete-code-example)
    - [Building and Running](#building-and-running)
-6. [Testing and Validation](#testing-and-validation)
+7. [Testing and Validation](#testing-and-validation)
    - [Unit Testing](#unit-testing)
    - [Integration Testing](#integration-testing)
    - [Schema Validation](#schema-validation)
-7. [Best Practices and Common Patterns](#best-practices-and-common-patterns)
+8. [Best Practices and Common Patterns](#best-practices-and-common-patterns)
    - [Error Handling](#error-handling)
    - [Performance Considerations](#performance-considerations)
    - [Security Guidelines](#security-guidelines)
-8. [Troubleshooting](#troubleshooting)
+9. [Troubleshooting](#troubleshooting)
    - [Common Issues](#common-issues)
    - [Debug Techniques](#debug-techniques)
    - [FAQ](#faq)
@@ -984,6 +985,51 @@ func (s *Server) GetBudgets(ctx context.Context, req *pbc.GetBudgetsRequest) (*p
     return nil, status.Error(codes.Unimplemented, "plugin does not support GetBudgets")
 }
 ```
+
+## Usage Source Plugins
+
+A **usage source** reports how much CPU and memory Kubernetes workloads request or consume, backed
+by the Kubernetes API, Prometheus, Datadog, or a similar system. It carries no prices. Instead it
+serves `UsageSourceService.GetStats` (`proto/finfocus/v1/usage.proto`), which returns usage rows and
+the priceable resources (nodes, control planes) that the workloads run on. Hosts price those
+resources through ordinary cost-source plugins and join them with the usage rows on the node name.
+
+### The `UsageSourceProvider` Interface
+
+```go
+type UsageSourceProvider interface {
+    GetStats(ctx context.Context, req *pbc.GetStatsRequest) (*pbc.GetStatsResponse, error)
+}
+```
+
+Embed `*pluginsdk.BasePlugin` so your struct satisfies the required `Plugin` interface, then
+implement `GetStats`. `pluginsdk.Serve` (and `pluginsdk.Run`) detects the interface and registers
+`UsageSourceService` over gRPC and Connect, including the Connect health check. Return gRPC status
+errors (`InvalidArgument`, `PermissionDenied`, `Unauthenticated`); the SDK keeps the same code and
+message on both transports.
+
+### Declare Capabilities Explicitly
+
+Capability auto-discovery infers `PLUGIN_CAPABILITY_USAGE_STATS` from `GetStats`, but it also always
+reports the four pricing capabilities that the `Plugin` interface implies. A usage-only plugin must
+therefore declare its capabilities explicitly, or hosts cannot tell it apart from a pricing plugin:
+
+```go
+info := pluginsdk.NewPluginInfo("k8s-usage", "v1.0.0",
+    pluginsdk.WithCapabilities(pbc.PluginCapability_PLUGIN_CAPABILITY_USAGE_STATS),
+)
+```
+
+If a usage source starts without explicit `PluginInfo.Capabilities` and does not implement
+`PluginInfoProvider`, `Serve` logs one warning at startup.
+
+### Testing a Usage Source
+
+The `sdk/go/testing` package provides `ValidateGetStatsRequest`, `ValidateStatsResponse`, and an
+in-memory `UsageSourceHarness`. See [sdk/go/testing/README.md](sdk/go/testing/README.md).
+
+For subject keys, metrics, units, historical versus run-rate mode, and priceable-resource tagging,
+see [docs/usage-source.md](docs/usage-source.md).
 
 ## Packaging and Manifest Format
 
