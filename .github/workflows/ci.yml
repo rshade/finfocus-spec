@@ -157,6 +157,34 @@ jobs:
       - name: Validate examples against schema
         run: node validate_examples.js
 
+  typescript-sdk:
+    name: TypeScript SDK Client
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up toolchain
+        uses: jdx/mise-action@v4
+        with:
+          version: ${{ env.MISE_VERSION }}
+          install_args: node
+
+      # Mirrors publish-ts-client.yml so lockfile or build breakage surfaces on
+      # the PR instead of after a finfocus-client release tag is cut.
+      - name: Install TypeScript SDK dependencies
+        run: npm ci
+        working-directory: sdk/typescript
+
+      - name: Build client package
+        run: npm run build -w packages/client
+        working-directory: sdk/typescript
+
+      - name: Test client package
+        run: npm test -w packages/client
+        working-directory: sdk/typescript
+
   validate-commits:
     name: Validate Commit Messages
     runs-on: ubuntu-latest

@@ -47,7 +47,14 @@
       "release-type": "node",
       "package-name": "@rshade/finfocus-client",
       "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": true
+      "bump-patch-for-minor-pre-major": true,
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "/sdk/typescript/package-lock.json",
+          "jsonpath": "$.packages['packages/client'].version"
+        }
+      ]
     }
   }
 }

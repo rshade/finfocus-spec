@@ -191,7 +191,8 @@ type ServeConfig struct {
     Port int
 
     // Optional: Registry for looking up plugins (used for Supports validation).
-    // If nil, defaults to a no-op registry.
+    // If nil, Supports skips provider/region validation and delegates
+    // directly to the plugin's Supports method.
     Registry RegistryLookup
 
     // Optional: Custom logger.
@@ -554,6 +555,11 @@ If your plugin needs to determine metadata at runtime (e.g., list of providers d
 configuration), you can implement the `PluginInfoProvider` interface directly on your plugin struct.
 This takes precedence over `ServeConfig.PluginInfo`.
 
+Leave `Capabilities` unset to inherit the capabilities the SDK infers from the interfaces your
+plugin implements. Setting it replaces the inferred set entirely, so list every capability you
+want advertised. Use this to hide methods that only return `Unimplemented`. Either way, the
+SDK adds any missing legacy `supports_*` metadata keys and keeps the ones you set.
+
 ```go
 // Implement PluginInfoProvider interface
 func (p *MyPlugin) GetPluginInfo(
@@ -565,6 +571,7 @@ func (p *MyPlugin) GetPluginInfo(
         Version:     "1.0.0",
         SpecVersion: pluginsdk.SpecVersion,
         Providers:   p.detectProviders(), // Dynamic
+        // Capabilities omitted: inherits the inferred set.
     }, nil
 }
 ```
@@ -599,16 +606,18 @@ pluginsdk.Serve(ctx, pluginsdk.ServeConfig{
 #### Dynamic Metadata
 
 If your plugin's capabilities change at runtime (e.g., based on credentials), implement
-the `PluginInfoProvider` interface:
+the `PluginInfoProvider` interface. An empty `Capabilities` list inherits the inferred
+capabilities; a non-empty list replaces them:
 
 ```go
 func (p *MyPlugin) GetPluginInfo(ctx context.Context, req *pbc.GetPluginInfoRequest) (
     *pbc.GetPluginInfoResponse, error) {
     return &pbc.GetPluginInfoResponse{
-        Name:        "my-cost-plugin",
-        Version:     "v1.0.0",
-        SpecVersion: pluginsdk.SpecVersion,
-        Providers:   p.discoverProviders(), // Dynamic logic
+        Name:         "my-cost-plugin",
+        Version:      "v1.0.0",
+        SpecVersion:  pluginsdk.SpecVersion,
+        Providers:    p.discoverProviders(),   // Dynamic logic
+        Capabilities: p.enabledCapabilities(), // Replaces the inferred set
     }, nil
 }
 ```
@@ -909,6 +918,10 @@ pluginsdk.Serve(ctx, pluginsdk.ServeConfig{
     TypeRegistry: registry,
 })
 ```
+
+Setting `TypeRegistry` also advertises `PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES`, so the
+host knows to call the RPC. If you list `PluginInfo.Capabilities` explicitly, include it
+yourself.
 
 #### Option 2: ResolveResourceTypesProvider interface
 
@@ -2460,18 +2473,20 @@ Stdout is an `ax.Envelope` whose `data` field is the `DryRunResponse` JSON
 
 ### DryRun RPC
 
-The `DryRun` RPC allows hosts to query a plugin's field mapping capabilities:
+The `DryRun` RPC allows hosts to query a plugin's field mapping capabilities.
+Implement `DryRunHandler`; the SDK serves the `DryRun` RPC over gRPC and Connect
+by calling `HandleDryRun`, and advertises `PLUGIN_CAPABILITY_DRY_RUN`. Plugins
+without `DryRunHandler` answer `Unimplemented`.
 
 ```go
-// Implement the DryRun RPC on your plugin
-func (p *MyPlugin) DryRun(
+func (p *MyPlugin) HandleDryRun(
     ctx context.Context,
     req *pbc.DryRunRequest,
 ) (*pbc.DryRunResponse, error) {
     resource := req.GetResource()
 
     // Check if resource type is supported
-    if !p.supports(resource.GetType()) {
+    if !p.supports(resource.GetResourceType()) {
         return pluginsdk.NewDryRunResponse(
             pluginsdk.WithResourceTypeSupported(false),
         ), nil

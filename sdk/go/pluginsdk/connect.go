@@ -160,3 +160,27 @@ func (h *ConnectHandler) BatchCost(
 	}
 	return connect.NewResponse(resp), nil
 }
+
+// DryRun implements pbcconnect.CostSourceServiceHandler.
+func (h *ConnectHandler) DryRun(
+	ctx context.Context,
+	req *connect.Request[pbc.DryRunRequest],
+) (*connect.Response[pbc.DryRunResponse], error) {
+	resp, err := h.server.DryRun(ctx, req.Msg)
+	if err != nil {
+		return nil, toConnectError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+// ResolveResourceTypes implements pbcconnect.CostSourceServiceHandler.
+func (h *ConnectHandler) ResolveResourceTypes(
+	ctx context.Context,
+	req *connect.Request[pbc.ResolveResourceTypesRequest],
+) (*connect.Response[pbc.ResolveResourceTypesResponse], error) {
+	resp, err := h.server.ResolveResourceTypes(ctx, req.Msg)
+	if err != nil {
+		return nil, toConnectError(err)
+	}
+	return connect.NewResponse(resp), nil
+}

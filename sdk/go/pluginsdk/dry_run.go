@@ -284,8 +284,8 @@ func NewDryRunResponse(opts ...DryRunResponseOption) *pbc.DryRunResponse {
 }
 
 // DryRunHandler is an optional interface that plugins can implement to provide
-// DryRun functionality. If a plugin implements this interface, the SDK can
-// automatically route DryRun requests to it.
+// DryRun functionality. The SDK's Server serves the DryRun RPC (gRPC and
+// Connect) by calling HandleDryRun; plugins without it answer Unimplemented.
 type DryRunHandler interface {
 	// HandleDryRun returns field mapping information for the given resource type.
 	// Implementations should:

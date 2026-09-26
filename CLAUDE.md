@@ -101,7 +101,7 @@ type MyPlugin struct {
     proto.UnimplementedCostSourceServiceServer
 }
 
-func (p *MyPlugin) HandleDryRun(req *pbc.DryRunRequest) (*pbc.DryRunResponse, error) {
+func (p *MyPlugin) HandleDryRun(ctx context.Context, req *pbc.DryRunRequest) (*pbc.DryRunResponse, error) {
     return pluginsdk.NewDryRunResponse(
         pluginsdk.WithResourceTypeSupported(true),
     ), nil
@@ -833,8 +833,8 @@ parallel subtests complete.
 - `toConnectError` (`connect_errors.go`): connect-go reports any non-`*connect.Error` as `Unknown`,
   so every Connect handler must convert gRPC `status` errors with it. Both the usage adapter and
   `ConnectHandler` (all cost RPCs) do; new Connect handler methods must too.
-- `ConnectHandler` does not implement `DryRun` or `ResolveResourceTypes`; over Connect they return
-  `Unimplemented` from the embedded `UnimplementedCostSourceServiceHandler`.
+- `ConnectHandler` implements every `CostSourceService` RPC, including `DryRun` and
+  `ResolveResourceTypes`; a new RPC needs its own method there or Connect returns `Unimplemented`.
 - `make generate` uses unpinned remote Go plugins; regenerating can reformat doc comments in
   untouched `*.connect.go` files. Restore unrelated generated files with `git checkout`.
 - `npm run build` in `sdk/typescript/packages/client` fails at tsup's DTS step (TS5101 `baseUrl`

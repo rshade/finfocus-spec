@@ -13,6 +13,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"connectrpc.com/connect"
@@ -22,6 +23,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 	"github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1/pbcconnect"
@@ -209,6 +211,13 @@ type DismissProvider interface {
 //
 // This interface is useful when plugins need dynamic metadata that can't
 // be determined at startup, such as runtime-computed values.
+//
+// Capabilities: leave GetPluginInfoResponse.Capabilities empty to inherit the
+// capabilities the SDK infers from the plugin's implemented interfaces (see
+// Server.GetGlobalCapabilities). A non-empty list replaces the inferred set
+// entirely; the two are never merged. In both cases the server adds the legacy
+// supports_* metadata keys that are missing, keeping any the provider set.
+// The returned response is copied, never modified.
 type PluginInfoProvider interface {
 	// GetPluginInfo returns metadata about the plugin including name, version,
 	// spec version, supported providers, and optional key-value metadata.
@@ -243,16 +252,18 @@ type BatchCostHandler interface {
 }
 
 // RegistryLookup defines the interface for looking up plugins by provider and region.
-// This is used to validate incoming Supports requests against registered plugins.
+// When configured, Supports rejects requests whose provider/region combination has
+// no registered plugin before consulting the plugin itself.
 type RegistryLookup interface {
 	// FindPlugin returns the plugin name for the given provider and region.
 	// Returns empty string if no plugin is registered for the combination.
 	FindPlugin(provider, region string) string
 }
 
-// DefaultRegistryLookup provides a no-op registry lookup that always returns empty.
-// This causes all Supports() calls to return InvalidArgument since no plugin
-// can be found. Use a real RegistryLookup implementation in production.
+// DefaultRegistryLookup represents "no registry configured". It is installed when
+// no RegistryLookup is supplied. With it, Supports skips the provider/region check
+// and delegates straight to the plugin's SupportsProvider (or returns the default
+// not-implemented response). FindPlugin always returns an empty string.
 type DefaultRegistryLookup struct{}
 
 // FindPlugin always returns empty string indicating no plugin is registered.
@@ -293,6 +304,10 @@ type Server struct {
 	// ResolveResourceTypes RPC fallback.
 	typeRegistry *TypeRegistry
 
+	// capabilityDriftOnce limits the PluginInfoProvider capability drift log to
+	// one entry per server.
+	capabilityDriftOnce sync.Once
+
 	// maxSourceTypes is the configured per-plugin source_types size limit for
 	// ResolveResourceTypes RPC. Defaults to DefaultMaxSourceTypes when not configured.
 	maxSourceTypes int32
@@ -300,7 +315,7 @@ type Server struct {
 
 // NewServer creates a Server that wraps the provided Plugin and initializes sensible defaults.
 //
-// The returned Server uses a DefaultRegistryLookup for provider resolution, a package-default logger,
+// The returned Server uses DefaultRegistryLookup (no Supports provider/region check), a package-default logger,
 // and infers global capabilities from the plugin. Batch-related defaults are applied: maxBatchSize is
 // set to DefaultMaxBatchSize and batchWorkers to DefaultBatchWorkers.
 func NewServer(plugin Plugin) *Server {
@@ -316,14 +331,14 @@ func NewServer(plugin Plugin) *Server {
 }
 
 // NewServerWithRegistry creates a Server with a custom registry lookup.
-// If registry is nil, DefaultRegistryLookup is used.
+// If registry is nil, DefaultRegistryLookup is used and Supports skips provider/region validation.
 // GetPluginInfo will return Unimplemented (legacy plugin behavior).
 func NewServerWithRegistry(plugin Plugin, registry RegistryLookup) *Server {
 	return NewServerWithOptions(plugin, registry, nil, nil)
 }
 
 // NewServerWithOptions creates a Server with custom registry, logger, and plugin info.
-// If registry is nil, DefaultRegistryLookup is used.
+// If registry is nil, DefaultRegistryLookup is used and Supports skips provider/region validation.
 // If logger is nil, a default logger is used.
 // If info is nil, GetPluginInfo will return Unimplemented (legacy plugin behavior).
 //
@@ -409,6 +424,10 @@ func (s *Server) Name(_ context.Context, _ *pbc.NameRequest) (*pbc.NameResponse,
 //  2. If PluginInfo was configured via ServeConfig, return it
 //  3. Return Unimplemented error (enables graceful degradation for legacy plugins)
 //
+// In paths 1 and 2, an empty capability list inherits the server's inferred
+// capabilities, and a non-empty list replaces them. Legacy supports_* metadata
+// keys and max_batch_size are derived from the final list.
+//
 // When calling GetPluginInfo on potentially legacy plugins, consumers should handle
 // the Unimplemented error gracefully:
 //
@@ -474,18 +493,20 @@ func (s *Server) handleProviderPluginInfo(
 		return nil, status.Error(codes.Internal, "plugin reported an invalid specification version")
 	}
 
-	// Enrich response with server-side batch metadata when the plugin supports batch cost.
-	// Create a new map to avoid mutating the plugin-returned response in place.
-	if containsCapability(resp.GetCapabilities(), pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST) {
-		meta := make(map[string]string, len(resp.GetMetadata())+1)
-		for k, v := range resp.GetMetadata() {
-			meta[k] = v
-		}
-		meta["max_batch_size"] = strconv.Itoa(int(s.maxBatchSize))
-		resp.Metadata = meta
+	// Work on a copy: the provider may cache or share the response it returns.
+	out, ok := proto.Clone(resp).(*pbc.GetPluginInfoResponse)
+	if !ok {
+		return nil, status.Error(codes.Internal, "unable to copy plugin metadata")
 	}
 
-	return resp, nil
+	if len(out.GetCapabilities()) == 0 {
+		out.Capabilities = slices.Clone(s.globalCapabilities)
+	} else {
+		s.logCapabilityDrift(out.GetCapabilities())
+	}
+	out.Metadata = s.withLegacyCapabilityMetadata(out.GetCapabilities(), out.GetMetadata(), false)
+
+	return out, nil
 }
 
 // handleConfiguredPluginInfo handles GetPluginInfo using the server's configured PluginInfo.
@@ -509,30 +530,7 @@ func (s *Server) handleConfiguredPluginInfo() (*pbc.GetPluginInfoResponse, error
 		capabilities = append([]pbc.PluginCapability{}, s.globalCapabilities...)
 	}
 
-	// Add legacy capability metadata for backward compatibility
-	// Use warning-aware function to detect and log invalid/unmapped capabilities
-	if len(capabilities) > 0 {
-		legacyMeta, warnings := CapabilitiesToLegacyMetadataWithWarnings(capabilities)
-
-		// Log any warnings about unmapped capabilities
-		for _, w := range warnings {
-			s.logger.Warn().
-				Int32("capability", int32(w.Capability)).
-				Str("reason", w.Reason).
-				Msg("Capability has no legacy metadata mapping")
-		}
-
-		if metadata == nil {
-			metadata = make(map[string]string, len(legacyMeta))
-		}
-		for key, val := range legacyMeta {
-			metadata[key] = val
-		}
-
-		if containsCapability(capabilities, pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST) {
-			metadata["max_batch_size"] = strconv.Itoa(int(s.maxBatchSize))
-		}
-	}
+	metadata = s.withLegacyCapabilityMetadata(capabilities, metadata, true)
 
 	return &pbc.GetPluginInfoResponse{
 		Name:         s.pluginInfo.Name,
@@ -542,6 +540,115 @@ func (s *Server) handleConfiguredPluginInfo() (*pbc.GetPluginInfoResponse, error
 		Metadata:     metadata,
 		Capabilities: capabilities,
 	}, nil
+}
+
+// withLegacyCapabilityMetadata adds the legacy supports_* keys derived from
+// capabilities, plus max_batch_size when BATCH_COST is present, to metadata and
+// returns it. With overwrite false, legacy keys already in metadata are kept so a
+// PluginInfoProvider's explicit values win. metadata must be owned by the caller;
+// it is allocated when nil.
+func (s *Server) withLegacyCapabilityMetadata(
+	capabilities []pbc.PluginCapability,
+	metadata map[string]string,
+	overwrite bool,
+) map[string]string {
+	if len(capabilities) == 0 {
+		return metadata
+	}
+
+	legacyMeta, warnings := CapabilitiesToLegacyMetadataWithWarnings(capabilities)
+	for _, w := range warnings {
+		s.logger.Warn().
+			Int32("capability", int32(w.Capability)).
+			Str("reason", w.Reason).
+			Msg("Capability has no legacy metadata mapping")
+	}
+
+	if metadata == nil {
+		metadata = make(map[string]string, len(legacyMeta)+1)
+	}
+	for key, val := range legacyMeta {
+		if _, exists := metadata[key]; overwrite || !exists {
+			metadata[key] = val
+		}
+	}
+
+	if containsCapability(capabilities, pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST) {
+		metadata["max_batch_size"] = strconv.Itoa(int(s.maxBatchSize))
+	}
+	return metadata
+}
+
+// logCapabilityDrift logs, once per server, the inferred capabilities that a
+// PluginInfoProvider's explicit capability list leaves out. Omitting them can be
+// deliberate (for example, methods that only return Unimplemented), so this is
+// Debug-level guidance rather than a warning.
+func (s *Server) logCapabilityDrift(explicit []pbc.PluginCapability) {
+	s.capabilityDriftOnce.Do(func() {
+		var omitted []string
+		for _, c := range s.globalCapabilities {
+			if !slices.Contains(explicit, c) {
+				omitted = append(omitted, c.String())
+			}
+		}
+		if len(omitted) > 0 {
+			s.logger.Debug().
+				Strs("omitted_capabilities", omitted).
+				Msg("PluginInfoProvider capabilities omit inferred capabilities")
+		}
+	})
+}
+
+// setTypeRegistry installs the ResolveResourceTypes fallback registry. When the
+// server's capabilities were inferred rather than explicitly configured, it also
+// advertises RESOLVE_RESOURCE_TYPES: inferCapabilities only inspects the plugin's
+// method set, so it cannot see a registry supplied through ServeConfig.
+func (s *Server) setTypeRegistry(registry *TypeRegistry, capabilitiesExplicit bool) {
+	s.typeRegistry = registry
+	resolve := pbc.PluginCapability_PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES
+	if registry == nil || capabilitiesExplicit || containsCapability(s.globalCapabilities, resolve) {
+		return
+	}
+	s.globalCapabilities = append(s.globalCapabilities, resolve)
+}
+
+// DryRun implements the gRPC DryRun method by delegating to the plugin's
+// DryRunHandler. Plugins that do not implement DryRunHandler return
+// Unimplemented, matching the other optional-capability RPCs.
+func (s *Server) DryRun(ctx context.Context, req *pbc.DryRunRequest) (*pbc.DryRunResponse, error) {
+	if req.GetResource() == nil {
+		return nil, status.Error(codes.InvalidArgument, "resource descriptor is required")
+	}
+
+	handler, ok := s.plugin.(DryRunHandler)
+	if !ok {
+		s.logger.Debug().Msg("DryRun returning Unimplemented (not supported by plugin)")
+		return nil, status.Error(codes.Unimplemented, "plugin does not support DryRun")
+	}
+
+	resp, err := handler.HandleDryRun(ctx, req)
+	if err != nil {
+		s.logger.Error().
+			Err(err).
+			Str(FieldResourceType, req.GetResource().GetResourceType()).
+			Msg("DryRun handler error")
+		return nil, status.Error(codes.Internal, "plugin failed to execute DryRun")
+	}
+	if resp == nil {
+		s.logger.Error().Msg("DryRun handler returned a nil response")
+		return nil, status.Error(codes.Internal, "plugin returned a nil response")
+	}
+	return resp, nil
+}
+
+// hasRegistry reports whether a real RegistryLookup was configured, as opposed to
+// none (nil) or the DefaultRegistryLookup placeholder.
+func (s *Server) hasRegistry() bool {
+	if s.registry == nil {
+		return false
+	}
+	_, isDefault := s.registry.(*DefaultRegistryLookup)
+	return !isDefault
 }
 
 // containsCapability reports whether target is present in capabilities.
@@ -579,8 +686,10 @@ func (s *Server) EstimateCost(
 }
 
 // Supports implements the gRPC Supports method.
-// It performs two-step validation: first checks registry for plugin by provider/region,
-// then delegates to the plugin's Supports method if implemented.
+// When a RegistryLookup is configured, it first rejects provider/region combinations
+// with no registered plugin. It then delegates to the plugin's Supports method if
+// implemented. With no registry (nil or DefaultRegistryLookup), the provider/region
+// check is skipped.
 func (s *Server) Supports(ctx context.Context, req *pbc.SupportsRequest) (*pbc.SupportsResponse, error) {
 	// Validate request has resource descriptor
 	if req.GetResource() == nil {
@@ -592,8 +701,7 @@ func (s *Server) Supports(ctx context.Context, req *pbc.SupportsRequest) (*pbc.S
 	region := resource.GetRegion()
 
 	// Step 1: Registry lookup - validate provider/region combination
-	pluginName := s.registry.FindPlugin(provider, region)
-	if pluginName == "" {
+	if s.hasRegistry() && s.registry.FindPlugin(provider, region) == "" {
 		return nil, status.Errorf(
 			codes.InvalidArgument,
 			"no plugin registered for provider %q and region %q",
@@ -953,7 +1061,9 @@ type ServeConfig struct {
 	// Plugin is the implementation of the cost source service.
 	Plugin Plugin
 
-	// Registry is an optional registry lookup for validating supports requests.
+	// Registry is an optional registry lookup for validating Supports requests.
+	// When nil, Supports skips provider/region validation and delegates directly
+	// to the plugin.
 	Registry RegistryLookup
 
 	// PluginInfo is optional plugin metadata returned by GetPluginInfo RPC.
@@ -1156,7 +1266,8 @@ func Serve(ctx context.Context, config ServeConfig) error {
 	server := NewServerWithOptions(config.Plugin, config.Registry, config.Logger, config.PluginInfo)
 	server.maxBatchSize = resolveBatchSize(config.MaxBatchSize)
 	server.batchWorkers = resolveBatchWorkers(config.BatchWorkers)
-	server.typeRegistry = config.TypeRegistry
+	server.setTypeRegistry(config.TypeRegistry,
+		config.PluginInfo != nil && len(config.PluginInfo.Capabilities) > 0)
 	server.maxSourceTypes = resolveSourceTypesLimit(config.MaxSourceTypes)
 	warnUsageSourceCapabilities(&server.logger, config.Plugin, config.PluginInfo)
 

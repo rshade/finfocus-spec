@@ -75,7 +75,7 @@ jobs:
             exit 1
           fi
 
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "::notice::Publishing tag: $TAG"
 
       - uses: actions/checkout@v6
