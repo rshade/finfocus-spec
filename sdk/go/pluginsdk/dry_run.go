@@ -30,7 +30,7 @@ import (
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
 
-// focusFieldNames contains all FOCUS 1.2/1.3 field names from FocusCostRecord.
+// focusFieldNames contains all FOCUS 1.2-1.4 field names from FocusCostRecord.
 // This is a package-level variable for zero-allocation access.
 //
 //nolint:gochecknoglobals // Intentional optimization for zero-allocation access
@@ -136,10 +136,14 @@ var focusFieldNames = []string{
 
 	// FOCUS 1.3 Contract Commitment Link
 	"contract_applied", // field 66
+
+	// FOCUS 1.4 Cost and Usage
+	"invoice_detail_id",                      // field 67
+	"commitment_program_eligibility_details", // field 68
 }
 
-// FocusFieldNames returns all FOCUS 1.2/1.3 field names from FocusCostRecord.
-// The returned slice contains ~66 field names matching the FocusCostRecord message.
+// FocusFieldNames returns all FOCUS 1.2-1.4 field names from FocusCostRecord.
+// The returned slice contains ~68 field names matching the FocusCostRecord message.
 //
 // This function is safe for concurrent use and returns a direct reference
 // to the package-level slice (zero allocation).

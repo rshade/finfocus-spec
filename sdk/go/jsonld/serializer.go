@@ -492,6 +492,10 @@ func (s *Serializer) serializeCostRecordFields(doc map[string]interface{}, recor
 	fw.addString("invoiceId", record.GetInvoiceId())
 	fw.addString("invoiceIssuer", record.GetInvoiceIssuer())
 
+	// FOCUS 1.4 Cost and Usage fields (the eligibility JSON is emitted as a string)
+	fw.addString("invoiceDetailId", record.GetInvoiceDetailId())
+	fw.addString("commitmentProgramEligibilityDetails", record.GetCommitmentProgramEligibilityDetails())
+
 	// Map fields (tags and extended columns)
 	fw.addMap("tags", record.GetTags())
 	fw.addMap("extendedColumns", record.GetExtendedColumns())

@@ -61,6 +61,21 @@ describe('CostSourceClient Integration', () => {
     expect(response.results[0].cost).toBe(100.0);
   });
 
+  it('reads FOCUS 1.4 cost and usage columns from the actual cost FOCUS record', async () => {
+    const request = create(GetActualCostRequestSchema, { resourceId: 'i-1234567890abcdef0' });
+    const response = await client.getActualCost(request);
+
+    const record = response.results[0].focusRecord;
+    expect(record).toBeDefined();
+    expect(record?.serviceProviderName).toBe('AWS');
+    expect(record?.providerName).toBe('');
+    expect(record?.invoiceId).toBe('INV-2026-09');
+    expect(record?.invoiceDetailId).toBe('INV-2026-09-L3');
+    expect(JSON.parse(record?.commitmentProgramEligibilityDetails ?? '')).toEqual({
+      CommitmentPrograms: [{ ProgramType: 'Savings Plan' }],
+    });
+  });
+
   it('fetches projected cost successfully using ResourceDescriptor', async () => {
     const resource = new ResourceDescriptorBuilder()
       .withProvider('AWS')
@@ -210,6 +225,30 @@ describe('FocusRecordBuilder', () => {
     expect(record.resourceId).toBe('i-1234567890abcdef0');
     expect(record.providerName).toBe('AWS');
   });
+
+  it('sets FOCUS 1.4 invoice detail and commitment program eligibility', () => {
+    const details = '{"CommitmentPrograms":[{"ProgramType":"Savings Plan"}]}';
+    const record = new FocusRecordBuilder()
+      .withInvoiceDetailId('INV-2026-09-L3')
+      .withCommitmentProgramEligibilityDetails(details)
+      .build();
+
+    expect(record.invoiceDetailId).toBe('INV-2026-09-L3');
+    expect(record.commitmentProgramEligibilityDetails).toBe(details);
+  });
+
+  it('rejects an empty invoice detail ID', () => {
+    expect(() => new FocusRecordBuilder().withInvoiceDetailId('  ')).toThrow(ValidationError);
+  });
+
+  it.each(['[]', 'null', '"x"', '{"CommitmentPrograms":[', '42'])(
+    'rejects commitment program eligibility details that are not a JSON object: %s',
+    (details) => {
+      expect(() => new FocusRecordBuilder().withCommitmentProgramEligibilityDetails(details)).toThrow(
+        ValidationError,
+      );
+    },
+  );
 });
 
 describe('ObservabilityClient', () => {

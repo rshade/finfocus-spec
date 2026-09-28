@@ -1458,3 +1458,127 @@ func TestFocusRecordBuilder_BackwardCompatibility_NewFieldsDefaultValues(t *test
 		t.Errorf("AllocatedTags should be empty by default, got %v", record.GetAllocatedTags())
 	}
 }
+
+// =============================================================================
+// FOCUS 1.4 Cost and Usage Builder Tests
+// =============================================================================
+
+// TestFocusRecordBuilder_WithInvoiceDetailID verifies the FOCUS 1.4 InvoiceDetailId
+// setter and the rule that invoice_detail_id requires invoice_id.
+func TestFocusRecordBuilder_WithInvoiceDetailID(t *testing.T) {
+	t.Run("round trip with invoice", func(t *testing.T) {
+		record, err := createValidBuilder().
+			WithInvoice("INV-1", "AWS").
+			WithInvoiceDetailID("INV-1-L3").
+			Build()
+		if err != nil {
+			t.Fatalf("Build failed: %v", err)
+		}
+		if record.GetInvoiceDetailId() != "INV-1-L3" {
+			t.Errorf("InvoiceDetailId = %q, want INV-1-L3", record.GetInvoiceDetailId())
+		}
+		if record.GetInvoiceId() != "INV-1" {
+			t.Errorf("InvoiceId = %q, want INV-1", record.GetInvoiceId())
+		}
+	})
+
+	t.Run("missing invoice_id fails", func(t *testing.T) {
+		_, err := createValidBuilder().
+			WithInvoice("", "AWS").
+			WithInvoiceDetailID("INV-1-L3").
+			Build()
+		if !errors.Is(err, pluginsdk.ErrInvoiceIDMissingForInvoiceDetail) {
+			t.Fatalf("Build error = %v, want ErrInvoiceIDMissingForInvoiceDetail", err)
+		}
+		var valErr *pluginsdk.ValidationError
+		if !errors.As(err, &valErr) || valErr.FieldName != "invoice_id" {
+			t.Errorf("want *ValidationError for invoice_id, got %T (%v)", err, err)
+		}
+	})
+
+	t.Run("empty detail id adds no rule", func(t *testing.T) {
+		if _, err := createValidBuilder().WithInvoice("", "").WithInvoiceDetailID("").Build(); err != nil {
+			t.Fatalf("Build failed: %v", err)
+		}
+	})
+}
+
+// TestFocusRecordBuilder_WithCommitmentProgramEligibilityDetails verifies that only a
+// well-formed JSON object passes Build.
+func TestFocusRecordBuilder_WithCommitmentProgramEligibilityDetails(t *testing.T) {
+	tests := []struct {
+		name    string
+		details string
+		wantErr bool
+	}{
+		{name: "FOCUS example", details: `{"CommitmentPrograms":[{"ProgramType":"Savings Plan"}]}`},
+		{name: "surrounding whitespace", details: " \n\t{\"CommitmentPrograms\":[]} \n"},
+		{name: "empty object", details: `{}`},
+		{name: "unset", details: ``},
+		{name: "truncated", details: `{"CommitmentPrograms":[`, wantErr: true},
+		{name: "array", details: `[]`, wantErr: true},
+		{name: "string", details: `"text"`, wantErr: true},
+		{name: "null literal", details: `null`, wantErr: true},
+		{name: "number", details: `42`, wantErr: true},
+		{name: "whitespace only", details: "   ", wantErr: true},
+		{name: "two objects", details: `{"a":1}{"b":2}`, wantErr: true},
+		{name: "not JSON", details: `SavingsPlan`, wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			record, err := createValidBuilder().
+				WithCommitmentProgramEligibilityDetails(tt.details).
+				Build()
+			if tt.wantErr {
+				assertEligibilityDetailsError(t, err)
+				return
+			}
+			if err != nil {
+				t.Fatalf("Build failed: %v", err)
+			}
+			if record.GetCommitmentProgramEligibilityDetails() != tt.details {
+				t.Errorf("CommitmentProgramEligibilityDetails = %q, want %q",
+					record.GetCommitmentProgramEligibilityDetails(), tt.details)
+			}
+		})
+	}
+}
+
+// assertEligibilityDetailsError checks that err is the eligibility-details sentinel
+// wrapped in a *ValidationError whose actual value is a fixed reason, never the input.
+func assertEligibilityDetailsError(t *testing.T, err error) {
+	t.Helper()
+	if !errors.Is(err, pluginsdk.ErrInvalidCommitmentProgramEligibilityDetails) {
+		t.Fatalf("Build error = %v, want ErrInvalidCommitmentProgramEligibilityDetails", err)
+	}
+	var valErr *pluginsdk.ValidationError
+	if !errors.As(err, &valErr) || valErr.FieldName != "commitment_program_eligibility_details" {
+		t.Fatalf("want *ValidationError for commitment_program_eligibility_details, got %T (%v)", err, err)
+	}
+	if valErr.ActualValue != "malformed JSON" && valErr.ActualValue != "not a JSON object" {
+		t.Errorf("ActualValue = %q, want a fixed reason that does not echo the input", valErr.ActualValue)
+	}
+}
+
+// BenchmarkFocusRecordBuilder_WithInvoiceDetailID measures the FOCUS 1.4 setter.
+func BenchmarkFocusRecordBuilder_WithInvoiceDetailID(b *testing.B) {
+	builder := createValidBuilder()
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		builder.WithInvoiceDetailID("INV-2026-09-L3")
+	}
+}
+
+// BenchmarkFocusRecordBuilder_WithCommitmentProgramEligibilityDetails measures the
+// FOCUS 1.4 setter, which stores the string without validating it.
+func BenchmarkFocusRecordBuilder_WithCommitmentProgramEligibilityDetails(b *testing.B) {
+	builder := createValidBuilder()
+	details := `{"CommitmentPrograms":[{"ProgramType":"Savings Plan"}]}`
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		builder.WithCommitmentProgramEligibilityDetails(details)
+	}
+}

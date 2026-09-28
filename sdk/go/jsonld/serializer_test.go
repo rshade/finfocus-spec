@@ -752,3 +752,61 @@ func TestSerializeCommitment_WithUserIDField(t *testing.T) {
 		t.Errorf("@id should contain user-provided ID, got: %s", id)
 	}
 }
+
+// TestSerialize_Focus14Fields verifies the FOCUS 1.4 Cost and Usage columns are emitted
+// as strings when set and omitted when empty.
+func TestSerialize_Focus14Fields(t *testing.T) {
+	const eligibility = `{"CommitmentPrograms":[{"ProgramType":"Savings Plan"}]}`
+	serializer := jsonld.NewSerializer()
+
+	record := &pbc.FocusCostRecord{
+		BillingAccountId:                    "123456789012",
+		ServiceName:                         "Amazon EC2",
+		BilledCost:                          100.0,
+		BillingCurrency:                     "USD",
+		InvoiceId:                           "INV-2026-09",
+		InvoiceDetailId:                     "INV-2026-09-L3",
+		CommitmentProgramEligibilityDetails: eligibility,
+	}
+
+	output, err := serializer.Serialize(record)
+	if err != nil {
+		t.Fatalf("Serialize() failed: %v", err)
+	}
+	var result map[string]interface{}
+	if unmarshalErr := json.Unmarshal(output, &result); unmarshalErr != nil {
+		t.Fatalf("Output is not valid JSON: %v", unmarshalErr)
+	}
+	if got := result["invoiceDetailId"]; got != "INV-2026-09-L3" {
+		t.Errorf("invoiceDetailId = %v, want INV-2026-09-L3", got)
+	}
+	if got := result["commitmentProgramEligibilityDetails"]; got != eligibility {
+		t.Errorf("commitmentProgramEligibilityDetails = %v, want %s", got, eligibility)
+	}
+
+	record.InvoiceDetailId = ""
+	record.CommitmentProgramEligibilityDetails = ""
+	output, err = serializer.Serialize(record)
+	if err != nil {
+		t.Fatalf("Serialize() failed: %v", err)
+	}
+	result = nil
+	if unmarshalErr := json.Unmarshal(output, &result); unmarshalErr != nil {
+		t.Fatalf("Output is not valid JSON: %v", unmarshalErr)
+	}
+	for _, key := range []string{"invoiceDetailId", "commitmentProgramEligibilityDetails"} {
+		if _, ok := result[key]; ok {
+			t.Errorf("%s should be omitted when empty", key)
+		}
+	}
+}
+
+// TestVocabulary_Focus14Terms verifies the FOCUS 1.4 vocabulary terms.
+func TestVocabulary_Focus14Terms(t *testing.T) {
+	if jsonld.InvoiceDetailID != "focus:invoiceDetailId" {
+		t.Errorf("InvoiceDetailID = %q", jsonld.InvoiceDetailID)
+	}
+	if jsonld.CommitmentProgramEligibilityDetails != "focus:commitmentProgramEligibilityDetails" {
+		t.Errorf("CommitmentProgramEligibilityDetails = %q", jsonld.CommitmentProgramEligibilityDetails)
+	}
+}

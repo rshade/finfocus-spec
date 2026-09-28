@@ -25,7 +25,13 @@ export const handlers = [
           cost: 100.0,
           usageAmount: 720,
           usageUnit: "hours",
-          source: "AWS Cost Explorer"
+          source: "AWS Cost Explorer",
+          focusRecord: {
+            serviceProviderName: "AWS",
+            invoiceId: "INV-2026-09",
+            invoiceDetailId: "INV-2026-09-L3",
+            commitmentProgramEligibilityDetails: '{"CommitmentPrograms":[{"ProgramType":"Savings Plan"}]}'
+          }
         }
       ],
       fallbackHint: 1 // FALLBACK_HINT_NONE

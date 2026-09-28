@@ -202,3 +202,59 @@ func BenchmarkValidateFocusRecord_ErrorPath(b *testing.B) {
 		_ = pluginsdk.ValidateFocusRecord(record)
 	}
 }
+
+// createFocus14BenchmarkRecord returns the valid benchmark record with every FOCUS 1.4
+// Cost and Usage rule exercised: service provider only, invoice detail and eligibility.
+func createFocus14BenchmarkRecord() *pbc.FocusCostRecord {
+	r := createValidBenchmarkRecord()
+	r.ProviderName = "" //nolint:staticcheck // SA1019: FOCUS 1.4 removes provider_name
+	r.ServiceProviderName = "AWS"
+	r.InvoiceId = "INV-2026-09"
+	r.InvoiceDetailId = "INV-2026-09-L3"
+	r.CommitmentProgramEligibilityDetails = `{"CommitmentPrograms":[{"ProgramType":"Savings Plan"},` +
+		`{"ProgramType":"Reserved Instance"}]}`
+	return r
+}
+
+// BenchmarkValidateFocusRecord_Focus14Fields measures validation of a record that sets
+// both FOCUS 1.4 Cost and Usage columns. The eligibility JSON check costs 1 allocation
+// (the []byte conversion for json.Valid); everything else is allocation-free.
+func BenchmarkValidateFocusRecord_Focus14Fields(b *testing.B) {
+	record := createFocus14BenchmarkRecord()
+
+	b.ResetTimer()
+	b.ReportAllocs()
+	for range b.N {
+		_ = pluginsdk.ValidateFocusRecord(record)
+	}
+}
+
+// TestValidateFocusRecord_Focus14Allocs guards the validator's allocation budget:
+// records without eligibility details (every FOCUS 1.3 record) stay allocation-free,
+// and the eligibility JSON check costs at most the one []byte conversion.
+func TestValidateFocusRecord_Focus14Allocs(t *testing.T) {
+	withoutDetails := createFocus14BenchmarkRecord()
+	withoutDetails.CommitmentProgramEligibilityDetails = ""
+
+	tests := []struct {
+		name      string
+		record    *pbc.FocusCostRecord
+		maxAllocs float64
+	}{
+		{"without_eligibility_details", withoutDetails, 0},
+		{"with_eligibility_details", createFocus14BenchmarkRecord(), 1},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := pluginsdk.ValidateFocusRecord(tt.record); err != nil {
+				t.Fatalf("record must be valid: %v", err)
+			}
+			allocs := testing.AllocsPerRun(100, func() {
+				_ = pluginsdk.ValidateFocusRecord(tt.record)
+			})
+			if allocs > tt.maxAllocs {
+				t.Errorf("ValidateFocusRecord allocs = %v, want <= %v", allocs, tt.maxAllocs)
+			}
+		})
+	}
+}

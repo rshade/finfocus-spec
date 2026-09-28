@@ -1,24 +1,29 @@
-# FOCUS 1.2/1.3 Column Reference
+# FOCUS 1.2-1.4 Column Reference
 
 This document provides a comprehensive reference for columns defined in the
 FinOps FOCUS (FinOps Open Cost and Usage Specification) as implemented in
-FinFocus, covering FOCUS 1.2 and 1.3 additions.
+FinFocus, covering FOCUS 1.2 and the 1.3 and 1.4 additions.
 
 References:
 
 - FOCUS 1.2: <https://focus.finops.org/focus-specification/v1-2/>
 - FOCUS 1.3: <https://focus.finops.org/focus-specification/v1-3/>
+- FOCUS 1.4: <https://focus.finops.org/focus-specification/v1-4/>
 
 ## Column Summary
 
 ### FocusCostRecord Columns
 
-| Level       | FOCUS 1.2 | FOCUS 1.3 Additions | Total  | Description                                 |
-| ----------- | --------- | ------------------- | ------ | ------------------------------------------- |
-| Mandatory   | 14        | 0                   | 14     | Required for all cost records               |
-| Recommended | 1         | 1                   | 2      | Strongly suggested for completeness         |
-| Conditional | 42        | 7                   | 49     | Required when applicable conditions are met |
-| **Total**   | **57**    | **8**               | **65** | Complete FOCUS 1.3 coverage                 |
+| Level       | FOCUS 1.2 | FOCUS 1.3 Additions | FOCUS 1.4 Additions | Total  | Description                                 |
+| ----------- | --------- | ------------------- | ------------------- | ------ | ------------------------------------------- |
+| Mandatory   | 14        | 0                   | 0                   | 14     | Required for all cost records               |
+| Recommended | 1         | 1                   | 0                   | 2      | Strongly suggested for completeness         |
+| Conditional | 42        | 7                   | 2                   | 51     | Required when applicable conditions are met |
+| **Total**   | **57**    | **8**               | **2**               | **67** | Complete FOCUS 1.4 Cost and Usage coverage  |
+
+FOCUS 1.4 also removes `ProviderName` and `PublisherName` and makes `InvoiceId` Conditional. The
+counts above keep them in their FOCUS 1.2 rows because the SDK still carries both fields. See
+[FOCUS 1.4 Changes](#focus-14-changes-cost-and-usage).
 
 ### ContractCommitment Dataset (FOCUS 1.3)
 
@@ -28,12 +33,12 @@ References:
 | Conditional | 10     | Classification, periods, and amounts |
 | **Total**   | **12** | Complete commitment dataset          |
 
-### Deprecated Columns (FOCUS 1.3)
+### Deprecated Columns (FOCUS 1.3, removed in FOCUS 1.4)
 
-| Column          | Replacement         | Notes                        |
-| --------------- | ------------------- | ---------------------------- |
-| `ProviderName`  | `ServiceProviderName` | Supports marketplace scenarios |
-| `Publisher`     | `HostProviderName`    | Clarifies hosting vs service |
+| Column          | Replacement           | Notes                                                        |
+| --------------- | --------------------- | ------------------------------------------------------------ |
+| `ProviderName`  | `ServiceProviderName` | Supports marketplace scenarios; either one satisfies validation |
+| `Publisher`     | `HostProviderName`    | Clarifies hosting vs service                                 |
 
 ## Mandatory Columns (14)
 
@@ -43,7 +48,7 @@ These columns MUST be present in every FOCUS-compliant cost record.
 
 | Column                 | Type   | Description                      | Provider Mapping                                                           |
 | ---------------------- | ------ | -------------------------------- | -------------------------------------------------------------------------- |
-| **ProviderName**       | string | Cloud provider name              | AWS, Azure, GCP, Kubernetes                                                |
+| **ProviderName**       | string | Cloud provider name (removed in FOCUS 1.4; `ServiceProviderName` satisfies the rule) | AWS, Azure, GCP, Kubernetes |
 | **BillingAccountId**   | string | Billing account identifier       | AWS: Payer Account ID, Azure: Billing Account ID, GCP: Billing Account ID  |
 | **BillingAccountName** | string | Display name for billing account | AWS: Account Alias, Azure: Billing Account Name, GCP: Billing Account Name |
 
@@ -188,8 +193,8 @@ These columns are required when specific conditions apply.
 
 | Column            | Type   | Condition                   | Provider Mapping                      |
 | ----------------- | ------ | --------------------------- | ------------------------------------- |
-| **InvoiceId**     | string | When invoice exists         | AWS: bill/InvoiceId, Azure: InvoiceId |
-| **InvoiceIssuer** | string | When issuer is identifiable | Legal entity name                     |
+| **InvoiceId**     | string | When invoice exists (FOCUS 1.4: when the issuer supports payable invoices) | AWS: bill/InvoiceId, Azure: InvoiceId |
+| **InvoiceIssuer** | string | When issuer is identifiable (named `InvoiceIssuerName` in FOCUS 1.4)       | Legal entity name                     |
 
 ### Metadata
 
@@ -268,6 +273,86 @@ This column links cost records to the ContractCommitment supplemental dataset.
 ```go
 builder.WithContractApplied("ri-123456789")  // Links to ContractCommitment dataset
 ```
+
+---
+
+## FOCUS 1.4 Changes (Cost and Usage)
+
+FOCUS 1.4 adds 2 columns to the Cost and Usage dataset, removes 2, and changes the rules of
+several existing columns. Every change here is additive on the wire: no field was renamed,
+renumbered, or removed. Field numbers 69 to 80 are reserved for future Cost and Usage columns.
+
+### New Columns (2)
+
+| Column                                  | Proto field (number)                          | Type             | Level       | Nulls | Builder method                                |
+| --------------------------------------- | --------------------------------------------- | ---------------- | ----------- | ----- | --------------------------------------------- |
+| **InvoiceDetailId**                     | `invoice_detail_id` (67)                      | string           | Conditional | Yes   | `WithInvoiceDetailID(id)`                     |
+| **CommitmentProgramEligibilityDetails** | `commitment_program_eligibility_details` (68) | JSON object text | Conditional | Yes   | `WithCommitmentProgramEligibilityDetails(js)` |
+
+- **InvoiceDetailId** links a cost row to the invoice line item it contributes to. It is required
+  when the invoice issuer supports payable invoices, and null (empty) when there is no invoice or
+  only a provisional one. It is unique within an InvoiceId, so the SDK requires `invoice_id`
+  whenever it is set.
+- **CommitmentProgramEligibilityDetails** lists the commitment programs the charge is eligible
+  for, even when none was applied. It is required when the provider has commitment programs. It
+  is stored as a JSON string, like `allocated_method_details`, and the SDK requires a well-formed
+  JSON object when it is set.
+
+#### FOCUS 1.4 Example
+
+```go
+builder.WithInvoice("INV-2026-09", "Amazon Web Services, Inc.").
+    WithInvoiceDetailID("INV-2026-09-L3").
+    WithCommitmentProgramEligibilityDetails(
+        `{"CommitmentPrograms":[{"ProgramType":"Savings Plan"},{"ProgramType":"Reserved Instance"}]}`,
+    )
+```
+
+`ProgramType` values are provider-defined. When `commitment_discount_type` is set, one
+`ProgramType` should match it. Custom keys use the `x_` prefix.
+
+### Removed Columns (2)
+
+| Column          | Proto field (number)  | Status in this SDK                                                                   |
+| --------------- | --------------------- | ------------------------------------------------------------------------------------ |
+| `ProviderName`  | `provider_name` (1)   | Deprecated, kept on the wire. Validation accepts `service_provider_name` in its place |
+| `PublisherName` | `publisher` (55)      | Deprecated, kept on the wire. Use `host_provider_name`                                 |
+
+A FOCUS 1.4 record sets `service_provider_name` and leaves `provider_name` empty. The mandatory
+provider check passes when either field is set. When both are empty, the validation error keeps
+the field name `provider_name` and names `service_provider_name` as the expected value. Removing
+fields 1 and 55 from the wire needs a v2 package.
+
+### Renamed Column
+
+`InvoiceIssuer` is named `InvoiceIssuerName` in FOCUS 1.4. The proto field keeps its name
+(`invoice_issuer`, field 40) and `WithInvoice(invoiceID, invoiceIssuer)` is unchanged, so no
+generated Go or TypeScript API breaks.
+
+### Changed Columns
+
+| Column                           | FOCUS 1.4 change                                                      | SDK behavior                |
+| -------------------------------- | --------------------------------------------------------------------- | --------------------------- |
+| **InvoiceId**                    | Recommended → Conditional (required when payable invoices exist)      | Producer responsibility     |
+| **PricingCurrency**              | No longer nullable when the column applies                           | Producer responsibility     |
+| **PricingCurrencyEffectiveCost** | Not nullable; must be the PricingCurrency equivalent of EffectiveCost | Producer responsibility     |
+| **BilledCost**                   | 0 for non-invoicing entities; per-invoice sums within a tolerance     | Producer responsibility     |
+| **EffectiveCost**                | Explicit equality with BilledCost by ChargeCategory; amortization     | Existing hierarchy rule only |
+| **AllocatedMethodDetails**       | Becomes a JSON object (`AllocatedMethodDetailsObject`)                 | Not enforced (1.3 free text stays valid) |
+| **ServiceProviderName**          | Presence moved to dataset-level rules                                 | Satisfies the provider rule |
+| **HostProviderName**             | Must match ServiceProviderName when no separate host exists           | Producer responsibility     |
+
+### Validation Summary
+
+| Rule                                                                           | Enforced | Error (`errors.Is`)                             |
+| ------------------------------------------------------------------------------ | -------- | ----------------------------------------------- |
+| `service_provider_name` or `provider_name` is set                              | Yes      | `ValidationError` on `provider_name`            |
+| `commitment_program_eligibility_details`, when set, is a well-formed JSON object | Yes      | `ErrInvalidCommitmentProgramEligibilityDetails` |
+| `invoice_detail_id`, when set, has an `invoice_id`                              | Yes      | `ErrInvoiceIDMissingForInvoiceDetail`           |
+| One `ProgramType` matches `commitment_discount_type`                           | No       | Producer responsibility                         |
+| InvoiceDetailId is unique within an InvoiceId                                  | No       | Cross-row rule                                  |
+
+The per-record checks allocate nothing on valid records.
 
 ---
 

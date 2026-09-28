@@ -78,15 +78,17 @@ func (FocusContractCommitmentCategory) EnumDescriptor() ([]byte, []int) {
 }
 
 // FocusCostRecord represents a single cost line item normalized to the
-// FinOps FOCUS specification (1.2 and 1.3). All field names follow FOCUS naming conventions.
+// FinOps FOCUS specification (1.2, 1.3 and 1.4). All field names follow FOCUS naming conventions.
 // Includes FOCUS 1.3 additions: allocation fields, contract commitment linking,
-// and service/host provider disambiguation.
+// and service/host provider disambiguation. Includes FOCUS 1.4 Cost and Usage
+// additions: invoice detail linking and commitment program eligibility.
 // Reference: https://focus.finops.org
 type FocusCostRecord struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// ProviderName: The name of the cloud provider (e.g., "AWS", "Azure", "GCP").
 	// DEPRECATED in FOCUS 1.3: Use service_provider_name instead.
-	// Will be removed in FOCUS 1.4.
+	// Removed from FOCUS 1.4; kept on the wire for backward compatibility.
+	// Validation accepts service_provider_name in its place.
 	//
 	// Deprecated: Marked as deprecated in finfocus/v1/focus.proto.
 	ProviderName string `protobuf:"bytes,1,opt,name=provider_name,json=providerName,proto3" json:"provider_name,omitempty"`
@@ -135,12 +137,15 @@ type FocusCostRecord struct {
 	// PricingCurrency: Currency for pricing-related columns when different from
 	// billing currency. FOCUS 1.2 Section 3.34: Pricing Currency (CONDITIONAL).
 	// Format: ISO 4217 currency code.
+	// FOCUS 1.4: not nullable when the column applies.
 	PricingCurrency string `protobuf:"bytes,51,opt,name=pricing_currency,json=pricingCurrency,proto3" json:"pricing_currency,omitempty"`
 	// PricingCurrencyContractedUnitPrice: Contracted unit price denominated in
 	// pricing currency. FOCUS 1.2 Section 3.35 (CONDITIONAL).
 	PricingCurrencyContractedUnitPrice float64 `protobuf:"fixed64,52,opt,name=pricing_currency_contracted_unit_price,json=pricingCurrencyContractedUnitPrice,proto3" json:"pricing_currency_contracted_unit_price,omitempty"`
 	// PricingCurrencyEffectiveCost: Effective cost denominated in pricing
 	// currency. FOCUS 1.2 Section 3.36 (CONDITIONAL).
+	// FOCUS 1.4: not nullable when the column applies; MUST be the PricingCurrency
+	// equivalent of effective_cost.
 	PricingCurrencyEffectiveCost float64 `protobuf:"fixed64,53,opt,name=pricing_currency_effective_cost,json=pricingCurrencyEffectiveCost,proto3" json:"pricing_currency_effective_cost,omitempty"`
 	// PricingCurrencyListUnitPrice: List unit price denominated in pricing
 	// currency. FOCUS 1.2 Section 3.37 (CONDITIONAL).
@@ -155,7 +160,7 @@ type FocusCostRecord struct {
 	// Publisher: Entity that published the service or product.
 	// FOCUS 1.2 Section 3.39: Publisher (CONDITIONAL).
 	// DEPRECATED in FOCUS 1.3: Use host_provider_name instead.
-	// Will be removed in FOCUS 1.4.
+	// Removed from FOCUS 1.4; kept on the wire for backward compatibility.
 	//
 	// Deprecated: Marked as deprecated in finfocus/v1/focus.proto.
 	Publisher string `protobuf:"bytes,55,opt,name=publisher,proto3" json:"publisher,omitempty"`
@@ -226,8 +231,11 @@ type FocusCostRecord struct {
 	// is not null and ChargeCategory is "Usage".
 	CapacityReservationStatus FocusCapacityReservationStatus `protobuf:"varint,45,opt,name=capacity_reservation_status,json=capacityReservationStatus,proto3,enum=finfocus.v1.FocusCapacityReservationStatus" json:"capacity_reservation_status,omitempty"`
 	// InvoiceId: The identifier for the invoice. Critical for reconciliation.
+	// FOCUS 1.4: CONDITIONAL (was RECOMMENDED): required when the invoice issuer
+	// supports payable invoices.
 	InvoiceId string `protobuf:"bytes,19,opt,name=invoice_id,json=invoiceId,proto3" json:"invoice_id,omitempty"`
-	// InvoiceIssuer: The entity that issued the invoice.
+	// InvoiceIssuerName (FOCUS 1.4 column name; formerly InvoiceIssuer): The entity
+	// that issues the invoice. The proto field keeps its original name.
 	InvoiceIssuer string `protobuf:"bytes,40,opt,name=invoice_issuer,json=invoiceIssuer,proto3" json:"invoice_issuer,omitempty"`
 	// Tags: User-defined key-value pairs for resource tagging.
 	Tags map[string]string `protobuf:"bytes,22,rep,name=tags,proto3" json:"tags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
@@ -252,6 +260,8 @@ type FocusCostRecord struct {
 	// AllocatedMethodDetails: Human-readable description of the allocation method.
 	// Provides transparency into how costs were split.
 	// FOCUS 1.3 Section: Allocated Method Details (RECOMMENDED)
+	// FOCUS 1.4 defines this column as a JSON object (AllocatedMethodDetailsObject);
+	// the SDK does not enforce the format.
 	AllocatedMethodDetails string `protobuf:"bytes,62,opt,name=allocated_method_details,json=allocatedMethodDetails,proto3" json:"allocated_method_details,omitempty"`
 	// AllocatedResourceId: Identifier of the resource receiving the allocated cost.
 	// This is the target of the cost allocation.
@@ -268,8 +278,23 @@ type FocusCostRecord struct {
 	// Commitment dataset. Treated as opaque reference (no cross-dataset validation).
 	// FOCUS 1.3 Section: Contract Applied (CONDITIONAL)
 	ContractApplied string `protobuf:"bytes,66,opt,name=contract_applied,json=contractApplied,proto3" json:"contract_applied,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// InvoiceDetailId: Identifier of the invoice line item this row contributes to.
+	// Unique within an InvoiceId, so invoice_id MUST be set when this is set.
+	// Empty means null: there is no invoice or only a provisional invoice.
+	// FOCUS 1.4 Section: Invoice Detail ID (CONDITIONAL: required when the invoice
+	// issuer supports payable invoices).
+	InvoiceDetailId string `protobuf:"bytes,67,opt,name=invoice_detail_id,json=invoiceDetailId,proto3" json:"invoice_detail_id,omitempty"`
+	// CommitmentProgramEligibilityDetails: JSON object listing the commitment
+	// programs this charge is eligible for, whether or not one was applied, e.g.
+	// {"CommitmentPrograms":[{"ProgramType":"Savings Plan"}]}.
+	// Stored as a JSON string, like allocated_method_details. When set, it MUST be
+	// a well-formed JSON object. One ProgramType SHOULD match commitment_discount_type
+	// when that is set; custom keys use the "x_" prefix. Empty means null.
+	// FOCUS 1.4 Section: Commitment Program Eligibility Details (CONDITIONAL:
+	// required when the provider has one or more commitment programs).
+	CommitmentProgramEligibilityDetails string `protobuf:"bytes,68,opt,name=commitment_program_eligibility_details,json=commitmentProgramEligibilityDetails,proto3" json:"commitment_program_eligibility_details,omitempty"`
+	unknownFields                       protoimpl.UnknownFields
+	sizeCache                           protoimpl.SizeCache
 }
 
 func (x *FocusCostRecord) Reset() {
@@ -766,6 +791,20 @@ func (x *FocusCostRecord) GetContractApplied() string {
 	return ""
 }
 
+func (x *FocusCostRecord) GetInvoiceDetailId() string {
+	if x != nil {
+		return x.InvoiceDetailId
+	}
+	return ""
+}
+
+func (x *FocusCostRecord) GetCommitmentProgramEligibilityDetails() string {
+	if x != nil {
+		return x.CommitmentProgramEligibilityDetails
+	}
+	return ""
+}
+
 // ContractCommitment represents a contractual commitment record in the
 // FOCUS 1.3 Contract Commitment supplemental dataset.
 //
@@ -944,7 +983,7 @@ var File_finfocus_v1_focus_proto protoreflect.FileDescriptor
 
 const file_finfocus_v1_focus_proto_rawDesc = "" +
 	"\n" +
-	"\x17finfocus/v1/focus.proto\x12\vfinfocus.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17finfocus/v1/enums.proto\"\xa8\x1d\n" +
+	"\x17finfocus/v1/focus.proto\x12\vfinfocus.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17finfocus/v1/enums.proto\"\xa9\x1e\n" +
 	"\x0fFocusCostRecord\x12'\n" +
 	"\rprovider_name\x18\x01 \x01(\tB\x02\x18\x01R\fproviderName\x12,\n" +
 	"\x12billing_account_id\x18\x02 \x01(\tR\x10billingAccountId\x120\n" +
@@ -1017,7 +1056,9 @@ const file_finfocus_v1_focus_proto_rawDesc = "" +
 	"\x15allocated_resource_id\x18? \x01(\tR\x13allocatedResourceId\x126\n" +
 	"\x17allocated_resource_name\x18@ \x01(\tR\x15allocatedResourceName\x12V\n" +
 	"\x0eallocated_tags\x18A \x03(\v2/.finfocus.v1.FocusCostRecord.AllocatedTagsEntryR\rallocatedTags\x12)\n" +
-	"\x10contract_applied\x18B \x01(\tR\x0fcontractApplied\x1a7\n" +
+	"\x10contract_applied\x18B \x01(\tR\x0fcontractApplied\x12*\n" +
+	"\x11invoice_detail_id\x18C \x01(\tR\x0finvoiceDetailId\x12S\n" +
+	"&commitment_program_eligibility_details\x18D \x01(\tR#commitmentProgramEligibilityDetails\x1a7\n" +
 	"\tTagsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1aB\n" +

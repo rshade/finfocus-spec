@@ -89,7 +89,11 @@ const (
 
 	// Invoice fields.
 	InvoiceID     = "focus:invoiceId"
-	InvoiceIssuer = "focus:invoiceIssuer"
+	InvoiceIssuer = "focus:invoiceIssuer" // FOCUS 1.4 column name: InvoiceIssuerName
+
+	// FOCUS 1.4 Cost and Usage fields.
+	InvoiceDetailID                     = "focus:invoiceDetailId"
+	CommitmentProgramEligibilityDetails = "focus:commitmentProgramEligibilityDetails"
 
 	// Map fields.
 	Tags            = "focus:tags"

@@ -346,9 +346,12 @@ func TestValidateFocusRecord_MandatoryFields(t *testing.T) {
 		expectedField string
 	}{
 		{
-			name: "missing provider_name",
-			//nolint:staticcheck // SA1019: Testing validation of deprecated provider_name field
-			modifyFunc:    func(r *pbc.FocusCostRecord) { r.ProviderName = "" },
+			name: "missing provider_name and service_provider_name",
+			modifyFunc: func(r *pbc.FocusCostRecord) {
+				//nolint:staticcheck // SA1019: Testing validation of deprecated provider_name field
+				r.ProviderName = ""
+				r.ServiceProviderName = ""
+			},
 			errorContains: "provider_name",
 			expectedField: "provider_name",
 		},
@@ -664,6 +667,51 @@ func createValidFocusRecord() *pbc.FocusCostRecord {
 		ContractedCost:     10.0,
 		ConsumedQuantity:   1.0,
 		ConsumedUnit:       "Hours",
+	}
+}
+
+// TestValidateFocusRecord_ProviderRule verifies the FOCUS 1.4 provider rule: FOCUS 1.4
+// removes ProviderName, so service_provider_name alone satisfies it, while a record
+// with neither provider name fails on provider_name.
+func TestValidateFocusRecord_ProviderRule(t *testing.T) {
+	tests := []struct {
+		name            string
+		providerName    string
+		serviceProvider string
+		wantErr         bool
+	}{
+		{name: "service_provider_name only (FOCUS 1.4)", serviceProvider: "AWS"},
+		{name: "provider_name only (FOCUS 1.2)", providerName: "AWS"},
+		{name: "both set", providerName: "AWS", serviceProvider: "AWS"},
+		{name: "neither set", wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := createValidFocusRecord()
+			//nolint:staticcheck // SA1019: Testing deprecated provider_name fallback
+			r.ProviderName = tt.providerName
+			r.ServiceProviderName = tt.serviceProvider
+
+			err := pluginsdk.ValidateFocusRecord(r)
+			if !tt.wantErr {
+				if err != nil {
+					t.Fatalf("ValidateFocusRecord() = %v, want nil", err)
+				}
+				return
+			}
+
+			var valErr *pluginsdk.ValidationError
+			if !errors.As(err, &valErr) {
+				t.Fatalf("errors.As failed: got %T (%v)", err, err)
+			}
+			if valErr.FieldName != "provider_name" {
+				t.Errorf("FieldName = %q, want provider_name", valErr.FieldName)
+			}
+			if !strings.Contains(valErr.ExpectedValue, "service_provider_name") {
+				t.Errorf("ExpectedValue = %q, want it to name service_provider_name", valErr.ExpectedValue)
+			}
+		})
 	}
 }
 
@@ -1578,6 +1626,7 @@ func TestValidateFocusRecord_ErrorsAs_AdHocErrors(t *testing.T) {
 				r := createValidFocusRecord()
 				//nolint:staticcheck // SA1019: Testing deprecated field
 				r.ProviderName = ""
+				r.ServiceProviderName = ""
 				return r
 			}(),
 			expectedFieldName: "provider_name",

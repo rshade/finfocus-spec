@@ -1,6 +1,7 @@
 package pluginsdk
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -59,9 +60,22 @@ var (
 
 	// ErrPricingUnitMissing indicates PricingUnit is required when PricingQuantity > 0.
 	ErrPricingUnitMissing = errors.New("pricing_unit required when pricing_quantity > 0")
+
+	// ErrInvalidCommitmentProgramEligibilityDetails indicates that the FOCUS 1.4
+	// commitment_program_eligibility_details column is set but is not a well-formed
+	// JSON object.
+	ErrInvalidCommitmentProgramEligibilityDetails = errors.New(
+		"commitment_program_eligibility_details must be a well-formed JSON object",
+	)
+
+	// ErrInvoiceIDMissingForInvoiceDetail indicates the FOCUS 1.4 invoice_detail_id
+	// column is set without invoice_id. An InvoiceDetailId is only unique within an
+	// InvoiceId, so it is meaningless on its own.
+	ErrInvoiceIDMissingForInvoiceDetail = errors.New("invoice_id required when invoice_detail_id is set")
 )
 
-// ValidateFocusRecord checks if a record complies with FOCUS 1.2 mandatory fields and business rules.
+// ValidateFocusRecord checks if a record complies with FOCUS mandatory fields and business rules
+// (FOCUS 1.2 through the FOCUS 1.4 Cost and Usage columns).
 // This is a convenience wrapper that uses fail-fast validation mode.
 // For aggregate mode or other options, use ValidateFocusRecordWithOptions.
 // Reference: https://focus.finops.org
@@ -73,7 +87,7 @@ func ValidateFocusRecord(r *pbc.FocusCostRecord) error {
 	return nil
 }
 
-// ValidateFocusRecordWithOptions validates a FocusCostRecord according to FOCUS 1.2/1.3
+// ValidateFocusRecordWithOptions validates a FocusCostRecord according to FOCUS 1.2 to 1.4
 // and contextual FinOps rules using the provided ValidationOptions.
 // In FailFast mode, validation stops on the first error. In Aggregate mode, all errors
 // are collected and returned. Returns an empty slice when the record is valid.
@@ -169,15 +183,19 @@ func checkCostValue(val float64, name string) error {
 
 // validateMandatoryFields verifies the 14 mandatory FOCUS 1.2 fields are present in r.
 // It returns an error describing the first missing or unspecified required field.
-// This validation requires provider_name for FOCUS 1.2 (provider_name is deprecated in FOCUS 1.3).
+// The provider is satisfied by service_provider_name or the deprecated provider_name:
+// FOCUS 1.3 deprecates ProviderName and FOCUS 1.4 removes it. When both are empty the
+// error keeps the field name provider_name for backward compatibility.
 // BilledCost and ContractedCost are considered mandatory but may be zero or negative; billing_account_name
 // validation is intentionally relaxed to accommodate providers that omit account names.
 func validateMandatoryFields(r *pbc.FocusCostRecord) error {
 	// Identity fields (FOCUS 1.2 Section 2.1).
-	// Note: provider_name is deprecated in FOCUS 1.3 but still required for FOCUS 1.2 conformance.
-	//nolint:staticcheck // SA1019: Checking deprecated field for FOCUS 1.2 backward compatibility
-	if r.GetProviderName() == "" {
-		return NewValidationError("provider_name", "required", "", "non-empty string")
+	//nolint:staticcheck // SA1019: The deprecated provider_name still satisfies the rule for FOCUS 1.2 records.
+	if r.GetServiceProviderName() == "" && r.GetProviderName() == "" {
+		return NewValidationError(
+			"provider_name", "required", "",
+			"non-empty service_provider_name (or deprecated provider_name)",
+		)
 	}
 	if r.GetBillingAccountId() == "" {
 		return NewValidationError("billing_account_id", "required", "", "non-empty string")
@@ -245,7 +263,7 @@ func validateCurrencyFields(r *pbc.FocusCostRecord) error {
 	return nil
 }
 
-// validateBusinessRulesWithOptions validates FOCUS 1.2/1.3 business rules with options support.
+// validateBusinessRulesWithOptions validates FOCUS 1.2 to 1.4 business rules with options support.
 func validateBusinessRulesWithOptions(r *pbc.FocusCostRecord, opts ValidationOptions) []error {
 	var errs []error
 
@@ -280,6 +298,15 @@ func validateBusinessRulesWithOptions(r *pbc.FocusCostRecord, opts ValidationOpt
 			return []error{err}
 		}
 		errs = append(errs, err)
+	}
+
+	// Validate FOCUS 1.4 Cost and Usage rules (invoice detail, commitment program eligibility).
+	focus14Errs := validateFocus14Rules(r, opts)
+	if len(focus14Errs) > 0 {
+		if opts.Mode == ValidationModeFailFast {
+			return []error{focus14Errs[0]}
+		}
+		errs = append(errs, focus14Errs...)
 	}
 
 	// Validate contextual FinOps rules (cost hierarchy, commitment discounts, etc.)
@@ -367,6 +394,62 @@ func validateAllocationRule(r *pbc.FocusCostRecord) error {
 		)
 	}
 	return nil
+}
+
+// =============================================================================
+// FOCUS 1.4 Validation Rules
+// =============================================================================
+
+// validateFocus14Rules validates the per-record FOCUS 1.4 Cost and Usage rules:
+// commitment_program_eligibility_details must be a JSON object when set, and
+// invoice_detail_id requires invoice_id. It allocates nothing on valid records.
+func validateFocus14Rules(r *pbc.FocusCostRecord, opts ValidationOptions) []error {
+	var errs []error
+
+	if details := r.GetCommitmentProgramEligibilityDetails(); details != "" {
+		if reason := jsonObjectFailure(details); reason != "" {
+			err := NewValidationErrorWithCause(
+				"commitment_program_eligibility_details", "must be a well-formed JSON object",
+				reason, "JSON object",
+				ErrInvalidCommitmentProgramEligibilityDetails,
+			)
+			if opts.Mode == ValidationModeFailFast {
+				return []error{err}
+			}
+			errs = append(errs, err)
+		}
+	}
+
+	if r.GetInvoiceDetailId() != "" && r.GetInvoiceId() == "" {
+		errs = append(errs, NewValidationErrorWithCause(
+			"invoice_id", "required when invoice_detail_id is set",
+			"", "non-empty string",
+			ErrInvoiceIDMissingForInvoiceDetail,
+		))
+	}
+
+	return errs
+}
+
+// jsonObjectFailure returns "" when s is exactly one well-formed JSON object, and
+// otherwise a fixed reason ("malformed JSON" or "not a JSON object") that never
+// echoes the input.
+func jsonObjectFailure(s string) string {
+	if !json.Valid([]byte(s)) {
+		return "malformed JSON"
+	}
+	// json.Valid guarantees exactly one value, so a leading '{' means an object.
+	for i := range len(s) {
+		switch s[i] {
+		case ' ', '\t', '\n', '\r':
+			continue
+		case '{':
+			return ""
+		default:
+			return "not a JSON object"
+		}
+	}
+	return "malformed JSON"
 }
 
 // validateCurrency checks if a currency code is a valid ISO 4217 code.
