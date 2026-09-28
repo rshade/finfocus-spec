@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -20,6 +21,26 @@ import (
 	"github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
+
+// ExampleWithCredentials attaches named credentials to one call context.
+// The printed line shows the count, that the value round-trips, and that String redacts it.
+func ExampleWithCredentials() {
+	creds, err := pluginsdk.NewCredentials(map[string]string{"token": "example-value"})
+	if err != nil {
+		fmt.Println("error")
+		return
+	}
+	ctx := pluginsdk.WithCredentials(context.Background(), creds)
+	got, err := pluginsdk.ExtractCredentials(ctx)
+	if err != nil {
+		fmt.Println("error")
+		return
+	}
+	value, ok := got.Get("token")
+	fmt.Println(got.Len(), ok && value == "example-value", strings.Contains(got.String(), "example-value"))
+	// Output:
+	// 1 true false
+}
 
 // ExampleClient_Close demonstrates proper resource cleanup for SDK-owned HTTP clients.
 //

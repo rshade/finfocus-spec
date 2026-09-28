@@ -619,6 +619,10 @@ func validateResourceDescriptor(rd *ResourceDescriptor) error {
 - Support API keys, OAuth tokens, or service account credentials
 - Load credentials from environment variables or config files
 - Implement credential refresh logic for OAuth
+- Per-request credentials are opt-in and do not replace the process environment.
+  Implement `PerRequestCredentialConsumer`, read the call with `ExtractCredentials`,
+  and do not log the values. Hosts attach them with `WithCredentials` for that call
+  only. Missing per-request credentials is not an error.
 
 #### Caching
 

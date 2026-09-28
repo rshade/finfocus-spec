@@ -514,6 +514,7 @@ func (s *Server) handleProviderPluginInfo(
 		s.logCapabilityDrift(out.GetCapabilities())
 	}
 	out.Metadata = s.withLegacyCapabilityMetadata(out.GetCapabilities(), out.GetMetadata(), false)
+	out.Metadata = s.applyPerRequestCredentialMetadata(out.GetMetadata())
 
 	return out, nil
 }
@@ -540,6 +541,7 @@ func (s *Server) handleConfiguredPluginInfo() (*pbc.GetPluginInfoResponse, error
 	}
 
 	metadata = s.withLegacyCapabilityMetadata(capabilities, metadata, true)
+	metadata = s.applyPerRequestCredentialMetadata(metadata)
 
 	return &pbc.GetPluginInfoResponse{
 		Name:         s.pluginInfo.Name,
@@ -585,6 +587,24 @@ func (s *Server) withLegacyCapabilityMetadata(
 	if containsCapability(capabilities, pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST) {
 		metadata["max_batch_size"] = strconv.Itoa(int(s.maxBatchSize))
 	}
+	return metadata
+}
+
+// applyPerRequestCredentialMetadata sets the acceptance note from the plugin
+// interface. Opt-in overwrites a hand-written value. A plugin that did not opt
+// in loses a hand-written claim. metadata is owned by the caller when non-nil.
+func (s *Server) applyPerRequestCredentialMetadata(metadata map[string]string) map[string]string {
+	if s == nil || s.plugin == nil {
+		return metadata
+	}
+	if _, opted := s.plugin.(PerRequestCredentialConsumer); !opted {
+		delete(metadata, MetadataSupportsPerRequestCredentials)
+		return metadata
+	}
+	if metadata == nil {
+		metadata = make(map[string]string, 1)
+	}
+	metadata[MetadataSupportsPerRequestCredentials] = ValueTrue
 	return metadata
 }
 
@@ -1310,6 +1330,9 @@ func serveGRPC(
 	ctx context.Context, listener net.Listener, server *Server, services optionalServices, config ServeConfig,
 ) error {
 	// Build interceptor chain: tracing first, then user interceptors
+	// Credential headers are read inside TracingUnaryServerInterceptorWithLogger
+	// from the metadata copy it already made. A separate interceptor would call
+	// metadata.FromIncomingContext again and copy every header on every call.
 	interceptors := make([]grpc.UnaryServerInterceptor, 0, 1+len(config.UnaryInterceptors))
 	interceptors = append(interceptors, TracingUnaryServerInterceptorWithLogger(server.logger))
 	interceptors = append(interceptors, config.UnaryInterceptors...)
@@ -1375,7 +1398,8 @@ func serveConnect(
 	// Build connect handler options (currently none; CORS is applied via middleware below)
 	var handlerOpts []connect.HandlerOption
 
-	// Create connect handler from our server
+	// Create connect handler from our server.
+	// Credential headers are copied by middleware below, not by a Connect interceptor.
 	connectHandler := NewConnectHandler(server)
 	path, handler := pbcconnect.NewCostSourceServiceHandler(connectHandler, handlerOpts...)
 	mux.Handle(path, handler)
@@ -1416,10 +1440,11 @@ func serveConnect(
 		mux.Handle("/healthz", HealthHandler(customChecker))
 	}
 
-	// Apply CORS if configured
-	finalHandler := http.Handler(mux)
+	// Copy per-request credential headers onto the request context before handlers.
+	// This is ordinary HTTP middleware. Connect interceptors are not added.
+	finalHandler := credentialContextMiddleware(mux)
 	if len(config.Web.AllowedOrigins) > 0 {
-		finalHandler = corsMiddleware(mux, config.Web)
+		finalHandler = corsMiddleware(finalHandler, config.Web)
 	}
 
 	// Apply payload size limit (1MB) to prevent DoS

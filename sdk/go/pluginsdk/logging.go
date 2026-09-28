@@ -285,6 +285,10 @@ func TracingUnaryServerInterceptorWithLogger(logger zerolog.Logger) grpc.UnarySe
 			if values := md.Get(TraceIDMetadataKey); len(values) > 0 {
 				traceID = values[0]
 			}
+			// Scan the metadata copy this interceptor already made. A second
+			// FromIncomingContext would copy every header again, including on
+			// calls that carry no credentials. This call does not log.
+			ctx = attachCredentialsFromMetadata(ctx, md)
 		}
 
 		// Validate the trace ID; generate a new one if invalid or missing
