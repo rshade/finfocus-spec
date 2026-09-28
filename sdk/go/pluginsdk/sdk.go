@@ -251,6 +251,20 @@ type AllocatorProvider interface {
 	Allocate(ctx context.Context, req *pbc.AllocateRequest) (*pbc.AllocateResponse, error)
 }
 
+// ContractCommitmentProvider is an optional interface for plugins that serve
+// FOCUS Contract Commitment records through
+// SupplementalDatasetService.GetContractCommitments. When ServeConfig.Plugin
+// implements it, Serve registers the service in gRPC and Connect modes, reports
+// it in the Connect health checker, and infers
+// PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS. Implementations typically call
+// ValidateGetContractCommitmentsRequest, filter with
+// ContractCommitmentMatchesWindow, and page with PaginateContractCommitments.
+// Commitment-only plugins should set PluginInfo.Capabilities explicitly.
+type ContractCommitmentProvider interface {
+	GetContractCommitments(ctx context.Context, req *pbc.GetContractCommitmentsRequest) (
+		*pbc.GetContractCommitmentsResponse, error)
+}
+
 // BatchCostHandler is an optional interface that plugins can implement
 // for optimized batch processing. Plugins that do not implement this
 // interface are served via SDK fallback processing.
@@ -1312,15 +1326,48 @@ func Serve(ctx context.Context, config ServeConfig) error {
 // optionalServices holds the optional services a plugin implements beside
 // CostSourceService; each field is nil when the plugin does not serve it.
 type optionalServices struct {
-	usage     UsageSourceProvider
-	allocator AllocatorProvider
+	usage       UsageSourceProvider
+	allocator   AllocatorProvider
+	commitments ContractCommitmentProvider
 }
 
 func newOptionalServices(plugin Plugin) optionalServices {
 	var services optionalServices
 	services.usage, _ = plugin.(UsageSourceProvider)
 	services.allocator, _ = plugin.(AllocatorProvider)
+	services.commitments, _ = plugin.(ContractCommitmentProvider)
 	return services
+}
+
+// registerConnect mounts a Connect handler on mux for each optional service
+// that is non-nil.
+func (s optionalServices) registerConnect(mux *http.ServeMux, opts []connect.HandlerOption) {
+	if s.usage != nil {
+		mux.Handle(pbcconnect.NewUsageSourceServiceHandler(&usageSourceConnectHandler{provider: s.usage}, opts...))
+	}
+	if s.allocator != nil {
+		mux.Handle(pbcconnect.NewAllocatorServiceHandler(&allocatorConnectHandler{provider: s.allocator}, opts...))
+	}
+	if s.commitments != nil {
+		mux.Handle(pbcconnect.NewSupplementalDatasetServiceHandler(
+			&contractCommitmentConnectHandler{provider: s.commitments}, opts...))
+	}
+}
+
+// healthServiceNames lists CostSourceService and each optional service that is
+// non-nil, for the Connect health checker.
+func (s optionalServices) healthServiceNames() []string {
+	names := []string{pbcconnect.CostSourceServiceName}
+	if s.usage != nil {
+		names = append(names, pbcconnect.UsageSourceServiceName)
+	}
+	if s.allocator != nil {
+		names = append(names, pbcconnect.AllocatorServiceName)
+	}
+	if s.commitments != nil {
+		names = append(names, pbcconnect.SupplementalDatasetServiceName)
+	}
+	return names
 }
 
 // serveGRPC starts a standard gRPC server (legacy mode). It registers the
@@ -1347,6 +1394,10 @@ func serveGRPC(
 	}
 	if services.allocator != nil {
 		pbc.RegisterAllocatorServiceServer(grpcServer, &allocatorGRPCServer{provider: services.allocator})
+	}
+	if services.commitments != nil {
+		pbc.RegisterSupplementalDatasetServiceServer(grpcServer,
+			&contractCommitmentGRPCServer{provider: services.commitments})
 	}
 	reflection.Register(grpcServer)
 
@@ -1385,7 +1436,7 @@ func serveGRPC(
 // serveConnect starts an HTTP server that exposes the plugin over Connect, gRPC-Web, and gRPC
 // (using cleartext HTTP/2).
 // It registers the CostSource service, each optional service in services that is non-nil (UsageSource,
-// Allocator), and the gRPC health service, optionally exposes a /healthz endpoint,
+// Allocator, SupplementalDataset), and the gRPC health service, optionally exposes a /healthz endpoint,
 // applies CORS when configured, enforces a 1MB request payload limit, and uses the provided timeouts.
 // The server shuts down gracefully when ctx is canceled.
 // It returns ctx.Err() if shutdown was initiated by the provided context, or the underlying serve error otherwise.
@@ -1404,16 +1455,7 @@ func serveConnect(
 	path, handler := pbcconnect.NewCostSourceServiceHandler(connectHandler, handlerOpts...)
 	mux.Handle(path, handler)
 
-	if services.usage != nil {
-		usagePath, usageHandler := pbcconnect.NewUsageSourceServiceHandler(
-			&usageSourceConnectHandler{provider: services.usage}, handlerOpts...)
-		mux.Handle(usagePath, usageHandler)
-	}
-	if services.allocator != nil {
-		allocPath, allocHandler := pbcconnect.NewAllocatorServiceHandler(
-			&allocatorConnectHandler{provider: services.allocator}, handlerOpts...)
-		mux.Handle(allocPath, allocHandler)
-	}
+	services.registerConnect(mux, handlerOpts)
 
 	// Detect HealthChecker from plugin
 	var customChecker HealthChecker
@@ -1423,15 +1465,8 @@ func serveConnect(
 
 	// Register gRPC health check service (grpc.health.v1.Health/Check)
 	// This provides standard gRPC health checking protocol support
-	// Report CostSourceService, and UsageSourceService and AllocatorService when served, as serving
-	healthServices := []string{pbcconnect.CostSourceServiceName}
-	if services.usage != nil {
-		healthServices = append(healthServices, pbcconnect.UsageSourceServiceName)
-	}
-	if services.allocator != nil {
-		healthServices = append(healthServices, pbcconnect.AllocatorServiceName)
-	}
-	healthChecker := grpchealth.NewStaticChecker(healthServices...)
+	// Report CostSourceService, and each optional service when served, as serving
+	healthChecker := grpchealth.NewStaticChecker(services.healthServiceNames()...)
 	healthPath, healthHandler := grpchealth.NewHandler(healthChecker, handlerOpts...)
 	mux.Handle(healthPath, healthHandler)
 

@@ -921,7 +921,38 @@ parallel subtests complete.
   `buf breaking` never checks focus.proto. Verify focus.proto changes against a copy of main with that
   ignore entry removed.
 
+### Supplemental Dataset Pattern (544-supplemental-contract-commitments)
+
+- `SupplementalDatasetService` (`supplemental.proto`) serves FOCUS supplemental datasets; stage A has
+  only `GetContractCommitments` over the existing `ContractCommitment` (focus.proto untouched).
+  Each dataset gets its own provider interface and capability (`ContractCommitmentProvider` →
+  `PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS = 16`, `supports_contract_commitments`). Stage B (invoice
+  RPCs, issue 543) adds methods to the same service: the adapters must then return `Unimplemented`
+  for a provider the plugin lacks, and the service registers when either provider exists.
+- `optionalServices` now has `registerConnect` and `healthServiceNames` (added to keep
+  `serveConnect` under funlen); add the next optional service there, not inline.
+- Rules live in `sdk/go/testing/supplemental.go`; `pluginsdk/supplemental.go` delegates, and
+  `ContractCommitmentBuilder.Build` calls `ValidateContractCommitment`, which keeps the builder's
+  unprefixed messages and adds NaN/Inf rejection. Request/response errors use the 052
+  `invalidArgumentError` with a sentinel prefix.
+- No "return all" mode: `page_size` 0 means 50, above 1000 clamps, negative is InvalidArgument;
+  `total_count` is exact. Window matching is overlap on `[start, end)` using the commitment period,
+  falling back to the contract period; unset bounds are open.
+- `ValidateGetContractCommitmentsResponse` is 0 allocs up to 64 records (pairwise duplicate check)
+  and uses a map above; `TestContractCommitmentValidatorsAllocationFree` guards it.
+- The reference producer is `MockContractCommitmentSource`, not a `MockPlugin` method, so
+  `MockPlugin`'s inferred capabilities do not change. No startup warning for commitment providers
+  (they are normally also cost sources).
+- In an agent worktree, `buf breaking --against '.git#branch=main'` is blocked; `git archive main
+  proto buf.yaml` into a scratch dir and run `buf breaking --against <dir>` instead.
+
 ## Active Technologies
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
+  google.golang.org/protobuf, google.golang.org/grpc, connectrpc.com/connect,
+  buf v1.32.1; no new dependencies (544-supplemental-contract-commitments)
+- N/A (stateless paged RPC over the existing ContractCommitment message)
+  (544-supplemental-contract-commitments)
 
 - Go 1.27.1 (go.mod) + Existing `google.golang.org/protobuf` (protojson, protocmp in tests). (055-cost-allocation-lineage)
 - N/A (wire contract and in-memory builder only) (055-cost-allocation-lineage)
@@ -1054,6 +1085,12 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+
+- 544-supplemental-contract-commitments: Added SupplementalDatasetService.GetContractCommitments
+  (supplemental.proto), PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS = 16,
+  pluginsdk.ContractCommitmentProvider with validation, window, and pagination helpers,
+  MockContractCommitmentSource, RunContractCommitmentConformance, and a TS
+  SupplementalDatasetClient
 
 - 055-focus-14-cost-usage-columns: Added FocusCostRecord.invoice_detail_id (67) and
   commitment_program_eligibility_details (68, JSON object string),

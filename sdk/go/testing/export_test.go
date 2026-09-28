@@ -21,6 +21,13 @@ package testing
 //nolint:gochecknoglobals // Test-only export of an unexported function.
 var RunAllocatorScenariosForTest = runAllocatorScenarios
 
+// RunContractCommitmentScenariosForTest exposes the contract commitment
+// conformance scenario runner, so broken sources can be asserted to fail
+// specific scenarios without a fake *testing.T.
+//
+//nolint:gochecknoglobals // Test-only export of an unexported function.
+var RunContractCommitmentScenariosForTest = runContractCommitmentScenarios
+
 // CopiedVocabularyForTest returns the row kinds and metric names this package
 // copies from pluginsdk (which it cannot import), in a fixed order, so an
 // external drift test can compare them with the pluginsdk constants.

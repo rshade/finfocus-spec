@@ -12,23 +12,24 @@ This guide provides comprehensive instructions for developing FinFocus plugins u
    - [Implementation Requirements](#implementation-requirements)
 4. [Usage Source Plugins](#usage-source-plugins)
 5. [Allocator Plugins](#allocator-plugins)
-6. [Packaging and Manifest Format](#packaging-and-manifest-format)
+6. [Contract Commitments](#contract-commitments)
+7. [Packaging and Manifest Format](#packaging-and-manifest-format)
    - [Plugin Structure](#plugin-structure)
    - [Manifest Configuration](#manifest-configuration)
    - [Distribution](#distribution)
-7. [Example: Minimal Plugin Implementation](#example-minimal-plugin-implementation)
+8. [Example: Minimal Plugin Implementation](#example-minimal-plugin-implementation)
    - [Project Setup](#project-setup)
    - [Complete Code Example](#complete-code-example)
    - [Building and Running](#building-and-running)
-8. [Testing and Validation](#testing-and-validation)
+9. [Testing and Validation](#testing-and-validation)
    - [Unit Testing](#unit-testing)
    - [Integration Testing](#integration-testing)
    - [Schema Validation](#schema-validation)
-9. [Best Practices and Common Patterns](#best-practices-and-common-patterns)
-   - [Error Handling](#error-handling)
-   - [Performance Considerations](#performance-considerations)
-   - [Security Guidelines](#security-guidelines)
-10. [Troubleshooting](#troubleshooting)
+10. [Best Practices and Common Patterns](#best-practices-and-common-patterns)
+    - [Error Handling](#error-handling)
+    - [Performance Considerations](#performance-considerations)
+    - [Security Guidelines](#security-guidelines)
+11. [Troubleshooting](#troubleshooting)
     - [Common Issues](#common-issues)
     - [Debug Techniques](#debug-techniques)
     - [FAQ](#faq)
@@ -1172,6 +1173,19 @@ func TestMyAllocatorConformance(t *testing.T) {
 
 Use `plugintesting.NewAllocatorHarness(impl)` directly for your own scenarios. See
 [sdk/go/testing/README.md](sdk/go/testing/README.md#allocator-conformance).
+
+## Contract Commitments
+
+A billing plugin that knows its account's reservations, savings plans, or committed use discounts
+can deliver them as FOCUS Contract Commitment records through
+`SupplementalDatasetService.GetContractCommitments` (`proto/finfocus/v1/supplemental.proto`).
+Implement `pluginsdk.ContractCommitmentProvider`; `Serve` registers the service over gRPC and
+Connect and infers `PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS`. Build records with
+`ContractCommitmentBuilder`, then in the handler validate the request, filter with
+`ContractCommitmentMatchesWindow`, and page with `PaginateContractCommitments`. Prove the
+implementation with `plugintesting.RunContractCommitmentConformance`. See
+[docs/supplemental-datasets.md](docs/supplemental-datasets.md) and the
+[pluginsdk README](sdk/go/pluginsdk/README.md#serving-contract-commitments-supplementaldatasetservice).
 
 ## Packaging and Manifest Format
 

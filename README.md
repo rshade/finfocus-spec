@@ -52,7 +52,8 @@ finfocus-spec/
 ├─ proto/finfocus/v1/           # gRPC service definitions
 │  ├─ costsource.proto            # Complete CostSource service specification
 │  ├─ usage.proto                 # UsageSource service (workload CPU/memory usage)
-│  └─ allocation.proto            # Allocator service (split priced nodes across workloads)
+│  ├─ allocation.proto            # Allocator service (split priced nodes across workloads)
+│  └─ supplemental.proto          # Supplemental dataset service (FOCUS contract commitments)
 ├─ schemas/                       # JSON schema validation
 │  └─ pricing_spec.schema.json    # Comprehensive pricing schema (44+ billing modes)
 ├─ sdk/go/                        # Production Go SDK
@@ -82,6 +83,8 @@ finfocus-spec/
 - **[gRPC Service](proto/finfocus/v1/costsource.proto)**: CostSourceService with 11 RPC methods
 - **[Usage Source Service](proto/finfocus/v1/usage.proto)**: UsageSourceService with 1 RPC method (GetStats)
 - **[Allocator Service](proto/finfocus/v1/allocation.proto)**: AllocatorService with 1 RPC method (Allocate)
+- **[Supplemental Dataset Service](proto/finfocus/v1/supplemental.proto)**: SupplementalDatasetService
+  with 1 RPC method (GetContractCommitments)
 - **[JSON Schema](schemas/pricing_spec.schema.json)**: Comprehensive validation supporting all major cloud providers
 - **[Go SDK](sdk/go/)**: Production-ready SDK with automatic protobuf generation
 - **[Plugin SDK](sdk/go/pluginsdk/)**: Serve(), environment handling, logging, metrics, FOCUS builder
@@ -760,6 +763,23 @@ service AllocatorService {
 
 A Go plugin implements `pluginsdk.AllocatorProvider` and declares `PLUGIN_CAPABILITY_ALLOCATION`
 explicitly. See [docs/allocator.md](docs/allocator.md) for the invariants, policy rules, and errors.
+
+### SupplementalDatasetService
+
+Delivers FOCUS supplemental datasets, which sit beside cost rows and join to them by key. It
+currently serves the FOCUS 1.3 Contract Commitment dataset, paged and filtered by an optional time
+window.
+
+```protobuf
+service SupplementalDatasetService {
+  rpc GetContractCommitments(GetContractCommitmentsRequest)
+      returns (GetContractCommitmentsResponse); // Paged ContractCommitment records
+}
+```
+
+A Go plugin implements `pluginsdk.ContractCommitmentProvider`; `PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS`
+is inferred. See [docs/supplemental-datasets.md](docs/supplemental-datasets.md) for window
+matching, pagination, and errors.
 
 ### JSON Schema Validation
 

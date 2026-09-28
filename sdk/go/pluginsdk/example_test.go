@@ -20,6 +20,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
@@ -556,4 +557,87 @@ func ExampleWithProjectedCostBreakdown() {
 	// root_volume: 0.800 USD
 	// valid: <nil>
 	// true GetProjectedCostResponse: cost_breakdown does not sum to cost_per_month: sum 9, cost_per_month 8.392, tolerance 0.01
+}
+
+// reservationSource serves contract commitments it already holds, using the
+// SDK helpers for request validation, window filtering, and pagination.
+type reservationSource struct {
+	*pluginsdk.BasePlugin
+
+	commitments []*pbc.ContractCommitment
+}
+
+func (s *reservationSource) GetContractCommitments(
+	_ context.Context, req *pbc.GetContractCommitmentsRequest,
+) (*pbc.GetContractCommitmentsResponse, error) {
+	if err := pluginsdk.ValidateGetContractCommitmentsRequest(req); err != nil {
+		return nil, err
+	}
+	var matching []*pbc.ContractCommitment
+	for _, c := range s.commitments {
+		if pluginsdk.ContractCommitmentMatchesWindow(c, req.GetStart(), req.GetEnd()) {
+			matching = append(matching, c)
+		}
+	}
+	page, next, total, err := pluginsdk.PaginateContractCommitments(matching, req.GetPageSize(), req.GetPageToken())
+	if err != nil {
+		return nil, err
+	}
+	return &pbc.GetContractCommitmentsResponse{Commitments: page, NextPageToken: next, TotalCount: total}, nil
+}
+
+// Example_contractCommitmentProvider shows a plugin that serves FOCUS
+// Contract Commitment records. Implementing GetContractCommitments is enough:
+// Serve registers SupplementalDatasetService and infers
+// PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS.
+func Example_contractCommitmentProvider() {
+	year := func(y int) time.Time { return time.Date(y, 1, 1, 0, 0, 0, 0, time.UTC) }
+	build := func(id string, start, end time.Time) *pbc.ContractCommitment {
+		c, err := pluginsdk.NewContractCommitmentBuilder().
+			WithIdentity(id, "ea-2024").
+			WithCategory(pbc.FocusContractCommitmentCategory_FOCUS_CONTRACT_COMMITMENT_CATEGORY_SPEND).
+			WithType("Reserved Instance").
+			WithCommitmentPeriod(start, end).
+			WithFinancials(12000, 0, "", "USD").
+			Build()
+		if err != nil {
+			panic(err)
+		}
+		return c
+	}
+	source := &reservationSource{
+		BasePlugin: pluginsdk.NewBasePlugin("reservations"),
+		commitments: []*pbc.ContractCommitment{
+			build("ri-2024", year(2024), year(2025)),
+			build("ri-2025", year(2025), year(2026)),
+			build("ri-2025b", year(2025), year(2028)),
+		},
+	}
+
+	req := &pbc.GetContractCommitmentsRequest{
+		Start:    timestamppb.New(time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC)),
+		End:      timestamppb.New(time.Date(2025, 7, 1, 0, 0, 0, 0, time.UTC)),
+		PageSize: 1,
+	}
+	for {
+		resp, err := source.GetContractCommitments(context.Background(), req)
+		if err != nil {
+			panic(err)
+		}
+		for _, c := range resp.GetCommitments() {
+			fmt.Printf("%s of %d\n", c.GetContractCommitmentId(), resp.GetTotalCount())
+		}
+		if resp.GetNextPageToken() == "" {
+			break
+		}
+		req.PageToken = resp.GetNextPageToken()
+	}
+
+	_, err := source.GetContractCommitments(context.Background(), &pbc.GetContractCommitmentsRequest{PageSize: -1})
+	fmt.Println(status.Code(err))
+
+	// Output:
+	// ri-2025 of 2
+	// ri-2025b of 2
+	// InvalidArgument
 }

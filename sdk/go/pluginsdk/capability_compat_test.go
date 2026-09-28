@@ -177,3 +177,20 @@ func TestLegacyMetadata_Allocation(t *testing.T) {
 		t.Errorf("expected no warnings, got %v", warnings)
 	}
 }
+
+func TestLegacyMetadata_ContractCommitments(t *testing.T) {
+	name := pluginsdk.CapabilityToLegacyName(pbc.PluginCapability_PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS)
+	if name != "supports_contract_commitments" {
+		t.Errorf("expected supports_contract_commitments, got %q", name)
+	}
+
+	metadata, warnings := pluginsdk.CapabilitiesToLegacyMetadataWithWarnings([]pbc.PluginCapability{
+		pbc.PluginCapability_PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS,
+	})
+	if metadata["supports_contract_commitments"] != "true" {
+		t.Errorf("expected supports_contract_commitments=true, got %q", metadata["supports_contract_commitments"])
+	}
+	if len(warnings) != 0 {
+		t.Errorf("expected no warnings, got %v", warnings)
+	}
+}

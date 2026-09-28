@@ -45,6 +45,10 @@ and SDK. Use this guide to navigate to the appropriate documentation for your ne
   - The five invariants, including conservation and its tolerance
   - Strict policy decoding, errors, and host verification
 
+- **[Supplemental Dataset Service](supplemental-datasets.md)** - FOCUS supplemental datasets
+  - `GetContractCommitments`: window matching, pagination, and snapshot semantics
+  - Record rules, provider examples, and error codes
+
 - **[Plugin Migration Guide](PLUGIN_MIGRATION_GUIDE.md)** - Breaking change migrations
   - Version upgrade paths
   - Backwards compatibility
