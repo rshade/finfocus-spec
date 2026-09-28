@@ -13,6 +13,7 @@ utilities for plugin development.
 - [Multi-Protocol Support](#multi-protocol-support-grpc-grpc-web-connect)
 - [Go Client SDK](#go-client-sdk)
 - [Plugin Info (GetPluginInfo RPC)](#plugin-info-getplugininfo-rpc)
+- [Per-Request Credentials](#per-request-credentials)
 - [Environment Variables](#environment-variables)
 - [Core Components](#core-components)
 - [Structured Logging](#structured-logging)
@@ -633,6 +634,57 @@ status. Clients should handle this gracefully:
 info, err := client.GetPluginInfo(ctx, req)
 if status.Code(err) == codes.Unimplemented {
     // Legacy plugin - assume default behavior
+}
+```
+
+## Per-Request Credentials
+
+The default is still one plugin process per organization, with that organization's cloud
+credentials in the process environment. This SDK does not launch, route, or cap processes.
+
+A plugin that can read credentials for a single call opts in by implementing
+`PerRequestCredentialConsumer`. `GetPluginInfo` then sets metadata
+`supports_per_request_credentials` to `true`. That note is not a new `PluginCapability`,
+and it is not CORS `AllowCredentials`. A hand-written note cannot claim support the plugin
+did not declare.
+
+Hosts attach a set to one call with `WithCredentials`. The set is not stored on the client.
+The next call does not see it. An opted-in plugin reads it with `ExtractCredentials`.
+No set is not an error: the plugin keeps using its process environment. This SDK does not
+copy the values into the environment.
+
+`String` on a set reports only how many entries were redacted. Do not log `Get`. Values
+that cannot travel as gRPC metadata are rejected with a fixed error that does not include
+the name or the value.
+
+```go
+creds, err := pluginsdk.NewCredentials(map[string]string{
+    "token": "example-value",
+})
+if err != nil {
+    return err
+}
+ctx = pluginsdk.WithCredentials(ctx, creds)
+resp, err := client.GetActualCost(ctx, req)
+```
+
+Inside the plugin:
+
+```go
+func (p *MyPlugin) ConsumesPerRequestCredentials() {}
+
+func (p *MyPlugin) GetActualCost(
+    ctx context.Context,
+    req *pbc.GetActualCostRequest,
+) (*pbc.GetActualCostResponse, error) {
+    creds, err := pluginsdk.ExtractCredentials(ctx)
+    if err != nil {
+        return nil, err // fixed text, no secret
+    }
+    if creds.Len() == 0 {
+        // No per-request credentials. Use the process environment.
+    }
+    return &pbc.GetActualCostResponse{}, nil
 }
 ```
 

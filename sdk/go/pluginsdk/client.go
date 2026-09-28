@@ -161,6 +161,14 @@ type Client struct {
 	ownsClient bool // true if we created the http.Client and should close it
 }
 
+// attachCredentialHeaders builds a connect request and, when ctx carries a
+// validated credential set, copies it onto the request headers for this call only.
+func attachCredentialHeaders[T any](ctx context.Context, msg *T) *connect.Request[T] {
+	req := connect.NewRequest(msg)
+	applyCredentialHTTPHeaders(ctx, req.Header())
+	return req
+}
+
 // wrapRPCError wraps an RPC error with context about the operation.
 // It distinguishes context cancellation/timeout from other errors for better debugging.
 // When the context error is available, it is included using errors.Join to preserve
@@ -279,7 +287,7 @@ func NewGRPCWebClient(baseURL string) *Client {
 
 // Name returns the display name of the cost source plugin.
 func (c *Client) Name(ctx context.Context) (string, error) {
-	resp, err := c.inner.Name(ctx, connect.NewRequest(&pbc.NameRequest{}))
+	resp, err := c.inner.Name(ctx, attachCredentialHeaders(ctx, &pbc.NameRequest{}))
 	if err != nil {
 		return "", wrapRPCError(ctx, "Name", err)
 	}
@@ -294,7 +302,7 @@ func (c *Client) Supports(ctx context.Context, resource *pbc.ResourceDescriptor)
 	if resource.GetResourceType() == "" {
 		return nil, errors.New("resource type is required")
 	}
-	resp, err := c.inner.Supports(ctx, connect.NewRequest(&pbc.SupportsRequest{
+	resp, err := c.inner.Supports(ctx, attachCredentialHeaders(ctx, &pbc.SupportsRequest{
 		Resource: resource,
 	}))
 	if err != nil {
@@ -319,7 +327,7 @@ func (c *Client) EstimateCost(ctx context.Context, req *pbc.EstimateCostRequest)
 	if req == nil {
 		return nil, errors.New("request cannot be nil")
 	}
-	resp, err := c.inner.EstimateCost(ctx, connect.NewRequest(req))
+	resp, err := c.inner.EstimateCost(ctx, attachCredentialHeaders(ctx, req))
 	if err != nil {
 		return nil, wrapRPCError(ctx, "EstimateCost", err)
 	}
@@ -332,7 +340,7 @@ func (c *Client) BatchCost(ctx context.Context, req *pbc.BatchCostRequest) (*pbc
 		return nil, errors.New("request cannot be nil")
 	}
 
-	resp, err := c.inner.BatchCost(ctx, connect.NewRequest(req))
+	resp, err := c.inner.BatchCost(ctx, attachCredentialHeaders(ctx, req))
 	if err != nil {
 		return nil, wrapRPCError(ctx, "BatchCost", err)
 	}
@@ -344,7 +352,7 @@ func (c *Client) GetActualCost(ctx context.Context, req *pbc.GetActualCostReques
 	if req == nil {
 		return nil, errors.New("request cannot be nil")
 	}
-	resp, err := c.inner.GetActualCost(ctx, connect.NewRequest(req))
+	resp, err := c.inner.GetActualCost(ctx, attachCredentialHeaders(ctx, req))
 	if err != nil {
 		return nil, wrapRPCError(ctx, "GetActualCost", err)
 	}
@@ -359,7 +367,7 @@ func (c *Client) GetProjectedCost(
 	if req == nil {
 		return nil, errors.New("request cannot be nil")
 	}
-	resp, err := c.inner.GetProjectedCost(ctx, connect.NewRequest(req))
+	resp, err := c.inner.GetProjectedCost(ctx, attachCredentialHeaders(ctx, req))
 	if err != nil {
 		return nil, wrapRPCError(ctx, "GetProjectedCost", err)
 	}
@@ -374,7 +382,7 @@ func (c *Client) GetPricingSpec(
 	if req == nil {
 		return nil, errors.New("request cannot be nil")
 	}
-	resp, err := c.inner.GetPricingSpec(ctx, connect.NewRequest(req))
+	resp, err := c.inner.GetPricingSpec(ctx, attachCredentialHeaders(ctx, req))
 	if err != nil {
 		return nil, wrapRPCError(ctx, "GetPricingSpec", err)
 	}
@@ -389,7 +397,7 @@ func (c *Client) GetRecommendations(
 	if req == nil {
 		return nil, errors.New("request cannot be nil")
 	}
-	resp, err := c.inner.GetRecommendations(ctx, connect.NewRequest(req))
+	resp, err := c.inner.GetRecommendations(ctx, attachCredentialHeaders(ctx, req))
 	if err != nil {
 		return nil, wrapRPCError(ctx, "GetRecommendations", err)
 	}
@@ -404,7 +412,7 @@ func (c *Client) DismissRecommendation(
 	if req == nil {
 		return nil, errors.New("request cannot be nil")
 	}
-	resp, err := c.inner.DismissRecommendation(ctx, connect.NewRequest(req))
+	resp, err := c.inner.DismissRecommendation(ctx, attachCredentialHeaders(ctx, req))
 	if err != nil {
 		return nil, wrapRPCError(ctx, "DismissRecommendation", err)
 	}
@@ -416,7 +424,7 @@ func (c *Client) GetBudgets(ctx context.Context, req *pbc.GetBudgetsRequest) (*p
 	if req == nil {
 		return nil, errors.New("request cannot be nil")
 	}
-	resp, err := c.inner.GetBudgets(ctx, connect.NewRequest(req))
+	resp, err := c.inner.GetBudgets(ctx, attachCredentialHeaders(ctx, req))
 	if err != nil {
 		return nil, wrapRPCError(ctx, "GetBudgets", err)
 	}
