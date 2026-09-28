@@ -24,7 +24,7 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/rshade/finfocus-spec/sdk/go/internal/grpcconv"
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
@@ -867,13 +867,39 @@ func copyStringMap(in map[string]string) map[string]string {
 
 // descriptorClone returns a deep copy of the given ResourceDescriptor.
 // If resource is nil, descriptorClone returns nil.
+//
+// The copy is field-wise rather than proto.Clone: ResourceDescriptor has only
+// scalar fields, one string map, and two optional scalars, so a manual copy
+// avoids reflection overhead (see BenchmarkDescriptorClone). Unknown fields
+// are preserved so wire round-trips lose nothing. The copy is kept (rather
+// than aliasing the request descriptor) because callers may retain and mutate
+// request descriptors after BatchCost returns; results must stay independent.
 func descriptorClone(resource *pbc.ResourceDescriptor) *pbc.ResourceDescriptor {
 	if resource == nil {
 		return nil
 	}
-	// proto.Clone preserves the concrete type, so this assertion is safe.
-	//nolint:errcheck // Type assertion guaranteed by proto.Clone contract.
-	return proto.Clone(resource).(*pbc.ResourceDescriptor)
+	out := &pbc.ResourceDescriptor{
+		Provider:     resource.GetProvider(),
+		ResourceType: resource.GetResourceType(),
+		Sku:          resource.GetSku(),
+		Region:       resource.GetRegion(),
+		Tags:         copyStringMap(resource.GetTags()),
+		Id:           resource.GetId(),
+		Arn:          resource.GetArn(),
+		GrowthType:   resource.GetGrowthType(),
+	}
+	if resource.UtilizationPercentage != nil {
+		v := resource.GetUtilizationPercentage()
+		out.UtilizationPercentage = &v
+	}
+	if resource.GrowthRate != nil {
+		v := resource.GetGrowthRate()
+		out.GrowthRate = &v
+	}
+	if unknown := resource.ProtoReflect().GetUnknown(); len(unknown) > 0 {
+		out.ProtoReflect().SetUnknown(append(protoreflect.RawFields(nil), unknown...))
+	}
+	return out
 }
 
 // newResourceDataResult creates a ResourceCostResult that contains a deep-cloned ResourceDescriptor and the given CostData.
