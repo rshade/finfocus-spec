@@ -1311,7 +1311,7 @@ func serveGRPC(
 ) error {
 	// Build interceptor chain: tracing first, then user interceptors
 	interceptors := make([]grpc.UnaryServerInterceptor, 0, 1+len(config.UnaryInterceptors))
-	interceptors = append(interceptors, TracingUnaryServerInterceptor())
+	interceptors = append(interceptors, TracingUnaryServerInterceptorWithLogger(server.logger))
 	interceptors = append(interceptors, config.UnaryInterceptors...)
 
 	// Create and register server with interceptor chain

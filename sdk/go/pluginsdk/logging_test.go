@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"sync"
@@ -143,6 +144,79 @@ func TestTracingUnaryServerInterceptor_Integration(t *testing.T) {
 
 	if capturedTraceID != validTraceID {
 		t.Errorf("Expected trace ID %q, got %q", validTraceID, capturedTraceID)
+	}
+}
+
+func TestTracingUnaryServerInterceptor_StampsValidationErrorAndLog(t *testing.T) {
+	var buf bytes.Buffer
+	logger := zerolog.New(&buf)
+	interceptor := pluginsdk.TracingUnaryServerInterceptorWithLogger(logger)
+	hostID := "abcdef1234567890abcdef1234567890"
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.New(map[string]string{
+		pluginsdk.TraceIDMetadataKey: hostID,
+	}))
+	handler := func(context.Context, interface{}) (interface{}, error) {
+		return nil, pluginsdk.NewValidationError("billed_cost", "required", "", "non-empty")
+	}
+
+	info := &grpc.UnaryServerInfo{FullMethod: "/finfocus.v1.CostSourceService/GetActualCost"}
+	_, err := interceptor(ctx, nil, info, handler)
+	if err == nil {
+		t.Fatal("expected validation error")
+	}
+	var ve *pluginsdk.ValidationError
+	if !errors.As(err, &ve) {
+		t.Fatalf("expected *ValidationError, got %T", err)
+	}
+	if ve.TraceID != hostID {
+		t.Errorf("TraceID = %q, want %q", ve.TraceID, hostID)
+	}
+	if !bytes.Contains(buf.Bytes(), []byte(hostID)) {
+		t.Errorf("log missing host trace id: %s", buf.String())
+	}
+	if !bytes.Contains(buf.Bytes(), []byte("GetActualCost")) {
+		t.Errorf("log missing method: %s", buf.String())
+	}
+}
+
+func TestTracingUnaryServerInterceptor_KeepsHandlerTraceID(t *testing.T) {
+	interceptor := pluginsdk.TracingUnaryServerInterceptor()
+	hostID := "abcdef1234567890abcdef1234567890"
+	handlerID := "1234567890abcdef1234567890abcdef"
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.New(map[string]string{
+		pluginsdk.TraceIDMetadataKey: hostID,
+	}))
+	handler := func(context.Context, interface{}) (interface{}, error) {
+		err := pluginsdk.NewValidationError("billed_cost", "required", "", "non-empty")
+		err.TraceID = handlerID
+		return nil, err
+	}
+
+	_, err := interceptor(ctx, nil, &grpc.UnaryServerInfo{}, handler)
+	var ve *pluginsdk.ValidationError
+	if !errors.As(err, &ve) {
+		t.Fatalf("expected *ValidationError, got %T", err)
+	}
+	if ve.TraceID != handlerID {
+		t.Errorf("TraceID = %q, want handler id %q", ve.TraceID, handlerID)
+	}
+}
+
+func TestWithTrace(t *testing.T) {
+	var buf bytes.Buffer
+	base := zerolog.New(&buf)
+	ctx := pluginsdk.ContextWithTraceID(context.Background(), "abcdef1234567890abcdef1234567890")
+	traced := pluginsdk.WithTrace(ctx, base)
+	traced.Info().Msg("calculated cost")
+	if !bytes.Contains(buf.Bytes(), []byte(`"trace_id":"abcdef1234567890abcdef1234567890"`)) {
+		t.Errorf("log = %s", buf.String())
+	}
+
+	buf.Reset()
+	plain := pluginsdk.WithTrace(context.Background(), base)
+	plain.Info().Msg("no id")
+	if bytes.Contains(buf.Bytes(), []byte("trace_id")) {
+		t.Errorf("empty context should not add trace_id: %s", buf.String())
 	}
 }
 

@@ -1322,14 +1322,19 @@ logger := pluginsdk.NewPluginLogger(
     os.Stderr,             // Output writer (nil for os.Stderr)
 )
 
-// Standard field constants
+// WithTrace copies the host trace id from the handler context once.
+// The gRPC server already stores that id. Do not also set FieldTraceID.
+logger = pluginsdk.WithTrace(ctx, logger)
 logger.Info().
-    Str(pluginsdk.FieldTraceID, traceID).
     Str(pluginsdk.FieldOperation, "GetProjectedCost").
     Str(pluginsdk.FieldResourceType, "aws:ec2:Instance").
     Float64(pluginsdk.FieldCostMonthly, 73.0).
     Msg("calculated cost")
 ```
+
+A failed gRPC call logs that same id on the plugin logger and, when the
+handler returns `*ValidationError` with an empty `TraceID`, appends
+`trace_id=<id>` to the error text. Connect mode does not run this interceptor.
 
 ### Available Field Constants
 

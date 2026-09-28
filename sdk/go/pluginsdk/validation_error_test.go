@@ -56,6 +56,23 @@ func TestValidationError_Error(t *testing.T) {
 	}
 }
 
+func TestValidationError_TraceID(t *testing.T) {
+	err := pluginsdk.NewValidationError(
+		"effective_cost",
+		"must not exceed billed_cost",
+		"150.00",
+		"<= 100.00",
+	)
+	assert.NotContains(t, err.Error(), "trace_id=")
+
+	err.TraceID = "abcdef1234567890abcdef1234567890"
+	assert.Equal(t,
+		"effective_cost: must not exceed billed_cost (actual: 150.00, expected: <= 100.00) "+
+			"trace_id=abcdef1234567890abcdef1234567890",
+		err.Error(),
+	)
+}
+
 func TestValidationError_ImplementsError(t *testing.T) {
 	var err error = &pluginsdk.ValidationError{
 		FieldName:     "test_field",

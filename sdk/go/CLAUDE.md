@@ -81,6 +81,10 @@ cd ../../ && make test && make lint
 - `--help`, `--version`, `dry-run`, and `__schema` go through `ax.Execute`.
 - `ServeConfig.Logger` stays `*zerolog.Logger`. Do not change it to `ax.Logger`;
   gRPC trace-ID metadata (`TraceIDMetadataKey`) is separate from CLI process logging.
+- A failed gRPC call logs `x-finfocus-trace-id` on that plugin logger and stamps
+  it onto `*ValidationError` (`Error()` gains `trace_id=<id>` only when the field
+  is set). `WithTrace(ctx, logger)` is the per-request helper. Connect does not
+  run `TracingUnaryServerInterceptor`. Do not add a `x-pulumicost-trace-parent` key.
 - `ParsePortFlag()` remains for legacy `flag.Parse()` + `Serve()` mains.
 
 **`pluginsdk/` Package - Plugin Development SDK**
