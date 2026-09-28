@@ -78,7 +78,7 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "::notice::Publishing tag: $TAG"
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ steps.determine_tag.outputs.tag }}
 
@@ -97,7 +97,7 @@ jobs:
           fi
           echo "version=$version" >>"$GITHUB_OUTPUT"
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ steps.node_version.outputs.version }}
           registry-url: "https://npm.pkg.github.com"
@@ -145,7 +145,7 @@ jobs:
 
       - name: Notify on failure
         if: failure()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const tag = context.payload.release?.tag_name || context.payload.inputs?.tag
