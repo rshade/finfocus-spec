@@ -25,10 +25,10 @@ export class FinFocusController {
     @Inject(REST_GATEWAY_OPTIONS) private gateway: RESTGateway
   ) {}
 
-  @All('finfocus.v1.*')
+  @All('finfocus.v1.*path')
   async handleRequest(@Req() req: Request, @Res() res: Response) {
     try {
-      await this.gateway.handleRequest(req as any, res as any);
+      await this.gateway.handleRequest(req, res);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new InternalServerErrorException(errorMessage);
@@ -44,7 +44,7 @@ export class FinFocusController {
  * ```typescript
  * import { Module } from '@nestjs/common';
  * import { FinFocusModule } from 'finfocus-framework-plugins';
- * import { CostSourceClient } from 'finfocus-client';
+ * import { CostSourceClient } from '@rshade/finfocus-client';
  *
  * @Module({
  *   imports: [
@@ -139,6 +139,6 @@ export class FinFocusGatewayService {
     if (!this.gateway) {
       throw new InternalServerErrorException('FinFocus gateway not configured');
     }
-    await this.gateway.handleRequest(req as any, res as any);
+    await this.gateway.handleRequest(req, res);
   }
 }

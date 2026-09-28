@@ -1,6 +1,5 @@
 import type { FastifyRequest, FastifyReply, FastifyInstance, FastifyPluginAsync } from 'fastify';
 import { RESTGateway, RESTGatewayConfig } from 'finfocus-middleware';
-import * as http from 'http';
 
 /**
  * Creates a Fastify plugin for FinFocus REST Gateway.
@@ -13,7 +12,7 @@ import * as http from 'http';
  * ```typescript
  * import Fastify from 'fastify';
  * import { createFastifyPlugin } from 'finfocus-framework-plugins';
- * import { CostSourceClient } from 'finfocus-client';
+ * import { CostSourceClient } from '@rshade/finfocus-client';
  *
  * const fastify = Fastify();
  * const client = new CostSourceClient({ baseUrl: 'https://plugin.example.com' });
@@ -26,49 +25,9 @@ export function createFastifyPlugin(config: RESTGatewayConfig): FastifyPluginAsy
 
   return async (fastify: FastifyInstance) => {
     fastify.post('/*', async (request: FastifyRequest, reply: FastifyReply) => {
-      try {
-        // Only handle FinFocus REST API paths
-        const path = request.url;
-        if (!path.match(/^\/finfocus\.v1\./)) {
-          return reply.status(404).send({ error: 'Not found' });
-        }
-
-        // Convert Fastify request/reply to Node.js http objects
-        // Create a mock IncomingMessage
-        const mockReq = {
-          method: request.method,
-          url: request.url,
-          headers: request.headers,
-          on: (_event: string, _callback: Function) => {},
-          once: (_event: string, _callback: Function) => {},
-        } as any as http.IncomingMessage;
-
-        // Create a mock ServerResponse
-        const mockRes = {
-          writeHead: (statusCode: number, headers?: any) => {
-            reply.status(statusCode);
-            if (headers) {
-              Object.entries(headers).forEach(([key, value]) => {
-                reply.header(key, value as string);
-              });
-            }
-          },
-          end: (data?: string | Buffer) => {
-            if (data) {
-              reply.send(data);
-            }
-          },
-          write: (data: string | Buffer) => {
-            // This will be called if body is split
-          },
-        } as any as http.ServerResponse;
-
-        // Handle the request
-        await gateway.handleRequest(mockReq, mockRes);
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        return reply.status(500).send({ error: errorMessage });
-      }
+      // Fastify has already parsed the body, so dispatch directly instead of re-reading the stream.
+      const result = await gateway.dispatch(request.url, request.body);
+      return reply.status(result.status).send(result.body);
     });
   };
 }
@@ -88,5 +47,5 @@ export const createFastifyRoutes: FastifyPluginAsync<{ config: RESTGatewayConfig
   { config }
 ) => {
   const plugin = createFastifyPlugin(config);
-  await plugin(fastify);
+  await plugin(fastify, {});
 };

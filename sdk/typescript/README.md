@@ -23,6 +23,9 @@ This SDK is organized as a monorepo with three packages:
 - **[finfocus-middleware](./packages/middleware)** - Node.js HTTP transport and REST gateway
 - **[finfocus-framework-plugins](./packages/framework-plugins)** - Express, Fastify, NestJS adapters
 
+Only `@rshade/finfocus-client` is published. `finfocus-middleware` and `finfocus-framework-plugins`
+are built and tested in this workspace but not yet released, so use them from a checkout of this repository.
+
 ## Installation
 
 ### Core Client (Browser & Node.js)
@@ -33,7 +36,8 @@ npm install @rshade/finfocus-client
 
 ### Node.js Middleware (Server-Side)
 
-For server-side Node.js environments, install the middleware package to access the Node.js HTTP transport:
+For server-side Node.js environments, the middleware package provides the Node.js HTTP transport (unpublished; see
+[Packages](#packages)):
 
 ```bash
 npm install @rshade/finfocus-client finfocus-middleware
@@ -41,10 +45,11 @@ npm install @rshade/finfocus-client finfocus-middleware
 
 ### Framework Plugins (Optional)
 
-For Express, Fastify, or NestJS integration:
+For Express, Fastify, or NestJS integration (unpublished; see [Packages](#packages)). The frameworks are optional
+peer dependencies, so install the one you use alongside the adapters:
 
 ```bash
-npm install @rshade/finfocus-client finfocus-framework-plugins
+npm install @rshade/finfocus-client finfocus-framework-plugins express
 ```
 
 ## Quick Start
@@ -91,18 +96,18 @@ import { createNodeTransport } from "finfocus-middleware";
 
 const transport = createNodeTransport({
   baseUrl: "https://plugin.example.com",
-  timeout: 30000 // 30 second timeout
+  timeout: 30000 // 30 second deadline; elapsed calls reject with Code.DeadlineExceeded
 });
 
-const client = new CostSourceClient({ transport });
+const client = new CostSourceClient({ baseUrl: "https://plugin.example.com", transport });
 ```
 
 **Why use Node transport?**
 
-- Supports HTTP/2 and connection pooling
-- Required for environments without browser `fetch` API
-- Enables custom timeout and retry logic
-- Better performance for server-to-server communication
+- Supports HTTP/1.1 (default) and HTTP/2
+- Uses Node's `http`/`https` modules instead of the browser `fetch` API
+- Applies a per-call deadline via `timeout`
+- Accepts Node request options, such as a keep-alive `agent`
 
 ## Core API
 
@@ -526,23 +531,24 @@ import * as https from "https";
 
 const transport = createNodeTransport({
   baseUrl: "https://plugin.example.com",
-  timeout: 30000,  // 30 second timeout
+  timeout: 30000,  // 30 second deadline
 
-  // Custom HTTPS agent for connection pooling
-  httpsClient: new https.Agent({
-    keepAlive: true,
-    maxSockets: 50
-  })
+  // HTTP/1.1 request options, e.g. a keep-alive agent for connection pooling
+  nodeOptions: {
+    agent: new https.Agent({ keepAlive: true, maxSockets: 50 })
+  }
 });
 
-const client = new CostSourceClient({ transport });
+const client = new CostSourceClient({ baseUrl: "https://plugin.example.com", transport });
 ```
+
+Set `httpVersion: "2"` to use HTTP/2 instead; `nodeOptions` applies to HTTP/1.1 only.
 
 **Node transport features:**
 
-- HTTP/2 support (when server supports it)
-- Connection pooling and keep-alive
-- Custom timeout handling
+- HTTP/1.1 (default) or HTTP/2
+- Connection pooling and keep-alive through `nodeOptions.agent`
+- Per-call deadline via `timeout`, surfaced as `Code.DeadlineExceeded`
 - Works in AWS Lambda, Google Cloud Functions, etc.
 - No dependency on browser `fetch` API
 
@@ -779,16 +785,24 @@ Query plugin field mapping capabilities without fetching cost data.
 
 ## Framework Integration
 
+The framework adapters mount a REST gateway that proxies JSON requests to a FinFocus plugin through the clients you
+supply. Each RPC is served at `POST /finfocus.v1.<Service>/<Method>`, for example
+`POST /finfocus.v1.CostSourceService/GetActualCost`. Bodies use the proto3 JSON mapping: `Timestamp` fields are
+RFC 3339 strings and 64-bit integers are strings. Plugin errors map to the matching HTTP status with a body of
+`{ "error": "...", "code": "not_found" }`.
+
 ### Express
 
 ```typescript
 import express from "express";
-import { createExpressAdapter } from "finfocus-framework-plugins";
-import { MyPlugin } from "./my-plugin.js";
+import { CostSourceClient } from "@rshade/finfocus-client";
+import { createExpressRouter } from "finfocus-framework-plugins";
 
 const app = express();
+const costSourceClient = new CostSourceClient({ baseUrl: "https://plugin.example.com" });
 
-app.use("/finfocus", createExpressAdapter(new MyPlugin()));
+// Works with or without express.json(); other paths fall through to later routes.
+app.use(createExpressRouter({ costSourceClient }));
 
 app.listen(3000);
 ```
@@ -797,35 +811,37 @@ app.listen(3000);
 
 ```typescript
 import Fastify from "fastify";
+import { CostSourceClient } from "@rshade/finfocus-client";
 import { createFastifyPlugin } from "finfocus-framework-plugins";
-import { MyPlugin } from "./my-plugin.js";
 
 const fastify = Fastify();
+const costSourceClient = new CostSourceClient({ baseUrl: "https://plugin.example.com" });
 
-await fastify.register(createFastifyPlugin(new MyPlugin()), {
-  prefix: "/finfocus"
-});
+await fastify.register(createFastifyPlugin({ costSourceClient }));
 
 await fastify.listen({ port: 3000 });
 ```
 
 ### NestJS
 
+Requires `@nestjs/platform-express`.
+
 ```typescript
 import { Module } from "@nestjs/common";
+import { CostSourceClient } from "@rshade/finfocus-client";
 import { FinFocusModule } from "finfocus-framework-plugins";
-import { MyPlugin } from "./my-plugin.js";
 
 @Module({
   imports: [
-    FinFocusModule.forRoot({
-      plugin: new MyPlugin(),
-      path: "/finfocus"
+    FinFocusModule.register({
+      costSourceClient: new CostSourceClient({ baseUrl: "https://plugin.example.com" })
     })
   ]
 })
 export class AppModule {}
 ```
+
+Use `FinFocusModule.registerAsync({ useFactory, inject })` when the clients depend on other providers.
 
 ## License
 
