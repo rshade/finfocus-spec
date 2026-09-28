@@ -242,6 +242,15 @@ type UsageSourceProvider interface {
 	GetStats(ctx context.Context, req *pbc.GetStatsRequest) (*pbc.GetStatsResponse, error)
 }
 
+// AllocatorProvider is an optional interface for plugins that serve
+// AllocatorService. When ServeConfig.Plugin implements it, Serve registers the
+// service in gRPC and Connect modes, reports it in the Connect health checker,
+// and infers PLUGIN_CAPABILITY_ALLOCATION. Allocation-only plugins should set
+// PluginInfo.Capabilities explicitly.
+type AllocatorProvider interface {
+	Allocate(ctx context.Context, req *pbc.AllocateRequest) (*pbc.AllocateResponse, error)
+}
+
 // BatchCostHandler is an optional interface that plugins can implement
 // for optimized batch processing. Plugins that do not implement this
 // interface are served via SDK fallback processing.
@@ -1269,21 +1278,36 @@ func Serve(ctx context.Context, config ServeConfig) error {
 	server.setTypeRegistry(config.TypeRegistry,
 		config.PluginInfo != nil && len(config.PluginInfo.Capabilities) > 0)
 	server.maxSourceTypes = resolveSourceTypesLimit(config.MaxSourceTypes)
-	warnUsageSourceCapabilities(&server.logger, config.Plugin, config.PluginInfo)
+	warnInferredOnlyCapabilities(&server.logger, config.Plugin, config.PluginInfo)
 
-	// nil when the plugin does not serve UsageSourceService.
-	usage, _ := config.Plugin.(UsageSourceProvider)
+	services := newOptionalServices(config.Plugin)
 
 	// Choose serving mode based on WebConfig
 	if config.Web.Enabled {
-		return serveConnect(ctx, listener, server, usage, config)
+		return serveConnect(ctx, listener, server, services, config)
 	}
-	return serveGRPC(ctx, listener, server, usage, config)
+	return serveGRPC(ctx, listener, server, services, config)
 }
 
-// serveGRPC starts a standard gRPC server (legacy mode).
+// optionalServices holds the optional services a plugin implements beside
+// CostSourceService; each field is nil when the plugin does not serve it.
+type optionalServices struct {
+	usage     UsageSourceProvider
+	allocator AllocatorProvider
+}
+
+func newOptionalServices(plugin Plugin) optionalServices {
+	var services optionalServices
+	services.usage, _ = plugin.(UsageSourceProvider)
+	services.allocator, _ = plugin.(AllocatorProvider)
+	return services
+}
+
+// serveGRPC starts a standard gRPC server (legacy mode). It registers the
+// CostSource service and each optional service in services that is non-nil;
+// the interceptor chain applies to all of them.
 func serveGRPC(
-	ctx context.Context, listener net.Listener, server *Server, usage UsageSourceProvider, config ServeConfig,
+	ctx context.Context, listener net.Listener, server *Server, services optionalServices, config ServeConfig,
 ) error {
 	// Build interceptor chain: tracing first, then user interceptors
 	interceptors := make([]grpc.UnaryServerInterceptor, 0, 1+len(config.UnaryInterceptors))
@@ -1295,8 +1319,11 @@ func serveGRPC(
 		grpc.ChainUnaryInterceptor(interceptors...),
 	)
 	pbc.RegisterCostSourceServiceServer(grpcServer, server)
-	if usage != nil {
-		pbc.RegisterUsageSourceServiceServer(grpcServer, &usageSourceGRPCServer{provider: usage})
+	if services.usage != nil {
+		pbc.RegisterUsageSourceServiceServer(grpcServer, &usageSourceGRPCServer{provider: services.usage})
+	}
+	if services.allocator != nil {
+		pbc.RegisterAllocatorServiceServer(grpcServer, &allocatorGRPCServer{provider: services.allocator})
 	}
 	reflection.Register(grpcServer)
 
@@ -1334,13 +1361,13 @@ func serveGRPC(
 
 // serveConnect starts an HTTP server that exposes the plugin over Connect, gRPC-Web, and gRPC
 // (using cleartext HTTP/2).
-// It registers the CostSource service, the UsageSource service when usage is non-nil, and the gRPC
-// health service, optionally exposes a /healthz endpoint,
+// It registers the CostSource service, each optional service in services that is non-nil (UsageSource,
+// Allocator), and the gRPC health service, optionally exposes a /healthz endpoint,
 // applies CORS when configured, enforces a 1MB request payload limit, and uses the provided timeouts.
 // The server shuts down gracefully when ctx is canceled.
 // It returns ctx.Err() if shutdown was initiated by the provided context, or the underlying serve error otherwise.
 func serveConnect(
-	ctx context.Context, listener net.Listener, server *Server, usage UsageSourceProvider, config ServeConfig,
+	ctx context.Context, listener net.Listener, server *Server, services optionalServices, config ServeConfig,
 ) error {
 	// Create HTTP mux for routing
 	mux := http.NewServeMux()
@@ -1353,10 +1380,15 @@ func serveConnect(
 	path, handler := pbcconnect.NewCostSourceServiceHandler(connectHandler, handlerOpts...)
 	mux.Handle(path, handler)
 
-	if usage != nil {
+	if services.usage != nil {
 		usagePath, usageHandler := pbcconnect.NewUsageSourceServiceHandler(
-			&usageSourceConnectHandler{provider: usage}, handlerOpts...)
+			&usageSourceConnectHandler{provider: services.usage}, handlerOpts...)
 		mux.Handle(usagePath, usageHandler)
+	}
+	if services.allocator != nil {
+		allocPath, allocHandler := pbcconnect.NewAllocatorServiceHandler(
+			&allocatorConnectHandler{provider: services.allocator}, handlerOpts...)
+		mux.Handle(allocPath, allocHandler)
 	}
 
 	// Detect HealthChecker from plugin
@@ -1367,10 +1399,13 @@ func serveConnect(
 
 	// Register gRPC health check service (grpc.health.v1.Health/Check)
 	// This provides standard gRPC health checking protocol support
-	// Report CostSourceService, and UsageSourceService when served, as serving
+	// Report CostSourceService, and UsageSourceService and AllocatorService when served, as serving
 	healthServices := []string{pbcconnect.CostSourceServiceName}
-	if usage != nil {
+	if services.usage != nil {
 		healthServices = append(healthServices, pbcconnect.UsageSourceServiceName)
+	}
+	if services.allocator != nil {
+		healthServices = append(healthServices, pbcconnect.AllocatorServiceName)
 	}
 	healthChecker := grpchealth.NewStaticChecker(healthServices...)
 	healthPath, healthHandler := grpchealth.NewHandler(healthChecker, handlerOpts...)

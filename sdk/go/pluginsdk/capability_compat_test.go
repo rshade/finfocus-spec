@@ -160,3 +160,20 @@ func TestLegacyMetadata_UsageStats(t *testing.T) {
 		t.Errorf("expected no warnings, got %v", warnings)
 	}
 }
+
+func TestLegacyMetadata_Allocation(t *testing.T) {
+	name := pluginsdk.CapabilityToLegacyName(pbc.PluginCapability_PLUGIN_CAPABILITY_ALLOCATION)
+	if name != "supports_allocation" {
+		t.Errorf("expected supports_allocation, got %q", name)
+	}
+
+	metadata, warnings := pluginsdk.CapabilitiesToLegacyMetadataWithWarnings([]pbc.PluginCapability{
+		pbc.PluginCapability_PLUGIN_CAPABILITY_ALLOCATION,
+	})
+	if metadata["supports_allocation"] != "true" {
+		t.Errorf("expected supports_allocation=true, got %q", metadata["supports_allocation"])
+	}
+	if len(warnings) != 0 {
+		t.Errorf("expected no warnings, got %v", warnings)
+	}
+}

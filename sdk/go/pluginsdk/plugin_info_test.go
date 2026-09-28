@@ -609,3 +609,73 @@ func TestGetPluginInfo_UsageStatsRoundTrip(t *testing.T) {
 		t.Errorf("Metadata[supports_usage_stats] = %q, want \"true\"", got)
 	}
 }
+
+type mockAllocatorPlugin struct {
+	*pluginsdk.BasePlugin
+}
+
+func (m *mockAllocatorPlugin) Allocate(context.Context, *pbc.AllocateRequest) (*pbc.AllocateResponse, error) {
+	return &pbc.AllocateResponse{}, nil
+}
+
+func hasCapability(caps []pbc.PluginCapability, want pbc.PluginCapability) bool {
+	for _, c := range caps {
+		if c == want {
+			return true
+		}
+	}
+	return false
+}
+
+func TestGetPluginInfo_AllocationInferred(t *testing.T) {
+	plugin := &mockAllocatorPlugin{BasePlugin: pluginsdk.NewBasePlugin("alloc")}
+	server := pluginsdk.NewServerWithOptions(plugin, nil, nil, pluginsdk.NewPluginInfo("alloc", "v1.0.0"))
+
+	resp, err := server.GetPluginInfo(context.Background(), &pbc.GetPluginInfoRequest{})
+	if err != nil {
+		t.Fatalf("GetPluginInfo() error = %v", err)
+	}
+	if !hasCapability(resp.GetCapabilities(), pbc.PluginCapability_PLUGIN_CAPABILITY_ALLOCATION) {
+		t.Errorf("Capabilities = %v, want PLUGIN_CAPABILITY_ALLOCATION", resp.GetCapabilities())
+	}
+	if got := resp.GetMetadata()["supports_allocation"]; got != "true" {
+		t.Errorf("Metadata[supports_allocation] = %q, want \"true\"", got)
+	}
+}
+
+func TestGetPluginInfo_AllocationExplicit(t *testing.T) {
+	allocation := pbc.PluginCapability_PLUGIN_CAPABILITY_ALLOCATION
+	plugin := &mockAllocatorPlugin{BasePlugin: pluginsdk.NewBasePlugin("alloc")}
+	info := pluginsdk.NewPluginInfo("alloc", "v1.0.0", pluginsdk.WithCapabilities(allocation))
+	server := pluginsdk.NewServerWithOptions(plugin, nil, nil, info)
+
+	resp, err := server.GetPluginInfo(context.Background(), &pbc.GetPluginInfoRequest{})
+	if err != nil {
+		t.Fatalf("GetPluginInfo() error = %v", err)
+	}
+	caps := resp.GetCapabilities()
+	if len(caps) != 1 || caps[0] != allocation {
+		t.Errorf("Capabilities = %v, want [PLUGIN_CAPABILITY_ALLOCATION]", caps)
+	}
+}
+
+func TestGetPluginInfo_NotAnAllocator(t *testing.T) {
+	for name, plugin := range map[string]pluginsdk.Plugin{
+		"cost only":    pluginsdk.NewBasePlugin("cost"),
+		"usage source": &mockUsageStatsPlugin{BasePlugin: pluginsdk.NewBasePlugin("usage")},
+	} {
+		t.Run(name, func(t *testing.T) {
+			server := pluginsdk.NewServerWithOptions(plugin, nil, nil, pluginsdk.NewPluginInfo("p", "v1.0.0"))
+			resp, err := server.GetPluginInfo(context.Background(), &pbc.GetPluginInfoRequest{})
+			if err != nil {
+				t.Fatalf("GetPluginInfo() error = %v", err)
+			}
+			if hasCapability(resp.GetCapabilities(), pbc.PluginCapability_PLUGIN_CAPABILITY_ALLOCATION) {
+				t.Errorf("unexpected PLUGIN_CAPABILITY_ALLOCATION in %v", resp.GetCapabilities())
+			}
+			if _, ok := resp.GetMetadata()["supports_allocation"]; ok {
+				t.Error("unexpected supports_allocation metadata")
+			}
+		})
+	}
+}

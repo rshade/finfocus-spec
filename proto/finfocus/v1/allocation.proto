@@ -1,0 +1,148 @@
+// Copyright 2026 The FinFocus Authors
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package finfocus.v1;
+
+option go_package = "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1;pbc";
+
+import "finfocus/v1/costsource.proto";
+import "finfocus/v1/usage.proto";
+
+// AllocatorService is implemented by allocator plugins, which divide priced
+// infrastructure (nodes, control plane) across the workloads that use it.
+// Hosts gather usage through UsageSourceService, price the priceable resources
+// through CostSourceService plugins, and call Allocate. Hosts carry no
+// allocation semantics; the math belongs to the allocator.
+//
+// Invariants every response MUST satisfy (hosts verify them and reject
+// violations; the Go SDK exposes the checks as pluginsdk.CheckConservation and
+// testing.ValidateAllocateResponse):
+//   - Conservation: the sum of rows.total_cost equals the sum of priced.cost
+//     over entries with priced=true, within a relative tolerance of 1e-6 with
+//     an absolute floor of 1e-9, so zero totals compare equal.
+//   - Every row has total_cost = cpu_cost + mem_cost within the same
+//     tolerance, except rows with subject kind "__cluster__".
+//   - No row carries a negative cpu_cost, mem_cost, or total_cost.
+//   - Every successfully priced node (priced=true, resource.tags.kind="node")
+//     has exactly one "__idle__" row whose "node" subject equals the node's
+//     resource.id, even when its idle cost is zero.
+//   - Every row carries the resolved currency (see AllocateRequest.priced).
+//
+// Error semantics:
+//   - INVALID_ARGUMENT: the request is inconsistent (an entry with priced=false
+//     and a nonzero cost, a negative cost, more than one distinct non-empty
+//     currency among priced=true entries, or two entries with the same
+//     resource.tags.kind and resource.id), or policy_json is malformed, has
+//     trailing data, has an unknown field (the message names its JSON path,
+//     for example "node_split.cpu"), or has an unknown or unsupported version.
+//     An allocator never falls back to defaults on a bad policy.
+service AllocatorService {
+  // Allocate divides the successfully priced resources across the workloads
+  // in usage, reporting unclaimed capacity as idle rows and shared
+  // infrastructure as cluster rows.
+  rpc Allocate(AllocateRequest) returns (AllocateResponse);
+}
+
+// PricedResource is one priceable resource from GetStatsResponse.priceable
+// after the host priced it.
+message PricedResource {
+  // The resource as the usage source reported it. Nodes carry
+  // tags.kind="node" and an id equal to the node's "node" subject value; a
+  // control plane carries tags.kind="cluster". Entries are unique by
+  // (tags.kind, id).
+  ResourceDescriptor resource = 1;
+
+  // Cost for the normalized period, non-negative and finite. MUST be 0 when
+  // priced is false.
+  double cost = 2;
+
+  // ISO 4217 code. Across entries with priced=true there is one resolved
+  // currency: the single distinct non-empty value, or "USD" when all are
+  // empty. An empty value takes the resolved currency. Ignored when priced is
+  // false. The "USD" fallback applies only within this contract.
+  string currency = 3;
+
+  // True when pricing succeeded. False entries count 0 toward conservation.
+  bool priced = 4;
+
+  // Human-readable note, such as why pricing failed.
+  string note = 5;
+}
+
+// AllocateRequest carries usage, priced resources, and the allocation policy.
+message AllocateRequest {
+  // Usage rows as returned by UsageSourceService.GetStats.
+  repeated UsageRow usage = 1;
+
+  // Priced resources; see PricedResource for the uniqueness and currency
+  // rules.
+  repeated PricedResource priced = 2;
+
+  // Allocator-owned JSON policy, opaque to the host. Every allocator's schema
+  // has a top-level integer "version". Empty and "{}" both mean the
+  // allocator's defaults and yield identical effective policy and digest.
+  // Accepted overrides merge onto the defaults.
+  bytes policy_json = 3;
+
+  // Mode the usage was collected in. STATS_MODE_UNSPECIFIED is allowed:
+  // allocation uses ratios of usage to capacity, so the result does not
+  // depend on the mode.
+  StatsMode mode = 4;
+}
+
+// AllocateResponse carries allocation rows and the policy actually applied.
+// A request with no usage and no priced resources succeeds with no rows but
+// with effective_policy_json and policy_digest, so hosts can display policy.
+message AllocateResponse {
+  // Allocation rows; see AllocatorService for the invariants.
+  repeated AllocationRow rows = 1;
+
+  // The effective policy (defaults with overrides applied) in the
+  // allocator's canonical JSON form. Never empty.
+  bytes effective_policy_json = 2;
+
+  // Lowercase hex SHA-256 of effective_policy_json. Stable: the same
+  // effective policy always yields the same digest from the same allocator.
+  // Not comparable across different allocators.
+  string policy_digest = 3;
+
+  // Human-readable, non-fatal warnings.
+  repeated string warnings = 4;
+}
+
+// AllocationRow is one unit of allocated cost.
+message AllocationRow {
+  // Identifies what the cost belongs to, using the UsageRow subject keys. The
+  // required "kind" is "workload", "__idle__" (unclaimed capacity of one node;
+  // requires the "node" key), or "__cluster__" (shared infrastructure such as
+  // the control plane, or a priced resource that is not a node).
+  map<string, string> subject = 1;
+
+  // CPU portion of the cost; non-negative.
+  double cpu_cost = 2;
+
+  // Memory portion of the cost; non-negative.
+  double mem_cost = 3;
+
+  // Total cost; non-negative. Equals cpu_cost + mem_cost except on
+  // "__cluster__" rows, which may carry all cost here with zero portions.
+  double total_cost = 4;
+
+  // The resolved currency; never empty.
+  string currency = 5;
+
+  // Human-readable note, such as why a workload's cost is zero.
+  string note = 6;
+}

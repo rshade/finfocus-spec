@@ -840,7 +840,30 @@ parallel subtests complete.
 - `npm run build` in `sdk/typescript/packages/client` fails at tsup's DTS step (TS5101 `baseUrl`
   deprecation under TypeScript 6) on main too; use `npx tsc --noEmit` to type-check.
 
+### Allocator SDK Pattern (052-allocator-allocate)
+
+- `AllocatorProvider` (one method, `Allocate`) joins `Serve` like `UsageSourceProvider`: `Serve` builds an
+  unexported `optionalServices{usage, allocator}` once and passes it to `serveGRPC`/`serveConnect`; add the
+  next optional service as a field there, not as another parameter.
+- Allocation rules (`ResolveCurrency`, `ValidateAllocateRequest`, `ValidateAllocateResponse`,
+  `CheckConservation`) live in `sdk/go/testing/allocation.go`; `pluginsdk/allocator.go` only delegates, so
+  hosts get one rule from production code. `DecodePolicy` is native to `pluginsdk/policy.go`.
+- Invalid-input errors are plain errors whose type implements `GRPCStatus()` (`InvalidArgument`), so
+  `Error()` has no `rpc error:` prefix and both transports report the same code. Do not use
+  `status.Error` for them, and do not add `GRPCStatus` to the existing `ContractError`.
+- `sdk/go/internal/refalloc` (reference allocator) imports `pluginsdk`, so only external test packages
+  (`pluginsdk_test`, `testing_test`) may import it.
+- `RunAllocatorConformance` is policy-agnostic: bad policies are derived from the allocator's own effective
+  policy (nested target = first object-valued key, sorted). `testing/export_test.go` exposes
+  `runAllocatorScenarios` so broken-allocator tests assert specific scenario failures.
+- `make generate` also regenerates the TypeScript bindings; no separate TS buf run was needed.
+
 ## Active Technologies
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
+  google.golang.org/protobuf, google.golang.org/grpc, connectrpc.com/connect,
+  buf v1.32.1; no new Go dependencies (052-allocator-allocate)
+- N/A (stateless allocation RPC contract and SDK helpers) (052-allocator-allocate)
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
   google.golang.org/protobuf, google.golang.org/grpc, connectrpc.com/connect,
@@ -956,6 +979,10 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+
+- 052-allocator-allocate: Adds AllocatorService.Allocate (allocation.proto),
+  PLUGIN_CAPABILITY_ALLOCATION = 15, pluginsdk.AllocatorProvider and DecodePolicy,
+  conservation/validation helpers, RunAllocatorConformance, and a TS AllocatorClient
 
 - 051-usage-source-getstats: Added UsageSourceService.GetStats (usage.proto),
   PLUGIN_CAPABILITY_USAGE_STATS = 14, pluginsdk.UsageSourceProvider, and a TS

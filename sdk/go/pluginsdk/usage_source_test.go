@@ -17,6 +17,7 @@ package pluginsdk
 
 import (
 	"context"
+	"encoding/json"
 	"net"
 	"net/http"
 	"strings"
@@ -375,6 +376,103 @@ func TestUsageSourceWarning(t *testing.T) {
 				}
 			}
 			assert.Equal(t, tt.wantWarn, warnings, "log output:\n%s", logs.String())
+		})
+	}
+}
+
+// warnAllocatorPlugin is a minimal AllocatorProvider for the startup warning tests.
+type warnAllocatorPlugin struct {
+	*BasePlugin
+}
+
+func (p *warnAllocatorPlugin) Allocate(context.Context, *pbc.AllocateRequest) (*pbc.AllocateResponse, error) {
+	return &pbc.AllocateResponse{}, nil
+}
+
+// warnUsageAndAllocPlugin implements both service-only providers.
+type warnUsageAndAllocPlugin struct {
+	*usageTestPlugin
+}
+
+func (p *warnUsageAndAllocPlugin) Allocate(context.Context, *pbc.AllocateRequest) (*pbc.AllocateResponse, error) {
+	return &pbc.AllocateResponse{}, nil
+}
+
+// warnAllocInfoPlugin is an allocator that also supplies its own plugin info.
+type warnAllocInfoPlugin struct {
+	*warnAllocatorPlugin
+}
+
+func (p *warnAllocInfoPlugin) GetPluginInfo(
+	_ context.Context, _ *pbc.GetPluginInfoRequest,
+) (*pbc.GetPluginInfoResponse, error) {
+	return &pbc.GetPluginInfoResponse{
+		Name:         "alloc-dynamic",
+		Version:      "v1.0.0",
+		SpecVersion:  SpecVersion,
+		Capabilities: []pbc.PluginCapability{pbc.PluginCapability_PLUGIN_CAPABILITY_ALLOCATION},
+	}, nil
+}
+
+func TestServe_WarnsAllocatorWithoutExplicitCapabilities(t *testing.T) {
+	const (
+		usageWarning = "usage source relies on inferred capabilities, which include pricing capabilities; " +
+			"usage-only plugins should set PluginInfo.Capabilities explicitly"
+		allocWarning = "allocator relies on inferred capabilities, which include pricing capabilities; " +
+			"allocation-only plugins should set PluginInfo.Capabilities explicitly"
+	)
+	usageCap := pbc.PluginCapability_PLUGIN_CAPABILITY_USAGE_STATS.String()
+	allocCap := pbc.PluginCapability_PLUGIN_CAPABILITY_ALLOCATION.String()
+	newAlloc := func() *warnAllocatorPlugin { return &warnAllocatorPlugin{BasePlugin: NewBasePlugin("alloc")} }
+
+	tests := []struct {
+		name   string
+		plugin Plugin
+		info   *PluginInfo
+		want   map[string]string // capability -> message
+	}{
+		{name: "inferred capabilities", plugin: newAlloc(), want: map[string]string{allocCap: allocWarning}},
+		{
+			name: "explicit capabilities", plugin: newAlloc(),
+			info: NewPluginInfo("alloc", "v1.0.0", WithCapabilities(pbc.PluginCapability_PLUGIN_CAPABILITY_ALLOCATION)),
+			want: map[string]string{},
+		},
+		{
+			name: "plugin info provider", plugin: &warnAllocInfoPlugin{warnAllocatorPlugin: newAlloc()},
+			want: map[string]string{},
+		},
+		{
+			name:   "usage source and allocator",
+			plugin: &warnUsageAndAllocPlugin{usageTestPlugin: newUsageTestPlugin()},
+			want:   map[string]string{usageCap: usageWarning, allocCap: allocWarning},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var logs syncBuffer
+			logger := zerolog.New(&logs)
+			_, call := startUsageServer(t, tt.plugin, false, func(c *ServeConfig) {
+				c.Logger = &logger
+				c.PluginInfo = tt.info
+			})
+
+			// A completed RPC proves Serve finished its startup logging.
+			_, _ = callGetStats(t, call, &pbc.GetStatsRequest{})
+
+			got := map[string]string{}
+			for _, line := range strings.Split(logs.String(), "\n") {
+				var entry struct {
+					Level      string `json:"level"`
+					Capability string `json:"capability"`
+					Message    string `json:"message"`
+				}
+				if json.Unmarshal([]byte(line), &entry) != nil || entry.Level != "warn" || entry.Capability == "" {
+					continue
+				}
+				got[entry.Capability] = entry.Message
+			}
+			assert.Equal(t, tt.want, got, "log output:\n%s", logs.String())
 		})
 	}
 }

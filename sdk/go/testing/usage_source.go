@@ -44,6 +44,8 @@ const (
 	labelPrefix  = "label."
 	kindWorkload = "workload"
 	kindNode     = "node"
+	kindIdle     = "__idle__"
+	kindCluster  = "__cluster__"
 )
 
 //nolint:gochecknoglobals // Zero-allocation lookup slices (registry pattern).
@@ -57,7 +59,8 @@ var (
 		subjectNode,
 		subjectKind,
 	}
-	validRowKinds = []string{kindWorkload, kindNode}
+	validRowKinds        = []string{kindWorkload, kindNode}
+	validAllocationKinds = []string{kindWorkload, kindIdle, kindCluster}
 )
 
 // KnownSubjectKeys returns a copy of the documented, non-label subject keys

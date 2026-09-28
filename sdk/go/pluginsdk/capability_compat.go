@@ -36,6 +36,7 @@ var legacyCapabilityNames = map[pbc.PluginCapability]string{
 	pbc.PluginCapability_PLUGIN_CAPABILITY_WATER:                   "supports_water",
 	pbc.PluginCapability_PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES:  "supports_resolve_resource_types",
 	pbc.PluginCapability_PLUGIN_CAPABILITY_USAGE_STATS:             "supports_usage_stats",
+	pbc.PluginCapability_PLUGIN_CAPABILITY_ALLOCATION:              "supports_allocation",
 }
 
 // CapabilityToLegacyName converts a PluginCapability enum to its legacy string name.

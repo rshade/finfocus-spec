@@ -11,26 +11,27 @@ This guide provides comprehensive instructions for developing FinFocus plugins u
    - [Request/Response Messages](#requestresponse-messages)
    - [Implementation Requirements](#implementation-requirements)
 4. [Usage Source Plugins](#usage-source-plugins)
-5. [Packaging and Manifest Format](#packaging-and-manifest-format)
+5. [Allocator Plugins](#allocator-plugins)
+6. [Packaging and Manifest Format](#packaging-and-manifest-format)
    - [Plugin Structure](#plugin-structure)
    - [Manifest Configuration](#manifest-configuration)
    - [Distribution](#distribution)
-6. [Example: Minimal Plugin Implementation](#example-minimal-plugin-implementation)
+7. [Example: Minimal Plugin Implementation](#example-minimal-plugin-implementation)
    - [Project Setup](#project-setup)
    - [Complete Code Example](#complete-code-example)
    - [Building and Running](#building-and-running)
-7. [Testing and Validation](#testing-and-validation)
+8. [Testing and Validation](#testing-and-validation)
    - [Unit Testing](#unit-testing)
    - [Integration Testing](#integration-testing)
    - [Schema Validation](#schema-validation)
-8. [Best Practices and Common Patterns](#best-practices-and-common-patterns)
+9. [Best Practices and Common Patterns](#best-practices-and-common-patterns)
    - [Error Handling](#error-handling)
    - [Performance Considerations](#performance-considerations)
    - [Security Guidelines](#security-guidelines)
-9. [Troubleshooting](#troubleshooting)
-   - [Common Issues](#common-issues)
-   - [Debug Techniques](#debug-techniques)
-   - [FAQ](#faq)
+10. [Troubleshooting](#troubleshooting)
+    - [Common Issues](#common-issues)
+    - [Debug Techniques](#debug-techniques)
+    - [FAQ](#faq)
 
 ## Overview
 
@@ -1030,6 +1031,139 @@ in-memory `UsageSourceHarness`. See [sdk/go/testing/README.md](sdk/go/testing/RE
 
 For subject keys, metrics, units, historical versus run-rate mode, and priceable-resource tagging,
 see [docs/usage-source.md](docs/usage-source.md).
+
+## Allocator Plugins
+
+An **allocator** divides priced infrastructure across the workloads that use it. It serves
+`AllocatorService.Allocate` (`proto/finfocus/v1/allocation.proto`). The host collects usage from a
+usage source, prices the priceable resources through cost-source plugins, and sends both to the
+allocator together with an opaque, allocator-owned JSON policy. The allocator returns workload
+rows, one idle row per priced node, and cluster rows for shared infrastructure.
+
+The specification fixes the contract and its invariants, not the algorithm. See
+[docs/allocator.md](docs/allocator.md) for the complete semantics.
+
+### Writing an allocator
+
+```go
+type AllocatorProvider interface {
+    Allocate(ctx context.Context, req *pbc.AllocateRequest) (*pbc.AllocateResponse, error)
+}
+```
+
+Embed `*pluginsdk.BasePlugin` so your struct satisfies the required `Plugin` interface, then
+implement `Allocate`. `pluginsdk.Serve` (and `pluginsdk.Run`) detects the interface and registers
+`AllocatorService` over gRPC and Connect, including the Connect health check. A plugin may serve
+`GetStats` and `Allocate` together.
+
+Start `Allocate` with the SDK helpers, in this order. Each returns an error that already carries
+`codes.InvalidArgument`, so you can return it unchanged:
+
+```go
+type myPolicy struct {
+    Version   int `json:"version"`
+    NodeSplit struct {
+        CPUWeight float64 `json:"cpu_weight"`
+    } `json:"node_split"`
+}
+
+func (a *myAllocator) Allocate(ctx context.Context, req *pbc.AllocateRequest) (*pbc.AllocateResponse, error) {
+    if err := pluginsdk.ValidateAllocateRequest(req); err != nil {
+        return nil, err
+    }
+
+    policy := myPolicy{Version: 1}
+    policy.NodeSplit.CPUWeight = 0.5
+    if err := pluginsdk.DecodePolicy(req.GetPolicyJson(), &policy); err != nil {
+        return nil, err // names the unknown field's path, such as node_split.cpu
+    }
+    if policy.Version != 1 {
+        return nil, status.Errorf(codes.InvalidArgument, "unsupported policy version %d", policy.Version)
+    }
+
+    currency, err := pluginsdk.ResolveCurrency(req.GetPriced())
+    if err != nil {
+        return nil, err
+    }
+
+    effective, _ := json.Marshal(policy)
+    digest := sha256.Sum256(effective)
+    rows := a.split(req, policy, currency) // your allocation math
+    return &pbc.AllocateResponse{
+        Rows:                rows,
+        EffectivePolicyJson: effective,
+        PolicyDigest:        hex.EncodeToString(digest[:]),
+    }, nil
+}
+```
+
+Your rows must satisfy the invariants hosts verify:
+
+- **Conservation.** Row totals sum to the cost of the `priced = true` entries within
+  `max(1e-6 × |expected|, 1e-9)`.
+- **Portions add up.** `total_cost = cpu_cost + mem_cost`, except on `__cluster__` rows.
+- **No negative cost**, even when workloads request more than a node can allocate.
+- **Idle rows.** Exactly one `__idle__` row per priced node (`subject["node"]` equals the node's
+  `resource.id`), even when idle is zero. Unpriced nodes need none; give their workloads zero-cost
+  rows with a note.
+- **Cluster rows.** Put a control plane (`tags.kind = "cluster"`) or any other non-node priced
+  resource in a `__cluster__` row. Such rows may carry all cost in `total_cost`.
+- **One currency.** Every row carries the resolved currency.
+
+Never fall back to defaults on a bad policy, and make sure an empty `policy_json` and `{}` produce
+the same effective policy and digest.
+
+The compiled version of this pattern is `ExampleAllocatorProvider` in
+`sdk/go/pluginsdk/example_test.go`.
+
+### Declare Capabilities Explicitly
+
+Capability auto-discovery infers `PLUGIN_CAPABILITY_ALLOCATION` from `Allocate`, but it also always
+reports the four pricing capabilities that the `Plugin` interface implies. An allocation-only plugin
+must therefore declare its capabilities explicitly:
+
+```go
+info := pluginsdk.NewPluginInfo("k8s-allocator", "v1.0.0",
+    pluginsdk.WithCapabilities(pbc.PluginCapability_PLUGIN_CAPABILITY_ALLOCATION),
+)
+```
+
+If an allocator starts without explicit `PluginInfo.Capabilities` and does not implement
+`PluginInfoProvider`, `Serve` logs one warning at startup. Legacy hosts see
+`supports_allocation=true` in the metadata.
+
+### Testing an Allocator
+
+`plugintesting.RunAllocatorConformance(t, impl)` serves your allocator over an in-memory
+`AllocatorHarness` and runs twelve named subtests. Each allocation scenario checks that the call
+succeeds, that `ValidateAllocateResponse` passes, and that `CheckConservation` holds:
+
+| Subtest | What it checks |
+| ------- | -------------- |
+| `single_node` | One priced node with two workloads |
+| `three_nodes` | Three priced nodes with workloads on each |
+| `empty_cluster` | No workloads: idle rows carry all node cost |
+| `fully_packed_node` | Requests equal allocatable; the idle row is still present |
+| `unpriced_node` | Only the priced node needs an idle row |
+| `control_plane` | A priced control plane produces at least one `__cluster__` row |
+| `over_requested_node` | Requests exceed allocatable; idle stays non-negative |
+| `policy_unknown_field` | An unknown key is rejected with `InvalidArgument` naming its path |
+| `policy_unknown_version` | `version` 2147483647 is rejected with `InvalidArgument` |
+| `empty_request` | No rows, a 64-character hex digest, and an object policy with integer `version` |
+| `fingerprint_stable` | Identical requests yield identical digests and policies |
+| `fingerprint_empty_equals_braces` | Empty `policy_json` and `{}` yield one digest |
+
+The assertions are policy-agnostic: the suite derives bad policies from your allocator's own
+effective policy, so it works with any schema.
+
+```go
+func TestMyAllocatorConformance(t *testing.T) {
+    plugintesting.RunAllocatorConformance(t, &myAllocator{BasePlugin: pluginsdk.NewBasePlugin("alloc")})
+}
+```
+
+Use `plugintesting.NewAllocatorHarness(impl)` directly for your own scenarios. See
+[sdk/go/testing/README.md](sdk/go/testing/README.md#allocator-conformance).
 
 ## Packaging and Manifest Format
 

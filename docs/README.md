@@ -40,6 +40,11 @@ and SDK. Use this guide to navigate to the appropriate documentation for your ne
   - Priceable node and control-plane tagging (AWS, Azure, GCP)
   - Error codes and the usage-only capability rule
 
+- **[Allocator Service](allocator.md)** - `AllocatorService.Allocate` semantics
+  - Priced resources, currency resolution, and row kinds
+  - The five invariants, including conservation and its tolerance
+  - Strict policy decoding, errors, and host verification
+
 - **[Plugin Migration Guide](PLUGIN_MIGRATION_GUIDE.md)** - Breaking change migrations
   - Version upgrade paths
   - Backwards compatibility

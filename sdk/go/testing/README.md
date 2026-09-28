@@ -339,6 +339,99 @@ func TestMyUsageSource(t *testing.T) {
 }
 ```
 
+### Allocator Testing
+
+Helpers for plugins that implement `AllocatorService.Allocate` (see
+[docs/allocator.md](../../../docs/allocator.md)). The same rules are available from production code
+through `pluginsdk`, which delegates to these functions.
+
+#### `ResolveCurrency` and `ValidateAllocateRequest`
+
+`ResolveCurrency(priced)` returns the single distinct non-empty currency across `priced = true`
+entries, or `USD` when all are empty. More than one returns an error wrapping `ErrMixedCurrency`.
+
+`ValidateAllocateRequest(req)` returns the first violation. Every error carries
+`codes.InvalidArgument`, has no `rpc error:` prefix, and names the `priced[i]` entry, so an
+allocator can return it unchanged.
+
+| Rule | Check | Error wraps |
+| ---- | ----- | ----------- |
+| Q1 | Request and every `priced` entry are non-nil | `ErrInvalidAllocateRequest` |
+| Q2 | `priced = false` entries have `cost = 0` | `ErrInvalidAllocateRequest` |
+| Q3 | `cost` is finite and non-negative | `ErrInvalidAllocateRequest` |
+| Q4 | At most one non-empty currency over priced entries | `ErrInvalidAllocateRequest`, `ErrMixedCurrency` |
+| Q5 | No two entries share `(tags.kind, id)` | `ErrInvalidAllocateRequest` |
+
+Usage rows are not validated; the allocator interprets them.
+
+#### `ValidateAllocateResponse`
+
+`ValidateAllocateResponse(req, resp)` returns `nil` or the first violation, wrapping
+`ErrInvalidAllocateResponse` and naming the `rows[i]` entry.
+
+| Rule | Check |
+| ---- | ----- |
+| P1 | Response is non-nil; `policy_digest` and `effective_policy_json` are non-empty |
+| P2 | Each row's `kind` is `workload`, `__idle__`, or `__cluster__` |
+| P3 | `__idle__` rows carry a `node` key |
+| P4 | `cpu_cost`, `mem_cost`, and `total_cost` are finite and non-negative |
+| P5 | Non-cluster rows have `total_cost = cpu_cost + mem_cost` within tolerance |
+| P6 | Every row's currency equals the resolved currency |
+| P7 | Each priced node has exactly one `__idle__` row with its `id` |
+
+#### `CheckConservation`
+
+`CheckConservation(req, resp, relEpsilon)` passes when the row totals equal the priced total
+within `max(relEpsilon × abs(expected), ConservationAbsoluteFloor)`. Use
+`DefaultConservationEpsilon` (1e-6); the floor is 1e-9. It returns an error, never a pass, for NaN
+or infinite costs and totals and for a negative or non-finite epsilon. A mismatch is a
+`*ConservationError` with `Expected`, `Actual`, `Difference` (actual minus expected), and
+`Currency`, wrapping `ErrConservation`:
+
+```go
+var consErr *plugintesting.ConservationError
+if errors.As(plugintesting.CheckConservation(req, resp, plugintesting.DefaultConservationEpsilon), &consErr) {
+    t.Errorf("off by %+g %s", consErr.Difference, consErr.Currency)
+}
+```
+
+#### Allocator Conformance
+
+`RunAllocatorConformance(t, impl)` serves `impl` over an `AllocatorHarness` and runs twelve
+subtests. `impl` is any `AllocateServer`: a type with an `Allocate` method, such as a
+`pluginsdk.AllocatorProvider` or a `pbc.AllocatorServiceServer`.
+
+```go
+func TestMyAllocator(t *testing.T) {
+    plugintesting.RunAllocatorConformance(t, &MyAllocator{})
+}
+```
+
+Every allocation scenario checks that the call succeeds, that `ValidateAllocateResponse` passes,
+and that `CheckConservation` holds. Fixture usage is valid usage-source output (checked with
+`ValidateStatsResponse`), with a distinct `namespace`/`pod` per workload.
+
+| Subtest | Fixture | Extra check |
+| ------- | ------- | ----------- |
+| `single_node` | One priced node, two workloads | — |
+| `three_nodes` | Three priced nodes with workloads | — |
+| `empty_cluster` | Two priced nodes, no workloads | Idle rows total the node costs |
+| `fully_packed_node` | Requests equal allocatable | Idle row present |
+| `unpriced_node` | One priced and one unpriced node | Idle row required only for the priced node |
+| `control_plane` | Three nodes plus a priced control plane | At least one `__cluster__` row |
+| `over_requested_node` | Requests exceed allocatable | Idle row present and non-negative |
+| `policy_unknown_field` | Effective policy plus an unknown key, top level and nested | `InvalidArgument` naming the key (nested: its dotted path) |
+| `policy_unknown_version` | Effective policy with `version` 2147483647 | `InvalidArgument` |
+| `empty_request` | No usage, no priced | No rows; 64-character hex digest; integer `version` |
+| `fingerprint_stable` | The same request twice | Equal digests and effective policies |
+| `fingerprint_empty_equals_braces` | `policy_json` empty and `{}` | Equal digests |
+
+The assertions are policy-agnostic: bad policies are derived from the allocator's own effective
+policy, and the nested target is the first object-valued key in sorted order.
+
+`NewAllocatorHarness(impl)` with `Start(t)`, `Client()`, and `Stop()` serves an allocator for your
+own tests, like `UsageSourceHarness`.
+
 ### FOCUS Record Validation (Contextual FinOps)
 
 The `pluginsdk` package provides comprehensive FOCUS 1.2/1.3 validation for cost records:

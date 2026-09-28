@@ -53,23 +53,29 @@ func (h *usageSourceConnectHandler) GetStats(
 	return connect.NewResponse(resp), nil
 }
 
-// warnUsageSourceCapabilities logs a warning when a usage source relies on
-// inferred capabilities. Inference always adds the four pricing capabilities
-// from the required Plugin interface, so a usage-only plugin would otherwise
-// advertise pricing it does not offer. Plugins that implement
-// PluginInfoProvider control their own capabilities and are not warned.
-func warnUsageSourceCapabilities(logger *zerolog.Logger, plugin Plugin, info *PluginInfo) {
-	if _, ok := plugin.(UsageSourceProvider); !ok {
-		return
-	}
+// warnInferredOnlyCapabilities logs one warning per service-only provider
+// (usage source, allocator) the plugin implements when it relies on inferred
+// capabilities. Inference always adds the four pricing capabilities from the
+// required Plugin interface, so a usage-only or allocation-only plugin would
+// otherwise advertise pricing it does not offer. Plugins that implement
+// PluginInfoProvider or set explicit capabilities are not warned.
+func warnInferredOnlyCapabilities(logger *zerolog.Logger, plugin Plugin, info *PluginInfo) {
 	if _, ok := plugin.(PluginInfoProvider); ok {
 		return
 	}
 	if info != nil && len(info.Capabilities) > 0 {
 		return
 	}
-	logger.Warn().
-		Str("capability", pbc.PluginCapability_PLUGIN_CAPABILITY_USAGE_STATS.String()).
-		Msg("usage source relies on inferred capabilities, which include pricing capabilities; " +
-			"usage-only plugins should set PluginInfo.Capabilities explicitly")
+	if _, ok := plugin.(UsageSourceProvider); ok {
+		logger.Warn().
+			Str("capability", pbc.PluginCapability_PLUGIN_CAPABILITY_USAGE_STATS.String()).
+			Msg("usage source relies on inferred capabilities, which include pricing capabilities; " +
+				"usage-only plugins should set PluginInfo.Capabilities explicitly")
+	}
+	if _, ok := plugin.(AllocatorProvider); ok {
+		logger.Warn().
+			Str("capability", pbc.PluginCapability_PLUGIN_CAPABILITY_ALLOCATION.String()).
+			Msg("allocator relies on inferred capabilities, which include pricing capabilities; " +
+				"allocation-only plugins should set PluginInfo.Capabilities explicitly")
+	}
 }
