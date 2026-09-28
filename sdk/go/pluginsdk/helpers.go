@@ -1170,7 +1170,44 @@ func PaginateActualCosts(
 // GetRecommendations Summary Calculation
 // =============================================================================
 
+// savingsAggregate sums amounts that share at most one non-empty currency.
+// An empty currency does not count as a second currency, and its amount is still added.
+// Two or more distinct non-empty currencies withhold the sum (amount returns 0).
+type savingsAggregate struct {
+	sum   float64
+	first string
+	mixed bool
+}
+
+func (a *savingsAggregate) add(amount float64, currency string) {
+	a.sum += amount
+	if currency == "" {
+		return
+	}
+	if a.first == "" {
+		a.first = currency
+		return
+	}
+	if a.first != currency {
+		a.mixed = true
+	}
+}
+
+func (a *savingsAggregate) amount() float64 {
+	if a.mixed {
+		return 0
+	}
+	return a.sum
+}
+
 // CalculateRecommendationSummary computes aggregated summary statistics for recommendations.
+//
+// Savings are summed only within a single non-empty currency. An empty currency does not
+// count as a second currency, and that amount is still included. When the page, a category,
+// or an action contains two or more distinct non-empty currencies, that aggregate is withheld:
+// the page total is 0 and Currency is empty, and a mixed bucket stores 0. A total of 0 with
+// a non-empty Currency is a real zero. Counts are unaffected. Comparison is exact, so "usd"
+// and "USD" differ, and "XXX" is its own currency.
 func CalculateRecommendationSummary(
 	recommendations []*pbc.Recommendation,
 	projectionPeriod string,
@@ -1184,9 +1221,9 @@ func CalculateRecommendationSummary(
 		SavingsByActionType:  make(map[string]float64),
 	}
 
-	var totalSavings float64
-	var detectedCurrency string
-	var currencyMismatch bool
+	categories := make(map[string]*savingsAggregate)
+	actions := make(map[string]*savingsAggregate)
+	var page savingsAggregate
 
 	for _, rec := range recommendations {
 		catName := rec.GetCategory().String()
@@ -1195,29 +1232,41 @@ func CalculateRecommendationSummary(
 		summary.CountByCategory[catName]++
 		summary.CountByActionType[actionName]++
 
-		if impact := rec.GetImpact(); impact != nil {
-			savings := impact.GetEstimatedSavings()
-			totalSavings += savings
-			summary.SavingsByCategory[catName] += savings
-			summary.SavingsByActionType[actionName] += savings
-			if c := impact.GetCurrency(); c != "" {
-				if detectedCurrency == "" {
-					detectedCurrency = c
-				} else if detectedCurrency != c {
-					currencyMismatch = true
-				}
-			}
+		impact := rec.GetImpact()
+		if impact == nil {
+			continue
 		}
-	}
-	// Clear currency if recommendations have mixed currencies (sum is ambiguous)
-	if currencyMismatch {
-		detectedCurrency = ""
+		amount := impact.GetEstimatedSavings()
+		currency := impact.GetCurrency()
+		addSavings(categories, catName, amount, currency)
+		addSavings(actions, actionName, amount, currency)
+		page.add(amount, currency)
 	}
 
-	summary.TotalEstimatedSavings = totalSavings
-	summary.Currency = detectedCurrency
+	for name, bucket := range categories {
+		summary.SavingsByCategory[name] = bucket.amount()
+	}
+	for name, bucket := range actions {
+		summary.SavingsByActionType[name] = bucket.amount()
+	}
+	if page.mixed {
+		summary.TotalEstimatedSavings = 0
+		summary.Currency = ""
+	} else {
+		summary.TotalEstimatedSavings = page.sum
+		summary.Currency = page.first
+	}
 
 	return summary
+}
+
+func addSavings(buckets map[string]*savingsAggregate, name string, amount float64, currency string) {
+	bucket := buckets[name]
+	if bucket == nil {
+		bucket = &savingsAggregate{}
+		buckets[name] = bucket
+	}
+	bucket.add(amount, currency)
 }
 
 // =============================================================================
