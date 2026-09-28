@@ -525,6 +525,39 @@ message GetProjectedCostResponse {
   //   - Empty map when not populated by plugin
   //   - Existing consumers unaffected (safe to ignore)
   map<string, string> metadata = 14;
+
+  // cost_breakdown reports the monthly cost of each named component that makes
+  // up cost_per_month (e.g., an EC2 instance's compute plus its root volume).
+  // It replaces parsing component costs out of billing_detail.
+  //
+  // Semantics:
+  //   - Empty map: No breakdown available. This does NOT mean zero cost.
+  //   - Values are monthly costs in the response currency, on the same basis
+  //     as cost_per_month (730 hours/month for hourly-billed resources).
+  //   - When non-empty, values sum to cost_per_month within a tolerance of
+  //     max(0.01, 0.001 * cost_per_month).
+  //   - Discounts and credits are already applied to the component they
+  //     reduce; there are no negative entries.
+  //
+  // Producer constraints (enforced by pluginsdk.ValidateGetProjectedCostResponse):
+  //   - Max 32 entries.
+  //   - Keys: 1-64 bytes, lowercase snake_case: [a-z][a-z0-9_]*.
+  //   - Values: finite and non-negative.
+  //   - Sum within tolerance of cost_per_month (hard error, not a warning).
+  //   - MUST be empty when dry_run_result is set.
+  //
+  // Recommended keys (non-exhaustive; consumers MUST accept others):
+  //   compute, storage, root_volume, network, license, request, data_transfer
+  //
+  // Example (EC2 t3.micro + 8GB gp2 root volume):
+  //   cost_per_month: 8.392
+  //   cost_breakdown: { "compute": 7.592, "root_volume": 0.80 }
+  //
+  // Backward compatibility:
+  //   - Empty map when not populated by plugin
+  //   - Existing consumers unaffected (safe to ignore)
+  //   - billing_detail is unchanged and may still describe components for humans
+  map<string, double> cost_breakdown = 15;
 }
 
 // GetPricingSpecRequest contains the resource descriptor for pricing specification.
@@ -537,6 +570,61 @@ message GetPricingSpecRequest {
 message GetPricingSpecResponse {
   // spec contains the complete pricing specification for the resource
   PricingSpec spec = 1;
+}
+
+// LineageNode represents one level in a cost allocation lineage chain.
+// Nodes form a singly-linked list from leaf (the resource itself) up toward
+// the organizational root via the parent pointer.
+//
+// Pass-Through Semantics:
+//   - Lineage data is reported by plugins and passed through verbatim by hosts.
+//   - Hosts MUST NOT infer missing parents or synthesize chain levels.
+//   - Hosts MUST NOT validate node ids against provider APIs.
+//   - Hosts MUST NOT cross-check nodes against billing_account_id or
+//     sub_account_id fields; FOCUS account fields remain the canonical source
+//     for two-level attribution, and disagreement is NOT an error.
+//   - Partial chains are valid: a chain may stop at any level and may skip
+//     level types.
+//
+// Depth Note:
+//   - The parent field is a nested message encoding; practical protobuf
+//     recursion limits apply to very deep chains. Implementations SHOULD keep
+//     chains to a reasonable organizational depth (typically under 10 levels).
+//
+// Example chain (leaf first, walking parent pointers toward the root):
+//   resource "i-0abc123" (RESOURCE)
+//     -> "123456789012" (SUB_ACCOUNT)
+//     -> "999988887777" (BILLING_ACCOUNT)
+//     -> "o-exampleorg" (ORGANIZATION, parent = null)
+message LineageNode {
+  // type classifies this level of the hierarchy.
+  // REQUIRED for well-formed chains. LINEAGE_NODE_TYPE_UNSPECIFIED indicates
+  // an incomplete implementation.
+  LineageNodeType type = 1;
+
+  // id is the provider-specific identifier for this hierarchy level.
+  // RECOMMENDED. Treated as an opaque string; hosts MUST NOT validate the
+  // format or existence of this id against provider APIs.
+  // Examples: "o-exampleorg" (AWS Org), "123456789012" (AWS account),
+  // "my-resource-group" (Azure RG), "my-gcp-project" (GCP Project).
+  string id = 2;
+
+  // name is the human-readable display name for this hierarchy level.
+  // OPTIONAL. May be empty when only the id is known.
+  // Examples: "Engineering OU", "Production Account", "platform-team".
+  string name = 3;
+
+  // parent links to the next level up toward the organizational root.
+  // OPTIONAL. A nil parent marks the top of the reported chain (typically the
+  // organization, but partial chains may stop at any level).
+  // Hosts MUST NOT infer or synthesize a missing parent.
+  LineageNode parent = 4;
+
+  // metadata carries provider-specific attributes for this level.
+  // OPTIONAL. Keys are not standardized; common examples include
+  // "owner_email", "cost_center", "environment", "level_kind".
+  // Both keys and values should be non-empty when provided.
+  map<string, string> metadata = 5;
 }
 
 // ResourceDescriptor describes a cloud resource for cost analysis.
@@ -705,6 +793,21 @@ message ResourceDescriptor {
   // In generated Go code, check presence with:
   //   if desc.GrowthRate != nil { rate := *desc.GrowthRate }
   optional double growth_rate = 10;
+
+  // lineage is the optional cost allocation lineage chain for this resource.
+  // OPTIONAL. When set, the chain starts at the resource level (leaf, type
+  // LINEAGE_NODE_TYPE_RESOURCE) and links upward toward the organization via
+  // LineageNode.parent pointers.
+  //
+  // Pass-Through Semantics:
+  //   - Plugins report lineage; hosts pass it through verbatim.
+  //   - Hosts MUST NOT infer missing parents, MUST NOT validate ids against
+  //     provider APIs, and MUST NOT treat disagreement with billing_account_id
+  //     or sub_account_id as an error (FOCUS fields remain canonical).
+  //   - Partial chains are valid (e.g., resource -> sub-account only).
+  //
+  // See LineageNode for the full semantics and depth guidance.
+  LineageNode lineage = 11;
 }
 
 // ActualCostResult represents a single cost data point.
@@ -741,6 +844,30 @@ message ActualCostResult {
   //   - Billing cycle alignment: Set to end of current billing period
   //   - Real-time sources: Leave unset (no caching)
   google.protobuf.Timestamp expires_at = 8;
+
+  // lineage is the optional cost allocation lineage chain for the resource
+  // this cost data point belongs to.
+  // OPTIONAL. When set, the chain starts at the resource level (leaf, type
+  // LINEAGE_NODE_TYPE_RESOURCE) and links upward toward the organization via
+  // LineageNode.parent pointers.
+  //
+  // Use Cases:
+  //   - Hierarchical cost aggregation: roll costs up by any chain level
+  //     (e.g., per organizational unit, per billing account).
+  //   - Drill-down: navigate from an organization-level total down to the
+  //     contributing resources.
+  //   - Chargeback/showback grouping beyond the two-level FOCUS model.
+  //
+  // Pass-Through Semantics:
+  //   - Plugins report lineage; hosts pass it through verbatim.
+  //   - Hosts MUST NOT infer missing parents, MUST NOT validate ids against
+  //     provider APIs, and MUST NOT treat omission of or disagreement with
+  //     billing_account_id or sub_account_id as an error (FOCUS fields remain
+  //     canonical).
+  //   - Partial chains are valid (e.g., resource -> sub-account only).
+  //
+  // See LineageNode for the full semantics and depth guidance.
+  LineageNode lineage = 9;
 }
 
 // UsageMetricHint provides guidance on usage metrics for cost calculation.
@@ -1092,8 +1219,9 @@ message EstimateCostRequest {
 // EstimateCostResponse contains the estimated monthly cost for a resource
 // based on the provided configuration.
 //
-// Future versions may add optional breakdown fields (e.g., compute vs storage)
-// while maintaining backward compatibility through optional fields.
+// Future versions may add an optional cost breakdown (e.g., compute vs storage).
+// It MUST follow the rules of GetProjectedCostResponse.cost_breakdown
+// (key format, non-negative values, sum tolerance) for consistency.
 message EstimateCostResponse {
   // The currency of the cost, as an ISO 4217 currency code.
   // Typically "USD" but depends on the plugin's pricing source.

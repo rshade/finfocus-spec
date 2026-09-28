@@ -879,7 +879,35 @@ parallel subtests complete.
   `runAllocatorScenarios` so broken-allocator tests assert specific scenario failures.
 - `make generate` also regenerates the TypeScript bindings; no separate TS buf run was needed.
 
+### Cost Breakdown Pattern (053-projected-cost-breakdown)
+
+- `GetProjectedCostResponse.cost_breakdown` (field 15) sum rule: `|sum - cost_per_month| <=
+  max(costBreakdownAbsTolerance 0.01, costBreakdownRelTolerance 0.001 * cost_per_month)`, a hard error.
+  At a zero total the 0.01 floor still applies. Entries (key, then value) are checked before the sum, so
+  NaN reports `ErrCostBreakdownInvalidValue`, not a mismatch.
+- `WithProjectedCostBreakdown` copies the map and does NOT validate (the sum depends on another
+  option's `cost_per_month`); call `ValidateGetProjectedCostResponse`.
+- `ValidateGetProjectedCostResponse` guards the breakdown call with `len() > 0` at the call site: on the
+  ~6 ns `_Valid` benchmark a non-inlined call alone costs >10%. Compare benchmarks A/B against a `main`
+  worktree with prebuilt test binaries; sequential runs on a loaded box drift 20%+.
+- `MockPlugin.ProjectedCostBreakdown` values are weights scaled to the mock's `cost_per_month`, so mock
+  responses always validate. Negative, NaN/Inf, or zero-sum weights return `codes.FailedPrecondition`
+  rather than an invalid breakdown.
+- The conformance suite's `plugintesting.ValidateProjectedCostResponse` does not check the breakdown
+  (import cycle, same as #427 metadata); only the `pluginsdk` validator does.
+- The TS client `tsconfig.json` excludes `test/`, so `tsc --noEmit` cannot show a failing TS test;
+  use `npx vitest run`.
+- `TestUsageSourceNotRegistered/connect` (`usage_source_test.go:79`, "server did not shut down in
+  time") flakes under full `make test` load (about 1 in 8 runs); it passes in isolation.
+
 ## Active Technologies
+
+- Go 1.27.1 (go.mod) + Existing `google.golang.org/protobuf` (protojson, protocmp in tests). (055-cost-allocation-lineage)
+- N/A (wire contract and in-memory builder only) (055-cost-allocation-lineage)
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
+  google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1 (053-projected-cost-breakdown)
+- N/A (stateless map field on GetProjectedCostResponse + zero-alloc validation) (053-projected-cost-breakdown)
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
   google.golang.org/protobuf, google.golang.org/grpc, connectrpc.com/connect,
@@ -1001,6 +1029,14 @@ See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable doc
 
 ## Recent Changes
 
+- 055-cost-allocation-lineage: Added Go 1.27.1 (go.mod) +
+  `google.golang.org/protobuf` (protojson, protocmp in tests)
+
+- 053-projected-cost-breakdown: Added GetProjectedCostResponse.cost_breakdown
+  (map<string,double>, field 15), pluginsdk.WithProjectedCostBreakdown, five
+  ErrCostBreakdown* sentinels, and MockPlugin.ProjectedCostBreakdown; validated for
+  snake_case keys, non-negative values, and sum within max(0.01, 0.1%) of cost_per_month
+
 - 052-allocator-allocate: Adds AllocatorService.Allocate (allocation.proto),
   PLUGIN_CAPABILITY_ALLOCATION = 15, pluginsdk.AllocatorProvider and DecodePolicy,
   conservation/validation helpers, RunAllocatorConformance, and a TS AllocatorClient
@@ -1025,6 +1061,8 @@ See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable doc
 - 047-validation-error-integration: Added Go 1.25.8 (per go.mod) +
   google.golang.org/protobuf, google.golang.org/grpc (existing, unchanged)
 
+- 046-batch-cost-rpc: Added Go 1.25.8 (per go.mod) + Protocol Buffers v3,
   TypeScript (SDK) + google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1
 
+- 045-caching-hint-expires-at: Added Go 1.25.8 (per go.mod) + Protocol Buffers v3,
   TypeScript (SDK) + google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1

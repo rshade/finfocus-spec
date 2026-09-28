@@ -930,6 +930,105 @@ func (SourceFormat) EnumDescriptor() ([]byte, []int) {
 	return file_finfocus_v1_enums_proto_rawDescGZIP(), []int{13}
 }
 
+// LineageNodeType classifies a single level in a cost allocation lineage chain.
+// Used by LineageNode to identify what kind of organizational or resource
+// entity a chain level represents.
+//
+// The values follow a general top-down ordering (organization at the root,
+// resource at the leaf), but this enum imposes NO structural constraints:
+//   - Chains may skip levels (partial chains are valid).
+//   - Chains may use levels in any order or repeat a level type.
+//   - CUSTOM exists for plugin-defined levels that do not map to the
+//     standard categories (e.g., "cost center", "department", "chargeback group").
+//
+// These types describe how a node was classified by the plugin that reported
+// it; they are NOT validated against provider APIs by hosts.
+type LineageNodeType int32
+
+const (
+	// Default value - node type not specified.
+	// Should not be used in well-formed chains; indicates incomplete implementation.
+	LineageNodeType_LINEAGE_NODE_TYPE_UNSPECIFIED LineageNodeType = 0
+	// Top-level organizational entity (root of the chain).
+	// Examples: AWS Organization, Azure Tenant, GCP Organization.
+	LineageNodeType_LINEAGE_NODE_TYPE_ORGANIZATION LineageNodeType = 1
+	// Intermediate organizational grouping between organization and accounts.
+	// Examples: AWS Organizational Unit, Azure Management Group, GCP Folder.
+	LineageNodeType_LINEAGE_NODE_TYPE_ORGANIZATIONAL_UNIT LineageNodeType = 2
+	// Billing/payer entity responsible for payment.
+	// Examples: AWS Payer Account, Azure Billing Profile, GCP Billing Account.
+	// Corresponds conceptually to FOCUS BillingAccountId, but hosts MUST NOT
+	// cross-validate this node against billing_account_id fields.
+	LineageNodeType_LINEAGE_NODE_TYPE_BILLING_ACCOUNT LineageNodeType = 3
+	// Linked or member account under a billing account.
+	// Examples: AWS Member Account, Azure Subscription.
+	// Corresponds conceptually to FOCUS SubAccountId, but hosts MUST NOT
+	// cross-validate this node against sub_account_id fields.
+	LineageNodeType_LINEAGE_NODE_TYPE_SUB_ACCOUNT LineageNodeType = 4
+	// Resource-scoping container directly above individual resources.
+	// Examples: Azure Resource Group, GCP Project, Kubernetes Namespace.
+	LineageNodeType_LINEAGE_NODE_TYPE_RESOURCE_GROUP LineageNodeType = 5
+	// Individual billable resource. This is the leaf of the chain.
+	// Examples: an EC2 instance, an Azure VM, a GCE instance, a K8s pod.
+	LineageNodeType_LINEAGE_NODE_TYPE_RESOURCE LineageNodeType = 6
+	// Plugin-defined level that does not fit the standard categories.
+	// Examples: "cost center", "department", "environment tier".
+	// Nodes of this type SHOULD carry a descriptor in metadata
+	// (e.g., metadata["level_kind"] = "cost_center").
+	LineageNodeType_LINEAGE_NODE_TYPE_CUSTOM LineageNodeType = 7
+)
+
+// Enum value maps for LineageNodeType.
+var (
+	LineageNodeType_name = map[int32]string{
+		0: "LINEAGE_NODE_TYPE_UNSPECIFIED",
+		1: "LINEAGE_NODE_TYPE_ORGANIZATION",
+		2: "LINEAGE_NODE_TYPE_ORGANIZATIONAL_UNIT",
+		3: "LINEAGE_NODE_TYPE_BILLING_ACCOUNT",
+		4: "LINEAGE_NODE_TYPE_SUB_ACCOUNT",
+		5: "LINEAGE_NODE_TYPE_RESOURCE_GROUP",
+		6: "LINEAGE_NODE_TYPE_RESOURCE",
+		7: "LINEAGE_NODE_TYPE_CUSTOM",
+	}
+	LineageNodeType_value = map[string]int32{
+		"LINEAGE_NODE_TYPE_UNSPECIFIED":         0,
+		"LINEAGE_NODE_TYPE_ORGANIZATION":        1,
+		"LINEAGE_NODE_TYPE_ORGANIZATIONAL_UNIT": 2,
+		"LINEAGE_NODE_TYPE_BILLING_ACCOUNT":     3,
+		"LINEAGE_NODE_TYPE_SUB_ACCOUNT":         4,
+		"LINEAGE_NODE_TYPE_RESOURCE_GROUP":      5,
+		"LINEAGE_NODE_TYPE_RESOURCE":            6,
+		"LINEAGE_NODE_TYPE_CUSTOM":              7,
+	}
+)
+
+func (x LineageNodeType) Enum() *LineageNodeType {
+	p := new(LineageNodeType)
+	*p = x
+	return p
+}
+
+func (x LineageNodeType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (LineageNodeType) Descriptor() protoreflect.EnumDescriptor {
+	return file_finfocus_v1_enums_proto_enumTypes[14].Descriptor()
+}
+
+func (LineageNodeType) Type() protoreflect.EnumType {
+	return &file_finfocus_v1_enums_proto_enumTypes[14]
+}
+
+func (x LineageNodeType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use LineageNodeType.Descriptor instead.
+func (LineageNodeType) EnumDescriptor() ([]byte, []int) {
+	return file_finfocus_v1_enums_proto_rawDescGZIP(), []int{14}
+}
+
 // CostQueryType specifies which cost operation to perform in a batch query.
 // Used by BatchCostRequest to select the underlying cost RPC for all resources.
 type CostQueryType int32
@@ -973,11 +1072,11 @@ func (x CostQueryType) String() string {
 }
 
 func (CostQueryType) Descriptor() protoreflect.EnumDescriptor {
-	return file_finfocus_v1_enums_proto_enumTypes[14].Descriptor()
+	return file_finfocus_v1_enums_proto_enumTypes[15].Descriptor()
 }
 
 func (CostQueryType) Type() protoreflect.EnumType {
-	return &file_finfocus_v1_enums_proto_enumTypes[14]
+	return &file_finfocus_v1_enums_proto_enumTypes[15]
 }
 
 func (x CostQueryType) Number() protoreflect.EnumNumber {
@@ -986,7 +1085,7 @@ func (x CostQueryType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use CostQueryType.Descriptor instead.
 func (CostQueryType) EnumDescriptor() ([]byte, []int) {
-	return file_finfocus_v1_enums_proto_rawDescGZIP(), []int{14}
+	return file_finfocus_v1_enums_proto_rawDescGZIP(), []int{15}
 }
 
 var File_finfocus_v1_enums_proto protoreflect.FileDescriptor
@@ -1087,7 +1186,16 @@ const file_finfocus_v1_enums_proto_rawDesc = "" +
 	"\fSourceFormat\x12\x1d\n" +
 	"\x19SOURCE_FORMAT_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17SOURCE_FORMAT_TERRAFORM\x10\x01\x12 \n" +
-	"\x1cSOURCE_FORMAT_CLOUDFORMATION\x10\x02*\x89\x01\n" +
+	"\x1cSOURCE_FORMAT_CLOUDFORMATION\x10\x02*\xb1\x02\n" +
+	"\x0fLineageNodeType\x12!\n" +
+	"\x1dLINEAGE_NODE_TYPE_UNSPECIFIED\x10\x00\x12\"\n" +
+	"\x1eLINEAGE_NODE_TYPE_ORGANIZATION\x10\x01\x12)\n" +
+	"%LINEAGE_NODE_TYPE_ORGANIZATIONAL_UNIT\x10\x02\x12%\n" +
+	"!LINEAGE_NODE_TYPE_BILLING_ACCOUNT\x10\x03\x12!\n" +
+	"\x1dLINEAGE_NODE_TYPE_SUB_ACCOUNT\x10\x04\x12$\n" +
+	" LINEAGE_NODE_TYPE_RESOURCE_GROUP\x10\x05\x12\x1e\n" +
+	"\x1aLINEAGE_NODE_TYPE_RESOURCE\x10\x06\x12\x1c\n" +
+	"\x18LINEAGE_NODE_TYPE_CUSTOM\x10\a*\x89\x01\n" +
 	"\rCostQueryType\x12\x1f\n" +
 	"\x1bCOST_QUERY_TYPE_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18COST_QUERY_TYPE_ESTIMATE\x10\x01\x12\x1a\n" +
@@ -1108,7 +1216,7 @@ func file_finfocus_v1_enums_proto_rawDescGZIP() []byte {
 	return file_finfocus_v1_enums_proto_rawDescData
 }
 
-var file_finfocus_v1_enums_proto_enumTypes = make([]protoimpl.EnumInfo, 15)
+var file_finfocus_v1_enums_proto_enumTypes = make([]protoimpl.EnumInfo, 16)
 var file_finfocus_v1_enums_proto_goTypes = []any{
 	(FocusServiceCategory)(0),            // 0: finfocus.v1.FocusServiceCategory
 	(FocusChargeCategory)(0),             // 1: finfocus.v1.FocusChargeCategory
@@ -1124,7 +1232,8 @@ var file_finfocus_v1_enums_proto_goTypes = []any{
 	(PluginCapability)(0),                // 11: finfocus.v1.PluginCapability
 	(UsageProfile)(0),                    // 12: finfocus.v1.UsageProfile
 	(SourceFormat)(0),                    // 13: finfocus.v1.SourceFormat
-	(CostQueryType)(0),                   // 14: finfocus.v1.CostQueryType
+	(LineageNodeType)(0),                 // 14: finfocus.v1.LineageNodeType
+	(CostQueryType)(0),                   // 15: finfocus.v1.CostQueryType
 }
 var file_finfocus_v1_enums_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -1144,7 +1253,7 @@ func file_finfocus_v1_enums_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_finfocus_v1_enums_proto_rawDesc), len(file_finfocus_v1_enums_proto_rawDesc)),
-			NumEnums:      15,
+			NumEnums:      16,
 			NumMessages:   0,
 			NumExtensions: 0,
 			NumServices:   0,

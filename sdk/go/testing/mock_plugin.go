@@ -103,8 +103,8 @@ const (
 // Use separate MockPlugin instances for concurrent tests.
 //
 // Fields that must be set before Start() include: ShouldError* flags, *Delay durations,
-// FallbackHint, ExpiresAtDuration, ProjectedCostExpiresAtDuration, EstimateCostExpiresAtDuration,
-// MockBudgets, DryRun* fields, PricingCategory/SpotRiskScore fields, and RecommendationsConfig.
+// FallbackHint, ExpiresAtDuration, ProjectedCostExpiresAtDuration, ProjectedCostBreakdown,
+// EstimateCostExpiresAtDuration, MockBudgets, DryRun* fields, PricingCategory/SpotRiskScore fields, and RecommendationsConfig.
 //
 // The recommended pattern is:
 //
@@ -177,6 +177,14 @@ type MockPlugin struct {
 	// cost responses. Same semantics as ExpiresAtDuration: zero means unset,
 	// positive means future expiration, negative means immediately stale.
 	ProjectedCostExpiresAtDuration time.Duration
+
+	// ProjectedCostBreakdown configures cost_breakdown on GetProjectedCost
+	// responses. Values are weights: they are scaled so they sum to the
+	// computed cost_per_month, so responses pass ValidateGetProjectedCostResponse.
+	// Weights must be finite and non-negative with a positive sum; otherwise
+	// GetProjectedCost returns codes.FailedPrecondition. Nil means no breakdown.
+	// Dry-run responses never carry a breakdown.
+	ProjectedCostBreakdown map[string]float64
 
 	// EstimateCostExpiresAtDuration configures the expires_at hint for estimate
 	// cost responses. Same semantics as ExpiresAtDuration: zero means unset,
@@ -1269,7 +1277,38 @@ func (m *MockPlugin) GetProjectedCost(
 		resp.ExpiresAt = timestamppb.New(time.Now().Add(m.ProjectedCostExpiresAtDuration))
 	}
 
+	if len(m.ProjectedCostBreakdown) > 0 {
+		breakdown, err := scaleCostBreakdown(m.ProjectedCostBreakdown, costPerMonth)
+		if err != nil {
+			return nil, status.Errorf(codes.FailedPrecondition, "mock ProjectedCostBreakdown: %v", err)
+		}
+		resp.CostBreakdown = breakdown
+	}
+
 	return resp, nil
+}
+
+// scaleCostBreakdown scales non-empty breakdown weights so they sum to costPerMonth.
+// Weights that are negative or non-finite, or
+// that do not have a positive finite sum, are rejected because no scaling of
+// them yields a valid breakdown.
+func scaleCostBreakdown(weights map[string]float64, costPerMonth float64) (map[string]float64, error) {
+	var weightSum float64
+	for k, w := range weights {
+		if math.IsNaN(w) || math.IsInf(w, 0) || w < 0 {
+			return nil, fmt.Errorf("weight %q is %v; weights must be finite and non-negative", k, w)
+		}
+		weightSum += w
+	}
+	if weightSum <= 0 || math.IsInf(weightSum, 0) {
+		return nil, fmt.Errorf("weights sum to %v; the sum must be positive and finite", weightSum)
+	}
+
+	scaled := make(map[string]float64, len(weights))
+	for k, w := range weights {
+		scaled[k] = costPerMonth * w / weightSum
+	}
+	return scaled, nil
 }
 
 // getBillingModeAndUnit returns billing mode and unit for a resource type.

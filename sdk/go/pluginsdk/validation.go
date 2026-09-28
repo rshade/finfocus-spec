@@ -93,6 +93,22 @@ var (
 	ErrMetadataValueControlChar = errors.New("metadata value contains control character")
 )
 
+// Validation error messages for cost_breakdown constraints.
+var (
+	// ErrCostBreakdownTooManyEntries is returned when cost_breakdown exceeds 32 entries.
+	ErrCostBreakdownTooManyEntries = errors.New("cost_breakdown has too many entries")
+	// ErrCostBreakdownInvalidKey is returned when a component name is not 1-64 bytes
+	// of lowercase snake_case ([a-z][a-z0-9_]*).
+	ErrCostBreakdownInvalidKey = errors.New("cost_breakdown key is invalid")
+	// ErrCostBreakdownInvalidValue is returned when a component value is NaN, infinite, or negative.
+	ErrCostBreakdownInvalidValue = errors.New("cost_breakdown value is invalid")
+	// ErrCostBreakdownSumMismatch is returned when the components do not sum to
+	// cost_per_month within max(0.01, 0.001 * cost_per_month).
+	ErrCostBreakdownSumMismatch = errors.New("cost_breakdown does not sum to cost_per_month")
+	// ErrCostBreakdownWithDryRun is returned when cost_breakdown is set alongside dry_run_result.
+	ErrCostBreakdownWithDryRun = errors.New("cost_breakdown must be empty for dry-run responses")
+)
+
 // spotRiskEpsilon is used for float comparison to handle floating-point representation errors.
 // This small value (1e-9) is chosen to be well below the precision typically meaningful
 // for risk scores while being large enough to catch representation errors.
@@ -111,6 +127,18 @@ const (
 	// 1024 bytes allows structured values (comma-separated lists, short JSON)
 	// while keeping total response size bounded (32 * 1024 = 32 KiB worst case).
 	maxMetadataValueLen = 1024
+)
+
+// Cost breakdown validation limits.
+const (
+	// maxCostBreakdownEntries matches the metadata entry limit.
+	maxCostBreakdownEntries = maxMetadataEntries
+	// maxCostBreakdownKeyLen matches the metadata key length limit.
+	maxCostBreakdownKeyLen = maxMetadataKeyLen
+	// costBreakdownAbsTolerance absorbs per-component rounding to cents on small totals.
+	costBreakdownAbsTolerance = 0.01
+	// costBreakdownRelTolerance (0.1%) absorbs float and upstream rounding on large totals.
+	costBreakdownRelTolerance = 0.001
 )
 
 // ValidateProjectedCostRequest validates a GetProjectedCostRequest for required fields.
@@ -538,6 +566,8 @@ func ValidateEstimateCostResponse(resp *pbc.EstimateCostResponse) error {
 //  5. Spot risk score validation (structural + semantic)
 //  6. ExpiresAt timestamp validity (if set)
 //  7. Metadata map validation (if set): entry count, key length/encoding, value length/UTF-8
+//  8. cost_breakdown validation (if set): entry count, key format, finite
+//     non-negative values, sum matches cost_per_month within tolerance, empty for dry-run responses
 //
 // Semantic rules enforced:
 //   - spot_interruption_risk_score must only be non-zero when pricing_category is FOCUS_PRICING_CATEGORY_DYNAMIC
@@ -593,6 +623,13 @@ func ValidateGetProjectedCostResponse(resp *pbc.GetProjectedCostResponse) error 
 	// Validate metadata map constraints
 	if err := validateMetadataMap(resp.GetMetadata()); err != nil {
 		return fmt.Errorf("GetProjectedCostResponse: %w", err)
+	}
+
+	// Guarding here keeps the common no-breakdown path free of a non-inlined call.
+	if breakdown := resp.GetCostBreakdown(); len(breakdown) > 0 {
+		if err := validateCostBreakdown(breakdown, costPerMonth, resp.GetDryRunResult() != nil); err != nil {
+			return fmt.Errorf("GetProjectedCostResponse: %w", err)
+		}
 	}
 
 	return nil
@@ -691,6 +728,71 @@ func validateMetadataEntry(k, v string) error {
 	for i := range len(v) {
 		if v[i] <= 0x1F || v[i] == 0x7F {
 			return fmt.Errorf("%w: key %q byte %d (0x%02X)", ErrMetadataValueControlChar, k, i, v[i])
+		}
+	}
+	return nil
+}
+
+// validateCostBreakdown validates cost_breakdown against costPerMonth, which the
+// caller has already checked is finite and non-negative. Entries are checked
+// before the sum, so a NaN component reports ErrCostBreakdownInvalidValue rather
+// than a sum mismatch. If multiple entries are invalid, the reported entry is
+// non-deterministic due to Go map iteration order.
+func validateCostBreakdown(breakdown map[string]float64, costPerMonth float64, isDryRun bool) error {
+	if len(breakdown) == 0 {
+		return nil
+	}
+	if isDryRun {
+		return ErrCostBreakdownWithDryRun
+	}
+	if len(breakdown) > maxCostBreakdownEntries {
+		return fmt.Errorf("%w: got %d, max %d",
+			ErrCostBreakdownTooManyEntries, len(breakdown), maxCostBreakdownEntries)
+	}
+
+	var sum float64
+	for k, v := range breakdown {
+		if err := validateCostBreakdownEntry(k, v); err != nil {
+			return err
+		}
+		sum += v
+	}
+
+	tol := max(costBreakdownAbsTolerance, costBreakdownRelTolerance*costPerMonth)
+	if math.Abs(sum-costPerMonth) > tol {
+		return fmt.Errorf("%w: sum %g, cost_per_month %g, tolerance %g",
+			ErrCostBreakdownSumMismatch, sum, costPerMonth, tol)
+	}
+	return nil
+}
+
+// validateCostBreakdownEntry validates one component name and its monthly cost.
+func validateCostBreakdownEntry(k string, v float64) error {
+	if err := validateCostBreakdownKey(k); err != nil {
+		return err
+	}
+	if math.IsNaN(v) || math.IsInf(v, 0) || v < 0 {
+		return fmt.Errorf("%w: key %q value %v must be finite and non-negative",
+			ErrCostBreakdownInvalidValue, k, v)
+	}
+	return nil
+}
+
+// validateCostBreakdownKey checks that k is 1-64 bytes of lowercase snake_case:
+// a first byte in a-z, then bytes in a-z, 0-9, or '_'.
+func validateCostBreakdownKey(k string) error {
+	if len(k) == 0 || len(k) > maxCostBreakdownKeyLen {
+		return fmt.Errorf("%w: key %q is %d bytes, want 1-%d",
+			ErrCostBreakdownInvalidKey, k, len(k), maxCostBreakdownKeyLen)
+	}
+	if k[0] < 'a' || k[0] > 'z' {
+		return fmt.Errorf("%w: key %q byte 0 must be a-z", ErrCostBreakdownInvalidKey, k)
+	}
+	for i := 1; i < len(k); i++ {
+		c := k[i]
+		if (c < 'a' || c > 'z') && (c < '0' || c > '9') && c != '_' {
+			return fmt.Errorf("%w: key %q byte %d (0x%02X) must be a-z, 0-9, or _",
+				ErrCostBreakdownInvalidKey, k, i, c)
 		}
 	}
 	return nil

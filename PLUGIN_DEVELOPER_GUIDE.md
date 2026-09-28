@@ -290,6 +290,10 @@ message GetProjectedCostResponse {
 - Calculate based on current pricing tables
 - `cost_per_month` should assume 30.44 days (365.25/12)
 - Include billing context in `billing_detail`
+- To report component costs (for example, compute plus a root volume), set `cost_breakdown`
+  (field 15) instead of encoding them in `billing_detail` for machines to parse. `billing_detail`
+  can still describe them for human readers. See
+  [Cost Breakdown Helpers](sdk/go/pluginsdk/README.md#cost-breakdown-helpers-cost_breakdown)
 
 #### GetPricingSpec RPC
 
