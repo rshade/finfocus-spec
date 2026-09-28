@@ -854,7 +854,8 @@ parallel subtests complete.
 - `sdk/go/internal/refalloc` (reference allocator) imports `pluginsdk`, so only external test packages
   (`pluginsdk_test`, `testing_test`) may import it.
 - `RunAllocatorConformance` is policy-agnostic: bad policies are derived from the allocator's own effective
-  policy (nested target = first object-valued key, sorted). `testing/export_test.go` exposes
+  policy. Only the top level is probed for unknown keys: nested objects may be map fields, which accept
+  any key, and the effective JSON cannot tell a map from a struct. `testing/export_test.go` exposes
   `runAllocatorScenarios` so broken-allocator tests assert specific scenario failures.
 - `make generate` also regenerates the TypeScript bindings; no separate TS buf run was needed.
 

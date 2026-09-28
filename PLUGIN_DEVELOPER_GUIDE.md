@@ -1147,7 +1147,7 @@ succeeds, that `ValidateAllocateResponse` passes, and that `CheckConservation` h
 | `unpriced_node` | Only the priced node needs an idle row |
 | `control_plane` | A priced control plane produces at least one `__cluster__` row |
 | `over_requested_node` | Requests exceed allocatable; idle stays non-negative |
-| `policy_unknown_field` | An unknown key is rejected with `InvalidArgument` naming its path |
+| `policy_unknown_field` | An unknown top-level key is rejected with `InvalidArgument` naming it |
 | `policy_unknown_version` | `version` 2147483647 is rejected with `InvalidArgument` |
 | `empty_request` | No rows, a 64-character hex digest, and an object policy with integer `version` |
 | `fingerprint_stable` | Identical requests yield identical digests and policies |

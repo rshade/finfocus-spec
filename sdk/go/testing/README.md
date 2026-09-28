@@ -361,6 +361,7 @@ allocator can return it unchanged.
 | Q3 | `cost` is finite and non-negative | `ErrInvalidAllocateRequest` |
 | Q4 | At most one non-empty currency over priced entries | `ErrInvalidAllocateRequest`, `ErrMixedCurrency` |
 | Q5 | No two entries share `(tags.kind, id)` | `ErrInvalidAllocateRequest` |
+| Q6 | `priced = true` node entries have a non-empty `id` | `ErrInvalidAllocateRequest` |
 
 Usage rows are not validated; the allocator interprets them.
 
@@ -420,14 +421,15 @@ and that `CheckConservation` holds. Fixture usage is valid usage-source output (
 | `unpriced_node` | One priced and one unpriced node | Idle row required only for the priced node |
 | `control_plane` | Three nodes plus a priced control plane | At least one `__cluster__` row |
 | `over_requested_node` | Requests exceed allocatable | Idle row present and non-negative |
-| `policy_unknown_field` | Effective policy plus an unknown key, top level and nested | `InvalidArgument` naming the key (nested: its dotted path) |
+| `policy_unknown_field` | Effective policy plus an unknown top-level key | `InvalidArgument` naming the key |
 | `policy_unknown_version` | Effective policy with `version` 2147483647 | `InvalidArgument` |
 | `empty_request` | No usage, no priced | No rows; 64-character hex digest; integer `version` |
 | `fingerprint_stable` | The same request twice | Equal digests and effective policies |
 | `fingerprint_empty_equals_braces` | `policy_json` empty and `{}` | Equal digests |
 
 The assertions are policy-agnostic: bad policies are derived from the allocator's own effective
-policy, and the nested target is the first object-valued key in sorted order.
+policy. Only the top level is probed for unknown keys, because a nested object may be a map field
+that accepts any key.
 
 `NewAllocatorHarness(impl)` with `Start(t)`, `Client()`, and `Stop()` serves an allocator for your
 own tests, like `UsageSourceHarness`.

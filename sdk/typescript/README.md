@@ -210,17 +210,21 @@ import { Code, ConnectError } from "@connectrpc/connect";
 import {
   AllocatorClient,
   AllocateRequestSchema,
+  UsageSourceClient,
+  GetStatsRequestSchema,
   SUBJECT_KIND,
   SUBJECT_NODE,
   KIND_IDLE,
 } from "@rshade/finfocus-client";
 
+const usage = new UsageSourceClient({ baseUrl: "https://usage-plugin.example.com" });
 const allocator = new AllocatorClient({ baseUrl: "https://allocator-plugin.example.com" });
 
 try {
+  const stats = await usage.getStats(create(GetStatsRequestSchema, { scope: "prod-cluster" }));
   const resp = await allocator.allocate(
     create(AllocateRequestSchema, {
-      usage: statsResponse.rows,
+      usage: stats.rows,
       priced: [{ resource: { id: "ip-10-0-1-5", tags: { kind: "node" } }, cost: 0.096, currency: "USD", priced: true }],
       policyJson: new TextEncoder().encode('{"node_split":{"cpu_weight":0.6}}'),
     }),

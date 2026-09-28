@@ -41,6 +41,7 @@ var ErrInvalidPolicy error
 // Delegating wrappers (FR-032): identical behavior to the sdk/go/testing
 // functions of the same name, so hosts need no test tooling import.
 func CheckConservation(req *pbc.AllocateRequest, resp *pbc.AllocateResponse, relEpsilon float64) error // fixed
+func ValidateAllocateResponse(req *pbc.AllocateRequest, resp *pbc.AllocateResponse) error            // fixed
 func ValidateAllocateRequest(req *pbc.AllocateRequest) error                                         // fixed
 func ResolveCurrency(priced []*pbc.PricedResource) (string, error)                                 // fixed
 
@@ -137,7 +138,7 @@ Each subtest is named exactly as below:
 | `unpriced_node` | 1 priced + 1 `priced=false` node | idle row only required for the priced node |
 | `control_plane` | 3 nodes + `tags.kind=cluster` | ≥ 1 `__cluster__` row |
 | `over_requested_node` | requests > allocatable | idle row present and ≥ 0 |
-| `policy_unknown_field` | effective policy + unknown key (top-level, and nested when possible) | InvalidArgument; message contains the key (nested: its dotted path) |
+| `policy_unknown_field` | effective policy + unknown top-level key | InvalidArgument; message contains the key |
 | `policy_unknown_version` | effective policy with `version` = 2147483647 | InvalidArgument |
 | `empty_request` | no usage, no priced | no rows; digest is 64 lowercase hex; effective policy is an object with integer `version` |
 | `fingerprint_stable` | same request twice | equal digests and effective policies |
@@ -145,8 +146,8 @@ Each subtest is named exactly as below:
 
 Fixture usage is valid usage-source output: every row has `kind`, node rows have `node`, each workload has a
 distinct `namespace`/`pod` pair plus `node`, and no (subject, metric) pair repeats. The suite checks each fixture with
-`ValidateStatsResponse` (051) before calling the allocator. For `policy_unknown_field`, the nested injection target is
-the first object-valued top-level key in sorted order.
+`ValidateStatsResponse` (051) before calling the allocator. `policy_unknown_field` probes only the top level: a nested
+object may be a map field that accepts any key.
 
 The common set for allocation scenarios is: the request passes `ValidateAllocateRequest`, the call
 succeeds, the response passes `ValidateAllocateResponse`, and `CheckConservation` passes at

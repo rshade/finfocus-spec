@@ -250,7 +250,7 @@ export const AllocationRowSchema: GenMessage<AllocationRow> = /*@__PURE__*/
  *
  * Invariants every response MUST satisfy (hosts verify them and reject
  * violations; the Go SDK exposes the checks as pluginsdk.CheckConservation and
- * testing.ValidateAllocateResponse):
+ * pluginsdk.ValidateAllocateResponse):
  *   - Conservation: the sum of rows.total_cost equals the sum of priced.cost
  *     over entries with priced=true, within a relative tolerance of 1e-6 with
  *     an absolute floor of 1e-9, so zero totals compare equal.

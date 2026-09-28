@@ -52,6 +52,8 @@ Rules, enforced by `ValidateAllocateRequest`:
   conservation. Its workloads still appear, at zero cost, usually with a note.
 - **Unique identity.** No two entries share `(resource.tags["kind"], resource.id)`. A node `n1` and
   a cluster `n1` are distinct.
+- **Priced nodes are named.** An entry with `priced = true` and `tags["kind"] = "node"` has a
+  non-empty `resource.id`, because its `__idle__` row is keyed by that id.
 - **Finite, non-negative cost.** NaN, infinite, or negative costs are rejected.
 
 ### Currency
@@ -263,6 +265,10 @@ Hosts verify every response from production code, without importing test tooling
 resp, err := client.Allocate(ctx, req)
 if err != nil {
     return err
+}
+if err := pluginsdk.ValidateAllocateResponse(req, resp); err != nil {
+    // For example: priced[0]: node "n1" has 0 "__idle__" rows, want exactly 1
+    return fmt.Errorf("allocator broke an invariant: %w", err)
 }
 if err := pluginsdk.CheckConservation(req, resp, pluginsdk.DefaultConservationEpsilon); err != nil {
     // For example: allocation rows total 10.01 USD, expected 10 USD (difference +0.01)

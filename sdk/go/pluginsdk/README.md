@@ -819,10 +819,11 @@ The SDK provides the building blocks every allocator and host needs:
 
 | Function | Purpose |
 | -------- | ------- |
-| `ValidateAllocateRequest(req)` | Rejects unpriced entries with nonzero cost, negative or non-finite costs, mixed currencies, and duplicate `(tags.kind, id)` |
+| `ValidateAllocateRequest(req)` | Rejects unpriced entries with nonzero cost, negative or non-finite costs, mixed currencies, duplicate `(tags.kind, id)`, and priced nodes without an id |
 | `DecodePolicy(data, &target)` | Strictly applies a JSON policy onto defaults: unknown fields, malformed JSON, trailing data, and type mismatches fail with the field's path (`node_split.cpu`); nested objects merge, arrays replace |
 | `ResolveCurrency(priced)` | The single non-empty currency across priced entries, or `USD` when all are empty |
 | `CheckConservation(req, resp, eps)` | Host-side check that rows sum to the priced total within `max(eps × abs(expected), 1e-9)`; use `DefaultConservationEpsilon` |
+| `ValidateAllocateResponse(req, resp)` | Host-side check of every other response invariant: row kinds, idle row per priced node, non-negative costs, portion totals, currency |
 
 The validation and decoding errors carry `codes.InvalidArgument` and have no `rpc error:` prefix,
 so `Allocate` can return them unchanged. `ErrInvalidPolicy` is wrapped by every `DecodePolicy`
