@@ -855,6 +855,10 @@ parallel subtests complete.
 - `RESTGateway` speaks proto3 JSON (`fromJson`/`toJson` via service descriptors). Never
   `JSON.stringify` a protobuf-es v2 message: int64 and `Timestamp.seconds` are `bigint`.
 - CI (`typescript-sdk` job) runs build, test, and `lint` (tsc including `test/`) for every workspace.
+- `mise.toml`'s `node` pin must bundle an npm that satisfies root `engines.npm`; nothing upgrades npm
+  separately. Check `https://nodejs.org/dist/index.json` for the bundled npm before bumping either.
+  Renovate does not manage `mise.toml`, so a Renovate `engines.node` bump needs a manual pin bump;
+  `engines.npm` bumps are disabled in `renovate.json`.
 
 ### Allocator SDK Pattern (052-allocator-allocate)
 
