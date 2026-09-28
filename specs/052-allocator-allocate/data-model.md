@@ -101,6 +101,7 @@ Joins used by allocators: a workload `UsageRow.subject["node"]` equals the node'
 | Q3 | `cost` is ≥ 0 and finite. | FR-024 (non-finite: R6) |
 | Q4 | At most one distinct non-empty currency over `priced=true` entries (wraps `ErrMixedCurrency`). | FR-011, FR-024 |
 | Q5 | No two entries share `(tags.kind, id)`. | FR-024, clarification |
+| Q6 | `priced=true`, `tags.kind="node"` entries have a non-empty `id` (P7 keys idle rows by it). | P3, P7 |
 
 ### Response: `ValidateAllocateResponse(req, resp)` (wraps `ErrInvalidAllocateResponse`)
 

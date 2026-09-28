@@ -167,6 +167,11 @@ func TestValidateAllocateRequest(t *testing.T) {
 			wantErr: plugintesting.ErrMixedCurrency,
 		},
 		{name: "duplicate kind and id", req: sharedID, wantErr: plugintesting.ErrInvalidAllocateRequest},
+		{
+			name:    "priced node without id",
+			req:     &pbc.AllocateRequest{Priced: []*pbc.PricedResource{pricedNode("", 1, "")}},
+			wantErr: plugintesting.ErrInvalidAllocateRequest,
+		},
 	}
 	for _, tt := range rejects {
 		t.Run("reject/"+tt.name, func(t *testing.T) {

@@ -52,6 +52,8 @@ Rules, enforced by `ValidateAllocateRequest`:
   conservation. Its workloads still appear, at zero cost, usually with a note.
 - **Unique identity.** No two entries share `(resource.tags["kind"], resource.id)`. A node `n1` and
   a cluster `n1` are distinct.
+- **Priced nodes are named.** An entry with `priced = true` and `tags["kind"] = "node"` has a
+  non-empty `resource.id`, because its `__idle__` row is keyed by that id.
 - **Finite, non-negative cost.** NaN, infinite, or negative costs are rejected.
 
 ### Currency

@@ -361,6 +361,7 @@ allocator can return it unchanged.
 | Q3 | `cost` is finite and non-negative | `ErrInvalidAllocateRequest` |
 | Q4 | At most one non-empty currency over priced entries | `ErrInvalidAllocateRequest`, `ErrMixedCurrency` |
 | Q5 | No two entries share `(tags.kind, id)` | `ErrInvalidAllocateRequest` |
+| Q6 | `priced = true` node entries have a non-empty `id` | `ErrInvalidAllocateRequest` |
 
 Usage rows are not validated; the allocator interprets them.
 

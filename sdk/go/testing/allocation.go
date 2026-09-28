@@ -105,10 +105,11 @@ func ResolveCurrency(priced []*pbc.PricedResource) (string, error) {
 }
 
 // ValidateAllocateRequest returns nil if req is a consistent AllocateRequest
-// (rules Q1–Q5 in data-model.md): the request and every priced entry are
+// (rules Q1–Q6 in data-model.md): the request and every priced entry are
 // non-nil; unpriced entries cost 0; costs are finite and non-negative; priced
-// entries resolve to one currency; and no two entries share
-// (resource.tags["kind"], resource.id). Usage rows are not validated.
+// entries resolve to one currency; no two entries share
+// (resource.tags["kind"], resource.id); and priced nodes have a non-empty
+// resource.id. Usage rows are not validated.
 //
 // Every failure wraps ErrInvalidAllocateRequest (mixed currencies also wrap
 // ErrMixedCurrency), names the offending priced[i] entry, and carries
@@ -155,6 +156,11 @@ func validatePricedEntry(i int, entry *pbc.PricedResource) error {
 	if !isFinite(cost) || cost < 0 {
 		return newInvalidArgument(ErrInvalidAllocateRequest,
 			"priced[%d]: cost %v must be finite and non-negative", i, cost)
+	}
+	resource := entry.GetResource()
+	if entry.GetPriced() && resource.GetTags()[subjectKind] == kindNode && resource.GetId() == "" {
+		return newInvalidArgument(ErrInvalidAllocateRequest,
+			"priced[%d]: a priced node needs a non-empty resource.id", i)
 	}
 	return nil
 }
