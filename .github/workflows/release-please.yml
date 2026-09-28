@@ -48,7 +48,7 @@ jobs:
 
           echo "use_pat=${use_pat}" >>"$GITHUB_OUTPUT"
 
-      - uses: googleapis/release-please-action@v4.4.1
+      - uses: googleapis/release-please-action@v5.0.0
         with:
           # Prefer a PAT so the release event can trigger other workflows (e.g.
           # publish-ts-client). GITHUB_TOKEN events don't trigger other

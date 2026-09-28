@@ -1,6 +1,6 @@
 {
   "name": "@rshade/finfocus-client",
-  "version": "0.6.5",
+  "version": "0.6.6",
   "description": "FinFocus Core Client SDK for Browser and Node.js",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -19,7 +19,7 @@
     "@connectrpc/connect-web": "^2.2.0"
   },
   "devDependencies": {
-    "@bufbuild/protoc-gen-es": "^2.14.1",
+    "@bufbuild/protoc-gen-es": "^2.15.0",
     "msw": "^2.15.0",
     "tsup": "^8.5.1"
   },

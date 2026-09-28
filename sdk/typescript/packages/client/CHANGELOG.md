@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.6.6](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.6.5...finfocus-client-v0.6.6) (2026-09-28)
+
+
+### Features
+
+* **pluginsdk:** add ValidateAllocateResponse and fix allocator checks ([#518](https://github.com/rshade/finfocus-spec/issues/518)) ([25b3b27](https://github.com/rshade/finfocus-spec/commit/25b3b27630f0c9eb28a195c65445afaa80e543aa))
+* **proto:** add AllocatorService.Allocate for cost allocation plugins ([#515](https://github.com/rshade/finfocus-spec/issues/515)) ([063e0b9](https://github.com/rshade/finfocus-spec/commit/063e0b9aabc0c9950564c8859d3288e6eedcb1bc)), closes [#506](https://github.com/rshade/finfocus-spec/issues/506)
+* **proto:** add UsageSourceService.GetStats for workload usage plugins ([#508](https://github.com/rshade/finfocus-spec/issues/508)) ([d314c2a](https://github.com/rshade/finfocus-spec/commit/d314c2af06c42e05cdd76f973eb3fd6d7ed1b513)), closes [#505](https://github.com/rshade/finfocus-spec/issues/505)
+
 ## [0.6.5](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.6.4...finfocus-client-v0.6.5) (2026-09-08)
 
 
