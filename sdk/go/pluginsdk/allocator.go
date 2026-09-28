@@ -53,6 +53,16 @@ func CheckConservation(req *pbc.AllocateRequest, resp *pbc.AllocateResponse, rel
 	return plugintesting.CheckConservation(req, resp, relEpsilon)
 }
 
+// ValidateAllocateResponse is identical to the sdk/go/testing function of the
+// same name. Hosts call it with CheckConservation on every AllocateResponse: it
+// checks every response invariant other than conservation (effective policy and
+// digest present, row kinds, idle-row node keys, finite non-negative costs,
+// portion totals, currency, and exactly one idle row per priced node). Every
+// failure wraps plugintesting.ErrInvalidAllocateResponse.
+func ValidateAllocateResponse(req *pbc.AllocateRequest, resp *pbc.AllocateResponse) error {
+	return plugintesting.ValidateAllocateResponse(req, resp)
+}
+
 // allocatorGRPCServer adapts an AllocatorProvider to the generated gRPC server
 // interface, so plugins need not embed the Unimplemented server.
 type allocatorGRPCServer struct {

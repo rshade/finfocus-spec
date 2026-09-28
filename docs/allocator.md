@@ -266,6 +266,10 @@ resp, err := client.Allocate(ctx, req)
 if err != nil {
     return err
 }
+if err := pluginsdk.ValidateAllocateResponse(req, resp); err != nil {
+    // For example: priced[0]: node "n1" has 0 "__idle__" rows, want exactly 1
+    return fmt.Errorf("allocator broke an invariant: %w", err)
+}
 if err := pluginsdk.CheckConservation(req, resp, pluginsdk.DefaultConservationEpsilon); err != nil {
     // For example: allocation rows total 10.01 USD, expected 10 USD (difference +0.01)
     return fmt.Errorf("allocator broke conservation: %w", err)

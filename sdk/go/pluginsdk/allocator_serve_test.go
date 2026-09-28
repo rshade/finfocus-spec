@@ -404,6 +404,8 @@ func TestAllocator_WrappersMatchTesting(t *testing.T) {
 	for i, tc := range conservation {
 		assert.Equal(t, fmt.Sprint(plugintesting.CheckConservation(requests[0], tc.resp, tc.epsilon)),
 			fmt.Sprint(pluginsdk.CheckConservation(requests[0], tc.resp, tc.epsilon)), "CheckConservation #%d", i)
+		assert.Equal(t, fmt.Sprint(plugintesting.ValidateAllocateResponse(requests[0], tc.resp)),
+			fmt.Sprint(pluginsdk.ValidateAllocateResponse(requests[0], tc.resp)), "ValidateAllocateResponse #%d", i)
 	}
 	assert.InDelta(t, plugintesting.DefaultConservationEpsilon, pluginsdk.DefaultConservationEpsilon, 0)
 }

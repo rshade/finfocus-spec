@@ -41,6 +41,7 @@ var ErrInvalidPolicy error
 // Delegating wrappers (FR-032): identical behavior to the sdk/go/testing
 // functions of the same name, so hosts need no test tooling import.
 func CheckConservation(req *pbc.AllocateRequest, resp *pbc.AllocateResponse, relEpsilon float64) error // fixed
+func ValidateAllocateResponse(req *pbc.AllocateRequest, resp *pbc.AllocateResponse) error            // fixed
 func ValidateAllocateRequest(req *pbc.AllocateRequest) error                                         // fixed
 func ResolveCurrency(priced []*pbc.PricedResource) (string, error)                                 // fixed
 
