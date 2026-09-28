@@ -3,12 +3,14 @@ package pluginsdk_test
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"math"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
@@ -2814,5 +2816,77 @@ func BenchmarkPaginateActualCosts(b *testing.B) {
 	b.ReportAllocs()
 	for b.Loop() {
 		_, _, _, _ = pluginsdk.PaginateActualCosts(results, 100, "")
+	}
+}
+
+// TestWithProjectedCostBreakdown tests the cost_breakdown option: population,
+// nil/empty handling, copy semantics, and option-order independence.
+func TestWithProjectedCostBreakdown(t *testing.T) {
+	t.Parallel()
+
+	ec2 := func() map[string]float64 {
+		return map[string]float64{"compute": 7.592, "root_volume": 0.80}
+	}
+
+	t.Run("ec2_example", func(t *testing.T) {
+		t.Parallel()
+		resp := pluginsdk.NewGetProjectedCostResponse(
+			pluginsdk.WithProjectedCostDetails(0.0104, "USD", 8.392, "On-demand Linux + 8GB gp2 root"),
+			pluginsdk.WithProjectedCostBreakdown(ec2()),
+		)
+		assert.Equal(t, ec2(), resp.GetCostBreakdown())
+		assert.Equal(t, "On-demand Linux + 8GB gp2 root", resp.GetBillingDetail())
+		require.NoError(t, pluginsdk.ValidateGetProjectedCostResponse(resp))
+	})
+
+	t.Run("nil_and_empty_leave_field_empty", func(t *testing.T) {
+		t.Parallel()
+		for _, breakdown := range []map[string]float64{nil, {}} {
+			resp := pluginsdk.NewGetProjectedCostResponse(pluginsdk.WithProjectedCostBreakdown(breakdown))
+			assert.Empty(t, resp.GetCostBreakdown())
+		}
+	})
+
+	t.Run("copies_input_map", func(t *testing.T) {
+		t.Parallel()
+		input := ec2()
+		resp := pluginsdk.NewGetProjectedCostResponse(pluginsdk.WithProjectedCostBreakdown(input))
+		input["compute"] = 100
+		input["network"] = 1
+		assert.Equal(t, ec2(), resp.GetCostBreakdown())
+	})
+
+	t.Run("option_order_independent", func(t *testing.T) {
+		t.Parallel()
+		details := pluginsdk.WithProjectedCostDetails(0.0104, "USD", 8.392, "detail")
+		before := pluginsdk.NewGetProjectedCostResponse(pluginsdk.WithProjectedCostBreakdown(ec2()), details)
+		after := pluginsdk.NewGetProjectedCostResponse(details, pluginsdk.WithProjectedCostBreakdown(ec2()))
+		assert.True(t, proto.Equal(before, after))
+	})
+}
+
+// BenchmarkWithProjectedCostBreakdown measures building a response with the
+// copying breakdown option for empty, typical, and maximum-size maps.
+func BenchmarkWithProjectedCostBreakdown(b *testing.B) {
+	full := make(map[string]float64, 32)
+	for i := range 32 {
+		full[fmt.Sprintf("component_%02d", i)] = 1.0
+	}
+	cases := []struct {
+		name      string
+		breakdown map[string]float64
+	}{
+		{"empty", nil},
+		{"ec2_2_entries", map[string]float64{"compute": 7.592, "root_volume": 0.80}},
+		{"32_entries", full},
+	}
+
+	for _, tc := range cases {
+		b.Run(tc.name, func(b *testing.B) {
+			b.ReportAllocs()
+			for range b.N {
+				_ = pluginsdk.NewGetProjectedCostResponse(pluginsdk.WithProjectedCostBreakdown(tc.breakdown))
+			}
+		})
 	}
 }

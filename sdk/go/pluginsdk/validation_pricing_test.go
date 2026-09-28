@@ -467,6 +467,28 @@ func TestValidateGetProjectedCostResponse(t *testing.T) {
 		err := pluginsdk.ValidateGetProjectedCostResponse(resp)
 		assert.NoError(t, err)
 	})
+
+	// Backward compatibility: responses from plugins that never set cost_breakdown.
+	t.Run("valid_no_cost_breakdown_backward_compat", func(t *testing.T) {
+		tests := []struct {
+			name string
+			resp *pbc.GetProjectedCostResponse
+		}{
+			{"nonzero_total", &pbc.GetProjectedCostResponse{Currency: "USD", CostPerMonth: 8.0}},
+			{"zero_total", &pbc.GetProjectedCostResponse{Currency: "USD", CostPerMonth: 0}},
+			{"dry_run", &pbc.GetProjectedCostResponse{DryRunResult: &pbc.DryRunResponse{}}},
+			{"empty_non_nil_map", &pbc.GetProjectedCostResponse{
+				Currency:      "USD",
+				CostPerMonth:  8.0,
+				CostBreakdown: map[string]float64{},
+			}},
+		}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				assert.NoError(t, pluginsdk.ValidateGetProjectedCostResponse(tt.resp))
+			})
+		}
+	})
 }
 
 func TestCheckSpotRiskConsistency(t *testing.T) {
@@ -1013,6 +1035,192 @@ func BenchmarkValidateGetProjectedCostResponse_Invalid_NaN(b *testing.B) {
 		PricingCategory:           pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_STANDARD,
 		SpotInterruptionRiskScore: 0.0,
 	}
+	b.ResetTimer()
+	b.ReportAllocs()
+	for range b.N {
+		_ = pluginsdk.ValidateGetProjectedCostResponse(resp)
+	}
+}
+
+// costBreakdownResponse builds a projected cost response with the given total
+// and breakdown for cost_breakdown validation tests and benchmarks.
+func costBreakdownResponse(total float64, breakdown map[string]float64) *pbc.GetProjectedCostResponse {
+	return &pbc.GetProjectedCostResponse{
+		Currency:      "USD",
+		CostPerMonth:  total,
+		CostBreakdown: breakdown,
+	}
+}
+
+// uniformCostBreakdown returns n entries of value 1.0 whose keys are padded to keyLen bytes.
+func uniformCostBreakdown(n, keyLen int) map[string]float64 {
+	m := make(map[string]float64, n)
+	for i := range n {
+		key := fmt.Sprintf("c%02d", i)
+		m[key+strings.Repeat("x", keyLen-len(key))] = 1.0
+	}
+	return m
+}
+
+// TestValidateCostBreakdown tests cost_breakdown validation via GetProjectedCostResponse.
+func TestValidateCostBreakdown(t *testing.T) {
+	type testCase struct {
+		name         string
+		resp         *pbc.GetProjectedCostResponse
+		wantErr      error // nil means expect no error
+		wantContains []string
+	}
+
+	tests := []testCase{
+		{
+			name: "ec2_example",
+			resp: costBreakdownResponse(8.392, map[string]float64{"compute": 7.592, "root_volume": 0.80}),
+		},
+		{
+			name: "single_component",
+			resp: costBreakdownResponse(8.0, map[string]float64{"storage": 8.0}),
+		},
+		{
+			name: "rounding_within_absolute_tolerance",
+			resp: costBreakdownResponse(10.00, map[string]float64{"compute": 6.004, "storage": 4.001}),
+		},
+		{
+			name: "large_total_within_relative_tolerance",
+			resp: costBreakdownResponse(50000, map[string]float64{"compute": 30040, "storage": 20000}),
+		},
+		{
+			name: "zero_total_zero_component",
+			resp: costBreakdownResponse(0, map[string]float64{"compute": 0}),
+		},
+		{
+			name: "zero_total_within_absolute_tolerance",
+			resp: costBreakdownResponse(0, map[string]float64{"compute": 0.005}),
+		},
+		{
+			name: "exactly_32_entries",
+			resp: costBreakdownResponse(32, uniformCostBreakdown(32, 8)),
+		},
+		{
+			name: "64_byte_key",
+			resp: costBreakdownResponse(1, map[string]float64{"a" + strings.Repeat("b", 63): 1}),
+		},
+		{
+			name: "digits_and_underscores",
+			resp: costBreakdownResponse(1, map[string]float64{"data_transfer_2": 1}),
+		},
+		{
+			name:         "sum_mismatch",
+			resp:         costBreakdownResponse(8.392, map[string]float64{"compute": 8.0, "root_volume": 1.0}),
+			wantErr:      pluginsdk.ErrCostBreakdownSumMismatch,
+			wantContains: []string{"GetProjectedCostResponse", "sum 9", "cost_per_month 8.392"},
+		},
+		{
+			name:    "sum_mismatch_zero_total",
+			resp:    costBreakdownResponse(0, map[string]float64{"compute": 0.5}),
+			wantErr: pluginsdk.ErrCostBreakdownSumMismatch,
+		},
+		{
+			name:    "sum_just_outside_absolute_tolerance",
+			resp:    costBreakdownResponse(10.00, map[string]float64{"compute": 6.01, "storage": 4.01}),
+			wantErr: pluginsdk.ErrCostBreakdownSumMismatch,
+		},
+		{
+			name:         "negative_value",
+			resp:         costBreakdownResponse(0, map[string]float64{"compute": -1}),
+			wantErr:      pluginsdk.ErrCostBreakdownInvalidValue,
+			wantContains: []string{`"compute"`},
+		},
+		{
+			name:         "nan_value",
+			resp:         costBreakdownResponse(8, map[string]float64{"compute": math.NaN()}),
+			wantErr:      pluginsdk.ErrCostBreakdownInvalidValue,
+			wantContains: []string{`"compute"`},
+		},
+		{
+			name:         "inf_value",
+			resp:         costBreakdownResponse(8, map[string]float64{"compute": math.Inf(1)}),
+			wantErr:      pluginsdk.ErrCostBreakdownInvalidValue,
+			wantContains: []string{`"compute"`},
+		},
+		{
+			name:    "too_many_entries",
+			resp:    costBreakdownResponse(33, uniformCostBreakdown(33, 8)),
+			wantErr: pluginsdk.ErrCostBreakdownTooManyEntries,
+		},
+		{
+			name: "dry_run_with_breakdown",
+			resp: &pbc.GetProjectedCostResponse{
+				DryRunResult:  &pbc.DryRunResponse{},
+				CostBreakdown: map[string]float64{"compute": 0},
+			},
+			wantErr: pluginsdk.ErrCostBreakdownWithDryRun,
+		},
+	}
+
+	for _, key := range []string{
+		"RootVolume", "root-volume", "1st", "_x", "", "root volume",
+		"a" + strings.Repeat("b", 64), "café",
+	} {
+		tests = append(tests, testCase{
+			name:    fmt.Sprintf("invalid_key_%q", key),
+			resp:    costBreakdownResponse(1, map[string]float64{key: 1}),
+			wantErr: pluginsdk.ErrCostBreakdownInvalidKey,
+		})
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := pluginsdk.ValidateGetProjectedCostResponse(tt.resp)
+			if tt.wantErr == nil {
+				require.NoError(t, err)
+				return
+			}
+			require.ErrorIs(t, err, tt.wantErr)
+			for _, s := range tt.wantContains {
+				assert.Contains(t, err.Error(), s)
+			}
+		})
+	}
+}
+
+// TestValidateGetProjectedCostResponse_CostBreakdownZeroAlloc guards SC-004:
+// validating a full, valid breakdown must not allocate.
+func TestValidateGetProjectedCostResponse_CostBreakdownZeroAlloc(t *testing.T) {
+	resp := costBreakdownResponse(32, uniformCostBreakdown(32, 64))
+	require.NoError(t, pluginsdk.ValidateGetProjectedCostResponse(resp))
+
+	allocs := testing.AllocsPerRun(100, func() {
+		_ = pluginsdk.ValidateGetProjectedCostResponse(resp)
+	})
+	assert.Zero(t, allocs)
+}
+
+// BenchmarkValidateGetProjectedCostResponse_WithCostBreakdown benchmarks the
+// two-component EC2 example.
+func BenchmarkValidateGetProjectedCostResponse_WithCostBreakdown(b *testing.B) {
+	resp := costBreakdownResponse(8.392, map[string]float64{"compute": 7.592, "root_volume": 0.80})
+	b.ResetTimer()
+	b.ReportAllocs()
+	for range b.N {
+		_ = pluginsdk.ValidateGetProjectedCostResponse(resp)
+	}
+}
+
+// BenchmarkValidateGetProjectedCostResponse_WithCostBreakdown32 benchmarks the
+// worst valid case: 32 entries with 64-byte keys.
+func BenchmarkValidateGetProjectedCostResponse_WithCostBreakdown32(b *testing.B) {
+	resp := costBreakdownResponse(32, uniformCostBreakdown(32, 64))
+	b.ResetTimer()
+	b.ReportAllocs()
+	for range b.N {
+		_ = pluginsdk.ValidateGetProjectedCostResponse(resp)
+	}
+}
+
+// BenchmarkValidateGetProjectedCostResponse_Invalid_CostBreakdownSum benchmarks
+// the sum mismatch error path.
+func BenchmarkValidateGetProjectedCostResponse_Invalid_CostBreakdownSum(b *testing.B) {
+	resp := costBreakdownResponse(8.392, map[string]float64{"compute": 8.0, "root_volume": 1.0})
 	b.ResetTimer()
 	b.ReportAllocs()
 	for range b.N {

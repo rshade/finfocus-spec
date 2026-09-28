@@ -19,6 +19,7 @@ utilities for plugin development.
 - [Prometheus Metrics](#prometheus-metrics)
 - [Testing Utilities](#testing-utilities)
 - [Error Helpers](#error-helpers)
+- [Cost Breakdown Helpers](#cost-breakdown-helpers-cost_breakdown)
 - [Pagination Helpers](#pagination-helpers)
 - [FOCUS 1.2 Cost Records](#focus-12-cost-records)
 - [FOCUS 1.3 Extensions](#focus-13-extensions)
@@ -1788,6 +1789,71 @@ resp := pluginsdk.NewGetProjectedCostResponse(
 | nil expires_at | `false` | `zero, false` |
 | Future timestamp | `false` | `time, true` |
 | Past timestamp | `true` | `time, true` |
+
+## Cost Breakdown Helpers (cost_breakdown)
+
+`GetProjectedCostResponse.cost_breakdown` reports the monthly cost of each named component that
+makes up `cost_per_month`, so consumers never have to parse component costs out of the free-text
+`billing_detail`. An empty map means "no breakdown available". It never means zero cost, and
+plugins that never set it stay valid.
+
+### Rules
+
+`ValidateGetProjectedCostResponse` enforces these rules as hard errors:
+
+| Rule | Constraint | Error |
+|------|------------|-------|
+| Entry count | At most 32 entries | `ErrCostBreakdownTooManyEntries` |
+| Key format | 1-64 bytes, lowercase snake_case: `[a-z][a-z0-9_]*` | `ErrCostBreakdownInvalidKey` |
+| Values | Finite and `>= 0`, with discounts already applied | `ErrCostBreakdownInvalidValue` |
+| Sum | Within `max(0.01, 0.001 × cost_per_month)` of `cost_per_month` | `ErrCostBreakdownSumMismatch` |
+| Dry run | Empty when `dry_run_result` is set | `ErrCostBreakdownWithDryRun` |
+
+Values are monthly costs in the response `currency`, on the same basis as `cost_per_month`. There
+is no per-component currency.
+
+### Recommended Component Names
+
+`compute`, `storage`, `root_volume`, `network`, `license`, `request`, `data_transfer`
+
+The list is not exhaustive. Any name that matches the key format is valid, and consumers MUST
+accept names they do not recognize.
+
+### Setting a Breakdown (Plugin Side)
+
+Use `WithProjectedCostBreakdown`. It copies the map and does not validate, because the sum rule
+depends on `cost_per_month`, which another option sets. Validate the finished response:
+
+```go
+// EC2 t3.micro plus an 8 GB gp2 root volume
+resp := pluginsdk.NewGetProjectedCostResponse(
+    pluginsdk.WithProjectedCostDetails(0.0104, "USD", 8.392, "On-demand Linux + 8GB gp2 root"),
+    pluginsdk.WithProjectedCostBreakdown(map[string]float64{
+        "compute":     7.592,
+        "root_volume": 0.80,
+    }),
+)
+if err := pluginsdk.ValidateGetProjectedCostResponse(resp); err != nil {
+    return nil, status.Errorf(codes.Internal, "invalid response: %v", err)
+}
+
+// Standalone EBS volume: a single component equal to the total
+resp = pluginsdk.NewGetProjectedCostResponse(
+    pluginsdk.WithProjectedCostDetails(0.08, "USD", 8.0, "100GB gp3"),
+    pluginsdk.WithProjectedCostBreakdown(map[string]float64{"storage": 8.0}),
+)
+```
+
+Check for a specific rule with `errors.Is`:
+
+```go
+err := pluginsdk.ValidateGetProjectedCostResponse(resp)
+if errors.Is(err, pluginsdk.ErrCostBreakdownSumMismatch) {
+    // Components do not add up to cost_per_month
+}
+```
+
+`billing_detail` is unchanged. Plugins may keep describing components there for human readers.
 
 ## Pagination Helpers
 

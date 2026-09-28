@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"sort"
 	"strconv"
@@ -1504,6 +1505,31 @@ func WithProjectedCostExpiresAt(expiresAt time.Time) GetProjectedCostResponseOpt
 			return
 		}
 		resp.ExpiresAt = timestamppb.New(expiresAt)
+	}
+}
+
+// WithProjectedCostBreakdown returns a GetProjectedCostResponseOption that sets
+// cost_breakdown to a copy of breakdown. A nil or empty map leaves the field empty.
+//
+// The option does not validate: the sum rule depends on cost_per_month, which
+// another option may set. Call ValidateGetProjectedCostResponse on the result.
+//
+// Usage:
+//
+//	resp := pluginsdk.NewGetProjectedCostResponse(
+//	    pluginsdk.WithProjectedCostDetails(0.0104, "USD", 8.392, "On-demand Linux + 8GB gp2 root"),
+//	    pluginsdk.WithProjectedCostBreakdown(map[string]float64{
+//	        "compute":     7.592,
+//	        "root_volume": 0.80,
+//	    }),
+//	)
+func WithProjectedCostBreakdown(breakdown map[string]float64) GetProjectedCostResponseOption {
+	return func(resp *pbc.GetProjectedCostResponse) {
+		if len(breakdown) == 0 {
+			resp.CostBreakdown = nil
+			return
+		}
+		resp.CostBreakdown = maps.Clone(breakdown)
 	}
 }
 

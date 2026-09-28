@@ -74,6 +74,10 @@ describe('CostSourceClient Integration', () => {
 
     expect(response.costPerMonth).toBe(150.0);
     expect(response.currency).toBe("USD");
+    expect(response.costBreakdown.compute).toBe(120.0);
+    expect(response.costBreakdown.root_volume).toBe(30.0);
+    const componentSum = Object.values(response.costBreakdown).reduce((sum, v) => sum + v, 0);
+    expect(componentSum).toBeCloseTo(response.costPerMonth, 9);
   });
 
   it('fetches pricing specification', async () => {
