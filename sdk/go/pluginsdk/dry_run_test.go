@@ -19,17 +19,17 @@ import (
 // =============================================================================
 
 // TestFocusFieldNames validates that FocusFieldNames() returns all expected
-// FOCUS 1.2/1.3 field names.
+// FOCUS 1.2-1.4 field names.
 //
 // Expected behavior:
-//   - Returns slice of ~50-66 FOCUS field names
+//   - Returns slice of ~50-68 FOCUS field names
 //   - Contains all core fields (service_category, billed_cost, resource_id, etc.)
-//   - Contains FOCUS 1.3 additions (service_provider_name, allocated_method_id, etc.)
+//   - Contains FOCUS 1.3 and 1.4 additions (service_provider_name, invoice_detail_id, etc.)
 //   - Field names match FocusCostRecord message field names
 func TestFocusFieldNames(t *testing.T) {
 	fields := pluginsdk.FocusFieldNames()
 
-	// Verify we have a reasonable number of fields (FOCUS 1.2/1.3 has ~66 fields)
+	// Verify we have a reasonable number of fields (FOCUS 1.2-1.4 has ~68 fields)
 	if len(fields) < 40 {
 		t.Errorf("Expected at least 40 FOCUS fields, got %d", len(fields))
 	}
@@ -99,6 +99,18 @@ func TestFocusFieldNames(t *testing.T) {
 	for _, field := range focus13Fields {
 		if !fieldSet[field] {
 			t.Errorf("Missing FOCUS 1.3 field: %s", field)
+		}
+	}
+
+	// Verify FOCUS 1.4 Cost and Usage additions are present
+	focus14Fields := []string{
+		"invoice_detail_id",
+		"commitment_program_eligibility_details",
+	}
+
+	for _, field := range focus14Fields {
+		if !fieldSet[field] {
+			t.Errorf("Missing FOCUS 1.4 field: %s", field)
 		}
 	}
 }

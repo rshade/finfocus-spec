@@ -178,6 +178,7 @@ if err != nil {
 - `conformance_test.go` - Multi-level plugin conformance testing (Basic/Standard/Advanced)
 - `dry_run_conformance_test.go` - DryRun capability conformance tests
 - `focus13_conformance_test.go` - FOCUS 1.3 backward compatibility and feature tests
+- `focus14_conformance_test.go` - FOCUS 1.4 Cost and Usage columns, provider rule, and field-list parity
 - `README.md` - Complete testing guide for plugin developers
 
 **FOCUS 1.3 Support (`sdk/go/pluginsdk/`)**
@@ -188,6 +189,9 @@ The pluginsdk implements FOCUS 1.3 FinOps specification extensions:
   AllocatedResourceName, AllocatedTags, ServiceProviderName, HostProviderName, ContractApplied
 - **ContractCommitment Dataset**: Supplemental dataset for tracking contractual obligations
 - **Deprecated Fields**: `provider_name` → `service_provider_name`, `publisher` → `host_provider_name`
+- **FOCUS 1.4 Cost and Usage**: InvoiceDetailId (`WithInvoiceDetailID`) and
+  CommitmentProgramEligibilityDetails (`WithCommitmentProgramEligibilityDetails`); ProviderName and
+  PublisherName are removed in 1.4, so validation accepts `service_provider_name` alone
 
 Key files:
 
@@ -250,7 +254,7 @@ The DryRun feature enables hosts to query plugin field mapping capabilities with
 
 Key helpers:
 
-- `FocusFieldNames()` - Returns all ~66 FOCUS 1.2/1.3 field names
+- `FocusFieldNames()` - Returns all ~68 FOCUS 1.2-1.4 field names
 - `NewFieldMapping()` - Creates field mapping with status and optional description
 - `AllFieldsWithStatus()` - Creates mappings for all fields with given status
 - `SetFieldStatus()` - Updates specific field status in mapping slice
@@ -900,10 +904,32 @@ parallel subtests complete.
 - `TestUsageSourceNotRegistered/connect` (`usage_source_test.go:79`, "server did not shut down in
   time") flakes under full `make test` load (about 1 in 8 runs); it passes in isolation.
 
+### FOCUS 1.4 Cost and Usage Pattern (055-focus-14-cost-usage-columns)
+
+- `FocusCostRecord` fields 67 (`invoice_detail_id`) and 68 (`commitment_program_eligibility_details`)
+  are FOCUS 1.4; 69-80 are reserved by comment for later cost-row columns. Fields 1 and 55 stay
+  (deprecated) until a v2 package; `invoice_issuer` (40) carries FOCUS 1.4 `InvoiceIssuerName`.
+- The mandatory provider rule accepts `service_provider_name` or `provider_name`; when both are empty
+  the error keeps `FieldName "provider_name"` so hosts matching on it keep working.
+- `validateFocus14Rules` runs after the 1.3 rules. The eligibility JSON check is `json.Valid([]byte(s))`,
+  which costs 1 alloc/op only when that field is set; records without it stay 0 allocs/op. A zero-copy
+  `unsafe` view was rejected in review to keep `unsafe` out of the SDK.
+- `testing/focus14_conformance_test.go` asserts `FocusFieldNames()` equals the `FocusCostRecord`
+  descriptor's fields and the mock's default dry-run mappings; a new proto field fails it until both
+  `dry_run.go` and `mock_plugin.go` list it.
+- `buf.yaml` lists `proto/finfocus/v1/focus.proto` under `breaking.ignore` (FOCUS 1.2 renames), so
+  `buf breaking` never checks focus.proto. Verify focus.proto changes against a copy of main with that
+  ignore entry removed.
+
 ## Active Technologies
 
 - Go 1.27.1 (go.mod) + Existing `google.golang.org/protobuf` (protojson, protocmp in tests). (055-cost-allocation-lineage)
 - N/A (wire contract and in-memory builder only) (055-cost-allocation-lineage)
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
+  google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1; stdlib encoding/json
+  (055-focus-14-cost-usage-columns)
+- N/A (stateless FocusCostRecord fields + zero-alloc validation) (055-focus-14-cost-usage-columns)
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
   google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1 (053-projected-cost-breakdown)
@@ -1028,6 +1054,12 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+
+- 055-focus-14-cost-usage-columns: Added FocusCostRecord.invoice_detail_id (67) and
+  commitment_program_eligibility_details (68, JSON object string),
+  pluginsdk.WithInvoiceDetailID and WithCommitmentProgramEligibilityDetails, two sentinels,
+  and TS builder setters; the provider rule now accepts service_provider_name (FOCUS 1.4
+  removes ProviderName)
 
 - 055-cost-allocation-lineage: Added Go 1.27.1 (go.mod) +
   `google.golang.org/protobuf` (protojson, protocmp in tests)

@@ -24,9 +24,18 @@ var (
 //
 // # FOCUS Version Compatibility
 //
-// This builder supports both FOCUS 1.2 and FOCUS 1.3 specifications:
+// This builder supports the FOCUS 1.2, 1.3 and 1.4 specifications:
 //   - FOCUS 1.2: Original columns (all existing methods)
 //   - FOCUS 1.3: New columns for split cost allocation, provider identification, and contract commitments
+//   - FOCUS 1.4: Cost and Usage columns InvoiceDetailId (WithInvoiceDetailID) and
+//     CommitmentProgramEligibilityDetails (WithCommitmentProgramEligibilityDetails)
+//
+// # FOCUS 1.4 Removed Columns
+//
+// FOCUS 1.4 removes ProviderName and PublisherName. The provider_name and publisher
+// fields stay on the wire for backward compatibility, and validation accepts
+// service_provider_name in place of provider_name. A FOCUS 1.4 record calls
+// WithServiceProvider and passes an empty providerName to WithIdentity.
 //
 // # Migration Guide: FOCUS 1.2 to FOCUS 1.3
 //
@@ -245,6 +254,8 @@ func (b *FocusRecordBuilder) WithCommitmentDiscount(
 }
 
 // WithInvoice sets the invoice details per FOCUS 1.2 Section 2.13.
+// invoiceIssuer populates the invoice_issuer field, which carries the FOCUS 1.4
+// InvoiceIssuerName column (the proto field keeps its original name).
 func (b *FocusRecordBuilder) WithInvoice(invoiceID, invoiceIssuer string) *FocusRecordBuilder {
 	b.record.InvoiceId = invoiceID
 	b.record.InvoiceIssuer = invoiceIssuer
@@ -488,6 +499,34 @@ func (b *FocusRecordBuilder) WithContractApplied(
 	commitmentID string,
 ) *FocusRecordBuilder {
 	b.record.ContractApplied = commitmentID
+	return b
+}
+
+// =============================================================================
+// FOCUS 1.4 Cost and Usage Builder Methods
+// =============================================================================
+
+// WithInvoiceDetailID sets the FOCUS 1.4 InvoiceDetailId: the invoice line item this
+// cost row contributes to. It is unique within an InvoiceId, so also set invoice_id
+// (WithInvoice or WithFinancials); Build fails with ErrInvoiceIDMissingForInvoiceDetail
+// otherwise. Leave it empty when there is no invoice or only a provisional one.
+// The setter does not validate or allocate.
+// FOCUS 1.4 Section: Invoice Detail ID (CONDITIONAL).
+func (b *FocusRecordBuilder) WithInvoiceDetailID(invoiceDetailID string) *FocusRecordBuilder {
+	b.record.InvoiceDetailId = invoiceDetailID
+	return b
+}
+
+// WithCommitmentProgramEligibilityDetails sets the FOCUS 1.4
+// CommitmentProgramEligibilityDetails column, a JSON object listing the commitment
+// programs the charge is eligible for, such as
+// {"CommitmentPrograms":[{"ProgramType":"Savings Plan"}]}. The setter stores the string
+// as given and does not validate or allocate; Build fails with
+// ErrInvalidCommitmentProgramEligibilityDetails unless it is a well-formed JSON object.
+// Leave it empty when the charge is not eligible for any program.
+// FOCUS 1.4 Section: Commitment Program Eligibility Details (CONDITIONAL).
+func (b *FocusRecordBuilder) WithCommitmentProgramEligibilityDetails(detailsJSON string) *FocusRecordBuilder {
+	b.record.CommitmentProgramEligibilityDetails = detailsJSON
 	return b
 }
 

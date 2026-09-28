@@ -124,7 +124,7 @@ func ExampleHighThroughputClientConfig() {
 	}
 }
 
-// ExampleNewFocusRecordBuilder demonstrates creating FOCUS 1.2/1.3 compliant cost records.
+// ExampleNewFocusRecordBuilder demonstrates creating FOCUS 1.2-1.4 compliant cost records.
 //
 // The FocusRecordBuilder provides a fluent API for constructing FinOps FOCUS
 // cost records with all mandatory and optional fields.
@@ -221,6 +221,60 @@ func ExampleFocusRecordBuilder_WithAllocation() {
 	fmt.Printf("Allocated to: %s (%s)\n",
 		record.GetAllocatedResourceName(),
 		record.GetAllocatedMethodId())
+}
+
+// ExampleFocusRecordBuilder_WithCommitmentProgramEligibilityDetails demonstrates the
+// FOCUS 1.4 Cost and Usage columns.
+//
+// FOCUS 1.4 removes ProviderName, so the record names its provider only through
+// WithServiceProvider. WithInvoiceDetailID links the row to an invoice line, and
+// WithCommitmentProgramEligibilityDetails lists the commitment programs the charge
+// was eligible for. Build rejects eligibility details that are not a JSON object.
+func ExampleFocusRecordBuilder_WithCommitmentProgramEligibilityDetails() {
+	newBuilder := func() *pluginsdk.FocusRecordBuilder {
+		monthStart := time.Date(2026, time.September, 1, 0, 0, 0, 0, time.UTC)
+		monthEnd := monthStart.AddDate(0, 1, 0)
+		return pluginsdk.NewFocusRecordBuilder().
+			WithIdentity("", "123456789012", "Production Account"). // no ProviderName in FOCUS 1.4
+			WithServiceProvider("AWS").
+			WithBillingPeriod(monthStart, monthEnd, "USD").
+			WithChargePeriod(monthStart, monthEnd).
+			WithChargeDetails(
+				pbc.FocusChargeCategory_FOCUS_CHARGE_CATEGORY_USAGE,
+				pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_STANDARD,
+			).
+			WithChargeClassification(
+				pbc.FocusChargeClass_FOCUS_CHARGE_CLASS_REGULAR,
+				"On-demand EC2 compute usage",
+				pbc.FocusChargeFrequency_FOCUS_CHARGE_FREQUENCY_USAGE_BASED,
+			).
+			WithUsage(720, "hours").
+			WithService(pbc.FocusServiceCategory_FOCUS_SERVICE_CATEGORY_COMPUTE, "Amazon EC2").
+			WithFinancials(73.0, 80.0, 70.0, "USD", "INV-2026-09").
+			WithContractedCost(73.0)
+	}
+
+	record, err := newBuilder().
+		WithInvoiceDetailID("INV-2026-09-L3").
+		WithCommitmentProgramEligibilityDetails(
+			`{"CommitmentPrograms":[{"ProgramType":"Savings Plan"}]}`,
+		).
+		Build()
+	fmt.Println("build error:", err)
+	fmt.Println("invoice detail:", record.GetInvoiceDetailId())
+	fmt.Println("eligibility:", record.GetCommitmentProgramEligibilityDetails())
+
+	_, err = newBuilder().
+		WithCommitmentProgramEligibilityDetails(`{"CommitmentPrograms":[`).
+		Build()
+	fmt.Println("truncated JSON rejected:",
+		errors.Is(err, pluginsdk.ErrInvalidCommitmentProgramEligibilityDetails))
+
+	// Output:
+	// build error: <nil>
+	// invoice detail: INV-2026-09-L3
+	// eligibility: {"CommitmentPrograms":[{"ProgramType":"Savings Plan"}]}
+	// truncated JSON rejected: true
 }
 
 // ExampleResourceMatcher demonstrates resource filtering configuration.

@@ -14,13 +14,14 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file finfocus/v1/focus.proto.
  */
 export const file_finfocus_v1_focus: GenFile = /*@__PURE__*/
-  fileDesc("ChdmaW5mb2N1cy92MS9mb2N1cy5wcm90bxILZmluZm9jdXMudjEi7RMKD0ZvY3VzQ29zdFJlY29yZBIZCg1wcm92aWRlcl9uYW1lGAEgASgJQgIYARIaChJiaWxsaW5nX2FjY291bnRfaWQYAiABKAkSHAoUYmlsbGluZ19hY2NvdW50X25hbWUYAyABKAkSFgoOc3ViX2FjY291bnRfaWQYGCABKAkSGAoQc3ViX2FjY291bnRfbmFtZRgZIAEoCRIcChRiaWxsaW5nX2FjY291bnRfdHlwZRgqIAEoCRIYChBzdWJfYWNjb3VudF90eXBlGCsgASgJEjgKFGJpbGxpbmdfcGVyaW9kX3N0YXJ0GBogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI2ChJiaWxsaW5nX3BlcmlvZF9lbmQYGyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhgKEGJpbGxpbmdfY3VycmVuY3kYEiABKAkSNwoTY2hhcmdlX3BlcmlvZF9zdGFydBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNQoRY2hhcmdlX3BlcmlvZF9lbmQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjkKD2NoYXJnZV9jYXRlZ29yeRgIIAEoDjIgLmZpbmZvY3VzLnYxLkZvY3VzQ2hhcmdlQ2F0ZWdvcnkSMwoMY2hhcmdlX2NsYXNzGBwgASgOMh0uZmluZm9jdXMudjEuRm9jdXNDaGFyZ2VDbGFzcxIaChJjaGFyZ2VfZGVzY3JpcHRpb24YHSABKAkSOwoQY2hhcmdlX2ZyZXF1ZW5jeRgeIAEoDjIhLmZpbmZvY3VzLnYxLkZvY3VzQ2hhcmdlRnJlcXVlbmN5EjsKEHByaWNpbmdfY2F0ZWdvcnkYCSABKA4yIS5maW5mb2N1cy52MS5Gb2N1c1ByaWNpbmdDYXRlZ29yeRIYChBwcmljaW5nX3F1YW50aXR5GB8gASgBEhQKDHByaWNpbmdfdW5pdBggIAEoCRIXCg9saXN0X3VuaXRfcHJpY2UYISABKAESGAoQcHJpY2luZ19jdXJyZW5jeRgzIAEoCRIuCiZwcmljaW5nX2N1cnJlbmN5X2NvbnRyYWN0ZWRfdW5pdF9wcmljZRg0IAEoARInCh9wcmljaW5nX2N1cnJlbmN5X2VmZmVjdGl2ZV9jb3N0GDUgASgBEigKIHByaWNpbmdfY3VycmVuY3lfbGlzdF91bml0X3ByaWNlGDYgASgBEjsKEHNlcnZpY2VfY2F0ZWdvcnkYBiABKA4yIS5maW5mb2N1cy52MS5Gb2N1c1NlcnZpY2VDYXRlZ29yeRIUCgxzZXJ2aWNlX25hbWUYByABKAkSGwoTc2VydmljZV9zdWJjYXRlZ29yeRg4IAEoCRIVCglwdWJsaXNoZXIYNyABKAlCAhgBEhMKC3Jlc291cmNlX2lkGAwgASgJEhUKDXJlc291cmNlX25hbWUYDSABKAkSFQoNcmVzb3VyY2VfdHlwZRgiIAEoCRIOCgZza3VfaWQYDiABKAkSFAoMc2t1X3ByaWNlX2lkGCMgASgJEhEKCXNrdV9tZXRlchg5IAEoCRIZChFza3VfcHJpY2VfZGV0YWlscxg6IAEoCRIRCglyZWdpb25faWQYCiABKAkSEwoLcmVnaW9uX25hbWUYCyABKAkSGQoRYXZhaWxhYmlsaXR5X3pvbmUYJCABKAkSEwoLYmlsbGVkX2Nvc3QYDyABKAESEQoJbGlzdF9jb3N0GBAgASgBEhYKDmVmZmVjdGl2ZV9jb3N0GBEgASgBEhcKD2NvbnRyYWN0ZWRfY29zdBgpIAEoARIdChVjb250cmFjdGVkX3VuaXRfcHJpY2UYMiABKAESGQoRY29uc3VtZWRfcXVhbnRpdHkYFCABKAESFQoNY29uc3VtZWRfdW5pdBgVIAEoCRJSChxjb21taXRtZW50X2Rpc2NvdW50X2NhdGVnb3J5GCUgASgOMiwuZmluZm9jdXMudjEuRm9jdXNDb21taXRtZW50RGlzY291bnRDYXRlZ29yeRIeChZjb21taXRtZW50X2Rpc2NvdW50X2lkGCYgASgJEiAKGGNvbW1pdG1lbnRfZGlzY291bnRfbmFtZRgnIAEoCRIkChxjb21taXRtZW50X2Rpc2NvdW50X3F1YW50aXR5GC4gASgBEk4KGmNvbW1pdG1lbnRfZGlzY291bnRfc3RhdHVzGC8gASgOMiouZmluZm9jdXMudjEuRm9jdXNDb21taXRtZW50RGlzY291bnRTdGF0dXMSIAoYY29tbWl0bWVudF9kaXNjb3VudF90eXBlGDAgASgJEiAKGGNvbW1pdG1lbnRfZGlzY291bnRfdW5pdBgxIAEoCRIfChdjYXBhY2l0eV9yZXNlcnZhdGlvbl9pZBgsIAEoCRJQChtjYXBhY2l0eV9yZXNlcnZhdGlvbl9zdGF0dXMYLSABKA4yKy5maW5mb2N1cy52MS5Gb2N1c0NhcGFjaXR5UmVzZXJ2YXRpb25TdGF0dXMSEgoKaW52b2ljZV9pZBgTIAEoCRIWCg5pbnZvaWNlX2lzc3VlchgoIAEoCRI0CgR0YWdzGBYgAygLMiYuZmluZm9jdXMudjEuRm9jdXNDb3N0UmVjb3JkLlRhZ3NFbnRyeRJLChBleHRlbmRlZF9jb2x1bW5zGBcgAygLMjEuZmluZm9jdXMudjEuRm9jdXNDb3N0UmVjb3JkLkV4dGVuZGVkQ29sdW1uc0VudHJ5Eh0KFXNlcnZpY2VfcHJvdmlkZXJfbmFtZRg7IAEoCRIaChJob3N0X3Byb3ZpZGVyX25hbWUYPCABKAkSGwoTYWxsb2NhdGVkX21ldGhvZF9pZBg9IAEoCRIgChhhbGxvY2F0ZWRfbWV0aG9kX2RldGFpbHMYPiABKAkSHQoVYWxsb2NhdGVkX3Jlc291cmNlX2lkGD8gASgJEh8KF2FsbG9jYXRlZF9yZXNvdXJjZV9uYW1lGEAgASgJEkcKDmFsbG9jYXRlZF90YWdzGEEgAygLMi8uZmluZm9jdXMudjEuRm9jdXNDb3N0UmVjb3JkLkFsbG9jYXRlZFRhZ3NFbnRyeRIYChBjb250cmFjdF9hcHBsaWVkGEIgASgJGisKCVRhZ3NFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjYKFEV4dGVuZGVkQ29sdW1uc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaNAoSQWxsb2NhdGVkVGFnc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiwQQKEkNvbnRyYWN0Q29tbWl0bWVudBIeChZjb250cmFjdF9jb21taXRtZW50X2lkGAEgASgJEhMKC2NvbnRyYWN0X2lkGAIgASgJElIKHGNvbnRyYWN0X2NvbW1pdG1lbnRfY2F0ZWdvcnkYAyABKA4yLC5maW5mb2N1cy52MS5Gb2N1c0NvbnRyYWN0Q29tbWl0bWVudENhdGVnb3J5EiAKGGNvbnRyYWN0X2NvbW1pdG1lbnRfdHlwZRgEIAEoCRJECiBjb250cmFjdF9jb21taXRtZW50X3BlcmlvZF9zdGFydBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASQgoeY29udHJhY3RfY29tbWl0bWVudF9wZXJpb2RfZW5kGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI5ChVjb250cmFjdF9wZXJpb2Rfc3RhcnQYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjcKE2NvbnRyYWN0X3BlcmlvZF9lbmQYCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiAKGGNvbnRyYWN0X2NvbW1pdG1lbnRfY29zdBgJIAEoARIkChxjb250cmFjdF9jb21taXRtZW50X3F1YW50aXR5GAogASgBEiAKGGNvbnRyYWN0X2NvbW1pdG1lbnRfdW5pdBgLIAEoCRIYChBiaWxsaW5nX2N1cnJlbmN5GAwgASgJKrEBCh9Gb2N1c0NvbnRyYWN0Q29tbWl0bWVudENhdGVnb3J5EjIKLkZPQ1VTX0NPTlRSQUNUX0NPTU1JVE1FTlRfQ0FURUdPUllfVU5TUEVDSUZJRUQQABIsCihGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX0NBVEVHT1JZX1NQRU5EEAESLAooRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9DQVRFR09SWV9VU0FHRRACQqgBCg9jb20uZmluZm9jdXMudjFCCkZvY3VzUHJvdG9QAVo8Z2l0aHViLmNvbS9yc2hhZGUvZmluZm9jdXMtc3BlYy9zZGsvZ28vcHJvdG8vZmluZm9jdXMvdjE7cGJjogIDRlhYqgILRmluZm9jdXMuVjHKAgtGaW5mb2N1c1xWMeICF0ZpbmZvY3VzXFYxXEdQQk1ldGFkYXRh6gIMRmluZm9jdXM6OlYxYgZwcm90bzM", [file_google_protobuf_timestamp, file_finfocus_v1_enums]);
+  fileDesc("ChdmaW5mb2N1cy92MS9mb2N1cy5wcm90bxILZmluZm9jdXMudjEiuBQKD0ZvY3VzQ29zdFJlY29yZBIZCg1wcm92aWRlcl9uYW1lGAEgASgJQgIYARIaChJiaWxsaW5nX2FjY291bnRfaWQYAiABKAkSHAoUYmlsbGluZ19hY2NvdW50X25hbWUYAyABKAkSFgoOc3ViX2FjY291bnRfaWQYGCABKAkSGAoQc3ViX2FjY291bnRfbmFtZRgZIAEoCRIcChRiaWxsaW5nX2FjY291bnRfdHlwZRgqIAEoCRIYChBzdWJfYWNjb3VudF90eXBlGCsgASgJEjgKFGJpbGxpbmdfcGVyaW9kX3N0YXJ0GBogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI2ChJiaWxsaW5nX3BlcmlvZF9lbmQYGyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhgKEGJpbGxpbmdfY3VycmVuY3kYEiABKAkSNwoTY2hhcmdlX3BlcmlvZF9zdGFydBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNQoRY2hhcmdlX3BlcmlvZF9lbmQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjkKD2NoYXJnZV9jYXRlZ29yeRgIIAEoDjIgLmZpbmZvY3VzLnYxLkZvY3VzQ2hhcmdlQ2F0ZWdvcnkSMwoMY2hhcmdlX2NsYXNzGBwgASgOMh0uZmluZm9jdXMudjEuRm9jdXNDaGFyZ2VDbGFzcxIaChJjaGFyZ2VfZGVzY3JpcHRpb24YHSABKAkSOwoQY2hhcmdlX2ZyZXF1ZW5jeRgeIAEoDjIhLmZpbmZvY3VzLnYxLkZvY3VzQ2hhcmdlRnJlcXVlbmN5EjsKEHByaWNpbmdfY2F0ZWdvcnkYCSABKA4yIS5maW5mb2N1cy52MS5Gb2N1c1ByaWNpbmdDYXRlZ29yeRIYChBwcmljaW5nX3F1YW50aXR5GB8gASgBEhQKDHByaWNpbmdfdW5pdBggIAEoCRIXCg9saXN0X3VuaXRfcHJpY2UYISABKAESGAoQcHJpY2luZ19jdXJyZW5jeRgzIAEoCRIuCiZwcmljaW5nX2N1cnJlbmN5X2NvbnRyYWN0ZWRfdW5pdF9wcmljZRg0IAEoARInCh9wcmljaW5nX2N1cnJlbmN5X2VmZmVjdGl2ZV9jb3N0GDUgASgBEigKIHByaWNpbmdfY3VycmVuY3lfbGlzdF91bml0X3ByaWNlGDYgASgBEjsKEHNlcnZpY2VfY2F0ZWdvcnkYBiABKA4yIS5maW5mb2N1cy52MS5Gb2N1c1NlcnZpY2VDYXRlZ29yeRIUCgxzZXJ2aWNlX25hbWUYByABKAkSGwoTc2VydmljZV9zdWJjYXRlZ29yeRg4IAEoCRIVCglwdWJsaXNoZXIYNyABKAlCAhgBEhMKC3Jlc291cmNlX2lkGAwgASgJEhUKDXJlc291cmNlX25hbWUYDSABKAkSFQoNcmVzb3VyY2VfdHlwZRgiIAEoCRIOCgZza3VfaWQYDiABKAkSFAoMc2t1X3ByaWNlX2lkGCMgASgJEhEKCXNrdV9tZXRlchg5IAEoCRIZChFza3VfcHJpY2VfZGV0YWlscxg6IAEoCRIRCglyZWdpb25faWQYCiABKAkSEwoLcmVnaW9uX25hbWUYCyABKAkSGQoRYXZhaWxhYmlsaXR5X3pvbmUYJCABKAkSEwoLYmlsbGVkX2Nvc3QYDyABKAESEQoJbGlzdF9jb3N0GBAgASgBEhYKDmVmZmVjdGl2ZV9jb3N0GBEgASgBEhcKD2NvbnRyYWN0ZWRfY29zdBgpIAEoARIdChVjb250cmFjdGVkX3VuaXRfcHJpY2UYMiABKAESGQoRY29uc3VtZWRfcXVhbnRpdHkYFCABKAESFQoNY29uc3VtZWRfdW5pdBgVIAEoCRJSChxjb21taXRtZW50X2Rpc2NvdW50X2NhdGVnb3J5GCUgASgOMiwuZmluZm9jdXMudjEuRm9jdXNDb21taXRtZW50RGlzY291bnRDYXRlZ29yeRIeChZjb21taXRtZW50X2Rpc2NvdW50X2lkGCYgASgJEiAKGGNvbW1pdG1lbnRfZGlzY291bnRfbmFtZRgnIAEoCRIkChxjb21taXRtZW50X2Rpc2NvdW50X3F1YW50aXR5GC4gASgBEk4KGmNvbW1pdG1lbnRfZGlzY291bnRfc3RhdHVzGC8gASgOMiouZmluZm9jdXMudjEuRm9jdXNDb21taXRtZW50RGlzY291bnRTdGF0dXMSIAoYY29tbWl0bWVudF9kaXNjb3VudF90eXBlGDAgASgJEiAKGGNvbW1pdG1lbnRfZGlzY291bnRfdW5pdBgxIAEoCRIfChdjYXBhY2l0eV9yZXNlcnZhdGlvbl9pZBgsIAEoCRJQChtjYXBhY2l0eV9yZXNlcnZhdGlvbl9zdGF0dXMYLSABKA4yKy5maW5mb2N1cy52MS5Gb2N1c0NhcGFjaXR5UmVzZXJ2YXRpb25TdGF0dXMSEgoKaW52b2ljZV9pZBgTIAEoCRIWCg5pbnZvaWNlX2lzc3VlchgoIAEoCRI0CgR0YWdzGBYgAygLMiYuZmluZm9jdXMudjEuRm9jdXNDb3N0UmVjb3JkLlRhZ3NFbnRyeRJLChBleHRlbmRlZF9jb2x1bW5zGBcgAygLMjEuZmluZm9jdXMudjEuRm9jdXNDb3N0UmVjb3JkLkV4dGVuZGVkQ29sdW1uc0VudHJ5Eh0KFXNlcnZpY2VfcHJvdmlkZXJfbmFtZRg7IAEoCRIaChJob3N0X3Byb3ZpZGVyX25hbWUYPCABKAkSGwoTYWxsb2NhdGVkX21ldGhvZF9pZBg9IAEoCRIgChhhbGxvY2F0ZWRfbWV0aG9kX2RldGFpbHMYPiABKAkSHQoVYWxsb2NhdGVkX3Jlc291cmNlX2lkGD8gASgJEh8KF2FsbG9jYXRlZF9yZXNvdXJjZV9uYW1lGEAgASgJEkcKDmFsbG9jYXRlZF90YWdzGEEgAygLMi8uZmluZm9jdXMudjEuRm9jdXNDb3N0UmVjb3JkLkFsbG9jYXRlZFRhZ3NFbnRyeRIYChBjb250cmFjdF9hcHBsaWVkGEIgASgJEhkKEWludm9pY2VfZGV0YWlsX2lkGEMgASgJEi4KJmNvbW1pdG1lbnRfcHJvZ3JhbV9lbGlnaWJpbGl0eV9kZXRhaWxzGEQgASgJGisKCVRhZ3NFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjYKFEV4dGVuZGVkQ29sdW1uc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaNAoSQWxsb2NhdGVkVGFnc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiwQQKEkNvbnRyYWN0Q29tbWl0bWVudBIeChZjb250cmFjdF9jb21taXRtZW50X2lkGAEgASgJEhMKC2NvbnRyYWN0X2lkGAIgASgJElIKHGNvbnRyYWN0X2NvbW1pdG1lbnRfY2F0ZWdvcnkYAyABKA4yLC5maW5mb2N1cy52MS5Gb2N1c0NvbnRyYWN0Q29tbWl0bWVudENhdGVnb3J5EiAKGGNvbnRyYWN0X2NvbW1pdG1lbnRfdHlwZRgEIAEoCRJECiBjb250cmFjdF9jb21taXRtZW50X3BlcmlvZF9zdGFydBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASQgoeY29udHJhY3RfY29tbWl0bWVudF9wZXJpb2RfZW5kGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI5ChVjb250cmFjdF9wZXJpb2Rfc3RhcnQYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjcKE2NvbnRyYWN0X3BlcmlvZF9lbmQYCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiAKGGNvbnRyYWN0X2NvbW1pdG1lbnRfY29zdBgJIAEoARIkChxjb250cmFjdF9jb21taXRtZW50X3F1YW50aXR5GAogASgBEiAKGGNvbnRyYWN0X2NvbW1pdG1lbnRfdW5pdBgLIAEoCRIYChBiaWxsaW5nX2N1cnJlbmN5GAwgASgJKrEBCh9Gb2N1c0NvbnRyYWN0Q29tbWl0bWVudENhdGVnb3J5EjIKLkZPQ1VTX0NPTlRSQUNUX0NPTU1JVE1FTlRfQ0FURUdPUllfVU5TUEVDSUZJRUQQABIsCihGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX0NBVEVHT1JZX1NQRU5EEAESLAooRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9DQVRFR09SWV9VU0FHRRACQqgBCg9jb20uZmluZm9jdXMudjFCCkZvY3VzUHJvdG9QAVo8Z2l0aHViLmNvbS9yc2hhZGUvZmluZm9jdXMtc3BlYy9zZGsvZ28vcHJvdG8vZmluZm9jdXMvdjE7cGJjogIDRlhYqgILRmluZm9jdXMuVjHKAgtGaW5mb2N1c1xWMeICF0ZpbmZvY3VzXFYxXEdQQk1ldGFkYXRh6gIMRmluZm9jdXM6OlYxYgZwcm90bzM", [file_google_protobuf_timestamp, file_finfocus_v1_enums]);
 
 /**
  * FocusCostRecord represents a single cost line item normalized to the
- * FinOps FOCUS specification (1.2 and 1.3). All field names follow FOCUS naming conventions.
+ * FinOps FOCUS specification (1.2, 1.3 and 1.4). All field names follow FOCUS naming conventions.
  * Includes FOCUS 1.3 additions: allocation fields, contract commitment linking,
- * and service/host provider disambiguation.
+ * and service/host provider disambiguation. Includes FOCUS 1.4 Cost and Usage
+ * additions: invoice detail linking and commitment program eligibility.
  * Reference: https://focus.finops.org
  *
  * ==========================================================================
@@ -33,7 +34,8 @@ export type FocusCostRecord = Message<"finfocus.v1.FocusCostRecord"> & {
   /**
    * ProviderName: The name of the cloud provider (e.g., "AWS", "Azure", "GCP").
    * DEPRECATED in FOCUS 1.3: Use service_provider_name instead.
-   * Will be removed in FOCUS 1.4.
+   * Removed from FOCUS 1.4; kept on the wire for backward compatibility.
+   * Validation accepts service_provider_name in its place.
    *
    * @generated from field: string provider_name = 1 [deprecated = true];
    * @deprecated
@@ -181,6 +183,7 @@ export type FocusCostRecord = Message<"finfocus.v1.FocusCostRecord"> & {
    * PricingCurrency: Currency for pricing-related columns when different from
    * billing currency. FOCUS 1.2 Section 3.34: Pricing Currency (CONDITIONAL).
    * Format: ISO 4217 currency code.
+   * FOCUS 1.4: not nullable when the column applies.
    *
    * @generated from field: string pricing_currency = 51;
    */
@@ -197,6 +200,8 @@ export type FocusCostRecord = Message<"finfocus.v1.FocusCostRecord"> & {
   /**
    * PricingCurrencyEffectiveCost: Effective cost denominated in pricing
    * currency. FOCUS 1.2 Section 3.36 (CONDITIONAL).
+   * FOCUS 1.4: not nullable when the column applies; MUST be the PricingCurrency
+   * equivalent of effective_cost.
    *
    * @generated from field: double pricing_currency_effective_cost = 53;
    */
@@ -236,7 +241,7 @@ export type FocusCostRecord = Message<"finfocus.v1.FocusCostRecord"> & {
    * Publisher: Entity that published the service or product.
    * FOCUS 1.2 Section 3.39: Publisher (CONDITIONAL).
    * DEPRECATED in FOCUS 1.3: Use host_provider_name instead.
-   * Will be removed in FOCUS 1.4.
+   * Removed from FOCUS 1.4; kept on the wire for backward compatibility.
    *
    * @generated from field: string publisher = 55 [deprecated = true];
    * @deprecated
@@ -441,13 +446,16 @@ export type FocusCostRecord = Message<"finfocus.v1.FocusCostRecord"> & {
 
   /**
    * InvoiceId: The identifier for the invoice. Critical for reconciliation.
+   * FOCUS 1.4: CONDITIONAL (was RECOMMENDED): required when the invoice issuer
+   * supports payable invoices.
    *
    * @generated from field: string invoice_id = 19;
    */
   invoiceId: string;
 
   /**
-   * InvoiceIssuer: The entity that issued the invoice.
+   * InvoiceIssuerName (FOCUS 1.4 column name; formerly InvoiceIssuer): The entity
+   * that issues the invoice. The proto field keeps its original name.
    *
    * @generated from field: string invoice_issuer = 40;
    */
@@ -502,6 +510,8 @@ export type FocusCostRecord = Message<"finfocus.v1.FocusCostRecord"> & {
    * AllocatedMethodDetails: Human-readable description of the allocation method.
    * Provides transparency into how costs were split.
    * FOCUS 1.3 Section: Allocated Method Details (RECOMMENDED)
+   * FOCUS 1.4 defines this column as a JSON object (AllocatedMethodDetailsObject);
+   * the SDK does not enforce the format.
    *
    * @generated from field: string allocated_method_details = 62;
    */
@@ -541,6 +551,31 @@ export type FocusCostRecord = Message<"finfocus.v1.FocusCostRecord"> & {
    * @generated from field: string contract_applied = 66;
    */
   contractApplied: string;
+
+  /**
+   * InvoiceDetailId: Identifier of the invoice line item this row contributes to.
+   * Unique within an InvoiceId, so invoice_id MUST be set when this is set.
+   * Empty means null: there is no invoice or only a provisional invoice.
+   * FOCUS 1.4 Section: Invoice Detail ID (CONDITIONAL: required when the invoice
+   * issuer supports payable invoices).
+   *
+   * @generated from field: string invoice_detail_id = 67;
+   */
+  invoiceDetailId: string;
+
+  /**
+   * CommitmentProgramEligibilityDetails: JSON object listing the commitment
+   * programs this charge is eligible for, whether or not one was applied, e.g.
+   * {"CommitmentPrograms":[{"ProgramType":"Savings Plan"}]}.
+   * Stored as a JSON string, like allocated_method_details. When set, it MUST be
+   * a well-formed JSON object. One ProgramType SHOULD match commitment_discount_type
+   * when that is set; custom keys use the "x_" prefix. Empty means null.
+   * FOCUS 1.4 Section: Commitment Program Eligibility Details (CONDITIONAL:
+   * required when the provider has one or more commitment programs).
+   *
+   * @generated from field: string commitment_program_eligibility_details = 68;
+   */
+  commitmentProgramEligibilityDetails: string;
 };
 
 /**

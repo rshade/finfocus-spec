@@ -891,7 +891,7 @@ func copyStringMap(in map[string]string) map[string]string {
 // generateDefaultFieldMappings returns a slice of FieldMapping entries for the canonical FOCUS fields,
 // each marked as FIELD_SUPPORT_STATUS_SUPPORTED. This is used when no custom field mappings are configured.
 func generateDefaultFieldMappings() []*pbc.FieldMapping {
-	// FOCUS 1.2/1.3 field names matching FocusCostRecord
+	// FOCUS 1.2-1.4 field names matching FocusCostRecord
 	fieldNames := []string{
 		// Identity & Hierarchy
 		"provider_name", "billing_account_id", "billing_account_name",
@@ -935,6 +935,8 @@ func generateDefaultFieldMappings() []*pbc.FieldMapping {
 		"allocated_resource_name", "allocated_tags",
 		// FOCUS 1.3 Contract Commitment Link
 		"contract_applied",
+		// FOCUS 1.4 Cost and Usage
+		"invoice_detail_id", "commitment_program_eligibility_details",
 	}
 
 	mappings := make([]*pbc.FieldMapping, len(fieldNames))

@@ -23,6 +23,7 @@ utilities for plugin development.
 - [Pagination Helpers](#pagination-helpers)
 - [FOCUS 1.2 Cost Records](#focus-12-cost-records)
 - [FOCUS 1.3 Extensions](#focus-13-extensions)
+- [FOCUS 1.4 Cost and Usage Columns](#focus-14-cost-and-usage-columns)
 - [Contract Commitment Dataset](#contract-commitment-dataset-focus-13)
 - [Manifest Management](#manifest-management)
 - [Property Mapping](#property-mapping-mapping-subpackage)
@@ -2198,7 +2199,9 @@ provider identification, and contract commitment tracking.
 | `publisher`      | `host_provider_name`    | Use `WithHostProvider()` instead of `WithPublisher()`                |
 
 When both deprecated and replacement fields are set, a warning is logged and the FOCUS 1.3
-field takes precedence.
+field takes precedence. FOCUS 1.4 removes both deprecated columns; validation accepts
+`service_provider_name` in place of `provider_name` (see
+[FOCUS 1.4 Cost and Usage Columns](#focus-14-cost-and-usage-columns)).
 
 ### FOCUS 1.3 Usage Examples
 
@@ -2248,6 +2251,53 @@ record, err := builder.Build()
 - **Allocation**: If `AllocatedMethodId` is set, `AllocatedResourceId` must also be set
 - **Deprecation**: Warnings logged when deprecated + replacement fields both present
 - **ContractApplied**: Treated as opaque reference (no cross-dataset validation)
+
+## FOCUS 1.4 Cost and Usage Columns
+
+FOCUS 1.4 adds two Cost and Usage columns and removes `ProviderName` and `PublisherName`. The
+wire change is additive: `provider_name` (field 1) and `publisher` (field 55) stay, deprecated.
+`invoice_issuer` (field 40) carries the column FOCUS 1.4 renames to `InvoiceIssuerName`.
+
+| Column                              | Builder Method                                         | Purpose                                        |
+| ----------------------------------- | ------------------------------------------------------ | ---------------------------------------------- |
+| InvoiceDetailId                     | `WithInvoiceDetailID(invoiceDetailID)`                 | Invoice line item this cost row contributes to |
+| CommitmentProgramEligibilityDetails | `WithCommitmentProgramEligibilityDetails(detailsJSON)` | JSON object of eligible commitment programs    |
+
+Both setters store the value as given, without validating or allocating. `Build()` and
+`ValidateFocusRecord` apply these rules:
+
+| Rule                                                                             | Error                                                  |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| `service_provider_name` or the deprecated `provider_name` is set                 | `*ValidationError` with `FieldName == "provider_name"` |
+| `commitment_program_eligibility_details`, when set, is a well-formed JSON object | `ErrInvalidCommitmentProgramEligibilityDetails`        |
+| `invoice_detail_id`, when set, has an `invoice_id`                               | `ErrInvoiceIDMissingForInvoiceDetail`                  |
+
+Both sentinels work with `errors.Is`, and `errors.As` extracts the `*ValidationError`. The checks
+allocate nothing on valid records. Matching `ProgramType` against `commitment_discount_type` and
+the other cross-row FOCUS 1.4 rules are the producer's responsibility.
+
+```go
+// A FOCUS 1.4 record: no ProviderName, invoice line link, eligibility details
+builder := pluginsdk.NewFocusRecordBuilder()
+builder.
+    WithIdentity("", "123456789012", "Production"). // FOCUS 1.4 has no ProviderName
+    WithServiceProvider("AWS").
+    WithInvoice("INV-2026-09", "Amazon Web Services, Inc.").
+    WithInvoiceDetailID("INV-2026-09-L3").
+    WithCommitmentProgramEligibilityDetails(
+        `{"CommitmentPrograms":[{"ProgramType":"Savings Plan"}]}`,
+    )
+
+record, err := builder.Build()
+if errors.Is(err, pluginsdk.ErrInvalidCommitmentProgramEligibilityDetails) {
+    // the eligibility value is not a JSON object
+}
+```
+
+`FocusFieldNames()` includes `invoice_detail_id` and `commitment_program_eligibility_details`.
+See `ExampleFocusRecordBuilder_WithCommitmentProgramEligibilityDetails` for a runnable example and
+the [FOCUS column reference](../../../docs/focus-columns.md#focus-14-changes-cost-and-usage) for
+the full FOCUS 1.4 change list.
 
 ## Contract Commitment Dataset (FOCUS 1.3)
 
@@ -2632,7 +2682,7 @@ Each FOCUS field can have one of the following support statuses:
 
 ### Field Mapping Helpers
 
-**FocusFieldNames()** - Returns all ~66 FOCUS 1.2/1.3 field names:
+**FocusFieldNames()** - Returns all ~68 FOCUS 1.2-1.4 field names:
 
 ```go
 fields := pluginsdk.FocusFieldNames()
