@@ -837,8 +837,24 @@ parallel subtests complete.
   `ResolveResourceTypes`; a new RPC needs its own method there or Connect returns `Unimplemented`.
 - `make generate` uses unpinned remote Go plugins; regenerating can reformat doc comments in
   untouched `*.connect.go` files. Restore unrelated generated files with `git checkout`.
-- `npm run build` in `sdk/typescript/packages/client` fails at tsup's DTS step (TS5101 `baseUrl`
-  deprecation under TypeScript 6) on main too; use `npx tsc --noEmit` to type-check.
+- `npm run build` in `sdk/typescript/packages/client` builds cleanly, DTS included
+  (`tsconfig.base.json` sets `ignoreDeprecations: "6.0"`).
+
+### TypeScript SDK Workspaces (issue #513)
+
+- `sdk/typescript/package.json` lists workspaces in dependency order (client, middleware,
+  framework-plugins) because `--workspaces` runs in list order, not topologically. A new package
+  goes after the packages it imports.
+- Workspace packages resolve siblings through `node_modules` links to their built `dist/`, so
+  build before testing. Do not add tsconfig `references`: the packages are not `composite` (TS6306).
+- Depend on the scoped `@rshade/finfocus-client`, never the unscoped name, which would resolve
+  from the public registry without the lockfile.
+- TypeScript 6 defaults `types` to `[]`; Node packages need `"types": ["node"]`.
+- tsup externalizes only `dependencies`/`peerDependencies`. Framework adapters declare express,
+  fastify, and NestJS as optional `peerDependencies`, or tsup tries to bundle them.
+- `RESTGateway` speaks proto3 JSON (`fromJson`/`toJson` via service descriptors). Never
+  `JSON.stringify` a protobuf-es v2 message: int64 and `Timestamp.seconds` are `bigint`.
+- CI (`typescript-sdk` job) runs build, test, and `lint` (tsc including `test/`) for every workspace.
 
 ### Allocator SDK Pattern (052-allocator-allocate)
 

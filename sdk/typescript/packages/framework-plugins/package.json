@@ -11,26 +11,44 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@bufbuild/protobuf": "^2.15.0",
-    "@connectrpc/connect": "^2.2.0",
-    "finfocus-middleware": "*",
-    "finfocus-client": "*"
+    "@rshade/finfocus-client": "*",
+    "finfocus-middleware": "*"
   },
   "devDependencies": {
-    "@types/node": "^24.13.3",
+    "@bufbuild/protobuf": "^2.15.0",
+    "@nestjs/common": "^11.2.3",
+    "@nestjs/core": "^11.2.3",
+    "@nestjs/platform-express": "^11.2.6",
     "@types/express": "^5.0.6",
+    "@types/node": "^24.13.3",
     "express": "^5.2.1",
     "fastify": "^5.12.3",
-    "@nestjs/core": "^11.2.3",
-    "@nestjs/common": "^11.2.3",
     "reflect-metadata": "^0.2.2",
     "tsup": "^8.5.1"
   },
-  "optionalDependencies": {
-    "express": "^5.2.1",
-    "fastify": "^5.12.5",
+  "peerDependencies": {
+    "@nestjs/common": "^11.1.28",
     "@nestjs/core": "^11.2.3",
-    "@nestjs/common": "^11.1.28"
+    "@nestjs/platform-express": "^11.2.6",
+    "express": "^5.2.1",
+    "fastify": "^5.12.5"
+  },
+  "peerDependenciesMeta": {
+    "@nestjs/common": {
+      "optional": true
+    },
+    "@nestjs/core": {
+      "optional": true
+    },
+    "@nestjs/platform-express": {
+      "optional": true
+    },
+    "express": {
+      "optional": true
+    },
+    "fastify": {
+      "optional": true
+    }
   },
   "files": [
     "dist"

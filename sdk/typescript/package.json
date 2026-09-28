@@ -9,7 +9,9 @@
     "clean": "rm -rf node_modules packages/*/node_modules packages/*/dist packages/*/tsconfig.tsbuildinfo"
   },
   "workspaces": [
-    "packages/*"
+    "packages/client",
+    "packages/middleware",
+    "packages/framework-plugins"
   ],
   "devDependencies": {
     "typescript": "^6.0.3",

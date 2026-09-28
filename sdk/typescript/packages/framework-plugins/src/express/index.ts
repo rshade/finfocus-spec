@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction } from 'express';
+import { Router, type Request, type Response, type NextFunction } from 'express';
 import { RESTGateway, RESTGatewayConfig } from 'finfocus-middleware';
 
 /**
@@ -12,7 +12,7 @@ import { RESTGateway, RESTGatewayConfig } from 'finfocus-middleware';
  * ```typescript
  * import express from 'express';
  * import { createExpressMiddleware } from 'finfocus-framework-plugins';
- * import { CostSourceClient } from 'finfocus-client';
+ * import { CostSourceClient } from '@rshade/finfocus-client';
  *
  * const app = express();
  * const client = new CostSourceClient({ baseUrl: 'https://plugin.example.com' });
@@ -37,9 +37,9 @@ export function createExpressMiddleware(config: RESTGatewayConfig) {
         return;
       }
 
-      // Create a mock IncomingMessage and ServerResponse for the gateway
-      // since Express req/res are compatible with Node.js http objects
-      await gateway.handleRequest(req as any, res as any);
+      // Express req/res extend Node's IncomingMessage/ServerResponse; a body parsed by
+      // express.json() is picked up from req.body.
+      await gateway.handleRequest(req, res);
     } catch (error) {
       next(error);
     }
@@ -61,11 +61,7 @@ export function createExpressMiddleware(config: RESTGatewayConfig) {
  * ```
  */
 export function createExpressRouter(config: RESTGatewayConfig) {
-  const express = require('express');
-  const router = express.Router();
-
-  const middleware = createExpressMiddleware(config);
-  router.post('*', middleware);
-
+  const router = Router();
+  router.use(createExpressMiddleware(config));
   return router;
 }
