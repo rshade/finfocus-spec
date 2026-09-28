@@ -23,7 +23,6 @@ import (
 	"math"
 	"net"
 	"regexp"
-	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -457,29 +456,11 @@ func scenarioPolicyUnknownField(ctx context.Context, client pbc.AllocatorService
 	if err != nil {
 		return err
 	}
+	// Only the top level is probed: it is always the allocator's struct, while a
+	// nested object may be a map field that legitimately accepts any key.
 	top := clonePolicy(policy)
 	top[conformanceUnknownField] = true
-	if err = expectPolicyRejected(ctx, client, top, conformanceUnknownField); err != nil {
-		return err
-	}
-
-	keys := make([]string, 0, len(policy))
-	for k := range policy {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	for _, key := range keys {
-		inner, ok := policy[key].(map[string]any)
-		if !ok {
-			continue
-		}
-		nested := clonePolicy(policy)
-		innerCopy := clonePolicy(inner)
-		innerCopy[conformanceUnknownField] = true
-		nested[key] = innerCopy
-		return expectPolicyRejected(ctx, client, nested, key+"."+conformanceUnknownField)
-	}
-	return nil
+	return expectPolicyRejected(ctx, client, top, conformanceUnknownField)
 }
 
 func scenarioPolicyUnknownVersion(ctx context.Context, client pbc.AllocatorServiceClient) error {
@@ -607,8 +588,8 @@ func runAllocatorScenarios(ctx context.Context, client pbc.AllocatorServiceClien
 //   - unpriced_node: one priced and one unpriced node; only the priced one needs idle
 //   - control_plane: three nodes plus a priced control plane; at least one cluster row
 //   - over_requested_node: requests exceed allocatable; idle is present and non-negative
-//   - policy_unknown_field: an unknown key (top level, and nested when the policy has
-//     an object field) is rejected with InvalidArgument naming its path
+//   - policy_unknown_field: an unknown top-level key is rejected with
+//     InvalidArgument naming it
 //   - policy_unknown_version: version 2147483647 is rejected with InvalidArgument
 //   - empty_request: no rows; 64-character lowercase hex digest; the effective
 //     policy is an object with an integer "version"

@@ -118,6 +118,42 @@ func TestAllocatorConformance_ScenarioNames(t *testing.T) {
 	assert.Equal(t, want, names)
 }
 
+// mapFieldAllocator wraps the reference allocator with a map-valued policy
+// field, "a_labels", that accepts any key and sorts before every struct field.
+func mapFieldAllocator() allocFunc {
+	ref := refalloc.New()
+	return func(ctx context.Context, req *pbc.AllocateRequest) (*pbc.AllocateResponse, error) {
+		doc := req.GetPolicyJson()
+		var obj map[string]any
+		if json.Unmarshal(doc, &obj) == nil && obj != nil {
+			delete(obj, "a_labels")
+			doc, _ = json.Marshal(obj)
+		}
+		clone := &pbc.AllocateRequest{
+			Usage: req.GetUsage(), Priced: req.GetPriced(), Mode: req.GetMode(), PolicyJson: doc,
+		}
+		resp, err := ref.Allocate(ctx, clone)
+		if err != nil {
+			return nil, err
+		}
+		var effective map[string]any
+		if err = json.Unmarshal(resp.GetEffectivePolicyJson(), &effective); err != nil {
+			return nil, err
+		}
+		effective["a_labels"] = map[string]any{}
+		if resp.EffectivePolicyJson, err = json.Marshal(effective); err != nil {
+			return nil, err
+		}
+		return resp, nil
+	}
+}
+
+func TestAllocatorConformance_MapPolicyFieldPasses(t *testing.T) {
+	for name, err := range runScenarios(t, mapFieldAllocator()) {
+		require.NoError(t, err, name)
+	}
+}
+
 // brokenAllocator is a deliberately wrong allocator and the scenarios that
 // must catch it.
 type brokenAllocator struct {
