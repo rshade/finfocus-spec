@@ -902,6 +902,9 @@ parallel subtests complete.
 
 ## Active Technologies
 
+- Go 1.27.1 (go.mod) + Existing `google.golang.org/protobuf` (protojson, protocmp in tests). (055-cost-allocation-lineage)
+- N/A (wire contract and in-memory builder only) (055-cost-allocation-lineage)
+
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
   google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1 (053-projected-cost-breakdown)
 - N/A (stateless map field on GetProjectedCostResponse + zero-alloc validation) (053-projected-cost-breakdown)
@@ -1026,6 +1029,9 @@ See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable doc
 
 ## Recent Changes
 
+- 055-cost-allocation-lineage: Added Go 1.27.1 (go.mod) +
+  `google.golang.org/protobuf` (protojson, protocmp in tests)
+
 - 053-projected-cost-breakdown: Added GetProjectedCostResponse.cost_breakdown
   (map<string,double>, field 15), pluginsdk.WithProjectedCostBreakdown, five
   ErrCostBreakdown* sentinels, and MockPlugin.ProjectedCostBreakdown; validated for
@@ -1055,6 +1061,8 @@ See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable doc
 - 047-validation-error-integration: Added Go 1.25.8 (per go.mod) +
   google.golang.org/protobuf, google.golang.org/grpc (existing, unchanged)
 
+- 046-batch-cost-rpc: Added Go 1.25.8 (per go.mod) + Protocol Buffers v3,
   TypeScript (SDK) + google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1
 
+- 045-caching-hint-expires-at: Added Go 1.25.8 (per go.mod) + Protocol Buffers v3,
   TypeScript (SDK) + google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1

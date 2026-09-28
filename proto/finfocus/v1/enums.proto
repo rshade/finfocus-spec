@@ -251,6 +251,59 @@ enum SourceFormat {
   SOURCE_FORMAT_CLOUDFORMATION = 2;
 }
 
+// LineageNodeType classifies a single level in a cost allocation lineage chain.
+// Used by LineageNode to identify what kind of organizational or resource
+// entity a chain level represents.
+//
+// The values follow a general top-down ordering (organization at the root,
+// resource at the leaf), but this enum imposes NO structural constraints:
+//   - Chains may skip levels (partial chains are valid).
+//   - Chains may use levels in any order or repeat a level type.
+//   - CUSTOM exists for plugin-defined levels that do not map to the
+//     standard categories (e.g., "cost center", "department", "chargeback group").
+//
+// These types describe how a node was classified by the plugin that reported
+// it; they are NOT validated against provider APIs by hosts.
+enum LineageNodeType {
+  // Default value - node type not specified.
+  // Should not be used in well-formed chains; indicates incomplete implementation.
+  LINEAGE_NODE_TYPE_UNSPECIFIED = 0;
+
+  // Top-level organizational entity (root of the chain).
+  // Examples: AWS Organization, Azure Tenant, GCP Organization.
+  LINEAGE_NODE_TYPE_ORGANIZATION = 1;
+
+  // Intermediate organizational grouping between organization and accounts.
+  // Examples: AWS Organizational Unit, Azure Management Group, GCP Folder.
+  LINEAGE_NODE_TYPE_ORGANIZATIONAL_UNIT = 2;
+
+  // Billing/payer entity responsible for payment.
+  // Examples: AWS Payer Account, Azure Billing Profile, GCP Billing Account.
+  // Corresponds conceptually to FOCUS BillingAccountId, but hosts MUST NOT
+  // cross-validate this node against billing_account_id fields.
+  LINEAGE_NODE_TYPE_BILLING_ACCOUNT = 3;
+
+  // Linked or member account under a billing account.
+  // Examples: AWS Member Account, Azure Subscription.
+  // Corresponds conceptually to FOCUS SubAccountId, but hosts MUST NOT
+  // cross-validate this node against sub_account_id fields.
+  LINEAGE_NODE_TYPE_SUB_ACCOUNT = 4;
+
+  // Resource-scoping container directly above individual resources.
+  // Examples: Azure Resource Group, GCP Project, Kubernetes Namespace.
+  LINEAGE_NODE_TYPE_RESOURCE_GROUP = 5;
+
+  // Individual billable resource. This is the leaf of the chain.
+  // Examples: an EC2 instance, an Azure VM, a GCE instance, a K8s pod.
+  LINEAGE_NODE_TYPE_RESOURCE = 6;
+
+  // Plugin-defined level that does not fit the standard categories.
+  // Examples: "cost center", "department", "environment tier".
+  // Nodes of this type SHOULD carry a descriptor in metadata
+  // (e.g., metadata["level_kind"] = "cost_center").
+  LINEAGE_NODE_TYPE_CUSTOM = 7;
+}
+
 // CostQueryType specifies which cost operation to perform in a batch query.
 // Used by BatchCostRequest to select the underlying cost RPC for all resources.
 enum CostQueryType {

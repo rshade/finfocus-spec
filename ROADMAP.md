@@ -51,8 +51,6 @@ centered around the FinOps Foundation's FOCUS standard.
 
 ### Active Research
 
-- [ ] **Standardized Cost Allocation Lineage Metadata**
-  ([#191](https://github.com/rshade/finfocus-spec/issues/191)) [L]
 - [ ] **Distributed Tracing Propagation (Contextual Visibility)**
   ([#193](https://github.com/rshade/finfocus-spec/issues/193)) [L]
 - [ ] **Authorization Middleware (OIDC/IAM)**
@@ -61,6 +59,10 @@ centered around the FinOps Foundation's FOCUS standard.
 
 ### Completed Research
 
+- [x] **Standardized Cost Allocation Lineage Metadata**
+  ([#191](https://github.com/rshade/finfocus-spec/issues/191)) -
+  Added `LineageNode` chain to `ActualCostResult` and `ResourceDescriptor` with
+  pass-through semantics, plus a `LineageBuilder` SDK helper. Sep 2026.
 - [x] **Streaming Actual Cost (Streaming RPCs)**
   ([#197](https://github.com/rshade/finfocus-spec/issues/197)) -
   Superseded by pagination approach ([#353](https://github.com/rshade/finfocus-spec/issues/353)). Jan 2026.
