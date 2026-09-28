@@ -9,7 +9,7 @@
     "registry": "https://npm.pkg.github.com"
   },
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --clean && tsc --noEmit",
+    "build": "tsup src/index.ts --format cjs,esm --clean && tsc --emitDeclarationOnly && tsc --noEmit",
     "test": "vitest run",
     "lint": "tsc --noEmit"
   },

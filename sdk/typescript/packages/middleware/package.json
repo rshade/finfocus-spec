@@ -6,7 +6,7 @@
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "build": "tsup src/index.ts --format cjs,esm --clean && tsc --emitDeclarationOnly -p tsconfig.build.json && tsc --noEmit",
     "test": "vitest run",
     "lint": "tsc --noEmit"
   },
