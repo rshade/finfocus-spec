@@ -845,7 +845,7 @@ func (x HealthCheckResponse_Status) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use HealthCheckResponse_Status.Descriptor instead.
 func (HealthCheckResponse_Status) EnumDescriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{18, 0}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{19, 0}
 }
 
 // NameRequest is used for the Name RPC call (empty request).
@@ -1898,6 +1898,126 @@ func (x *GetPricingSpecResponse) GetSpec() *PricingSpec {
 	return nil
 }
 
+// LineageNode represents one level in a cost allocation lineage chain.
+// Nodes form a singly-linked list from leaf (the resource itself) up toward
+// the organizational root via the parent pointer.
+//
+// Pass-Through Semantics:
+//   - Lineage data is reported by plugins and passed through verbatim by hosts.
+//   - Hosts MUST NOT infer missing parents or synthesize chain levels.
+//   - Hosts MUST NOT validate node ids against provider APIs.
+//   - Hosts MUST NOT cross-check nodes against billing_account_id or
+//     sub_account_id fields; FOCUS account fields remain the canonical source
+//     for two-level attribution, and disagreement is NOT an error.
+//   - Partial chains are valid: a chain may stop at any level and may skip
+//     level types.
+//
+// Depth Note:
+//   - The parent field is a nested message encoding; practical protobuf
+//     recursion limits apply to very deep chains. Implementations SHOULD keep
+//     chains to a reasonable organizational depth (typically under 10 levels).
+//
+// Example chain (leaf first, walking parent pointers toward the root):
+//
+//	resource "i-0abc123" (RESOURCE)
+//	  -> "123456789012" (SUB_ACCOUNT)
+//	  -> "999988887777" (BILLING_ACCOUNT)
+//	  -> "o-exampleorg" (ORGANIZATION, parent = null)
+type LineageNode struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// type classifies this level of the hierarchy.
+	// REQUIRED for well-formed chains. LINEAGE_NODE_TYPE_UNSPECIFIED indicates
+	// an incomplete implementation.
+	Type LineageNodeType `protobuf:"varint,1,opt,name=type,proto3,enum=finfocus.v1.LineageNodeType" json:"type,omitempty"`
+	// id is the provider-specific identifier for this hierarchy level.
+	// RECOMMENDED. Treated as an opaque string; hosts MUST NOT validate the
+	// format or existence of this id against provider APIs.
+	// Examples: "o-exampleorg" (AWS Org), "123456789012" (AWS account),
+	// "my-resource-group" (Azure RG), "my-gcp-project" (GCP Project).
+	Id string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	// name is the human-readable display name for this hierarchy level.
+	// OPTIONAL. May be empty when only the id is known.
+	// Examples: "Engineering OU", "Production Account", "platform-team".
+	Name string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	// parent links to the next level up toward the organizational root.
+	// OPTIONAL. A nil parent marks the top of the reported chain (typically the
+	// organization, but partial chains may stop at any level).
+	// Hosts MUST NOT infer or synthesize a missing parent.
+	Parent *LineageNode `protobuf:"bytes,4,opt,name=parent,proto3" json:"parent,omitempty"`
+	// metadata carries provider-specific attributes for this level.
+	// OPTIONAL. Keys are not standardized; common examples include
+	// "owner_email", "cost_center", "environment", "level_kind".
+	// Both keys and values should be non-empty when provided.
+	Metadata      map[string]string `protobuf:"bytes,5,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LineageNode) Reset() {
+	*x = LineageNode{}
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LineageNode) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LineageNode) ProtoMessage() {}
+
+func (x *LineageNode) ProtoReflect() protoreflect.Message {
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LineageNode.ProtoReflect.Descriptor instead.
+func (*LineageNode) Descriptor() ([]byte, []int) {
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *LineageNode) GetType() LineageNodeType {
+	if x != nil {
+		return x.Type
+	}
+	return LineageNodeType_LINEAGE_NODE_TYPE_UNSPECIFIED
+}
+
+func (x *LineageNode) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *LineageNode) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *LineageNode) GetParent() *LineageNode {
+	if x != nil {
+		return x.Parent
+	}
+	return nil
+}
+
+func (x *LineageNode) GetMetadata() map[string]string {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
 // ResourceDescriptor describes a cloud resource for cost analysis.
 // This message defines the contract between Core and Plugins for resource identification.
 //
@@ -2061,14 +2181,28 @@ type ResourceDescriptor struct {
 	// In generated Go code, check presence with:
 	//
 	//	if desc.GrowthRate != nil { rate := *desc.GrowthRate }
-	GrowthRate    *float64 `protobuf:"fixed64,10,opt,name=growth_rate,json=growthRate,proto3,oneof" json:"growth_rate,omitempty"`
+	GrowthRate *float64 `protobuf:"fixed64,10,opt,name=growth_rate,json=growthRate,proto3,oneof" json:"growth_rate,omitempty"`
+	// lineage is the optional cost allocation lineage chain for this resource.
+	// OPTIONAL. When set, the chain starts at the resource level (leaf, type
+	// LINEAGE_NODE_TYPE_RESOURCE) and links upward toward the organization via
+	// LineageNode.parent pointers.
+	//
+	// Pass-Through Semantics:
+	//   - Plugins report lineage; hosts pass it through verbatim.
+	//   - Hosts MUST NOT infer missing parents, MUST NOT validate ids against
+	//     provider APIs, and MUST NOT treat disagreement with billing_account_id
+	//     or sub_account_id as an error (FOCUS fields remain canonical).
+	//   - Partial chains are valid (e.g., resource -> sub-account only).
+	//
+	// See LineageNode for the full semantics and depth guidance.
+	Lineage       *LineageNode `protobuf:"bytes,11,opt,name=lineage,proto3" json:"lineage,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ResourceDescriptor) Reset() {
 	*x = ResourceDescriptor{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[11]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2080,7 +2214,7 @@ func (x *ResourceDescriptor) String() string {
 func (*ResourceDescriptor) ProtoMessage() {}
 
 func (x *ResourceDescriptor) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[11]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2093,7 +2227,7 @@ func (x *ResourceDescriptor) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourceDescriptor.ProtoReflect.Descriptor instead.
 func (*ResourceDescriptor) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{11}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ResourceDescriptor) GetProvider() string {
@@ -2166,6 +2300,13 @@ func (x *ResourceDescriptor) GetGrowthRate() float64 {
 	return 0
 }
 
+func (x *ResourceDescriptor) GetLineage() *LineageNode {
+	if x != nil {
+		return x.Lineage
+	}
+	return nil
+}
+
 // ActualCostResult represents a single cost data point.
 type ActualCostResult struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -2200,14 +2341,37 @@ type ActualCostResult struct {
 	//   - Rate-limited APIs: Set 6-12 hours to prevent excessive upstream calls
 	//   - Billing cycle alignment: Set to end of current billing period
 	//   - Real-time sources: Leave unset (no caching)
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	// lineage is the optional cost allocation lineage chain for the resource
+	// this cost data point belongs to.
+	// OPTIONAL. When set, the chain starts at the resource level (leaf, type
+	// LINEAGE_NODE_TYPE_RESOURCE) and links upward toward the organization via
+	// LineageNode.parent pointers.
+	//
+	// Use Cases:
+	//   - Hierarchical cost aggregation: roll costs up by any chain level
+	//     (e.g., per organizational unit, per billing account).
+	//   - Drill-down: navigate from an organization-level total down to the
+	//     contributing resources.
+	//   - Chargeback/showback grouping beyond the two-level FOCUS model.
+	//
+	// Pass-Through Semantics:
+	//   - Plugins report lineage; hosts pass it through verbatim.
+	//   - Hosts MUST NOT infer missing parents, MUST NOT validate ids against
+	//     provider APIs, and MUST NOT treat omission of or disagreement with
+	//     billing_account_id or sub_account_id as an error (FOCUS fields remain
+	//     canonical).
+	//   - Partial chains are valid (e.g., resource -> sub-account only).
+	//
+	// See LineageNode for the full semantics and depth guidance.
+	Lineage       *LineageNode `protobuf:"bytes,9,opt,name=lineage,proto3" json:"lineage,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ActualCostResult) Reset() {
 	*x = ActualCostResult{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[12]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2219,7 +2383,7 @@ func (x *ActualCostResult) String() string {
 func (*ActualCostResult) ProtoMessage() {}
 
 func (x *ActualCostResult) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[12]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2232,7 +2396,7 @@ func (x *ActualCostResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActualCostResult.ProtoReflect.Descriptor instead.
 func (*ActualCostResult) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{12}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ActualCostResult) GetTimestamp() *timestamppb.Timestamp {
@@ -2291,6 +2455,13 @@ func (x *ActualCostResult) GetExpiresAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *ActualCostResult) GetLineage() *LineageNode {
+	if x != nil {
+		return x.Lineage
+	}
+	return nil
+}
+
 // UsageMetricHint provides guidance on usage metrics for cost calculation.
 type UsageMetricHint struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -2304,7 +2475,7 @@ type UsageMetricHint struct {
 
 func (x *UsageMetricHint) Reset() {
 	*x = UsageMetricHint{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[13]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2316,7 +2487,7 @@ func (x *UsageMetricHint) String() string {
 func (*UsageMetricHint) ProtoMessage() {}
 
 func (x *UsageMetricHint) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[13]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2329,7 +2500,7 @@ func (x *UsageMetricHint) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UsageMetricHint.ProtoReflect.Descriptor instead.
 func (*UsageMetricHint) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{13}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *UsageMetricHint) GetMetric() string {
@@ -2388,7 +2559,7 @@ type PricingSpec struct {
 
 func (x *PricingSpec) Reset() {
 	*x = PricingSpec{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[14]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2400,7 +2571,7 @@ func (x *PricingSpec) String() string {
 func (*PricingSpec) ProtoMessage() {}
 
 func (x *PricingSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[14]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2413,7 +2584,7 @@ func (x *PricingSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PricingSpec.ProtoReflect.Descriptor instead.
 func (*PricingSpec) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{14}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *PricingSpec) GetProvider() string {
@@ -2532,7 +2703,7 @@ type PricingTier struct {
 
 func (x *PricingTier) Reset() {
 	*x = PricingTier{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[15]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2544,7 +2715,7 @@ func (x *PricingTier) String() string {
 func (*PricingTier) ProtoMessage() {}
 
 func (x *PricingTier) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[15]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2557,7 +2728,7 @@ func (x *PricingTier) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PricingTier.ProtoReflect.Descriptor instead.
 func (*PricingTier) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{15}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *PricingTier) GetMinQuantity() float64 {
@@ -2609,7 +2780,7 @@ type ErrorDetail struct {
 
 func (x *ErrorDetail) Reset() {
 	*x = ErrorDetail{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[16]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2621,7 +2792,7 @@ func (x *ErrorDetail) String() string {
 func (*ErrorDetail) ProtoMessage() {}
 
 func (x *ErrorDetail) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[16]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2634,7 +2805,7 @@ func (x *ErrorDetail) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ErrorDetail.ProtoReflect.Descriptor instead.
 func (*ErrorDetail) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{16}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ErrorDetail) GetCode() ErrorCode {
@@ -2690,7 +2861,7 @@ type HealthCheckRequest struct {
 
 func (x *HealthCheckRequest) Reset() {
 	*x = HealthCheckRequest{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[17]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2702,7 +2873,7 @@ func (x *HealthCheckRequest) String() string {
 func (*HealthCheckRequest) ProtoMessage() {}
 
 func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[17]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2715,7 +2886,7 @@ func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheckRequest.ProtoReflect.Descriptor instead.
 func (*HealthCheckRequest) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{17}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *HealthCheckRequest) GetServiceName() string {
@@ -2740,7 +2911,7 @@ type HealthCheckResponse struct {
 
 func (x *HealthCheckResponse) Reset() {
 	*x = HealthCheckResponse{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[18]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2752,7 +2923,7 @@ func (x *HealthCheckResponse) String() string {
 func (*HealthCheckResponse) ProtoMessage() {}
 
 func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[18]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2765,7 +2936,7 @@ func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheckResponse.ProtoReflect.Descriptor instead.
 func (*HealthCheckResponse) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{18}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *HealthCheckResponse) GetStatus() HealthCheckResponse_Status {
@@ -2802,7 +2973,7 @@ type GetMetricsRequest struct {
 
 func (x *GetMetricsRequest) Reset() {
 	*x = GetMetricsRequest{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[19]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2814,7 +2985,7 @@ func (x *GetMetricsRequest) String() string {
 func (*GetMetricsRequest) ProtoMessage() {}
 
 func (x *GetMetricsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[19]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2827,7 +2998,7 @@ func (x *GetMetricsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMetricsRequest.ProtoReflect.Descriptor instead.
 func (*GetMetricsRequest) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{19}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *GetMetricsRequest) GetMetricNames() []string {
@@ -2859,7 +3030,7 @@ type GetMetricsResponse struct {
 
 func (x *GetMetricsResponse) Reset() {
 	*x = GetMetricsResponse{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[20]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2871,7 +3042,7 @@ func (x *GetMetricsResponse) String() string {
 func (*GetMetricsResponse) ProtoMessage() {}
 
 func (x *GetMetricsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[20]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2884,7 +3055,7 @@ func (x *GetMetricsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMetricsResponse.ProtoReflect.Descriptor instead.
 func (*GetMetricsResponse) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{20}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *GetMetricsResponse) GetMetrics() []*Metric {
@@ -2925,7 +3096,7 @@ type Metric struct {
 
 func (x *Metric) Reset() {
 	*x = Metric{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[21]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2937,7 +3108,7 @@ func (x *Metric) String() string {
 func (*Metric) ProtoMessage() {}
 
 func (x *Metric) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[21]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2950,7 +3121,7 @@ func (x *Metric) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Metric.ProtoReflect.Descriptor instead.
 func (*Metric) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{21}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *Metric) GetName() string {
@@ -2996,7 +3167,7 @@ type MetricSample struct {
 
 func (x *MetricSample) Reset() {
 	*x = MetricSample{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[22]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3008,7 +3179,7 @@ func (x *MetricSample) String() string {
 func (*MetricSample) ProtoMessage() {}
 
 func (x *MetricSample) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[22]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3021,7 +3192,7 @@ func (x *MetricSample) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MetricSample.ProtoReflect.Descriptor instead.
 func (*MetricSample) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{22}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *MetricSample) GetLabels() map[string]string {
@@ -3058,7 +3229,7 @@ type GetServiceLevelIndicatorsRequest struct {
 
 func (x *GetServiceLevelIndicatorsRequest) Reset() {
 	*x = GetServiceLevelIndicatorsRequest{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[23]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3070,7 +3241,7 @@ func (x *GetServiceLevelIndicatorsRequest) String() string {
 func (*GetServiceLevelIndicatorsRequest) ProtoMessage() {}
 
 func (x *GetServiceLevelIndicatorsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[23]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3083,7 +3254,7 @@ func (x *GetServiceLevelIndicatorsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetServiceLevelIndicatorsRequest.ProtoReflect.Descriptor instead.
 func (*GetServiceLevelIndicatorsRequest) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{23}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *GetServiceLevelIndicatorsRequest) GetTimeRange() *TimeRange {
@@ -3113,7 +3284,7 @@ type GetServiceLevelIndicatorsResponse struct {
 
 func (x *GetServiceLevelIndicatorsResponse) Reset() {
 	*x = GetServiceLevelIndicatorsResponse{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[24]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3125,7 +3296,7 @@ func (x *GetServiceLevelIndicatorsResponse) String() string {
 func (*GetServiceLevelIndicatorsResponse) ProtoMessage() {}
 
 func (x *GetServiceLevelIndicatorsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[24]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3138,7 +3309,7 @@ func (x *GetServiceLevelIndicatorsResponse) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use GetServiceLevelIndicatorsResponse.ProtoReflect.Descriptor instead.
 func (*GetServiceLevelIndicatorsResponse) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{24}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *GetServiceLevelIndicatorsResponse) GetSlis() []*ServiceLevelIndicator {
@@ -3176,7 +3347,7 @@ type ServiceLevelIndicator struct {
 
 func (x *ServiceLevelIndicator) Reset() {
 	*x = ServiceLevelIndicator{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[25]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3188,7 +3359,7 @@ func (x *ServiceLevelIndicator) String() string {
 func (*ServiceLevelIndicator) ProtoMessage() {}
 
 func (x *ServiceLevelIndicator) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[25]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3201,7 +3372,7 @@ func (x *ServiceLevelIndicator) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServiceLevelIndicator.ProtoReflect.Descriptor instead.
 func (*ServiceLevelIndicator) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{25}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *ServiceLevelIndicator) GetName() string {
@@ -3259,7 +3430,7 @@ type TimeRange struct {
 
 func (x *TimeRange) Reset() {
 	*x = TimeRange{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[26]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3271,7 +3442,7 @@ func (x *TimeRange) String() string {
 func (*TimeRange) ProtoMessage() {}
 
 func (x *TimeRange) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[26]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3284,7 +3455,7 @@ func (x *TimeRange) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TimeRange.ProtoReflect.Descriptor instead.
 func (*TimeRange) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{26}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *TimeRange) GetStart() *timestamppb.Timestamp {
@@ -3325,7 +3496,7 @@ type TelemetryMetadata struct {
 
 func (x *TelemetryMetadata) Reset() {
 	*x = TelemetryMetadata{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[27]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3337,7 +3508,7 @@ func (x *TelemetryMetadata) String() string {
 func (*TelemetryMetadata) ProtoMessage() {}
 
 func (x *TelemetryMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[27]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3350,7 +3521,7 @@ func (x *TelemetryMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TelemetryMetadata.ProtoReflect.Descriptor instead.
 func (*TelemetryMetadata) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{27}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *TelemetryMetadata) GetTraceId() string {
@@ -3427,7 +3598,7 @@ type LogEntry struct {
 
 func (x *LogEntry) Reset() {
 	*x = LogEntry{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[28]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3439,7 +3610,7 @@ func (x *LogEntry) String() string {
 func (*LogEntry) ProtoMessage() {}
 
 func (x *LogEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[28]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3452,7 +3623,7 @@ func (x *LogEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogEntry.ProtoReflect.Descriptor instead.
 func (*LogEntry) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{28}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *LogEntry) GetTimestamp() *timestamppb.Timestamp {
@@ -3530,7 +3701,7 @@ type ErrorDetails struct {
 
 func (x *ErrorDetails) Reset() {
 	*x = ErrorDetails{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[29]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3542,7 +3713,7 @@ func (x *ErrorDetails) String() string {
 func (*ErrorDetails) ProtoMessage() {}
 
 func (x *ErrorDetails) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[29]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3555,7 +3726,7 @@ func (x *ErrorDetails) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ErrorDetails.ProtoReflect.Descriptor instead.
 func (*ErrorDetails) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{29}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ErrorDetails) GetErrorCode() string {
@@ -3628,7 +3799,7 @@ type EstimateCostRequest struct {
 
 func (x *EstimateCostRequest) Reset() {
 	*x = EstimateCostRequest{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[30]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3640,7 +3811,7 @@ func (x *EstimateCostRequest) String() string {
 func (*EstimateCostRequest) ProtoMessage() {}
 
 func (x *EstimateCostRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[30]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3653,7 +3824,7 @@ func (x *EstimateCostRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EstimateCostRequest.ProtoReflect.Descriptor instead.
 func (*EstimateCostRequest) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{30}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *EstimateCostRequest) GetResourceType() string {
@@ -3727,7 +3898,7 @@ type EstimateCostResponse struct {
 
 func (x *EstimateCostResponse) Reset() {
 	*x = EstimateCostResponse{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[31]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3739,7 +3910,7 @@ func (x *EstimateCostResponse) String() string {
 func (*EstimateCostResponse) ProtoMessage() {}
 
 func (x *EstimateCostResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[31]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3752,7 +3923,7 @@ func (x *EstimateCostResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EstimateCostResponse.ProtoReflect.Descriptor instead.
 func (*EstimateCostResponse) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{31}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *EstimateCostResponse) GetCurrency() string {
@@ -3851,7 +4022,7 @@ type GetRecommendationsRequest struct {
 
 func (x *GetRecommendationsRequest) Reset() {
 	*x = GetRecommendationsRequest{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[32]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3863,7 +4034,7 @@ func (x *GetRecommendationsRequest) String() string {
 func (*GetRecommendationsRequest) ProtoMessage() {}
 
 func (x *GetRecommendationsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[32]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3876,7 +4047,7 @@ func (x *GetRecommendationsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRecommendationsRequest.ProtoReflect.Descriptor instead.
 func (*GetRecommendationsRequest) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{32}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *GetRecommendationsRequest) GetFilter() *RecommendationFilter {
@@ -3950,7 +4121,7 @@ type GetRecommendationsResponse struct {
 
 func (x *GetRecommendationsResponse) Reset() {
 	*x = GetRecommendationsResponse{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[33]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3962,7 +4133,7 @@ func (x *GetRecommendationsResponse) String() string {
 func (*GetRecommendationsResponse) ProtoMessage() {}
 
 func (x *GetRecommendationsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[33]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3975,7 +4146,7 @@ func (x *GetRecommendationsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRecommendationsResponse.ProtoReflect.Descriptor instead.
 func (*GetRecommendationsResponse) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{33}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *GetRecommendationsResponse) GetRecommendations() []*Recommendation {
@@ -4060,7 +4231,7 @@ type RecommendationFilter struct {
 
 func (x *RecommendationFilter) Reset() {
 	*x = RecommendationFilter{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[34]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4072,7 +4243,7 @@ func (x *RecommendationFilter) String() string {
 func (*RecommendationFilter) ProtoMessage() {}
 
 func (x *RecommendationFilter) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[34]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4085,7 +4256,7 @@ func (x *RecommendationFilter) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecommendationFilter.ProtoReflect.Descriptor instead.
 func (*RecommendationFilter) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{34}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *RecommendationFilter) GetProvider() string {
@@ -4248,7 +4419,7 @@ type Recommendation struct {
 
 func (x *Recommendation) Reset() {
 	*x = Recommendation{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[35]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4260,7 +4431,7 @@ func (x *Recommendation) String() string {
 func (*Recommendation) ProtoMessage() {}
 
 func (x *Recommendation) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[35]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4273,7 +4444,7 @@ func (x *Recommendation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Recommendation.ProtoReflect.Descriptor instead.
 func (*Recommendation) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{35}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *Recommendation) GetId() string {
@@ -4486,7 +4657,7 @@ type ResourceRecommendationInfo struct {
 
 func (x *ResourceRecommendationInfo) Reset() {
 	*x = ResourceRecommendationInfo{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[36]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4498,7 +4669,7 @@ func (x *ResourceRecommendationInfo) String() string {
 func (*ResourceRecommendationInfo) ProtoMessage() {}
 
 func (x *ResourceRecommendationInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[36]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4511,7 +4682,7 @@ func (x *ResourceRecommendationInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourceRecommendationInfo.ProtoReflect.Descriptor instead.
 func (*ResourceRecommendationInfo) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{36}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *ResourceRecommendationInfo) GetId() string {
@@ -4591,7 +4762,7 @@ type ResourceUtilization struct {
 
 func (x *ResourceUtilization) Reset() {
 	*x = ResourceUtilization{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[37]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4603,7 +4774,7 @@ func (x *ResourceUtilization) String() string {
 func (*ResourceUtilization) ProtoMessage() {}
 
 func (x *ResourceUtilization) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[37]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4616,7 +4787,7 @@ func (x *ResourceUtilization) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourceUtilization.ProtoReflect.Descriptor instead.
 func (*ResourceUtilization) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{37}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *ResourceUtilization) GetCpuPercent() float64 {
@@ -4680,7 +4851,7 @@ type RightsizeAction struct {
 
 func (x *RightsizeAction) Reset() {
 	*x = RightsizeAction{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[38]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4692,7 +4863,7 @@ func (x *RightsizeAction) String() string {
 func (*RightsizeAction) ProtoMessage() {}
 
 func (x *RightsizeAction) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[38]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4705,7 +4876,7 @@ func (x *RightsizeAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RightsizeAction.ProtoReflect.Descriptor instead.
 func (*RightsizeAction) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{38}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *RightsizeAction) GetCurrentSku() string {
@@ -4756,7 +4927,7 @@ type TerminateAction struct {
 
 func (x *TerminateAction) Reset() {
 	*x = TerminateAction{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[39]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4768,7 +4939,7 @@ func (x *TerminateAction) String() string {
 func (*TerminateAction) ProtoMessage() {}
 
 func (x *TerminateAction) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[39]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4781,7 +4952,7 @@ func (x *TerminateAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TerminateAction.ProtoReflect.Descriptor instead.
 func (*TerminateAction) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{39}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *TerminateAction) GetTerminationReason() string {
@@ -4817,7 +4988,7 @@ type CommitmentAction struct {
 
 func (x *CommitmentAction) Reset() {
 	*x = CommitmentAction{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[40]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4829,7 +5000,7 @@ func (x *CommitmentAction) String() string {
 func (*CommitmentAction) ProtoMessage() {}
 
 func (x *CommitmentAction) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[40]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4842,7 +5013,7 @@ func (x *CommitmentAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommitmentAction.ProtoReflect.Descriptor instead.
 func (*CommitmentAction) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{40}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *CommitmentAction) GetCommitmentType() string {
@@ -4909,7 +5080,7 @@ type KubernetesAction struct {
 
 func (x *KubernetesAction) Reset() {
 	*x = KubernetesAction{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[41]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4921,7 +5092,7 @@ func (x *KubernetesAction) String() string {
 func (*KubernetesAction) ProtoMessage() {}
 
 func (x *KubernetesAction) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[41]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4934,7 +5105,7 @@ func (x *KubernetesAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use KubernetesAction.ProtoReflect.Descriptor instead.
 func (*KubernetesAction) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{41}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *KubernetesAction) GetClusterId() string {
@@ -5020,7 +5191,7 @@ type KubernetesResources struct {
 
 func (x *KubernetesResources) Reset() {
 	*x = KubernetesResources{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[42]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5032,7 +5203,7 @@ func (x *KubernetesResources) String() string {
 func (*KubernetesResources) ProtoMessage() {}
 
 func (x *KubernetesResources) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[42]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5045,7 +5216,7 @@ func (x *KubernetesResources) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use KubernetesResources.ProtoReflect.Descriptor instead.
 func (*KubernetesResources) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{42}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *KubernetesResources) GetCpu() string {
@@ -5077,7 +5248,7 @@ type ModifyAction struct {
 
 func (x *ModifyAction) Reset() {
 	*x = ModifyAction{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[43]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5089,7 +5260,7 @@ func (x *ModifyAction) String() string {
 func (*ModifyAction) ProtoMessage() {}
 
 func (x *ModifyAction) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[43]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5102,7 +5273,7 @@ func (x *ModifyAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ModifyAction.ProtoReflect.Descriptor instead.
 func (*ModifyAction) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{43}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *ModifyAction) GetModificationType() string {
@@ -5151,7 +5322,7 @@ type RecommendationImpact struct {
 
 func (x *RecommendationImpact) Reset() {
 	*x = RecommendationImpact{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[44]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5163,7 +5334,7 @@ func (x *RecommendationImpact) String() string {
 func (*RecommendationImpact) ProtoMessage() {}
 
 func (x *RecommendationImpact) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[44]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5176,7 +5347,7 @@ func (x *RecommendationImpact) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecommendationImpact.ProtoReflect.Descriptor instead.
 func (*RecommendationImpact) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{44}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *RecommendationImpact) GetEstimatedSavings() float64 {
@@ -5261,7 +5432,7 @@ type RecommendationSummary struct {
 
 func (x *RecommendationSummary) Reset() {
 	*x = RecommendationSummary{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[45]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5273,7 +5444,7 @@ func (x *RecommendationSummary) String() string {
 func (*RecommendationSummary) ProtoMessage() {}
 
 func (x *RecommendationSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[45]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5286,7 +5457,7 @@ func (x *RecommendationSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecommendationSummary.ProtoReflect.Descriptor instead.
 func (*RecommendationSummary) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{45}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *RecommendationSummary) GetTotalRecommendations() int32 {
@@ -5370,7 +5541,7 @@ type DismissRecommendationRequest struct {
 
 func (x *DismissRecommendationRequest) Reset() {
 	*x = DismissRecommendationRequest{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[46]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5382,7 +5553,7 @@ func (x *DismissRecommendationRequest) String() string {
 func (*DismissRecommendationRequest) ProtoMessage() {}
 
 func (x *DismissRecommendationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[46]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5395,7 +5566,7 @@ func (x *DismissRecommendationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DismissRecommendationRequest.ProtoReflect.Descriptor instead.
 func (*DismissRecommendationRequest) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{46}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *DismissRecommendationRequest) GetRecommendationId() string {
@@ -5452,7 +5623,7 @@ type DismissRecommendationResponse struct {
 
 func (x *DismissRecommendationResponse) Reset() {
 	*x = DismissRecommendationResponse{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[47]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5464,7 +5635,7 @@ func (x *DismissRecommendationResponse) String() string {
 func (*DismissRecommendationResponse) ProtoMessage() {}
 
 func (x *DismissRecommendationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[47]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5477,7 +5648,7 @@ func (x *DismissRecommendationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DismissRecommendationResponse.ProtoReflect.Descriptor instead.
 func (*DismissRecommendationResponse) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{47}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *DismissRecommendationResponse) GetSuccess() bool {
@@ -5525,7 +5696,7 @@ type GetPluginInfoRequest struct {
 
 func (x *GetPluginInfoRequest) Reset() {
 	*x = GetPluginInfoRequest{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[48]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5537,7 +5708,7 @@ func (x *GetPluginInfoRequest) String() string {
 func (*GetPluginInfoRequest) ProtoMessage() {}
 
 func (x *GetPluginInfoRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[48]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5550,7 +5721,7 @@ func (x *GetPluginInfoRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPluginInfoRequest.ProtoReflect.Descriptor instead.
 func (*GetPluginInfoRequest) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{48}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{49}
 }
 
 // GetPluginInfoResponse contains metadata about the plugin for compatibility
@@ -5588,7 +5759,7 @@ type GetPluginInfoResponse struct {
 
 func (x *GetPluginInfoResponse) Reset() {
 	*x = GetPluginInfoResponse{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[49]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5600,7 +5771,7 @@ func (x *GetPluginInfoResponse) String() string {
 func (*GetPluginInfoResponse) ProtoMessage() {}
 
 func (x *GetPluginInfoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[49]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5613,7 +5784,7 @@ func (x *GetPluginInfoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPluginInfoResponse.ProtoReflect.Descriptor instead.
 func (*GetPluginInfoResponse) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{49}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *GetPluginInfoResponse) GetName() string {
@@ -5686,7 +5857,7 @@ type FieldMapping struct {
 
 func (x *FieldMapping) Reset() {
 	*x = FieldMapping{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[50]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5698,7 +5869,7 @@ func (x *FieldMapping) String() string {
 func (*FieldMapping) ProtoMessage() {}
 
 func (x *FieldMapping) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[50]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5711,7 +5882,7 @@ func (x *FieldMapping) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FieldMapping.ProtoReflect.Descriptor instead.
 func (*FieldMapping) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{50}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *FieldMapping) GetFieldName() string {
@@ -5761,7 +5932,7 @@ type DryRunRequest struct {
 
 func (x *DryRunRequest) Reset() {
 	*x = DryRunRequest{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[51]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5773,7 +5944,7 @@ func (x *DryRunRequest) String() string {
 func (*DryRunRequest) ProtoMessage() {}
 
 func (x *DryRunRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[51]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5786,7 +5957,7 @@ func (x *DryRunRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DryRunRequest.ProtoReflect.Descriptor instead.
 func (*DryRunRequest) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{51}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *DryRunRequest) GetResource() *ResourceDescriptor {
@@ -5832,7 +6003,7 @@ type DryRunResponse struct {
 
 func (x *DryRunResponse) Reset() {
 	*x = DryRunResponse{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[52]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5844,7 +6015,7 @@ func (x *DryRunResponse) String() string {
 func (*DryRunResponse) ProtoMessage() {}
 
 func (x *DryRunResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[52]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5857,7 +6028,7 @@ func (x *DryRunResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DryRunResponse.ProtoReflect.Descriptor instead.
 func (*DryRunResponse) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{52}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *DryRunResponse) GetFieldMappings() []*FieldMapping {
@@ -5916,7 +6087,7 @@ type BatchCostRequest struct {
 
 func (x *BatchCostRequest) Reset() {
 	*x = BatchCostRequest{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[53]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5928,7 +6099,7 @@ func (x *BatchCostRequest) String() string {
 func (*BatchCostRequest) ProtoMessage() {}
 
 func (x *BatchCostRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[53]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5941,7 +6112,7 @@ func (x *BatchCostRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchCostRequest.ProtoReflect.Descriptor instead.
 func (*BatchCostRequest) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{53}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *BatchCostRequest) GetResources() []*ResourceDescriptor {
@@ -5993,7 +6164,7 @@ type BatchCostResponse struct {
 
 func (x *BatchCostResponse) Reset() {
 	*x = BatchCostResponse{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[54]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6005,7 +6176,7 @@ func (x *BatchCostResponse) String() string {
 func (*BatchCostResponse) ProtoMessage() {}
 
 func (x *BatchCostResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[54]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6018,7 +6189,7 @@ func (x *BatchCostResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchCostResponse.ProtoReflect.Descriptor instead.
 func (*BatchCostResponse) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{54}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *BatchCostResponse) GetResults() []*ResourceCostResult {
@@ -6054,7 +6225,7 @@ type ResourceCostResult struct {
 
 func (x *ResourceCostResult) Reset() {
 	*x = ResourceCostResult{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[55]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6066,7 +6237,7 @@ func (x *ResourceCostResult) String() string {
 func (*ResourceCostResult) ProtoMessage() {}
 
 func (x *ResourceCostResult) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[55]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6079,7 +6250,7 @@ func (x *ResourceCostResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourceCostResult.ProtoReflect.Descriptor instead.
 func (*ResourceCostResult) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{55}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *ResourceCostResult) GetResource() *ResourceDescriptor {
@@ -6149,7 +6320,7 @@ type CostData struct {
 
 func (x *CostData) Reset() {
 	*x = CostData{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[56]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6161,7 +6332,7 @@ func (x *CostData) String() string {
 func (*CostData) ProtoMessage() {}
 
 func (x *CostData) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[56]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6174,7 +6345,7 @@ func (x *CostData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CostData.ProtoReflect.Descriptor instead.
 func (*CostData) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{56}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *CostData) GetData() isCostData_Data {
@@ -6291,7 +6462,7 @@ type ActualCostData struct {
 
 func (x *ActualCostData) Reset() {
 	*x = ActualCostData{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[57]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6303,7 +6474,7 @@ func (x *ActualCostData) String() string {
 func (*ActualCostData) ProtoMessage() {}
 
 func (x *ActualCostData) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[57]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6316,7 +6487,7 @@ func (x *ActualCostData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActualCostData.ProtoReflect.Descriptor instead.
 func (*ActualCostData) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{57}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *ActualCostData) GetResults() []*ActualCostResult {
@@ -6366,7 +6537,7 @@ type ResourceError struct {
 
 func (x *ResourceError) Reset() {
 	*x = ResourceError{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[58]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6378,7 +6549,7 @@ func (x *ResourceError) String() string {
 func (*ResourceError) ProtoMessage() {}
 
 func (x *ResourceError) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[58]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6391,7 +6562,7 @@ func (x *ResourceError) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourceError.ProtoReflect.Descriptor instead.
 func (*ResourceError) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{58}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *ResourceError) GetCode() int32 {
@@ -6431,7 +6602,7 @@ type ResolveResourceTypesRequest struct {
 
 func (x *ResolveResourceTypesRequest) Reset() {
 	*x = ResolveResourceTypesRequest{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[59]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6443,7 +6614,7 @@ func (x *ResolveResourceTypesRequest) String() string {
 func (*ResolveResourceTypesRequest) ProtoMessage() {}
 
 func (x *ResolveResourceTypesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[59]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6456,7 +6627,7 @@ func (x *ResolveResourceTypesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveResourceTypesRequest.ProtoReflect.Descriptor instead.
 func (*ResolveResourceTypesRequest) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{59}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *ResolveResourceTypesRequest) GetSourceFormat() SourceFormat {
@@ -6503,7 +6674,7 @@ type ResolveResourceTypesResponse struct {
 
 func (x *ResolveResourceTypesResponse) Reset() {
 	*x = ResolveResourceTypesResponse{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[60]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6515,7 +6686,7 @@ func (x *ResolveResourceTypesResponse) String() string {
 func (*ResolveResourceTypesResponse) ProtoMessage() {}
 
 func (x *ResolveResourceTypesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[60]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6528,7 +6699,7 @@ func (x *ResolveResourceTypesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveResourceTypesResponse.ProtoReflect.Descriptor instead.
 func (*ResolveResourceTypesResponse) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{60}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *ResolveResourceTypesResponse) GetMappings() map[string]*ResourceTypeMapping {
@@ -6571,7 +6742,7 @@ type ResourceTypeMapping struct {
 
 func (x *ResourceTypeMapping) Reset() {
 	*x = ResourceTypeMapping{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[61]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6583,7 +6754,7 @@ func (x *ResourceTypeMapping) String() string {
 func (*ResourceTypeMapping) ProtoMessage() {}
 
 func (x *ResourceTypeMapping) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[61]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6596,7 +6767,7 @@ func (x *ResourceTypeMapping) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourceTypeMapping.ProtoReflect.Descriptor instead.
 func (*ResourceTypeMapping) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{61}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *ResourceTypeMapping) GetPulumiToken() string {
@@ -6706,7 +6877,16 @@ const file_finfocus_v1_costsource_proto_rawDesc = "" +
 	"\x15GetPricingSpecRequest\x12;\n" +
 	"\bresource\x18\x01 \x01(\v2\x1f.finfocus.v1.ResourceDescriptorR\bresource\"F\n" +
 	"\x16GetPricingSpecResponse\x12,\n" +
-	"\x04spec\x18\x01 \x01(\v2\x18.finfocus.v1.PricingSpecR\x04spec\"\xe0\x03\n" +
+	"\x04spec\x18\x01 \x01(\v2\x18.finfocus.v1.PricingSpecR\x04spec\"\x96\x02\n" +
+	"\vLineageNode\x120\n" +
+	"\x04type\x18\x01 \x01(\x0e2\x1c.finfocus.v1.LineageNodeTypeR\x04type\x12\x0e\n" +
+	"\x02id\x18\x02 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x120\n" +
+	"\x06parent\x18\x04 \x01(\v2\x18.finfocus.v1.LineageNodeR\x06parent\x12B\n" +
+	"\bmetadata\x18\x05 \x03(\v2&.finfocus.v1.LineageNode.MetadataEntryR\bmetadata\x1a;\n" +
+	"\rMetadataEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x94\x04\n" +
 	"\x12ResourceDescriptor\x12\x1a\n" +
 	"\bprovider\x18\x01 \x01(\tR\bprovider\x12#\n" +
 	"\rresource_type\x18\x02 \x01(\tR\fresourceType\x12\x10\n" +
@@ -6720,12 +6900,13 @@ const file_finfocus_v1_costsource_proto_rawDesc = "" +
 	"growthType\x12$\n" +
 	"\vgrowth_rate\x18\n" +
 	" \x01(\x01H\x01R\n" +
-	"growthRate\x88\x01\x01\x1a7\n" +
+	"growthRate\x88\x01\x01\x122\n" +
+	"\alineage\x18\v \x01(\v2\x18.finfocus.v1.LineageNodeR\alineage\x1a7\n" +
 	"\tTagsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x19\n" +
 	"\x17_utilization_percentageB\x0e\n" +
-	"\f_growth_rate\"\xf8\x02\n" +
+	"\f_growth_rate\"\xac\x03\n" +
 	"\x10ActualCostResult\x128\n" +
 	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x12\n" +
 	"\x04cost\x18\x02 \x01(\x01R\x04cost\x12!\n" +
@@ -6736,7 +6917,8 @@ const file_finfocus_v1_costsource_proto_rawDesc = "" +
 	"\ffocus_record\x18\x06 \x01(\v2\x1c.finfocus.v1.FocusCostRecordR\vfocusRecord\x12@\n" +
 	"\x0eimpact_metrics\x18\a \x03(\v2\x19.finfocus.v1.ImpactMetricR\rimpactMetrics\x129\n" +
 	"\n" +
-	"expires_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"=\n" +
+	"expires_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x122\n" +
+	"\alineage\x18\t \x01(\v2\x18.finfocus.v1.LineageNodeR\alineage\"=\n" +
 	"\x0fUsageMetricHint\x12\x16\n" +
 	"\x06metric\x18\x01 \x01(\tR\x06metric\x12\x12\n" +
 	"\x04unit\x18\x02 \x01(\tR\x04unit\"\xe5\x04\n" +
@@ -7255,7 +7437,7 @@ func file_finfocus_v1_costsource_proto_rawDescGZIP() []byte {
 }
 
 var file_finfocus_v1_costsource_proto_enumTypes = make([]protoimpl.EnumInfo, 13)
-var file_finfocus_v1_costsource_proto_msgTypes = make([]protoimpl.MessageInfo, 85)
+var file_finfocus_v1_costsource_proto_msgTypes = make([]protoimpl.MessageInfo, 87)
 var file_finfocus_v1_costsource_proto_goTypes = []any{
 	(MetricKind)(0),                           // 0: finfocus.v1.MetricKind
 	(FallbackHint)(0),                         // 1: finfocus.v1.FallbackHint
@@ -7281,256 +7463,264 @@ var file_finfocus_v1_costsource_proto_goTypes = []any{
 	(*GetProjectedCostResponse)(nil),          // 21: finfocus.v1.GetProjectedCostResponse
 	(*GetPricingSpecRequest)(nil),             // 22: finfocus.v1.GetPricingSpecRequest
 	(*GetPricingSpecResponse)(nil),            // 23: finfocus.v1.GetPricingSpecResponse
-	(*ResourceDescriptor)(nil),                // 24: finfocus.v1.ResourceDescriptor
-	(*ActualCostResult)(nil),                  // 25: finfocus.v1.ActualCostResult
-	(*UsageMetricHint)(nil),                   // 26: finfocus.v1.UsageMetricHint
-	(*PricingSpec)(nil),                       // 27: finfocus.v1.PricingSpec
-	(*PricingTier)(nil),                       // 28: finfocus.v1.PricingTier
-	(*ErrorDetail)(nil),                       // 29: finfocus.v1.ErrorDetail
-	(*HealthCheckRequest)(nil),                // 30: finfocus.v1.HealthCheckRequest
-	(*HealthCheckResponse)(nil),               // 31: finfocus.v1.HealthCheckResponse
-	(*GetMetricsRequest)(nil),                 // 32: finfocus.v1.GetMetricsRequest
-	(*GetMetricsResponse)(nil),                // 33: finfocus.v1.GetMetricsResponse
-	(*Metric)(nil),                            // 34: finfocus.v1.Metric
-	(*MetricSample)(nil),                      // 35: finfocus.v1.MetricSample
-	(*GetServiceLevelIndicatorsRequest)(nil),  // 36: finfocus.v1.GetServiceLevelIndicatorsRequest
-	(*GetServiceLevelIndicatorsResponse)(nil), // 37: finfocus.v1.GetServiceLevelIndicatorsResponse
-	(*ServiceLevelIndicator)(nil),             // 38: finfocus.v1.ServiceLevelIndicator
-	(*TimeRange)(nil),                         // 39: finfocus.v1.TimeRange
-	(*TelemetryMetadata)(nil),                 // 40: finfocus.v1.TelemetryMetadata
-	(*LogEntry)(nil),                          // 41: finfocus.v1.LogEntry
-	(*ErrorDetails)(nil),                      // 42: finfocus.v1.ErrorDetails
-	(*EstimateCostRequest)(nil),               // 43: finfocus.v1.EstimateCostRequest
-	(*EstimateCostResponse)(nil),              // 44: finfocus.v1.EstimateCostResponse
-	(*GetRecommendationsRequest)(nil),         // 45: finfocus.v1.GetRecommendationsRequest
-	(*GetRecommendationsResponse)(nil),        // 46: finfocus.v1.GetRecommendationsResponse
-	(*RecommendationFilter)(nil),              // 47: finfocus.v1.RecommendationFilter
-	(*Recommendation)(nil),                    // 48: finfocus.v1.Recommendation
-	(*ResourceRecommendationInfo)(nil),        // 49: finfocus.v1.ResourceRecommendationInfo
-	(*ResourceUtilization)(nil),               // 50: finfocus.v1.ResourceUtilization
-	(*RightsizeAction)(nil),                   // 51: finfocus.v1.RightsizeAction
-	(*TerminateAction)(nil),                   // 52: finfocus.v1.TerminateAction
-	(*CommitmentAction)(nil),                  // 53: finfocus.v1.CommitmentAction
-	(*KubernetesAction)(nil),                  // 54: finfocus.v1.KubernetesAction
-	(*KubernetesResources)(nil),               // 55: finfocus.v1.KubernetesResources
-	(*ModifyAction)(nil),                      // 56: finfocus.v1.ModifyAction
-	(*RecommendationImpact)(nil),              // 57: finfocus.v1.RecommendationImpact
-	(*RecommendationSummary)(nil),             // 58: finfocus.v1.RecommendationSummary
-	(*DismissRecommendationRequest)(nil),      // 59: finfocus.v1.DismissRecommendationRequest
-	(*DismissRecommendationResponse)(nil),     // 60: finfocus.v1.DismissRecommendationResponse
-	(*GetPluginInfoRequest)(nil),              // 61: finfocus.v1.GetPluginInfoRequest
-	(*GetPluginInfoResponse)(nil),             // 62: finfocus.v1.GetPluginInfoResponse
-	(*FieldMapping)(nil),                      // 63: finfocus.v1.FieldMapping
-	(*DryRunRequest)(nil),                     // 64: finfocus.v1.DryRunRequest
-	(*DryRunResponse)(nil),                    // 65: finfocus.v1.DryRunResponse
-	(*BatchCostRequest)(nil),                  // 66: finfocus.v1.BatchCostRequest
-	(*BatchCostResponse)(nil),                 // 67: finfocus.v1.BatchCostResponse
-	(*ResourceCostResult)(nil),                // 68: finfocus.v1.ResourceCostResult
-	(*CostData)(nil),                          // 69: finfocus.v1.CostData
-	(*ActualCostData)(nil),                    // 70: finfocus.v1.ActualCostData
-	(*ResourceError)(nil),                     // 71: finfocus.v1.ResourceError
-	(*ResolveResourceTypesRequest)(nil),       // 72: finfocus.v1.ResolveResourceTypesRequest
-	(*ResolveResourceTypesResponse)(nil),      // 73: finfocus.v1.ResolveResourceTypesResponse
-	(*ResourceTypeMapping)(nil),               // 74: finfocus.v1.ResourceTypeMapping
-	nil,                                       // 75: finfocus.v1.SupportsResponse.CapabilitiesEntry
-	nil,                                       // 76: finfocus.v1.GetActualCostRequest.TagsEntry
-	nil,                                       // 77: finfocus.v1.GetProjectedCostResponse.MetadataEntry
-	nil,                                       // 78: finfocus.v1.GetProjectedCostResponse.CostBreakdownEntry
-	nil,                                       // 79: finfocus.v1.ResourceDescriptor.TagsEntry
-	nil,                                       // 80: finfocus.v1.PricingSpec.PluginMetadataEntry
-	nil,                                       // 81: finfocus.v1.ErrorDetail.DetailsEntry
-	nil,                                       // 82: finfocus.v1.MetricSample.LabelsEntry
-	nil,                                       // 83: finfocus.v1.LogEntry.FieldsEntry
-	nil,                                       // 84: finfocus.v1.RecommendationFilter.TagsEntry
-	nil,                                       // 85: finfocus.v1.Recommendation.MetadataEntry
-	nil,                                       // 86: finfocus.v1.ResourceRecommendationInfo.TagsEntry
-	nil,                                       // 87: finfocus.v1.ResourceUtilization.CustomMetricsEntry
-	nil,                                       // 88: finfocus.v1.ModifyAction.CurrentConfigEntry
-	nil,                                       // 89: finfocus.v1.ModifyAction.RecommendedConfigEntry
-	nil,                                       // 90: finfocus.v1.RecommendationSummary.CountByCategoryEntry
-	nil,                                       // 91: finfocus.v1.RecommendationSummary.SavingsByCategoryEntry
-	nil,                                       // 92: finfocus.v1.RecommendationSummary.CountByActionTypeEntry
-	nil,                                       // 93: finfocus.v1.RecommendationSummary.SavingsByActionTypeEntry
-	nil,                                       // 94: finfocus.v1.GetPluginInfoResponse.MetadataEntry
-	nil,                                       // 95: finfocus.v1.DryRunRequest.SimulationParametersEntry
-	nil,                                       // 96: finfocus.v1.ResolveResourceTypesResponse.MappingsEntry
-	nil,                                       // 97: finfocus.v1.ResourceTypeMapping.PropertyMappingsEntry
-	(PluginCapability)(0),                     // 98: finfocus.v1.PluginCapability
-	(*timestamppb.Timestamp)(nil),             // 99: google.protobuf.Timestamp
-	(GrowthType)(0),                           // 100: finfocus.v1.GrowthType
-	(UsageProfile)(0),                         // 101: finfocus.v1.UsageProfile
-	(FocusPricingCategory)(0),                 // 102: finfocus.v1.FocusPricingCategory
-	(*FocusCostRecord)(nil),                   // 103: finfocus.v1.FocusCostRecord
-	(*structpb.Struct)(nil),                   // 104: google.protobuf.Struct
-	(RecommendationReason)(0),                 // 105: finfocus.v1.RecommendationReason
-	(FieldSupportStatus)(0),                   // 106: finfocus.v1.FieldSupportStatus
-	(CostQueryType)(0),                        // 107: finfocus.v1.CostQueryType
-	(SourceFormat)(0),                         // 108: finfocus.v1.SourceFormat
-	(*GetBudgetsRequest)(nil),                 // 109: finfocus.v1.GetBudgetsRequest
-	(*GetBudgetsResponse)(nil),                // 110: finfocus.v1.GetBudgetsResponse
+	(*LineageNode)(nil),                       // 24: finfocus.v1.LineageNode
+	(*ResourceDescriptor)(nil),                // 25: finfocus.v1.ResourceDescriptor
+	(*ActualCostResult)(nil),                  // 26: finfocus.v1.ActualCostResult
+	(*UsageMetricHint)(nil),                   // 27: finfocus.v1.UsageMetricHint
+	(*PricingSpec)(nil),                       // 28: finfocus.v1.PricingSpec
+	(*PricingTier)(nil),                       // 29: finfocus.v1.PricingTier
+	(*ErrorDetail)(nil),                       // 30: finfocus.v1.ErrorDetail
+	(*HealthCheckRequest)(nil),                // 31: finfocus.v1.HealthCheckRequest
+	(*HealthCheckResponse)(nil),               // 32: finfocus.v1.HealthCheckResponse
+	(*GetMetricsRequest)(nil),                 // 33: finfocus.v1.GetMetricsRequest
+	(*GetMetricsResponse)(nil),                // 34: finfocus.v1.GetMetricsResponse
+	(*Metric)(nil),                            // 35: finfocus.v1.Metric
+	(*MetricSample)(nil),                      // 36: finfocus.v1.MetricSample
+	(*GetServiceLevelIndicatorsRequest)(nil),  // 37: finfocus.v1.GetServiceLevelIndicatorsRequest
+	(*GetServiceLevelIndicatorsResponse)(nil), // 38: finfocus.v1.GetServiceLevelIndicatorsResponse
+	(*ServiceLevelIndicator)(nil),             // 39: finfocus.v1.ServiceLevelIndicator
+	(*TimeRange)(nil),                         // 40: finfocus.v1.TimeRange
+	(*TelemetryMetadata)(nil),                 // 41: finfocus.v1.TelemetryMetadata
+	(*LogEntry)(nil),                          // 42: finfocus.v1.LogEntry
+	(*ErrorDetails)(nil),                      // 43: finfocus.v1.ErrorDetails
+	(*EstimateCostRequest)(nil),               // 44: finfocus.v1.EstimateCostRequest
+	(*EstimateCostResponse)(nil),              // 45: finfocus.v1.EstimateCostResponse
+	(*GetRecommendationsRequest)(nil),         // 46: finfocus.v1.GetRecommendationsRequest
+	(*GetRecommendationsResponse)(nil),        // 47: finfocus.v1.GetRecommendationsResponse
+	(*RecommendationFilter)(nil),              // 48: finfocus.v1.RecommendationFilter
+	(*Recommendation)(nil),                    // 49: finfocus.v1.Recommendation
+	(*ResourceRecommendationInfo)(nil),        // 50: finfocus.v1.ResourceRecommendationInfo
+	(*ResourceUtilization)(nil),               // 51: finfocus.v1.ResourceUtilization
+	(*RightsizeAction)(nil),                   // 52: finfocus.v1.RightsizeAction
+	(*TerminateAction)(nil),                   // 53: finfocus.v1.TerminateAction
+	(*CommitmentAction)(nil),                  // 54: finfocus.v1.CommitmentAction
+	(*KubernetesAction)(nil),                  // 55: finfocus.v1.KubernetesAction
+	(*KubernetesResources)(nil),               // 56: finfocus.v1.KubernetesResources
+	(*ModifyAction)(nil),                      // 57: finfocus.v1.ModifyAction
+	(*RecommendationImpact)(nil),              // 58: finfocus.v1.RecommendationImpact
+	(*RecommendationSummary)(nil),             // 59: finfocus.v1.RecommendationSummary
+	(*DismissRecommendationRequest)(nil),      // 60: finfocus.v1.DismissRecommendationRequest
+	(*DismissRecommendationResponse)(nil),     // 61: finfocus.v1.DismissRecommendationResponse
+	(*GetPluginInfoRequest)(nil),              // 62: finfocus.v1.GetPluginInfoRequest
+	(*GetPluginInfoResponse)(nil),             // 63: finfocus.v1.GetPluginInfoResponse
+	(*FieldMapping)(nil),                      // 64: finfocus.v1.FieldMapping
+	(*DryRunRequest)(nil),                     // 65: finfocus.v1.DryRunRequest
+	(*DryRunResponse)(nil),                    // 66: finfocus.v1.DryRunResponse
+	(*BatchCostRequest)(nil),                  // 67: finfocus.v1.BatchCostRequest
+	(*BatchCostResponse)(nil),                 // 68: finfocus.v1.BatchCostResponse
+	(*ResourceCostResult)(nil),                // 69: finfocus.v1.ResourceCostResult
+	(*CostData)(nil),                          // 70: finfocus.v1.CostData
+	(*ActualCostData)(nil),                    // 71: finfocus.v1.ActualCostData
+	(*ResourceError)(nil),                     // 72: finfocus.v1.ResourceError
+	(*ResolveResourceTypesRequest)(nil),       // 73: finfocus.v1.ResolveResourceTypesRequest
+	(*ResolveResourceTypesResponse)(nil),      // 74: finfocus.v1.ResolveResourceTypesResponse
+	(*ResourceTypeMapping)(nil),               // 75: finfocus.v1.ResourceTypeMapping
+	nil,                                       // 76: finfocus.v1.SupportsResponse.CapabilitiesEntry
+	nil,                                       // 77: finfocus.v1.GetActualCostRequest.TagsEntry
+	nil,                                       // 78: finfocus.v1.GetProjectedCostResponse.MetadataEntry
+	nil,                                       // 79: finfocus.v1.GetProjectedCostResponse.CostBreakdownEntry
+	nil,                                       // 80: finfocus.v1.LineageNode.MetadataEntry
+	nil,                                       // 81: finfocus.v1.ResourceDescriptor.TagsEntry
+	nil,                                       // 82: finfocus.v1.PricingSpec.PluginMetadataEntry
+	nil,                                       // 83: finfocus.v1.ErrorDetail.DetailsEntry
+	nil,                                       // 84: finfocus.v1.MetricSample.LabelsEntry
+	nil,                                       // 85: finfocus.v1.LogEntry.FieldsEntry
+	nil,                                       // 86: finfocus.v1.RecommendationFilter.TagsEntry
+	nil,                                       // 87: finfocus.v1.Recommendation.MetadataEntry
+	nil,                                       // 88: finfocus.v1.ResourceRecommendationInfo.TagsEntry
+	nil,                                       // 89: finfocus.v1.ResourceUtilization.CustomMetricsEntry
+	nil,                                       // 90: finfocus.v1.ModifyAction.CurrentConfigEntry
+	nil,                                       // 91: finfocus.v1.ModifyAction.RecommendedConfigEntry
+	nil,                                       // 92: finfocus.v1.RecommendationSummary.CountByCategoryEntry
+	nil,                                       // 93: finfocus.v1.RecommendationSummary.SavingsByCategoryEntry
+	nil,                                       // 94: finfocus.v1.RecommendationSummary.CountByActionTypeEntry
+	nil,                                       // 95: finfocus.v1.RecommendationSummary.SavingsByActionTypeEntry
+	nil,                                       // 96: finfocus.v1.GetPluginInfoResponse.MetadataEntry
+	nil,                                       // 97: finfocus.v1.DryRunRequest.SimulationParametersEntry
+	nil,                                       // 98: finfocus.v1.ResolveResourceTypesResponse.MappingsEntry
+	nil,                                       // 99: finfocus.v1.ResourceTypeMapping.PropertyMappingsEntry
+	(PluginCapability)(0),                     // 100: finfocus.v1.PluginCapability
+	(*timestamppb.Timestamp)(nil),             // 101: google.protobuf.Timestamp
+	(GrowthType)(0),                           // 102: finfocus.v1.GrowthType
+	(UsageProfile)(0),                         // 103: finfocus.v1.UsageProfile
+	(FocusPricingCategory)(0),                 // 104: finfocus.v1.FocusPricingCategory
+	(LineageNodeType)(0),                      // 105: finfocus.v1.LineageNodeType
+	(*FocusCostRecord)(nil),                   // 106: finfocus.v1.FocusCostRecord
+	(*structpb.Struct)(nil),                   // 107: google.protobuf.Struct
+	(RecommendationReason)(0),                 // 108: finfocus.v1.RecommendationReason
+	(FieldSupportStatus)(0),                   // 109: finfocus.v1.FieldSupportStatus
+	(CostQueryType)(0),                        // 110: finfocus.v1.CostQueryType
+	(SourceFormat)(0),                         // 111: finfocus.v1.SourceFormat
+	(*GetBudgetsRequest)(nil),                 // 112: finfocus.v1.GetBudgetsRequest
+	(*GetBudgetsResponse)(nil),                // 113: finfocus.v1.GetBudgetsResponse
 }
 var file_finfocus_v1_costsource_proto_depIdxs = []int32{
 	0,   // 0: finfocus.v1.ImpactMetric.kind:type_name -> finfocus.v1.MetricKind
-	24,  // 1: finfocus.v1.SupportsRequest.resource:type_name -> finfocus.v1.ResourceDescriptor
-	75,  // 2: finfocus.v1.SupportsResponse.capabilities:type_name -> finfocus.v1.SupportsResponse.CapabilitiesEntry
+	25,  // 1: finfocus.v1.SupportsRequest.resource:type_name -> finfocus.v1.ResourceDescriptor
+	76,  // 2: finfocus.v1.SupportsResponse.capabilities:type_name -> finfocus.v1.SupportsResponse.CapabilitiesEntry
 	0,   // 3: finfocus.v1.SupportsResponse.supported_metrics:type_name -> finfocus.v1.MetricKind
-	98,  // 4: finfocus.v1.SupportsResponse.capabilities_enum:type_name -> finfocus.v1.PluginCapability
-	99,  // 5: finfocus.v1.GetActualCostRequest.start:type_name -> google.protobuf.Timestamp
-	99,  // 6: finfocus.v1.GetActualCostRequest.end:type_name -> google.protobuf.Timestamp
-	76,  // 7: finfocus.v1.GetActualCostRequest.tags:type_name -> finfocus.v1.GetActualCostRequest.TagsEntry
-	25,  // 8: finfocus.v1.GetActualCostResponse.results:type_name -> finfocus.v1.ActualCostResult
+	100, // 4: finfocus.v1.SupportsResponse.capabilities_enum:type_name -> finfocus.v1.PluginCapability
+	101, // 5: finfocus.v1.GetActualCostRequest.start:type_name -> google.protobuf.Timestamp
+	101, // 6: finfocus.v1.GetActualCostRequest.end:type_name -> google.protobuf.Timestamp
+	77,  // 7: finfocus.v1.GetActualCostRequest.tags:type_name -> finfocus.v1.GetActualCostRequest.TagsEntry
+	26,  // 8: finfocus.v1.GetActualCostResponse.results:type_name -> finfocus.v1.ActualCostResult
 	1,   // 9: finfocus.v1.GetActualCostResponse.fallback_hint:type_name -> finfocus.v1.FallbackHint
-	65,  // 10: finfocus.v1.GetActualCostResponse.dry_run_result:type_name -> finfocus.v1.DryRunResponse
-	24,  // 11: finfocus.v1.GetProjectedCostRequest.resource:type_name -> finfocus.v1.ResourceDescriptor
-	100, // 12: finfocus.v1.GetProjectedCostRequest.growth_type:type_name -> finfocus.v1.GrowthType
-	101, // 13: finfocus.v1.GetProjectedCostRequest.usage_profile:type_name -> finfocus.v1.UsageProfile
+	66,  // 10: finfocus.v1.GetActualCostResponse.dry_run_result:type_name -> finfocus.v1.DryRunResponse
+	25,  // 11: finfocus.v1.GetProjectedCostRequest.resource:type_name -> finfocus.v1.ResourceDescriptor
+	102, // 12: finfocus.v1.GetProjectedCostRequest.growth_type:type_name -> finfocus.v1.GrowthType
+	103, // 13: finfocus.v1.GetProjectedCostRequest.usage_profile:type_name -> finfocus.v1.UsageProfile
 	15,  // 14: finfocus.v1.GetProjectedCostResponse.impact_metrics:type_name -> finfocus.v1.ImpactMetric
-	100, // 15: finfocus.v1.GetProjectedCostResponse.growth_type:type_name -> finfocus.v1.GrowthType
-	65,  // 16: finfocus.v1.GetProjectedCostResponse.dry_run_result:type_name -> finfocus.v1.DryRunResponse
-	102, // 17: finfocus.v1.GetProjectedCostResponse.pricing_category:type_name -> finfocus.v1.FocusPricingCategory
-	99,  // 18: finfocus.v1.GetProjectedCostResponse.expires_at:type_name -> google.protobuf.Timestamp
-	77,  // 19: finfocus.v1.GetProjectedCostResponse.metadata:type_name -> finfocus.v1.GetProjectedCostResponse.MetadataEntry
-	78,  // 20: finfocus.v1.GetProjectedCostResponse.cost_breakdown:type_name -> finfocus.v1.GetProjectedCostResponse.CostBreakdownEntry
-	24,  // 21: finfocus.v1.GetPricingSpecRequest.resource:type_name -> finfocus.v1.ResourceDescriptor
-	27,  // 22: finfocus.v1.GetPricingSpecResponse.spec:type_name -> finfocus.v1.PricingSpec
-	79,  // 23: finfocus.v1.ResourceDescriptor.tags:type_name -> finfocus.v1.ResourceDescriptor.TagsEntry
-	100, // 24: finfocus.v1.ResourceDescriptor.growth_type:type_name -> finfocus.v1.GrowthType
-	99,  // 25: finfocus.v1.ActualCostResult.timestamp:type_name -> google.protobuf.Timestamp
-	103, // 26: finfocus.v1.ActualCostResult.focus_record:type_name -> finfocus.v1.FocusCostRecord
-	15,  // 27: finfocus.v1.ActualCostResult.impact_metrics:type_name -> finfocus.v1.ImpactMetric
-	99,  // 28: finfocus.v1.ActualCostResult.expires_at:type_name -> google.protobuf.Timestamp
-	26,  // 29: finfocus.v1.PricingSpec.metric_hints:type_name -> finfocus.v1.UsageMetricHint
-	80,  // 30: finfocus.v1.PricingSpec.plugin_metadata:type_name -> finfocus.v1.PricingSpec.PluginMetadataEntry
-	28,  // 31: finfocus.v1.PricingSpec.pricing_tiers:type_name -> finfocus.v1.PricingTier
-	3,   // 32: finfocus.v1.ErrorDetail.code:type_name -> finfocus.v1.ErrorCode
-	2,   // 33: finfocus.v1.ErrorDetail.category:type_name -> finfocus.v1.ErrorCategory
-	81,  // 34: finfocus.v1.ErrorDetail.details:type_name -> finfocus.v1.ErrorDetail.DetailsEntry
-	99,  // 35: finfocus.v1.ErrorDetail.timestamp:type_name -> google.protobuf.Timestamp
-	12,  // 36: finfocus.v1.HealthCheckResponse.status:type_name -> finfocus.v1.HealthCheckResponse.Status
-	99,  // 37: finfocus.v1.HealthCheckResponse.last_check_time:type_name -> google.protobuf.Timestamp
-	34,  // 38: finfocus.v1.GetMetricsResponse.metrics:type_name -> finfocus.v1.Metric
-	99,  // 39: finfocus.v1.GetMetricsResponse.timestamp:type_name -> google.protobuf.Timestamp
-	4,   // 40: finfocus.v1.Metric.type:type_name -> finfocus.v1.MetricType
-	35,  // 41: finfocus.v1.Metric.samples:type_name -> finfocus.v1.MetricSample
-	82,  // 42: finfocus.v1.MetricSample.labels:type_name -> finfocus.v1.MetricSample.LabelsEntry
-	99,  // 43: finfocus.v1.MetricSample.timestamp:type_name -> google.protobuf.Timestamp
-	39,  // 44: finfocus.v1.GetServiceLevelIndicatorsRequest.time_range:type_name -> finfocus.v1.TimeRange
-	38,  // 45: finfocus.v1.GetServiceLevelIndicatorsResponse.slis:type_name -> finfocus.v1.ServiceLevelIndicator
-	99,  // 46: finfocus.v1.GetServiceLevelIndicatorsResponse.measurement_time:type_name -> google.protobuf.Timestamp
-	5,   // 47: finfocus.v1.ServiceLevelIndicator.status:type_name -> finfocus.v1.SLIStatus
-	99,  // 48: finfocus.v1.TimeRange.start:type_name -> google.protobuf.Timestamp
-	99,  // 49: finfocus.v1.TimeRange.end:type_name -> google.protobuf.Timestamp
-	99,  // 50: finfocus.v1.LogEntry.timestamp:type_name -> google.protobuf.Timestamp
-	83,  // 51: finfocus.v1.LogEntry.fields:type_name -> finfocus.v1.LogEntry.FieldsEntry
-	42,  // 52: finfocus.v1.LogEntry.error_details:type_name -> finfocus.v1.ErrorDetails
-	104, // 53: finfocus.v1.EstimateCostRequest.attributes:type_name -> google.protobuf.Struct
-	102, // 54: finfocus.v1.EstimateCostResponse.pricing_category:type_name -> finfocus.v1.FocusPricingCategory
-	99,  // 55: finfocus.v1.EstimateCostResponse.expires_at:type_name -> google.protobuf.Timestamp
-	47,  // 56: finfocus.v1.GetRecommendationsRequest.filter:type_name -> finfocus.v1.RecommendationFilter
-	24,  // 57: finfocus.v1.GetRecommendationsRequest.target_resources:type_name -> finfocus.v1.ResourceDescriptor
-	101, // 58: finfocus.v1.GetRecommendationsRequest.usage_profile:type_name -> finfocus.v1.UsageProfile
-	48,  // 59: finfocus.v1.GetRecommendationsResponse.recommendations:type_name -> finfocus.v1.Recommendation
-	58,  // 60: finfocus.v1.GetRecommendationsResponse.summary:type_name -> finfocus.v1.RecommendationSummary
-	6,   // 61: finfocus.v1.RecommendationFilter.category:type_name -> finfocus.v1.RecommendationCategory
-	7,   // 62: finfocus.v1.RecommendationFilter.action_type:type_name -> finfocus.v1.RecommendationActionType
-	84,  // 63: finfocus.v1.RecommendationFilter.tags:type_name -> finfocus.v1.RecommendationFilter.TagsEntry
-	8,   // 64: finfocus.v1.RecommendationFilter.priority:type_name -> finfocus.v1.RecommendationPriority
-	9,   // 65: finfocus.v1.RecommendationFilter.sort_by:type_name -> finfocus.v1.RecommendationSortBy
-	10,  // 66: finfocus.v1.RecommendationFilter.sort_order:type_name -> finfocus.v1.SortOrder
-	6,   // 67: finfocus.v1.Recommendation.category:type_name -> finfocus.v1.RecommendationCategory
-	7,   // 68: finfocus.v1.Recommendation.action_type:type_name -> finfocus.v1.RecommendationActionType
-	49,  // 69: finfocus.v1.Recommendation.resource:type_name -> finfocus.v1.ResourceRecommendationInfo
-	51,  // 70: finfocus.v1.Recommendation.rightsize:type_name -> finfocus.v1.RightsizeAction
-	52,  // 71: finfocus.v1.Recommendation.terminate:type_name -> finfocus.v1.TerminateAction
-	53,  // 72: finfocus.v1.Recommendation.commitment:type_name -> finfocus.v1.CommitmentAction
-	54,  // 73: finfocus.v1.Recommendation.kubernetes:type_name -> finfocus.v1.KubernetesAction
-	56,  // 74: finfocus.v1.Recommendation.modify:type_name -> finfocus.v1.ModifyAction
-	57,  // 75: finfocus.v1.Recommendation.impact:type_name -> finfocus.v1.RecommendationImpact
-	8,   // 76: finfocus.v1.Recommendation.priority:type_name -> finfocus.v1.RecommendationPriority
-	99,  // 77: finfocus.v1.Recommendation.created_at:type_name -> google.protobuf.Timestamp
-	85,  // 78: finfocus.v1.Recommendation.metadata:type_name -> finfocus.v1.Recommendation.MetadataEntry
-	105, // 79: finfocus.v1.Recommendation.primary_reason:type_name -> finfocus.v1.RecommendationReason
-	105, // 80: finfocus.v1.Recommendation.secondary_reasons:type_name -> finfocus.v1.RecommendationReason
-	86,  // 81: finfocus.v1.ResourceRecommendationInfo.tags:type_name -> finfocus.v1.ResourceRecommendationInfo.TagsEntry
-	50,  // 82: finfocus.v1.ResourceRecommendationInfo.utilization:type_name -> finfocus.v1.ResourceUtilization
-	87,  // 83: finfocus.v1.ResourceUtilization.custom_metrics:type_name -> finfocus.v1.ResourceUtilization.CustomMetricsEntry
-	50,  // 84: finfocus.v1.RightsizeAction.projected_utilization:type_name -> finfocus.v1.ResourceUtilization
-	55,  // 85: finfocus.v1.KubernetesAction.current_requests:type_name -> finfocus.v1.KubernetesResources
-	55,  // 86: finfocus.v1.KubernetesAction.recommended_requests:type_name -> finfocus.v1.KubernetesResources
-	55,  // 87: finfocus.v1.KubernetesAction.current_limits:type_name -> finfocus.v1.KubernetesResources
-	55,  // 88: finfocus.v1.KubernetesAction.recommended_limits:type_name -> finfocus.v1.KubernetesResources
-	88,  // 89: finfocus.v1.ModifyAction.current_config:type_name -> finfocus.v1.ModifyAction.CurrentConfigEntry
-	89,  // 90: finfocus.v1.ModifyAction.recommended_config:type_name -> finfocus.v1.ModifyAction.RecommendedConfigEntry
-	90,  // 91: finfocus.v1.RecommendationSummary.count_by_category:type_name -> finfocus.v1.RecommendationSummary.CountByCategoryEntry
-	91,  // 92: finfocus.v1.RecommendationSummary.savings_by_category:type_name -> finfocus.v1.RecommendationSummary.SavingsByCategoryEntry
-	92,  // 93: finfocus.v1.RecommendationSummary.count_by_action_type:type_name -> finfocus.v1.RecommendationSummary.CountByActionTypeEntry
-	93,  // 94: finfocus.v1.RecommendationSummary.savings_by_action_type:type_name -> finfocus.v1.RecommendationSummary.SavingsByActionTypeEntry
-	11,  // 95: finfocus.v1.DismissRecommendationRequest.reason:type_name -> finfocus.v1.DismissalReason
-	99,  // 96: finfocus.v1.DismissRecommendationRequest.expires_at:type_name -> google.protobuf.Timestamp
-	99,  // 97: finfocus.v1.DismissRecommendationResponse.dismissed_at:type_name -> google.protobuf.Timestamp
-	99,  // 98: finfocus.v1.DismissRecommendationResponse.expires_at:type_name -> google.protobuf.Timestamp
-	94,  // 99: finfocus.v1.GetPluginInfoResponse.metadata:type_name -> finfocus.v1.GetPluginInfoResponse.MetadataEntry
-	98,  // 100: finfocus.v1.GetPluginInfoResponse.capabilities:type_name -> finfocus.v1.PluginCapability
-	106, // 101: finfocus.v1.FieldMapping.support_status:type_name -> finfocus.v1.FieldSupportStatus
-	24,  // 102: finfocus.v1.DryRunRequest.resource:type_name -> finfocus.v1.ResourceDescriptor
-	95,  // 103: finfocus.v1.DryRunRequest.simulation_parameters:type_name -> finfocus.v1.DryRunRequest.SimulationParametersEntry
-	63,  // 104: finfocus.v1.DryRunResponse.field_mappings:type_name -> finfocus.v1.FieldMapping
-	24,  // 105: finfocus.v1.BatchCostRequest.resources:type_name -> finfocus.v1.ResourceDescriptor
-	107, // 106: finfocus.v1.BatchCostRequest.query_type:type_name -> finfocus.v1.CostQueryType
-	99,  // 107: finfocus.v1.BatchCostRequest.start:type_name -> google.protobuf.Timestamp
-	99,  // 108: finfocus.v1.BatchCostRequest.end:type_name -> google.protobuf.Timestamp
-	68,  // 109: finfocus.v1.BatchCostResponse.results:type_name -> finfocus.v1.ResourceCostResult
-	24,  // 110: finfocus.v1.ResourceCostResult.resource:type_name -> finfocus.v1.ResourceDescriptor
-	69,  // 111: finfocus.v1.ResourceCostResult.cost_data:type_name -> finfocus.v1.CostData
-	71,  // 112: finfocus.v1.ResourceCostResult.error:type_name -> finfocus.v1.ResourceError
-	70,  // 113: finfocus.v1.CostData.actual_cost:type_name -> finfocus.v1.ActualCostData
-	21,  // 114: finfocus.v1.CostData.projected_cost:type_name -> finfocus.v1.GetProjectedCostResponse
-	44,  // 115: finfocus.v1.CostData.estimate:type_name -> finfocus.v1.EstimateCostResponse
-	65,  // 116: finfocus.v1.CostData.dry_run_result:type_name -> finfocus.v1.DryRunResponse
-	25,  // 117: finfocus.v1.ActualCostData.results:type_name -> finfocus.v1.ActualCostResult
-	1,   // 118: finfocus.v1.ActualCostData.fallback_hint:type_name -> finfocus.v1.FallbackHint
-	108, // 119: finfocus.v1.ResolveResourceTypesRequest.source_format:type_name -> finfocus.v1.SourceFormat
-	96,  // 120: finfocus.v1.ResolveResourceTypesResponse.mappings:type_name -> finfocus.v1.ResolveResourceTypesResponse.MappingsEntry
-	99,  // 121: finfocus.v1.ResolveResourceTypesResponse.expires_at:type_name -> google.protobuf.Timestamp
-	97,  // 122: finfocus.v1.ResourceTypeMapping.property_mappings:type_name -> finfocus.v1.ResourceTypeMapping.PropertyMappingsEntry
-	74,  // 123: finfocus.v1.ResolveResourceTypesResponse.MappingsEntry.value:type_name -> finfocus.v1.ResourceTypeMapping
-	13,  // 124: finfocus.v1.CostSourceService.Name:input_type -> finfocus.v1.NameRequest
-	16,  // 125: finfocus.v1.CostSourceService.Supports:input_type -> finfocus.v1.SupportsRequest
-	18,  // 126: finfocus.v1.CostSourceService.GetActualCost:input_type -> finfocus.v1.GetActualCostRequest
-	20,  // 127: finfocus.v1.CostSourceService.GetProjectedCost:input_type -> finfocus.v1.GetProjectedCostRequest
-	22,  // 128: finfocus.v1.CostSourceService.GetPricingSpec:input_type -> finfocus.v1.GetPricingSpecRequest
-	43,  // 129: finfocus.v1.CostSourceService.EstimateCost:input_type -> finfocus.v1.EstimateCostRequest
-	45,  // 130: finfocus.v1.CostSourceService.GetRecommendations:input_type -> finfocus.v1.GetRecommendationsRequest
-	59,  // 131: finfocus.v1.CostSourceService.DismissRecommendation:input_type -> finfocus.v1.DismissRecommendationRequest
-	109, // 132: finfocus.v1.CostSourceService.GetBudgets:input_type -> finfocus.v1.GetBudgetsRequest
-	61,  // 133: finfocus.v1.CostSourceService.GetPluginInfo:input_type -> finfocus.v1.GetPluginInfoRequest
-	64,  // 134: finfocus.v1.CostSourceService.DryRun:input_type -> finfocus.v1.DryRunRequest
-	66,  // 135: finfocus.v1.CostSourceService.BatchCost:input_type -> finfocus.v1.BatchCostRequest
-	72,  // 136: finfocus.v1.CostSourceService.ResolveResourceTypes:input_type -> finfocus.v1.ResolveResourceTypesRequest
-	30,  // 137: finfocus.v1.ObservabilityService.HealthCheck:input_type -> finfocus.v1.HealthCheckRequest
-	32,  // 138: finfocus.v1.ObservabilityService.GetMetrics:input_type -> finfocus.v1.GetMetricsRequest
-	36,  // 139: finfocus.v1.ObservabilityService.GetServiceLevelIndicators:input_type -> finfocus.v1.GetServiceLevelIndicatorsRequest
-	14,  // 140: finfocus.v1.CostSourceService.Name:output_type -> finfocus.v1.NameResponse
-	17,  // 141: finfocus.v1.CostSourceService.Supports:output_type -> finfocus.v1.SupportsResponse
-	19,  // 142: finfocus.v1.CostSourceService.GetActualCost:output_type -> finfocus.v1.GetActualCostResponse
-	21,  // 143: finfocus.v1.CostSourceService.GetProjectedCost:output_type -> finfocus.v1.GetProjectedCostResponse
-	23,  // 144: finfocus.v1.CostSourceService.GetPricingSpec:output_type -> finfocus.v1.GetPricingSpecResponse
-	44,  // 145: finfocus.v1.CostSourceService.EstimateCost:output_type -> finfocus.v1.EstimateCostResponse
-	46,  // 146: finfocus.v1.CostSourceService.GetRecommendations:output_type -> finfocus.v1.GetRecommendationsResponse
-	60,  // 147: finfocus.v1.CostSourceService.DismissRecommendation:output_type -> finfocus.v1.DismissRecommendationResponse
-	110, // 148: finfocus.v1.CostSourceService.GetBudgets:output_type -> finfocus.v1.GetBudgetsResponse
-	62,  // 149: finfocus.v1.CostSourceService.GetPluginInfo:output_type -> finfocus.v1.GetPluginInfoResponse
-	65,  // 150: finfocus.v1.CostSourceService.DryRun:output_type -> finfocus.v1.DryRunResponse
-	67,  // 151: finfocus.v1.CostSourceService.BatchCost:output_type -> finfocus.v1.BatchCostResponse
-	73,  // 152: finfocus.v1.CostSourceService.ResolveResourceTypes:output_type -> finfocus.v1.ResolveResourceTypesResponse
-	31,  // 153: finfocus.v1.ObservabilityService.HealthCheck:output_type -> finfocus.v1.HealthCheckResponse
-	33,  // 154: finfocus.v1.ObservabilityService.GetMetrics:output_type -> finfocus.v1.GetMetricsResponse
-	37,  // 155: finfocus.v1.ObservabilityService.GetServiceLevelIndicators:output_type -> finfocus.v1.GetServiceLevelIndicatorsResponse
-	140, // [140:156] is the sub-list for method output_type
-	124, // [124:140] is the sub-list for method input_type
-	124, // [124:124] is the sub-list for extension type_name
-	124, // [124:124] is the sub-list for extension extendee
-	0,   // [0:124] is the sub-list for field type_name
+	102, // 15: finfocus.v1.GetProjectedCostResponse.growth_type:type_name -> finfocus.v1.GrowthType
+	66,  // 16: finfocus.v1.GetProjectedCostResponse.dry_run_result:type_name -> finfocus.v1.DryRunResponse
+	104, // 17: finfocus.v1.GetProjectedCostResponse.pricing_category:type_name -> finfocus.v1.FocusPricingCategory
+	101, // 18: finfocus.v1.GetProjectedCostResponse.expires_at:type_name -> google.protobuf.Timestamp
+	78,  // 19: finfocus.v1.GetProjectedCostResponse.metadata:type_name -> finfocus.v1.GetProjectedCostResponse.MetadataEntry
+	79,  // 20: finfocus.v1.GetProjectedCostResponse.cost_breakdown:type_name -> finfocus.v1.GetProjectedCostResponse.CostBreakdownEntry
+	25,  // 21: finfocus.v1.GetPricingSpecRequest.resource:type_name -> finfocus.v1.ResourceDescriptor
+	28,  // 22: finfocus.v1.GetPricingSpecResponse.spec:type_name -> finfocus.v1.PricingSpec
+	105, // 23: finfocus.v1.LineageNode.type:type_name -> finfocus.v1.LineageNodeType
+	24,  // 24: finfocus.v1.LineageNode.parent:type_name -> finfocus.v1.LineageNode
+	80,  // 25: finfocus.v1.LineageNode.metadata:type_name -> finfocus.v1.LineageNode.MetadataEntry
+	81,  // 26: finfocus.v1.ResourceDescriptor.tags:type_name -> finfocus.v1.ResourceDescriptor.TagsEntry
+	102, // 27: finfocus.v1.ResourceDescriptor.growth_type:type_name -> finfocus.v1.GrowthType
+	24,  // 28: finfocus.v1.ResourceDescriptor.lineage:type_name -> finfocus.v1.LineageNode
+	101, // 29: finfocus.v1.ActualCostResult.timestamp:type_name -> google.protobuf.Timestamp
+	106, // 30: finfocus.v1.ActualCostResult.focus_record:type_name -> finfocus.v1.FocusCostRecord
+	15,  // 31: finfocus.v1.ActualCostResult.impact_metrics:type_name -> finfocus.v1.ImpactMetric
+	101, // 32: finfocus.v1.ActualCostResult.expires_at:type_name -> google.protobuf.Timestamp
+	24,  // 33: finfocus.v1.ActualCostResult.lineage:type_name -> finfocus.v1.LineageNode
+	27,  // 34: finfocus.v1.PricingSpec.metric_hints:type_name -> finfocus.v1.UsageMetricHint
+	82,  // 35: finfocus.v1.PricingSpec.plugin_metadata:type_name -> finfocus.v1.PricingSpec.PluginMetadataEntry
+	29,  // 36: finfocus.v1.PricingSpec.pricing_tiers:type_name -> finfocus.v1.PricingTier
+	3,   // 37: finfocus.v1.ErrorDetail.code:type_name -> finfocus.v1.ErrorCode
+	2,   // 38: finfocus.v1.ErrorDetail.category:type_name -> finfocus.v1.ErrorCategory
+	83,  // 39: finfocus.v1.ErrorDetail.details:type_name -> finfocus.v1.ErrorDetail.DetailsEntry
+	101, // 40: finfocus.v1.ErrorDetail.timestamp:type_name -> google.protobuf.Timestamp
+	12,  // 41: finfocus.v1.HealthCheckResponse.status:type_name -> finfocus.v1.HealthCheckResponse.Status
+	101, // 42: finfocus.v1.HealthCheckResponse.last_check_time:type_name -> google.protobuf.Timestamp
+	35,  // 43: finfocus.v1.GetMetricsResponse.metrics:type_name -> finfocus.v1.Metric
+	101, // 44: finfocus.v1.GetMetricsResponse.timestamp:type_name -> google.protobuf.Timestamp
+	4,   // 45: finfocus.v1.Metric.type:type_name -> finfocus.v1.MetricType
+	36,  // 46: finfocus.v1.Metric.samples:type_name -> finfocus.v1.MetricSample
+	84,  // 47: finfocus.v1.MetricSample.labels:type_name -> finfocus.v1.MetricSample.LabelsEntry
+	101, // 48: finfocus.v1.MetricSample.timestamp:type_name -> google.protobuf.Timestamp
+	40,  // 49: finfocus.v1.GetServiceLevelIndicatorsRequest.time_range:type_name -> finfocus.v1.TimeRange
+	39,  // 50: finfocus.v1.GetServiceLevelIndicatorsResponse.slis:type_name -> finfocus.v1.ServiceLevelIndicator
+	101, // 51: finfocus.v1.GetServiceLevelIndicatorsResponse.measurement_time:type_name -> google.protobuf.Timestamp
+	5,   // 52: finfocus.v1.ServiceLevelIndicator.status:type_name -> finfocus.v1.SLIStatus
+	101, // 53: finfocus.v1.TimeRange.start:type_name -> google.protobuf.Timestamp
+	101, // 54: finfocus.v1.TimeRange.end:type_name -> google.protobuf.Timestamp
+	101, // 55: finfocus.v1.LogEntry.timestamp:type_name -> google.protobuf.Timestamp
+	85,  // 56: finfocus.v1.LogEntry.fields:type_name -> finfocus.v1.LogEntry.FieldsEntry
+	43,  // 57: finfocus.v1.LogEntry.error_details:type_name -> finfocus.v1.ErrorDetails
+	107, // 58: finfocus.v1.EstimateCostRequest.attributes:type_name -> google.protobuf.Struct
+	104, // 59: finfocus.v1.EstimateCostResponse.pricing_category:type_name -> finfocus.v1.FocusPricingCategory
+	101, // 60: finfocus.v1.EstimateCostResponse.expires_at:type_name -> google.protobuf.Timestamp
+	48,  // 61: finfocus.v1.GetRecommendationsRequest.filter:type_name -> finfocus.v1.RecommendationFilter
+	25,  // 62: finfocus.v1.GetRecommendationsRequest.target_resources:type_name -> finfocus.v1.ResourceDescriptor
+	103, // 63: finfocus.v1.GetRecommendationsRequest.usage_profile:type_name -> finfocus.v1.UsageProfile
+	49,  // 64: finfocus.v1.GetRecommendationsResponse.recommendations:type_name -> finfocus.v1.Recommendation
+	59,  // 65: finfocus.v1.GetRecommendationsResponse.summary:type_name -> finfocus.v1.RecommendationSummary
+	6,   // 66: finfocus.v1.RecommendationFilter.category:type_name -> finfocus.v1.RecommendationCategory
+	7,   // 67: finfocus.v1.RecommendationFilter.action_type:type_name -> finfocus.v1.RecommendationActionType
+	86,  // 68: finfocus.v1.RecommendationFilter.tags:type_name -> finfocus.v1.RecommendationFilter.TagsEntry
+	8,   // 69: finfocus.v1.RecommendationFilter.priority:type_name -> finfocus.v1.RecommendationPriority
+	9,   // 70: finfocus.v1.RecommendationFilter.sort_by:type_name -> finfocus.v1.RecommendationSortBy
+	10,  // 71: finfocus.v1.RecommendationFilter.sort_order:type_name -> finfocus.v1.SortOrder
+	6,   // 72: finfocus.v1.Recommendation.category:type_name -> finfocus.v1.RecommendationCategory
+	7,   // 73: finfocus.v1.Recommendation.action_type:type_name -> finfocus.v1.RecommendationActionType
+	50,  // 74: finfocus.v1.Recommendation.resource:type_name -> finfocus.v1.ResourceRecommendationInfo
+	52,  // 75: finfocus.v1.Recommendation.rightsize:type_name -> finfocus.v1.RightsizeAction
+	53,  // 76: finfocus.v1.Recommendation.terminate:type_name -> finfocus.v1.TerminateAction
+	54,  // 77: finfocus.v1.Recommendation.commitment:type_name -> finfocus.v1.CommitmentAction
+	55,  // 78: finfocus.v1.Recommendation.kubernetes:type_name -> finfocus.v1.KubernetesAction
+	57,  // 79: finfocus.v1.Recommendation.modify:type_name -> finfocus.v1.ModifyAction
+	58,  // 80: finfocus.v1.Recommendation.impact:type_name -> finfocus.v1.RecommendationImpact
+	8,   // 81: finfocus.v1.Recommendation.priority:type_name -> finfocus.v1.RecommendationPriority
+	101, // 82: finfocus.v1.Recommendation.created_at:type_name -> google.protobuf.Timestamp
+	87,  // 83: finfocus.v1.Recommendation.metadata:type_name -> finfocus.v1.Recommendation.MetadataEntry
+	108, // 84: finfocus.v1.Recommendation.primary_reason:type_name -> finfocus.v1.RecommendationReason
+	108, // 85: finfocus.v1.Recommendation.secondary_reasons:type_name -> finfocus.v1.RecommendationReason
+	88,  // 86: finfocus.v1.ResourceRecommendationInfo.tags:type_name -> finfocus.v1.ResourceRecommendationInfo.TagsEntry
+	51,  // 87: finfocus.v1.ResourceRecommendationInfo.utilization:type_name -> finfocus.v1.ResourceUtilization
+	89,  // 88: finfocus.v1.ResourceUtilization.custom_metrics:type_name -> finfocus.v1.ResourceUtilization.CustomMetricsEntry
+	51,  // 89: finfocus.v1.RightsizeAction.projected_utilization:type_name -> finfocus.v1.ResourceUtilization
+	56,  // 90: finfocus.v1.KubernetesAction.current_requests:type_name -> finfocus.v1.KubernetesResources
+	56,  // 91: finfocus.v1.KubernetesAction.recommended_requests:type_name -> finfocus.v1.KubernetesResources
+	56,  // 92: finfocus.v1.KubernetesAction.current_limits:type_name -> finfocus.v1.KubernetesResources
+	56,  // 93: finfocus.v1.KubernetesAction.recommended_limits:type_name -> finfocus.v1.KubernetesResources
+	90,  // 94: finfocus.v1.ModifyAction.current_config:type_name -> finfocus.v1.ModifyAction.CurrentConfigEntry
+	91,  // 95: finfocus.v1.ModifyAction.recommended_config:type_name -> finfocus.v1.ModifyAction.RecommendedConfigEntry
+	92,  // 96: finfocus.v1.RecommendationSummary.count_by_category:type_name -> finfocus.v1.RecommendationSummary.CountByCategoryEntry
+	93,  // 97: finfocus.v1.RecommendationSummary.savings_by_category:type_name -> finfocus.v1.RecommendationSummary.SavingsByCategoryEntry
+	94,  // 98: finfocus.v1.RecommendationSummary.count_by_action_type:type_name -> finfocus.v1.RecommendationSummary.CountByActionTypeEntry
+	95,  // 99: finfocus.v1.RecommendationSummary.savings_by_action_type:type_name -> finfocus.v1.RecommendationSummary.SavingsByActionTypeEntry
+	11,  // 100: finfocus.v1.DismissRecommendationRequest.reason:type_name -> finfocus.v1.DismissalReason
+	101, // 101: finfocus.v1.DismissRecommendationRequest.expires_at:type_name -> google.protobuf.Timestamp
+	101, // 102: finfocus.v1.DismissRecommendationResponse.dismissed_at:type_name -> google.protobuf.Timestamp
+	101, // 103: finfocus.v1.DismissRecommendationResponse.expires_at:type_name -> google.protobuf.Timestamp
+	96,  // 104: finfocus.v1.GetPluginInfoResponse.metadata:type_name -> finfocus.v1.GetPluginInfoResponse.MetadataEntry
+	100, // 105: finfocus.v1.GetPluginInfoResponse.capabilities:type_name -> finfocus.v1.PluginCapability
+	109, // 106: finfocus.v1.FieldMapping.support_status:type_name -> finfocus.v1.FieldSupportStatus
+	25,  // 107: finfocus.v1.DryRunRequest.resource:type_name -> finfocus.v1.ResourceDescriptor
+	97,  // 108: finfocus.v1.DryRunRequest.simulation_parameters:type_name -> finfocus.v1.DryRunRequest.SimulationParametersEntry
+	64,  // 109: finfocus.v1.DryRunResponse.field_mappings:type_name -> finfocus.v1.FieldMapping
+	25,  // 110: finfocus.v1.BatchCostRequest.resources:type_name -> finfocus.v1.ResourceDescriptor
+	110, // 111: finfocus.v1.BatchCostRequest.query_type:type_name -> finfocus.v1.CostQueryType
+	101, // 112: finfocus.v1.BatchCostRequest.start:type_name -> google.protobuf.Timestamp
+	101, // 113: finfocus.v1.BatchCostRequest.end:type_name -> google.protobuf.Timestamp
+	69,  // 114: finfocus.v1.BatchCostResponse.results:type_name -> finfocus.v1.ResourceCostResult
+	25,  // 115: finfocus.v1.ResourceCostResult.resource:type_name -> finfocus.v1.ResourceDescriptor
+	70,  // 116: finfocus.v1.ResourceCostResult.cost_data:type_name -> finfocus.v1.CostData
+	72,  // 117: finfocus.v1.ResourceCostResult.error:type_name -> finfocus.v1.ResourceError
+	71,  // 118: finfocus.v1.CostData.actual_cost:type_name -> finfocus.v1.ActualCostData
+	21,  // 119: finfocus.v1.CostData.projected_cost:type_name -> finfocus.v1.GetProjectedCostResponse
+	45,  // 120: finfocus.v1.CostData.estimate:type_name -> finfocus.v1.EstimateCostResponse
+	66,  // 121: finfocus.v1.CostData.dry_run_result:type_name -> finfocus.v1.DryRunResponse
+	26,  // 122: finfocus.v1.ActualCostData.results:type_name -> finfocus.v1.ActualCostResult
+	1,   // 123: finfocus.v1.ActualCostData.fallback_hint:type_name -> finfocus.v1.FallbackHint
+	111, // 124: finfocus.v1.ResolveResourceTypesRequest.source_format:type_name -> finfocus.v1.SourceFormat
+	98,  // 125: finfocus.v1.ResolveResourceTypesResponse.mappings:type_name -> finfocus.v1.ResolveResourceTypesResponse.MappingsEntry
+	101, // 126: finfocus.v1.ResolveResourceTypesResponse.expires_at:type_name -> google.protobuf.Timestamp
+	99,  // 127: finfocus.v1.ResourceTypeMapping.property_mappings:type_name -> finfocus.v1.ResourceTypeMapping.PropertyMappingsEntry
+	75,  // 128: finfocus.v1.ResolveResourceTypesResponse.MappingsEntry.value:type_name -> finfocus.v1.ResourceTypeMapping
+	13,  // 129: finfocus.v1.CostSourceService.Name:input_type -> finfocus.v1.NameRequest
+	16,  // 130: finfocus.v1.CostSourceService.Supports:input_type -> finfocus.v1.SupportsRequest
+	18,  // 131: finfocus.v1.CostSourceService.GetActualCost:input_type -> finfocus.v1.GetActualCostRequest
+	20,  // 132: finfocus.v1.CostSourceService.GetProjectedCost:input_type -> finfocus.v1.GetProjectedCostRequest
+	22,  // 133: finfocus.v1.CostSourceService.GetPricingSpec:input_type -> finfocus.v1.GetPricingSpecRequest
+	44,  // 134: finfocus.v1.CostSourceService.EstimateCost:input_type -> finfocus.v1.EstimateCostRequest
+	46,  // 135: finfocus.v1.CostSourceService.GetRecommendations:input_type -> finfocus.v1.GetRecommendationsRequest
+	60,  // 136: finfocus.v1.CostSourceService.DismissRecommendation:input_type -> finfocus.v1.DismissRecommendationRequest
+	112, // 137: finfocus.v1.CostSourceService.GetBudgets:input_type -> finfocus.v1.GetBudgetsRequest
+	62,  // 138: finfocus.v1.CostSourceService.GetPluginInfo:input_type -> finfocus.v1.GetPluginInfoRequest
+	65,  // 139: finfocus.v1.CostSourceService.DryRun:input_type -> finfocus.v1.DryRunRequest
+	67,  // 140: finfocus.v1.CostSourceService.BatchCost:input_type -> finfocus.v1.BatchCostRequest
+	73,  // 141: finfocus.v1.CostSourceService.ResolveResourceTypes:input_type -> finfocus.v1.ResolveResourceTypesRequest
+	31,  // 142: finfocus.v1.ObservabilityService.HealthCheck:input_type -> finfocus.v1.HealthCheckRequest
+	33,  // 143: finfocus.v1.ObservabilityService.GetMetrics:input_type -> finfocus.v1.GetMetricsRequest
+	37,  // 144: finfocus.v1.ObservabilityService.GetServiceLevelIndicators:input_type -> finfocus.v1.GetServiceLevelIndicatorsRequest
+	14,  // 145: finfocus.v1.CostSourceService.Name:output_type -> finfocus.v1.NameResponse
+	17,  // 146: finfocus.v1.CostSourceService.Supports:output_type -> finfocus.v1.SupportsResponse
+	19,  // 147: finfocus.v1.CostSourceService.GetActualCost:output_type -> finfocus.v1.GetActualCostResponse
+	21,  // 148: finfocus.v1.CostSourceService.GetProjectedCost:output_type -> finfocus.v1.GetProjectedCostResponse
+	23,  // 149: finfocus.v1.CostSourceService.GetPricingSpec:output_type -> finfocus.v1.GetPricingSpecResponse
+	45,  // 150: finfocus.v1.CostSourceService.EstimateCost:output_type -> finfocus.v1.EstimateCostResponse
+	47,  // 151: finfocus.v1.CostSourceService.GetRecommendations:output_type -> finfocus.v1.GetRecommendationsResponse
+	61,  // 152: finfocus.v1.CostSourceService.DismissRecommendation:output_type -> finfocus.v1.DismissRecommendationResponse
+	113, // 153: finfocus.v1.CostSourceService.GetBudgets:output_type -> finfocus.v1.GetBudgetsResponse
+	63,  // 154: finfocus.v1.CostSourceService.GetPluginInfo:output_type -> finfocus.v1.GetPluginInfoResponse
+	66,  // 155: finfocus.v1.CostSourceService.DryRun:output_type -> finfocus.v1.DryRunResponse
+	68,  // 156: finfocus.v1.CostSourceService.BatchCost:output_type -> finfocus.v1.BatchCostResponse
+	74,  // 157: finfocus.v1.CostSourceService.ResolveResourceTypes:output_type -> finfocus.v1.ResolveResourceTypesResponse
+	32,  // 158: finfocus.v1.ObservabilityService.HealthCheck:output_type -> finfocus.v1.HealthCheckResponse
+	34,  // 159: finfocus.v1.ObservabilityService.GetMetrics:output_type -> finfocus.v1.GetMetricsResponse
+	38,  // 160: finfocus.v1.ObservabilityService.GetServiceLevelIndicators:output_type -> finfocus.v1.GetServiceLevelIndicatorsResponse
+	145, // [145:161] is the sub-list for method output_type
+	129, // [129:145] is the sub-list for method input_type
+	129, // [129:129] is the sub-list for extension type_name
+	129, // [129:129] is the sub-list for extension extendee
+	0,   // [0:129] is the sub-list for field type_name
 }
 
 func init() { file_finfocus_v1_costsource_proto_init() }
@@ -7543,23 +7733,23 @@ func file_finfocus_v1_costsource_proto_init() {
 	file_finfocus_v1_enums_proto_init()
 	file_finfocus_v1_costsource_proto_msgTypes[7].OneofWrappers = []any{}
 	file_finfocus_v1_costsource_proto_msgTypes[8].OneofWrappers = []any{}
-	file_finfocus_v1_costsource_proto_msgTypes[11].OneofWrappers = []any{}
-	file_finfocus_v1_costsource_proto_msgTypes[16].OneofWrappers = []any{}
-	file_finfocus_v1_costsource_proto_msgTypes[35].OneofWrappers = []any{
+	file_finfocus_v1_costsource_proto_msgTypes[12].OneofWrappers = []any{}
+	file_finfocus_v1_costsource_proto_msgTypes[17].OneofWrappers = []any{}
+	file_finfocus_v1_costsource_proto_msgTypes[36].OneofWrappers = []any{
 		(*Recommendation_Rightsize)(nil),
 		(*Recommendation_Terminate)(nil),
 		(*Recommendation_Commitment)(nil),
 		(*Recommendation_Kubernetes)(nil),
 		(*Recommendation_Modify)(nil),
 	}
-	file_finfocus_v1_costsource_proto_msgTypes[44].OneofWrappers = []any{}
-	file_finfocus_v1_costsource_proto_msgTypes[46].OneofWrappers = []any{}
+	file_finfocus_v1_costsource_proto_msgTypes[45].OneofWrappers = []any{}
 	file_finfocus_v1_costsource_proto_msgTypes[47].OneofWrappers = []any{}
-	file_finfocus_v1_costsource_proto_msgTypes[55].OneofWrappers = []any{
+	file_finfocus_v1_costsource_proto_msgTypes[48].OneofWrappers = []any{}
+	file_finfocus_v1_costsource_proto_msgTypes[56].OneofWrappers = []any{
 		(*ResourceCostResult_CostData)(nil),
 		(*ResourceCostResult_Error)(nil),
 	}
-	file_finfocus_v1_costsource_proto_msgTypes[56].OneofWrappers = []any{
+	file_finfocus_v1_costsource_proto_msgTypes[57].OneofWrappers = []any{
 		(*CostData_ActualCost)(nil),
 		(*CostData_ProjectedCost)(nil),
 		(*CostData_Estimate)(nil),
@@ -7571,7 +7761,7 @@ func file_finfocus_v1_costsource_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_finfocus_v1_costsource_proto_rawDesc), len(file_finfocus_v1_costsource_proto_rawDesc)),
 			NumEnums:      13,
-			NumMessages:   85,
+			NumMessages:   87,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

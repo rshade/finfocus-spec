@@ -572,6 +572,61 @@ message GetPricingSpecResponse {
   PricingSpec spec = 1;
 }
 
+// LineageNode represents one level in a cost allocation lineage chain.
+// Nodes form a singly-linked list from leaf (the resource itself) up toward
+// the organizational root via the parent pointer.
+//
+// Pass-Through Semantics:
+//   - Lineage data is reported by plugins and passed through verbatim by hosts.
+//   - Hosts MUST NOT infer missing parents or synthesize chain levels.
+//   - Hosts MUST NOT validate node ids against provider APIs.
+//   - Hosts MUST NOT cross-check nodes against billing_account_id or
+//     sub_account_id fields; FOCUS account fields remain the canonical source
+//     for two-level attribution, and disagreement is NOT an error.
+//   - Partial chains are valid: a chain may stop at any level and may skip
+//     level types.
+//
+// Depth Note:
+//   - The parent field is a nested message encoding; practical protobuf
+//     recursion limits apply to very deep chains. Implementations SHOULD keep
+//     chains to a reasonable organizational depth (typically under 10 levels).
+//
+// Example chain (leaf first, walking parent pointers toward the root):
+//   resource "i-0abc123" (RESOURCE)
+//     -> "123456789012" (SUB_ACCOUNT)
+//     -> "999988887777" (BILLING_ACCOUNT)
+//     -> "o-exampleorg" (ORGANIZATION, parent = null)
+message LineageNode {
+  // type classifies this level of the hierarchy.
+  // REQUIRED for well-formed chains. LINEAGE_NODE_TYPE_UNSPECIFIED indicates
+  // an incomplete implementation.
+  LineageNodeType type = 1;
+
+  // id is the provider-specific identifier for this hierarchy level.
+  // RECOMMENDED. Treated as an opaque string; hosts MUST NOT validate the
+  // format or existence of this id against provider APIs.
+  // Examples: "o-exampleorg" (AWS Org), "123456789012" (AWS account),
+  // "my-resource-group" (Azure RG), "my-gcp-project" (GCP Project).
+  string id = 2;
+
+  // name is the human-readable display name for this hierarchy level.
+  // OPTIONAL. May be empty when only the id is known.
+  // Examples: "Engineering OU", "Production Account", "platform-team".
+  string name = 3;
+
+  // parent links to the next level up toward the organizational root.
+  // OPTIONAL. A nil parent marks the top of the reported chain (typically the
+  // organization, but partial chains may stop at any level).
+  // Hosts MUST NOT infer or synthesize a missing parent.
+  LineageNode parent = 4;
+
+  // metadata carries provider-specific attributes for this level.
+  // OPTIONAL. Keys are not standardized; common examples include
+  // "owner_email", "cost_center", "environment", "level_kind".
+  // Both keys and values should be non-empty when provided.
+  map<string, string> metadata = 5;
+}
+
 // ResourceDescriptor describes a cloud resource for cost analysis.
 // This message defines the contract between Core and Plugins for resource identification.
 //
@@ -738,6 +793,21 @@ message ResourceDescriptor {
   // In generated Go code, check presence with:
   //   if desc.GrowthRate != nil { rate := *desc.GrowthRate }
   optional double growth_rate = 10;
+
+  // lineage is the optional cost allocation lineage chain for this resource.
+  // OPTIONAL. When set, the chain starts at the resource level (leaf, type
+  // LINEAGE_NODE_TYPE_RESOURCE) and links upward toward the organization via
+  // LineageNode.parent pointers.
+  //
+  // Pass-Through Semantics:
+  //   - Plugins report lineage; hosts pass it through verbatim.
+  //   - Hosts MUST NOT infer missing parents, MUST NOT validate ids against
+  //     provider APIs, and MUST NOT treat disagreement with billing_account_id
+  //     or sub_account_id as an error (FOCUS fields remain canonical).
+  //   - Partial chains are valid (e.g., resource -> sub-account only).
+  //
+  // See LineageNode for the full semantics and depth guidance.
+  LineageNode lineage = 11;
 }
 
 // ActualCostResult represents a single cost data point.
@@ -774,6 +844,30 @@ message ActualCostResult {
   //   - Billing cycle alignment: Set to end of current billing period
   //   - Real-time sources: Leave unset (no caching)
   google.protobuf.Timestamp expires_at = 8;
+
+  // lineage is the optional cost allocation lineage chain for the resource
+  // this cost data point belongs to.
+  // OPTIONAL. When set, the chain starts at the resource level (leaf, type
+  // LINEAGE_NODE_TYPE_RESOURCE) and links upward toward the organization via
+  // LineageNode.parent pointers.
+  //
+  // Use Cases:
+  //   - Hierarchical cost aggregation: roll costs up by any chain level
+  //     (e.g., per organizational unit, per billing account).
+  //   - Drill-down: navigate from an organization-level total down to the
+  //     contributing resources.
+  //   - Chargeback/showback grouping beyond the two-level FOCUS model.
+  //
+  // Pass-Through Semantics:
+  //   - Plugins report lineage; hosts pass it through verbatim.
+  //   - Hosts MUST NOT infer missing parents, MUST NOT validate ids against
+  //     provider APIs, and MUST NOT treat omission of or disagreement with
+  //     billing_account_id or sub_account_id as an error (FOCUS fields remain
+  //     canonical).
+  //   - Partial chains are valid (e.g., resource -> sub-account only).
+  //
+  // See LineageNode for the full semantics and depth guidance.
+  LineageNode lineage = 9;
 }
 
 // UsageMetricHint provides guidance on usage metrics for cost calculation.

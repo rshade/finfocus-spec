@@ -11,7 +11,7 @@
 
 ## Code Style
 
-- **Go version**: 1.25.5
+- **Go version**: 1.27.1 (per go.mod)
 - **Formatting**: `goimports` + `golines` (120 char lines)
 - **Linting**: 120+ linters via golangci-lint (see `.golangci.yml`)
 - **Imports**: Standard library first, then third-party, then local
@@ -29,6 +29,9 @@
 - Sanitize secrets in examples
 
 ## Active Technologies
+
+- Go 1.27.1 (go.mod) + google.golang.org/protobuf (protojson, protocmp in tests) (055-cost-allocation-lineage)
+- N/A (wire contract and in-memory builder only) (055-cost-allocation-lineage)
 
 - Go 1.25.5 + Go standard library (errors, fmt) (047-validation-error-integration)
 - N/A (in-memory validation only) (047-validation-error-integration)
@@ -49,6 +52,7 @@
 
 ## Recent Changes
 
+- 055-cost-allocation-lineage: Added Go 1.27.1 (go.mod) + google.golang.org/protobuf (protojson, protocmp in tests)
 - 001-get-budgets-rpc: Added Go 1.25.5 (per go.mod) + gRPC, protobuf, buf v1.32.1
 
 ## Common Issues & Solutions
