@@ -14,6 +14,8 @@ error handling.
 - **Framework Integration** - Ready-to-use adapters for Express, Fastify, and NestJS
 - **Usage Sources** - `UsageSourceClient` for workload CPU/memory usage (`UsageSourceService.GetStats`)
 - **Allocators** - `AllocatorClient` for splitting priced nodes across workloads (`AllocatorService.Allocate`)
+- **Supplemental Datasets** - `SupplementalDatasetClient` for FOCUS contract commitments
+  (`SupplementalDatasetService.GetContractCommitments`)
 
 ## Packages
 
@@ -252,6 +254,42 @@ try {
 Errors arrive as `ConnectError` with the code the allocator returned; a bad policy is
 `Code.InvalidArgument` naming the field's path. The client does not validate requests or check
 conservation.
+
+### SupplementalDatasetClient
+
+Calls plugins that serve `SupplementalDatasetService` and advertise
+`PluginCapability.CONTRACT_COMMITMENTS`. See
+[docs/supplemental-datasets.md](../../docs/supplemental-datasets.md) for window matching and
+pagination.
+
+```typescript
+import { create } from "@bufbuild/protobuf";
+import { timestampFromDate } from "@bufbuild/protobuf/wkt";
+import {
+  GetContractCommitmentsRequestSchema,
+  SupplementalDatasetClient,
+} from "@rshade/finfocus-client";
+
+const client = new SupplementalDatasetClient({ baseUrl: "https://billing-plugin.example.com" });
+
+// One page
+const page = await client.getContractCommitments(
+  create(GetContractCommitmentsRequestSchema, { pageSize: 100 }),
+);
+
+// Every commitment active in June 2025, across all pages
+const request = create(GetContractCommitmentsRequestSchema, {
+  start: timestampFromDate(new Date("2025-06-01T00:00:00Z")),
+  end: timestampFromDate(new Date("2025-07-01T00:00:00Z")),
+});
+for await (const commitment of client.contractCommitments(request)) {
+  console.log(commitment.contractCommitmentId, commitment.contractCommitmentCost);
+}
+```
+
+`contractCommitments` clones the request, uses a page size of 50 when none is set, and throws
+after 10 consecutive empty pages that still carry a token. Errors arrive as `ConnectError` with the
+plugin's code.
 
 ### Pagination
 

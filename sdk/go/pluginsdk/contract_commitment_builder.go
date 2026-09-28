@@ -1,14 +1,12 @@
 package pluginsdk
 
 import (
-	"errors"
-	"fmt"
 	"time"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/rshade/finfocus-spec/sdk/go/currency"
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
+	plugintesting "github.com/rshade/finfocus-spec/sdk/go/testing"
 )
 
 // ContractCommitmentBuilder handles the construction of FOCUS 1.3 ContractCommitment records.
@@ -125,7 +123,8 @@ func (b *ContractCommitmentBuilder) WithCurrency(currencyCode string) *ContractC
 }
 
 // Build validates and returns the constructed ContractCommitment record.
-// Returns an error if required fields are missing or validation rules are violated.
+// Returns an error if required fields are missing or validation rules are
+// violated; the rules are those of ValidateContractCommitment.
 func (b *ContractCommitmentBuilder) Build() (*pbc.ContractCommitment, error) {
 	if err := b.validate(); err != nil {
 		return nil, err
@@ -133,75 +132,8 @@ func (b *ContractCommitmentBuilder) Build() (*pbc.ContractCommitment, error) {
 	return b.record, nil
 }
 
-// validate checks all validation rules for the ContractCommitment record.
+// validate checks the record with ValidateContractCommitment, the rule set
+// hosts and the conformance suite also apply.
 func (b *ContractCommitmentBuilder) validate() error {
-	// Required fields validation
-	if b.record.GetContractCommitmentId() == "" {
-		return errors.New("contract_commitment_id is required")
-	}
-	if b.record.GetContractId() == "" {
-		return errors.New("contract_id is required")
-	}
-	if b.record.GetBillingCurrency() == "" {
-		return errors.New("billing_currency is required")
-	}
-
-	// Category validation - must be explicitly set to SPEND or USAGE
-	category := b.record.GetContractCommitmentCategory()
-	if category != pbc.FocusContractCommitmentCategory_FOCUS_CONTRACT_COMMITMENT_CATEGORY_SPEND &&
-		category != pbc.FocusContractCommitmentCategory_FOCUS_CONTRACT_COMMITMENT_CATEGORY_USAGE {
-		return fmt.Errorf("contract_commitment_category must be SPEND or USAGE, got %v", category)
-	}
-
-	// Currency validation using existing ISO 4217 validator
-	if !currency.IsValid(b.record.GetBillingCurrency()) {
-		return fmt.Errorf(
-			"billing_currency must be a valid ISO 4217 currency code, got %q",
-			b.record.GetBillingCurrency(),
-		)
-	}
-
-	// Period consistency validation
-	if err := b.validatePeriods(); err != nil {
-		return err
-	}
-
-	// Non-negative value validation
-	if b.record.GetContractCommitmentCost() < 0 {
-		return errors.New("contract_commitment_cost must be non-negative")
-	}
-	if b.record.GetContractCommitmentQuantity() < 0 {
-		return errors.New("contract_commitment_quantity must be non-negative")
-	}
-
-	return nil
-}
-
-// validatePeriods ensures period end >= period start for both commitment and contract periods.
-func (b *ContractCommitmentBuilder) validatePeriods() error {
-	// Validate commitment period if both are set
-	if b.record.GetContractCommitmentPeriodStart() != nil && b.record.GetContractCommitmentPeriodEnd() != nil {
-		start := b.record.GetContractCommitmentPeriodStart().AsTime()
-		end := b.record.GetContractCommitmentPeriodEnd().AsTime()
-		if end.Before(start) {
-			return fmt.Errorf(
-				"contract_commitment_period_end (%s) must be >= contract_commitment_period_start (%s)",
-				end.Format(time.RFC3339), start.Format(time.RFC3339),
-			)
-		}
-	}
-
-	// Validate contract period if both are set
-	if b.record.GetContractPeriodStart() != nil && b.record.GetContractPeriodEnd() != nil {
-		start := b.record.GetContractPeriodStart().AsTime()
-		end := b.record.GetContractPeriodEnd().AsTime()
-		if end.Before(start) {
-			return fmt.Errorf(
-				"contract_period_end (%s) must be >= contract_period_start (%s)",
-				end.Format(time.RFC3339), start.Format(time.RFC3339),
-			)
-		}
-	}
-
-	return nil
+	return plugintesting.ValidateContractCommitment(b.record)
 }

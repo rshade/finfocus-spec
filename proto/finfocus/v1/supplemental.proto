@@ -1,0 +1,85 @@
+// Copyright 2026 The FinFocus Authors
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package finfocus.v1;
+
+option go_package = "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1;pbc";
+
+import "google/protobuf/timestamp.proto";
+import "finfocus/v1/focus.proto";
+
+// SupplementalDatasetService is implemented by plugins that deliver FOCUS
+// supplemental datasets: records that sit beside Cost and Usage rows and join
+// to them by key. Each dataset has its own RPC and its own plugin capability,
+// so a plugin serves only the datasets it has. Stage A defines Contract
+// Commitment (FOCUS 1.3); PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS advertises it.
+//
+// Every call returns the source's current view of the requested records
+// (FOCUS Replacement / Overwrite semantics): a host replaces what it holds for
+// the same window rather than appending.
+//
+// Error semantics:
+//   - INVALID_ARGUMENT: only one of start/end is set, a timestamp is invalid,
+//     end is not after start, page_size is negative, or page_token was not
+//     issued by this source.
+//   - PERMISSION_DENIED: credentials lack a required permission.
+//   - UNAUTHENTICATED: no usable credentials.
+service SupplementalDatasetService {
+  // GetContractCommitments returns a page of FOCUS Contract Commitment records
+  // whose period overlaps the requested window.
+  rpc GetContractCommitments(GetContractCommitmentsRequest) returns (GetContractCommitmentsResponse);
+}
+
+// GetContractCommitmentsRequest selects commitments by time window and page.
+//
+// Window matching: a commitment's period is its contract commitment period
+// when either contract_commitment_period_start or _end is set, otherwise its
+// contract period. Periods and the window are half-open [start, end). An unset
+// period bound is open-ended, and a commitment with no period bounds matches
+// every window. A commitment matches when its period overlaps the window.
+message GetContractCommitmentsRequest {
+  // Start of the window (inclusive). Leave both start and end unset to
+  // request every commitment; setting exactly one is INVALID_ARGUMENT.
+  google.protobuf.Timestamp start = 1;
+
+  // End of the window (exclusive). Must be after start.
+  google.protobuf.Timestamp end = 2;
+
+  // Maximum number of commitments to return. 0 means the default of 50;
+  // values above 1000 are served as 1000; negative values are
+  // INVALID_ARGUMENT. There is no "return everything" mode.
+  int32 page_size = 3;
+
+  // Continuation token from a previous response's next_page_token; empty for
+  // the first page. Tokens are OPAQUE: clients pass them back verbatim with
+  // the same start, end, and page_size, and never construct them.
+  string page_token = 4;
+}
+
+// GetContractCommitmentsResponse carries one page of commitments.
+message GetContractCommitmentsResponse {
+  // Commitments on this page, in an order that is stable across calls. Each
+  // record is valid by the SDK's ContractCommitment rules, and
+  // contract_commitment_id is unique within the response and across the pages
+  // of one walk.
+  repeated ContractCommitment commitments = 1;
+
+  // Token for the next page; empty on the last page. OPAQUE.
+  string next_page_token = 2;
+
+  // Exact number of commitments matching the window across all pages; 0 only
+  // when none match.
+  int32 total_count = 3;
+}

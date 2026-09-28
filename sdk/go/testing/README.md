@@ -448,6 +448,43 @@ that accepts any key.
 `NewAllocatorHarness(impl)` with `Start(t)`, `Client()`, and `Stop()` serves an allocator for your
 own tests, like `UsageSourceHarness`.
 
+### Contract Commitment Testing
+
+Rules for `SupplementalDatasetService.GetContractCommitments` live here, because this package
+cannot import `pluginsdk`; the `pluginsdk` functions of the same names delegate to them. Every
+failure wraps one sentinel (`ErrInvalidContractCommitment`, `ErrInvalidContractCommitmentsRequest`,
+or `ErrInvalidContractCommitmentsResponse`) and carries `codes.InvalidArgument`.
+
+- `ValidateContractCommitment(c)`: the rules `ContractCommitmentBuilder.Build` applies, with the
+  builder's messages.
+- `ValidateGetContractCommitmentsRequest(req)`: `start` and `end` set together or not at all,
+  valid, and `end` after `start`; `page_size` not negative.
+- `ContractCommitmentMatchesWindow(c, start, end)`: overlap with the half-open window.
+- `PaginateContractCommitments(list, pageSize, pageToken)`: one page, next token, and total.
+- `ValidateGetContractCommitmentsResponse(req, resp)`: page size bound, valid records matching the
+  window, unique IDs, and `total_count`.
+
+#### `MockContractCommitmentSource`
+
+The reference producer. `NewMockContractCommitmentSource(commitments)` rejects nil, invalid, or
+duplicate commitments, so it never serves data that fails the validators above. It is a separate
+type rather than a `MockPlugin` method, so `MockPlugin`'s capabilities do not change.
+
+#### Contract Commitment Conformance
+
+```go
+func TestCommitmentConformance(t *testing.T) {
+    plugintesting.RunContractCommitmentConformance(t, myPlugin)
+}
+```
+
+`RunContractCommitmentConformance` serves the implementation over a `ContractCommitmentHarness`
+(bufconn) and runs seven source-agnostic subtests: `full_walk`, `stable_order`, `window_filter`,
+`window_one_bound`, `window_inverted`, `negative_page_size`, and `malformed_page_token`. They
+check the source's own data for consistency (valid pages, no duplicates across pages, an exact
+`total_count`, stable order, window matching) and that bad requests fail with InvalidArgument, so
+they pass for an empty source too.
+
 ### FOCUS Record Validation (Contextual FinOps)
 
 The `pluginsdk` package provides comprehensive FOCUS 1.2/1.3 validation for cost records:

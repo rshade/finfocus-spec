@@ -191,6 +191,8 @@ enum PluginCapability {
   PLUGIN_CAPABILITY_USAGE_STATS = 14;
   // Plugin implements AllocatorService.Allocate.
   PLUGIN_CAPABILITY_ALLOCATION = 15;
+  // Plugin implements SupplementalDatasetService.GetContractCommitments.
+  PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS = 16;
 }
 
 // UsageProfile represents the intended workload context for cost estimation.
