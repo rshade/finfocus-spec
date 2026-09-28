@@ -4,7 +4,7 @@ go 1.27.1
 
 require (
 	connectrpc.com/connect v1.21.0
-	connectrpc.com/grpchealth v1.4.0
+	connectrpc.com/grpchealth v1.5.0
 	github.com/google/go-cmp v0.7.0
 	github.com/prometheus/client_golang v1.24.1
 	github.com/prometheus/client_model v0.6.3
