@@ -35,6 +35,11 @@ type ValidationError struct {
 	// ExpectedValue is a string representation of what was expected.
 	ExpectedValue string
 
+	// TraceID is the host trace id for this failure, when the gRPC interceptor
+	// has one. Empty when the error was built outside a traced call.
+	// A non-empty value is appended to Error().
+	TraceID string
+
 	// err is the wrapped inner error for error chain support.
 	// When set, Unwrap() returns this error, enabling errors.Is() chain traversal.
 	// Unexported to prevent callers from mutating the error chain directly.
@@ -71,9 +76,14 @@ func NewValidationErrorWithCause(
 
 // Error implements the error interface.
 // Format: "{FieldName}: {Constraint} (actual: {ActualValue}, expected: {ExpectedValue})".
+// When TraceID is set, the text ends with " trace_id=<id>".
 func (e *ValidationError) Error() string {
-	return fmt.Sprintf("%s: %s (actual: %s, expected: %s)",
+	msg := fmt.Sprintf("%s: %s (actual: %s, expected: %s)",
 		e.FieldName, e.Constraint, e.ActualValue, e.ExpectedValue)
+	if e.TraceID == "" {
+		return msg
+	}
+	return msg + " trace_id=" + e.TraceID
 }
 
 // Unwrap returns the wrapped inner error, enabling errors.Is() and errors.As()

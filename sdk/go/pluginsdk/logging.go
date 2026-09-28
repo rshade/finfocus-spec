@@ -2,6 +2,7 @@ package pluginsdk
 
 import (
 	"context"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -261,11 +262,21 @@ func NewPluginLogger(pluginName, version string, level zerolog.Level, w io.Write
 // The interceptor looks for the TraceIDMetadataKey header. If the trace_id is missing or
 // invalid, a new valid trace_id is generated. The validated or generated trace_id is
 // stored in the context for retrieval via TraceIDFromContext.
+//
+// On failure it also stamps that id onto a returned *ValidationError and logs it.
+// Logging uses a discarded logger. Serve passes the plugin logger via
+// TracingUnaryServerInterceptorWithLogger. Connect mode does not run this interceptor.
 func TracingUnaryServerInterceptor() grpc.UnaryServerInterceptor {
+	return TracingUnaryServerInterceptorWithLogger(zerolog.Nop())
+}
+
+// TracingUnaryServerInterceptorWithLogger is TracingUnaryServerInterceptor
+// that writes failed calls to logger. A disabled logger still stamps validation errors.
+func TracingUnaryServerInterceptorWithLogger(logger zerolog.Logger) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
 		req interface{},
-		_ *grpc.UnaryServerInfo,
+		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
 		var traceID string
@@ -288,8 +299,45 @@ func TracingUnaryServerInterceptor() grpc.UnaryServerInterceptor {
 		}
 
 		ctx = ContextWithTraceID(ctx, traceID)
-		return handler(ctx, req)
+		resp, err := handler(ctx, req)
+		err = stampValidationTrace(err, traceID)
+		if err != nil && traceID != "" {
+			method := ""
+			if info != nil {
+				method = info.FullMethod
+			}
+			logger.Error().
+				Str(FieldTraceID, traceID).
+				Str(FieldOperation, method).
+				Err(err).
+				Msg("rpc failed")
+		}
+		return resp, err
 	}
+}
+
+// stampValidationTrace records traceID on the first *ValidationError in err.
+// An id already set by the handler is left as-is.
+func stampValidationTrace(err error, traceID string) error {
+	if err == nil || traceID == "" {
+		return err
+	}
+	var ve *ValidationError
+	if errors.As(err, &ve) && ve != nil && ve.TraceID == "" {
+		ve.TraceID = traceID
+	}
+	return err
+}
+
+// WithTrace returns a child of logger that includes the trace id from ctx.
+// The logger is returned unchanged when ctx has no trace id.
+// Call this once per request. Adding FieldTraceID again on the child writes a second key.
+func WithTrace(ctx context.Context, logger zerolog.Logger) zerolog.Logger {
+	id := TraceIDFromContext(ctx)
+	if id == "" {
+		return logger
+	}
+	return logger.With().Str(FieldTraceID, id).Logger()
 }
 
 // TraceIDFromContext extracts the trace ID from the given context.
