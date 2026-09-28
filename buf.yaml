@@ -13,15 +13,10 @@ breaking:
     # go_package path changes are not wire-breaking - they only affect Go import paths.
     # Existing gRPC clients continue to work. Ignored for connect-go support (PR #223).
     - FILE_SAME_GO_PACKAGE
-  # Ignore FOCUS 1.2 alignment renames introduced in PR #99.
-  # These are intentional breaking changes to align with FinOps FOCUS 1.2 spec:
-  #   - currency → billing_currency (field 18)
-  #   - usage_quantity → consumed_quantity (field 20)
-  #   - usage_unit → consumed_unit (field 21)
   # Ignore project rename from pulumicost to finfocus (035-project-rename-finfocus).
   # These files were moved from pulumicost/v1/ to finfocus/v1/ with package name changes.
+  # finfocus/v1/focus.proto is checked: the FOCUS 1.2 renames (PR #99) are long released.
   ignore:
-    - proto/finfocus/v1/focus.proto
     - pulumicost/v1/budget.proto
     - pulumicost/v1/costsource.proto
     - pulumicost/v1/enums.proto
