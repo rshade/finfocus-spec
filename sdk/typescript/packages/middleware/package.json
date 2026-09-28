@@ -16,7 +16,7 @@
     "finfocus-client": "*"
   },
   "devDependencies": {
-    "@types/node": "^24.13.3",
+    "@types/node": "^24.19.0",
     "tsup": "^8.5.1"
   },
   "files": [
