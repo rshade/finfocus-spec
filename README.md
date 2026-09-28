@@ -51,7 +51,8 @@ standardizing cloud cost data retrieval. It provides:
 finfocus-spec/
 ├─ proto/finfocus/v1/           # gRPC service definitions
 │  ├─ costsource.proto            # Complete CostSource service specification
-│  └─ usage.proto                 # UsageSource service (workload CPU/memory usage)
+│  ├─ usage.proto                 # UsageSource service (workload CPU/memory usage)
+│  └─ allocation.proto            # Allocator service (split priced nodes across workloads)
 ├─ schemas/                       # JSON schema validation
 │  └─ pricing_spec.schema.json    # Comprehensive pricing schema (44+ billing modes)
 ├─ sdk/go/                        # Production Go SDK
@@ -80,6 +81,7 @@ finfocus-spec/
 
 - **[gRPC Service](proto/finfocus/v1/costsource.proto)**: CostSourceService with 11 RPC methods
 - **[Usage Source Service](proto/finfocus/v1/usage.proto)**: UsageSourceService with 1 RPC method (GetStats)
+- **[Allocator Service](proto/finfocus/v1/allocation.proto)**: AllocatorService with 1 RPC method (Allocate)
 - **[JSON Schema](schemas/pricing_spec.schema.json)**: Comprehensive validation supporting all major cloud providers
 - **[Go SDK](sdk/go/)**: Production-ready SDK with automatic protobuf generation
 - **[Plugin SDK](sdk/go/pluginsdk/)**: Serve(), environment handling, logging, metrics, FOCUS builder
@@ -741,6 +743,23 @@ service UsageSourceService {
 A Go plugin implements `pluginsdk.UsageSourceProvider` and declares
 `PLUGIN_CAPABILITY_USAGE_STATS` explicitly. See [docs/usage-source.md](docs/usage-source.md) for
 subject keys, metrics, units, and priceable-resource tagging.
+
+### AllocatorService
+
+Allocator plugins divide priced infrastructure across the workloads that use it. The host sends the
+usage rows, the priced nodes and control planes, and an opaque allocator-owned JSON policy; the
+allocator returns workload rows, one idle row per priced node, and cluster rows, plus the effective
+policy and its SHA-256 digest. Rows always sum to the priced total, which hosts verify with
+`pluginsdk.CheckConservation`.
+
+```protobuf
+service AllocatorService {
+  rpc Allocate(AllocateRequest) returns (AllocateResponse); // Workload, idle, and cluster cost rows
+}
+```
+
+A Go plugin implements `pluginsdk.AllocatorProvider` and declares `PLUGIN_CAPABILITY_ALLOCATION`
+explicitly. See [docs/allocator.md](docs/allocator.md) for the invariants, policy rules, and errors.
 
 ### JSON Schema Validation
 

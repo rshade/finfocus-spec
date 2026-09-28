@@ -6,10 +6,16 @@ package pluginsdk_test
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"sync"
 	"time"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
@@ -303,4 +309,145 @@ func Example_usageSource() {
 	// [PLUGIN_CAPABILITY_USAGE_STATS]
 	// workload cpu_request=0.50 core
 	// node cpu_allocatable=1.93 core
+}
+
+// exampleAllocPolicy is an allocator's policy document. Every allocator policy
+// has a top-level integer "version".
+type exampleAllocPolicy struct {
+	Version   int     `json:"version"`
+	CPUWeight float64 `json:"cpu_weight"`
+}
+
+// idleOnlyAllocator is a deliberately simple allocator: it reports each priced
+// node's whole cost as that node's idle row, and every other priced resource
+// as a cluster row. It embeds BasePlugin for the required cost-source methods.
+type idleOnlyAllocator struct {
+	*pluginsdk.BasePlugin
+}
+
+func (a *idleOnlyAllocator) Allocate(_ context.Context, req *pbc.AllocateRequest) (*pbc.AllocateResponse, error) {
+	if err := pluginsdk.ValidateAllocateRequest(req); err != nil {
+		return nil, err // already carries codes.InvalidArgument
+	}
+	policy := exampleAllocPolicy{Version: 1, CPUWeight: 0.5}
+	if err := pluginsdk.DecodePolicy(req.GetPolicyJson(), &policy); err != nil {
+		return nil, err
+	}
+	if policy.Version != 1 {
+		return nil, status.Errorf(codes.InvalidArgument, "unsupported policy version %d", policy.Version)
+	}
+	currency, err := pluginsdk.ResolveCurrency(req.GetPriced())
+	if err != nil {
+		return nil, err
+	}
+
+	var rows []*pbc.AllocationRow
+	for _, entry := range req.GetPriced() {
+		if !entry.GetPriced() {
+			continue
+		}
+		cost := entry.GetCost()
+		if entry.GetResource().GetTags()[pluginsdk.SubjectKind] != pluginsdk.KindNode {
+			rows = append(rows, &pbc.AllocationRow{
+				Subject:   map[string]string{pluginsdk.SubjectKind: pluginsdk.KindCluster},
+				TotalCost: cost,
+				Currency:  currency,
+			})
+			continue
+		}
+		cpu := cost * policy.CPUWeight
+		rows = append(rows, &pbc.AllocationRow{
+			Subject: map[string]string{
+				pluginsdk.SubjectKind: pluginsdk.KindIdle,
+				pluginsdk.SubjectNode: entry.GetResource().GetId(),
+			},
+			CpuCost:   cpu,
+			MemCost:   cost - cpu,
+			TotalCost: cost,
+			Currency:  currency,
+		})
+	}
+
+	effective, err := json.Marshal(policy)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "encode policy: %v", err)
+	}
+	digest := sha256.Sum256(effective)
+	return &pbc.AllocateResponse{
+		Rows:                rows,
+		EffectivePolicyJson: effective,
+		PolicyDigest:        hex.EncodeToString(digest[:]),
+	}, nil
+}
+
+// ExampleAllocatorProvider shows an allocation-only plugin. It declares
+// PLUGIN_CAPABILITY_ALLOCATION explicitly so hosts do not mistake it for a
+// pricing plugin, and hosts verify its output with CheckConservation. A real
+// main would pass config to pluginsdk.Run.
+func ExampleAllocatorProvider() {
+	plugin := &idleOnlyAllocator{BasePlugin: pluginsdk.NewBasePlugin("idle-only")}
+
+	config := pluginsdk.ServeConfig{
+		Plugin: plugin,
+		PluginInfo: pluginsdk.NewPluginInfo("idle-only", "v1.0.0",
+			pluginsdk.WithCapabilities(pbc.PluginCapability_PLUGIN_CAPABILITY_ALLOCATION),
+		),
+	}
+	fmt.Println(config.PluginInfo.Capabilities)
+
+	req := &pbc.AllocateRequest{
+		Priced: []*pbc.PricedResource{{
+			Resource: &pbc.ResourceDescriptor{Id: "n1", Tags: map[string]string{"kind": "node"}},
+			Cost:     10,
+			Currency: "USD",
+			Priced:   true,
+		}},
+		PolicyJson: []byte(`{"cpu_weight":0.25}`),
+	}
+	resp, _ := plugin.Allocate(context.Background(), req)
+	for _, row := range resp.GetRows() {
+		fmt.Printf("%s %s cpu=%.2f mem=%.2f total=%.2f %s\n", row.GetSubject()[pluginsdk.SubjectKind],
+			row.GetSubject()[pluginsdk.SubjectNode], row.GetCpuCost(), row.GetMemCost(), row.GetTotalCost(),
+			row.GetCurrency())
+	}
+	fmt.Println(pluginsdk.CheckConservation(req, resp, pluginsdk.DefaultConservationEpsilon))
+
+	_, err := plugin.Allocate(context.Background(), &pbc.AllocateRequest{PolicyJson: []byte(`{"cpu":1}`)})
+	fmt.Println(status.Code(err), err)
+
+	// Output:
+	// [PLUGIN_CAPABILITY_ALLOCATION]
+	// __idle__ n1 cpu=2.50 mem=7.50 total=10.00 USD
+	// <nil>
+	// InvalidArgument invalid allocation policy: unknown field "cpu"
+}
+
+// ExampleDecodePolicy applies a partial policy document onto defaults: nested
+// objects merge field by field, arrays replace the default wholesale, and
+// unknown fields are rejected with their JSON path.
+func ExampleDecodePolicy() {
+	type nodeSplit struct {
+		CPUWeight float64 `json:"cpu_weight"`
+		MemWeight float64 `json:"mem_weight"`
+	}
+	type policy struct {
+		Version    int       `json:"version"`
+		NodeSplit  nodeSplit `json:"node_split"`
+		Namespaces []string  `json:"namespaces"`
+	}
+
+	p := policy{
+		Version:    1,
+		NodeSplit:  nodeSplit{CPUWeight: 0.5, MemWeight: 0.5},
+		Namespaces: []string{"default", "kube-system"},
+	}
+	err := pluginsdk.DecodePolicy([]byte(`{"node_split":{"cpu_weight":0.7},"namespaces":["payments"]}`), &p)
+	fmt.Printf("%+v %v\n", p, err)
+
+	err = pluginsdk.DecodePolicy([]byte(`{"node_split":{"cpu":1}}`), &p)
+	fmt.Println(err)
+
+	// Output:
+	// {Version:1 NodeSplit:{CPUWeight:0.7 MemWeight:0.5} Namespaces:[payments]} <nil>
+	// invalid allocation policy: unknown field "node_split.cpu"
 }

@@ -13,6 +13,7 @@ error handling.
 - **Comprehensive Error Handling** - Validation errors and Connect RPC error handling
 - **Framework Integration** - Ready-to-use adapters for Express, Fastify, and NestJS
 - **Usage Sources** - `UsageSourceClient` for workload CPU/memory usage (`UsageSourceService.GetStats`)
+- **Allocators** - `AllocatorClient` for splitting priced nodes across workloads (`AllocatorService.Allocate`)
 
 ## Packages
 
@@ -196,6 +197,52 @@ try {
 
 Errors arrive as `ConnectError` with the code the source returned. The client does no request
 validation. The `SUBJECT_*`, `KIND_*`, `METRIC_*`, and `UNIT_*` constants mirror the Go SDK.
+
+### AllocatorClient
+
+Calls plugins that serve `AllocatorService`, which divides priced nodes and control planes across
+workloads and returns workload, idle, and cluster rows. See
+[docs/allocator.md](../../docs/allocator.md) for the invariants and policy rules.
+
+```typescript
+import { create } from "@bufbuild/protobuf";
+import { Code, ConnectError } from "@connectrpc/connect";
+import {
+  AllocatorClient,
+  AllocateRequestSchema,
+  SUBJECT_KIND,
+  SUBJECT_NODE,
+  KIND_IDLE,
+} from "@rshade/finfocus-client";
+
+const allocator = new AllocatorClient({ baseUrl: "https://allocator-plugin.example.com" });
+
+try {
+  const resp = await allocator.allocate(
+    create(AllocateRequestSchema, {
+      usage: statsResponse.rows,
+      priced: [{ resource: { id: "ip-10-0-1-5", tags: { kind: "node" } }, cost: 0.096, currency: "USD", priced: true }],
+      policyJson: new TextEncoder().encode('{"node_split":{"cpu_weight":0.6}}'),
+    }),
+  );
+  for (const row of resp.rows) {
+    if (row.subject[SUBJECT_KIND] === KIND_IDLE) {
+      console.log(`idle on ${row.subject[SUBJECT_NODE]}: ${row.totalCost} ${row.currency}`);
+    }
+  }
+  console.log(`policy ${new TextDecoder().decode(resp.effectivePolicyJson)} (${resp.policyDigest})`);
+} catch (error) {
+  if (error instanceof ConnectError && error.code === Code.InvalidArgument) {
+    console.error(`Allocator rejected the request or policy: ${error.rawMessage}`);
+  } else {
+    throw error;
+  }
+}
+```
+
+Errors arrive as `ConnectError` with the code the allocator returned; a bad policy is
+`Code.InvalidArgument` naming the field's path. The client does not validate requests or check
+conservation.
 
 ### Pagination
 

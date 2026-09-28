@@ -831,12 +831,13 @@ func TestIsValidCapability(t *testing.T) {
 		{"BATCH_COST", pbc.PluginCapability_PLUGIN_CAPABILITY_BATCH_COST, true},
 		{"RESOLVE_RESOURCE_TYPES", pbc.PluginCapability_PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES, true},
 		{"USAGE_STATS", pbc.PluginCapability_PLUGIN_CAPABILITY_USAGE_STATS, true},
+		{"ALLOCATION", pbc.PluginCapability_PLUGIN_CAPABILITY_ALLOCATION, true},
 
 		// Invalid capabilities
 		{"UNSPECIFIED (0)", pbc.PluginCapability_PLUGIN_CAPABILITY_UNSPECIFIED, false},
 		{"negative value (-1)", pbc.PluginCapability(-1), false},
 		{"out of range (999)", pbc.PluginCapability(999), false},
-		{"just above max (15)", pbc.PluginCapability(15), false},
+		{"just above max (16)", pbc.PluginCapability(16), false},
 		{"very large value", pbc.PluginCapability(1000000), false},
 	}
 

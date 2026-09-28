@@ -189,6 +189,8 @@ enum PluginCapability {
   PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES = 13;
   // Plugin implements UsageSourceService.GetStats for workload usage
   PLUGIN_CAPABILITY_USAGE_STATS = 14;
+  // Plugin implements AllocatorService.Allocate.
+  PLUGIN_CAPABILITY_ALLOCATION = 15;
 }
 
 // UsageProfile represents the intended workload context for cost estimation.

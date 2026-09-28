@@ -710,6 +710,7 @@ Simply implement the standard interfaces:
 | `BatchCostHandler`               | `BatchCost`              | `PLUGIN_CAPABILITY_BATCH_COST`                 |
 | `ResolveResourceTypesProvider`   | `ResolveResourceTypes`   | `PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES`     |
 | `UsageSourceProvider`            | `GetStats`               | `PLUGIN_CAPABILITY_USAGE_STATS`                |
+| `AllocatorProvider`              | `Allocate`               | `PLUGIN_CAPABILITY_ALLOCATION`                 |
 
 ```go
 // Example: Implementing DryRunHandler
@@ -798,6 +799,37 @@ explicit. If a usage source starts with no explicit `PluginInfo.Capabilities` an
 really does both pricing and usage can ignore the warning.
 
 The compiled version of this snippet is `Example_usageSource` in `example_test.go`.
+
+### Allocation-Only Plugins
+
+An allocator divides priced infrastructure across workloads, reporting idle and cluster cost, and
+serves `AllocatorService.Allocate`. See [docs/allocator.md](../../../docs/allocator.md) for the
+invariants, policy rules, and errors.
+
+Embed `*pluginsdk.BasePlugin` and implement `Allocate`. When the plugin implements
+`AllocatorProvider`, `Serve` registers `AllocatorService` in both gRPC and Connect modes, reports it
+in the Connect health check, and legacy hosts see `supports_allocation=true` in the metadata.
+
+**Declare capabilities explicitly** with
+`WithCapabilities(pbc.PluginCapability_PLUGIN_CAPABILITY_ALLOCATION)`, for the same reason as
+usage-only plugins. `Serve` logs one warning at startup for an allocator with no explicit
+`PluginInfo.Capabilities` that does not implement `PluginInfoProvider`.
+
+The SDK provides the building blocks every allocator and host needs:
+
+| Function | Purpose |
+| -------- | ------- |
+| `ValidateAllocateRequest(req)` | Rejects unpriced entries with nonzero cost, negative or non-finite costs, mixed currencies, and duplicate `(tags.kind, id)` |
+| `DecodePolicy(data, &target)` | Strictly applies a JSON policy onto defaults: unknown fields, malformed JSON, trailing data, and type mismatches fail with the field's path (`node_split.cpu`); nested objects merge, arrays replace |
+| `ResolveCurrency(priced)` | The single non-empty currency across priced entries, or `USD` when all are empty |
+| `CheckConservation(req, resp, eps)` | Host-side check that rows sum to the priced total within `max(eps × abs(expected), 1e-9)`; use `DefaultConservationEpsilon` |
+
+The validation and decoding errors carry `codes.InvalidArgument` and have no `rpc error:` prefix,
+so `Allocate` can return them unchanged. `ErrInvalidPolicy` is wrapped by every `DecodePolicy`
+input error.
+
+The compiled versions are `ExampleAllocatorProvider` and `ExampleDecodePolicy` in
+`example_test.go`.
 
 ### BatchCost RPC
 
@@ -1151,6 +1183,15 @@ type SupportsProvider interface {
 ```go
 type RecommendationsProvider interface {
     GetRecommendations(ctx context.Context, req *pbc.GetRecommendationsRequest) (*pbc.GetRecommendationsResponse, error)
+}
+```
+
+**AllocatorProvider** - Serves `AllocatorService.Allocate`; see
+[Allocation-Only Plugins](#allocation-only-plugins).
+
+```go
+type AllocatorProvider interface {
+    Allocate(ctx context.Context, req *pbc.AllocateRequest) (*pbc.AllocateResponse, error)
 }
 ```
 
