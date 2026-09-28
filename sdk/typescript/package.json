@@ -14,9 +14,9 @@
     "packages/framework-plugins"
   ],
   "devDependencies": {
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "tsx": "^4.23.15",
-    "vitest": "^4.1.11",
+    "vitest": "^5.0.2",
     "@types/node": "^24.19.0"
   }
 }
