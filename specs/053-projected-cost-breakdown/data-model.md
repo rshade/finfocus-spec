@@ -74,7 +74,7 @@ Recommended names (documented, not validated): `compute`, `storage`, `root_volum
 
 | Field | Type | Meaning |
 |-------|------|---------|
-| **`ProjectedCostBreakdown`** | `map[string]float64` | Component weights. When non-nil, the values are scaled so they sum to the computed `cost_per_month`. When nil, the response has no breakdown |
+| **`ProjectedCostBreakdown`** | `map[string]float64` | Component weights. When non-nil, the values are scaled so they sum to the computed `cost_per_month`. Weights must be finite and non-negative with a positive sum, or `GetProjectedCost` returns `FailedPrecondition`. When nil, the response has no breakdown |
 
 ## Relationships
 

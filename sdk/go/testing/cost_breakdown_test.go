@@ -1,11 +1,29 @@
+// Copyright 2026 The FinFocus Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package testing_test
 
 import (
 	"context"
+	"fmt"
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protowire"
 	"google.golang.org/protobuf/proto"
 
@@ -76,6 +94,57 @@ func TestGetProjectedCostBreakdown_DryRun(t *testing.T) {
 	require.NoError(t, pluginsdk.ValidateGetProjectedCostResponse(resp))
 }
 
+// TestGetProjectedCostBreakdown_ZeroCost verifies that weights on a zero-cost
+// resource scale to all-zero components, which validate against a zero total.
+func TestGetProjectedCostBreakdown_ZeroCost(t *testing.T) {
+	plugin := plugintesting.NewMockPlugin()
+	plugin.BaseHourlyRate = 0
+	plugin.ProjectedCostBreakdown = map[string]float64{"compute": 3, "root_volume": 1}
+
+	harness := plugintesting.NewTestHarness(plugin)
+	harness.Start(t)
+	defer harness.Stop()
+
+	resp, err := harness.Client().GetProjectedCost(context.Background(), &pbc.GetProjectedCostRequest{
+		Resource: plugintesting.CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1"),
+	})
+	require.NoError(t, err)
+	assert.Equal(t, map[string]float64{"compute": 0, "root_volume": 0}, resp.GetCostBreakdown())
+	require.NoError(t, pluginsdk.ValidateGetProjectedCostResponse(resp))
+}
+
+// TestGetProjectedCostBreakdown_InvalidWeights verifies that weights no scaling
+// can make valid are reported as a FailedPrecondition configuration error.
+func TestGetProjectedCostBreakdown_InvalidWeights(t *testing.T) {
+	tests := []struct {
+		name    string
+		weights map[string]float64
+	}{
+		{"zero_sum", map[string]float64{"compute": 0, "storage": 0}},
+		{"negative", map[string]float64{"compute": 2, "credit": -1}},
+		{"nan", map[string]float64{"compute": math.NaN()}},
+		{"inf", map[string]float64{"compute": math.Inf(1)}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			plugin := plugintesting.NewMockPlugin()
+			plugin.ProjectedCostBreakdown = tt.weights
+
+			harness := plugintesting.NewTestHarness(plugin)
+			harness.Start(t)
+			defer harness.Stop()
+
+			_, err := harness.Client().GetProjectedCost(context.Background(), &pbc.GetProjectedCostRequest{
+				Resource: plugintesting.CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1"),
+			})
+			require.Error(t, err)
+			assert.Equal(t, codes.FailedPrecondition, status.Code(err))
+			assert.Contains(t, err.Error(), "ProjectedCostBreakdown")
+		})
+	}
+}
+
 // TestBatchProjectedCostBreakdown verifies that the batch path carries the
 // breakdown inside CostData.projected_cost.
 func TestBatchProjectedCostBreakdown(t *testing.T) {
@@ -136,4 +205,38 @@ func TestCostBreakdownWireCompat(t *testing.T) {
 		require.NoError(t, proto.Unmarshal(data, decoded))
 		assert.True(t, proto.Equal(original, decoded))
 	})
+}
+
+// BenchmarkMockGetProjectedCost_CostBreakdown measures the mock's breakdown
+// weight scaling by calling GetProjectedCost directly, without gRPC overhead.
+func BenchmarkMockGetProjectedCost_CostBreakdown(b *testing.B) {
+	full := make(map[string]float64, 32)
+	for i := range 32 {
+		full[fmt.Sprintf("component_%02d", i)] = float64(i + 1)
+	}
+	cases := []struct {
+		name    string
+		weights map[string]float64
+	}{
+		{"none", nil},
+		{"2_entries", map[string]float64{"compute": 3, "root_volume": 1}},
+		{"32_entries", full},
+	}
+
+	req := &pbc.GetProjectedCostRequest{
+		Resource: plugintesting.CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1"),
+	}
+	for _, tc := range cases {
+		b.Run(tc.name, func(b *testing.B) {
+			plugin := plugintesting.NewMockPlugin()
+			plugin.ProjectedCostBreakdown = tc.weights
+			ctx := context.Background()
+			b.ReportAllocs()
+			for range b.N {
+				if _, err := plugin.GetProjectedCost(ctx, req); err != nil {
+					b.Fatalf("GetProjectedCost() failed: %v", err)
+				}
+			}
+		})
+	}
 }

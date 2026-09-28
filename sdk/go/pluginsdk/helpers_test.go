@@ -3,6 +3,7 @@ package pluginsdk_test
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"math"
 	"strings"
 	"testing"
@@ -2862,4 +2863,30 @@ func TestWithProjectedCostBreakdown(t *testing.T) {
 		after := pluginsdk.NewGetProjectedCostResponse(details, pluginsdk.WithProjectedCostBreakdown(ec2()))
 		assert.True(t, proto.Equal(before, after))
 	})
+}
+
+// BenchmarkWithProjectedCostBreakdown measures building a response with the
+// copying breakdown option for empty, typical, and maximum-size maps.
+func BenchmarkWithProjectedCostBreakdown(b *testing.B) {
+	full := make(map[string]float64, 32)
+	for i := range 32 {
+		full[fmt.Sprintf("component_%02d", i)] = 1.0
+	}
+	cases := []struct {
+		name      string
+		breakdown map[string]float64
+	}{
+		{"empty", nil},
+		{"ec2_2_entries", map[string]float64{"compute": 7.592, "root_volume": 0.80}},
+		{"32_entries", full},
+	}
+
+	for _, tc := range cases {
+		b.Run(tc.name, func(b *testing.B) {
+			b.ReportAllocs()
+			for range b.N {
+				_ = pluginsdk.NewGetProjectedCostResponse(pluginsdk.WithProjectedCostBreakdown(tc.breakdown))
+			}
+		})
+	}
 }

@@ -180,8 +180,10 @@ type MockPlugin struct {
 
 	// ProjectedCostBreakdown configures cost_breakdown on GetProjectedCost
 	// responses. Values are weights: they are scaled so they sum to the
-	// computed cost_per_month. Nil means no breakdown. Dry-run responses
-	// never carry a breakdown.
+	// computed cost_per_month, so responses pass ValidateGetProjectedCostResponse.
+	// Weights must be finite and non-negative with a positive sum; otherwise
+	// GetProjectedCost returns codes.FailedPrecondition. Nil means no breakdown.
+	// Dry-run responses never carry a breakdown.
 	ProjectedCostBreakdown map[string]float64
 
 	// EstimateCostExpiresAtDuration configures the expires_at hint for estimate
@@ -1275,32 +1277,38 @@ func (m *MockPlugin) GetProjectedCost(
 		resp.ExpiresAt = timestamppb.New(time.Now().Add(m.ProjectedCostExpiresAtDuration))
 	}
 
-	resp.CostBreakdown = scaleCostBreakdown(m.ProjectedCostBreakdown, costPerMonth)
+	if len(m.ProjectedCostBreakdown) > 0 {
+		breakdown, err := scaleCostBreakdown(m.ProjectedCostBreakdown, costPerMonth)
+		if err != nil {
+			return nil, status.Errorf(codes.FailedPrecondition, "mock ProjectedCostBreakdown: %v", err)
+		}
+		resp.CostBreakdown = breakdown
+	}
 
 	return resp, nil
 }
 
-// scaleCostBreakdown scales breakdown weights so they sum to costPerMonth.
-// It returns nil for an empty map, and all-zero components when the weights sum to zero.
-func scaleCostBreakdown(weights map[string]float64, costPerMonth float64) map[string]float64 {
-	if len(weights) == 0 {
-		return nil
-	}
-
+// scaleCostBreakdown scales non-empty breakdown weights so they sum to costPerMonth.
+// Weights that are negative or non-finite, or
+// that do not have a positive finite sum, are rejected because no scaling of
+// them yields a valid breakdown.
+func scaleCostBreakdown(weights map[string]float64, costPerMonth float64) (map[string]float64, error) {
 	var weightSum float64
-	for _, w := range weights {
+	for k, w := range weights {
+		if math.IsNaN(w) || math.IsInf(w, 0) || w < 0 {
+			return nil, fmt.Errorf("weight %q is %v; weights must be finite and non-negative", k, w)
+		}
 		weightSum += w
+	}
+	if weightSum <= 0 || math.IsInf(weightSum, 0) {
+		return nil, fmt.Errorf("weights sum to %v; the sum must be positive and finite", weightSum)
 	}
 
 	scaled := make(map[string]float64, len(weights))
 	for k, w := range weights {
-		if weightSum == 0 {
-			scaled[k] = 0
-			continue
-		}
 		scaled[k] = costPerMonth * w / weightSum
 	}
-	return scaled
+	return scaled, nil
 }
 
 // getBillingModeAndUnit returns billing mode and unit for a resource type.

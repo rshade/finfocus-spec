@@ -886,8 +886,9 @@ parallel subtests complete.
 - `ValidateGetProjectedCostResponse` guards the breakdown call with `len() > 0` at the call site: on the
   ~6 ns `_Valid` benchmark a non-inlined call alone costs >10%. Compare benchmarks A/B against a `main`
   worktree with prebuilt test binaries; sequential runs on a loaded box drift 20%+.
-- `MockPlugin.ProjectedCostBreakdown` values are weights scaled to the mock's `cost_per_month` (zero
-  weight sum gives all-zero components), so mock responses always validate.
+- `MockPlugin.ProjectedCostBreakdown` values are weights scaled to the mock's `cost_per_month`, so mock
+  responses always validate. Negative, NaN/Inf, or zero-sum weights return `codes.FailedPrecondition`
+  rather than an invalid breakdown.
 - The conformance suite's `plugintesting.ValidateProjectedCostResponse` does not check the breakdown
   (import cycle, same as #427 metadata); only the `pluginsdk` validator does.
 - The TS client `tsconfig.json` excludes `test/`, so `tsc --noEmit` cannot show a failing TS test;

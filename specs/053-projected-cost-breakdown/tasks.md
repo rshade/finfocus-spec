@@ -120,8 +120,11 @@ both entries on `GetProjectedCost`. Their sum equals `cost_per_month`.
   `sdk/go/testing/mock_plugin.go`, and document it next to `ProjectedCostExpiresAtDuration` in the
   struct field list at about line 106. In `GetProjectedCost`, only on the non-dry-run path, when the
   map is non-empty: compute `weightSum`, then set each entry to
-  `costPerMonth * w / weightSum`. When `weightSum == 0`, set every entry to 0. Leave the response
-  unchanged when the map is nil (research R10). T007 must now pass.
+  `costPerMonth * w / weightSum`. Weights that are negative or non-finite, or that lack a positive
+  finite sum, cannot be scaled to a valid breakdown, so return `codes.FailedPrecondition` for them
+  (changed after PR review; the first version returned all zeros for a zero sum, which fails the sum
+  rule when `cost_per_month > 0`). Leave the response unchanged when the map is nil (research R10).
+  T007 must now pass.
 
 **Checkpoint**: US1 is complete. Run `go test ./sdk/go/pluginsdk/ ./sdk/go/testing/ -run
 'CostBreakdown'` and it passes.

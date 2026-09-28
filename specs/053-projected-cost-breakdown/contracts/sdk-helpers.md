@@ -56,7 +56,9 @@ type MockPlugin struct {
 
     // ProjectedCostBreakdown configures cost_breakdown on GetProjectedCost
     // responses. Values are weights: they are scaled so they sum to the
-    // computed cost_per_month. Nil means no breakdown.
+    // computed cost_per_month. Weights must be finite and non-negative with
+    // a positive sum; otherwise GetProjectedCost returns FailedPrecondition.
+    // Nil means no breakdown.
     ProjectedCostBreakdown map[string]float64
 }
 ```

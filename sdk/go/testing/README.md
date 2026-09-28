@@ -228,8 +228,10 @@ plugin.NameDelay = 100 * time.Millisecond
 
 `ProjectedCostBreakdown` makes `GetProjectedCost` return a `cost_breakdown`. The values are
 weights, scaled so the components sum to the mock's computed `cost_per_month`, which keeps the
-response valid under `pluginsdk.ValidateGetProjectedCostResponse`. Nil (the default) means no
-breakdown, and dry-run responses never carry one. Batch `PROJECTED` results include it too.
+response valid under `pluginsdk.ValidateGetProjectedCostResponse`. Weights must be finite and
+non-negative with a positive sum; otherwise `GetProjectedCost` returns `codes.FailedPrecondition`,
+because no scaling can make them valid. Nil (the default) means no breakdown, and dry-run responses
+never carry one. Batch `PROJECTED` results include it too.
 
 ```go
 plugin := plugintesting.NewMockPlugin()
