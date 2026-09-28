@@ -103,8 +103,8 @@ const (
 // Use separate MockPlugin instances for concurrent tests.
 //
 // Fields that must be set before Start() include: ShouldError* flags, *Delay durations,
-// FallbackHint, ExpiresAtDuration, ProjectedCostExpiresAtDuration, EstimateCostExpiresAtDuration,
-// MockBudgets, DryRun* fields, PricingCategory/SpotRiskScore fields, and RecommendationsConfig.
+// FallbackHint, ExpiresAtDuration, ProjectedCostExpiresAtDuration, ProjectedCostBreakdown,
+// EstimateCostExpiresAtDuration, MockBudgets, DryRun* fields, PricingCategory/SpotRiskScore fields, and RecommendationsConfig.
 //
 // The recommended pattern is:
 //
@@ -177,6 +177,12 @@ type MockPlugin struct {
 	// cost responses. Same semantics as ExpiresAtDuration: zero means unset,
 	// positive means future expiration, negative means immediately stale.
 	ProjectedCostExpiresAtDuration time.Duration
+
+	// ProjectedCostBreakdown configures cost_breakdown on GetProjectedCost
+	// responses. Values are weights: they are scaled so they sum to the
+	// computed cost_per_month. Nil means no breakdown. Dry-run responses
+	// never carry a breakdown.
+	ProjectedCostBreakdown map[string]float64
 
 	// EstimateCostExpiresAtDuration configures the expires_at hint for estimate
 	// cost responses. Same semantics as ExpiresAtDuration: zero means unset,
@@ -1269,7 +1275,32 @@ func (m *MockPlugin) GetProjectedCost(
 		resp.ExpiresAt = timestamppb.New(time.Now().Add(m.ProjectedCostExpiresAtDuration))
 	}
 
+	resp.CostBreakdown = scaleCostBreakdown(m.ProjectedCostBreakdown, costPerMonth)
+
 	return resp, nil
+}
+
+// scaleCostBreakdown scales breakdown weights so they sum to costPerMonth.
+// It returns nil for an empty map, and all-zero components when the weights sum to zero.
+func scaleCostBreakdown(weights map[string]float64, costPerMonth float64) map[string]float64 {
+	if len(weights) == 0 {
+		return nil
+	}
+
+	var weightSum float64
+	for _, w := range weights {
+		weightSum += w
+	}
+
+	scaled := make(map[string]float64, len(weights))
+	for k, w := range weights {
+		if weightSum == 0 {
+			scaled[k] = 0
+			continue
+		}
+		scaled[k] = costPerMonth * w / weightSum
+	}
+	return scaled
 }
 
 // getBillingModeAndUnit returns billing mode and unit for a resource type.

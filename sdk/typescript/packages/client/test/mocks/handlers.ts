@@ -37,7 +37,8 @@ export const handlers = [
       unitPrice: 0.10,
       currency: "USD",
       costPerMonth: 150.0,
-      billingDetail: "On-demand pricing"
+      billingDetail: "On-demand pricing",
+      costBreakdown: { compute: 120.0, root_volume: 30.0 }
     });
   }),
 

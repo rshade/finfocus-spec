@@ -224,6 +224,18 @@ plugin.NameDelay = 100 * time.Millisecond
 - `ConfigurableErrorMockPlugin()`: For error testing
 - `SlowMockPlugin()`: For timeout/performance testing
 
+### Projected Cost Breakdown
+
+`ProjectedCostBreakdown` makes `GetProjectedCost` return a `cost_breakdown`. The values are
+weights, scaled so the components sum to the mock's computed `cost_per_month`, which keeps the
+response valid under `pluginsdk.ValidateGetProjectedCostResponse`. Nil (the default) means no
+breakdown, and dry-run responses never carry one. Batch `PROJECTED` results include it too.
+
+```go
+plugin := plugintesting.NewMockPlugin()
+plugin.ProjectedCostBreakdown = map[string]float64{"compute": 3, "root_volume": 1} // 75% / 25%
+```
+
 ### Batch Cost Testing
 
 `MockPlugin` includes batch RPC controls for conformance and integration tests:

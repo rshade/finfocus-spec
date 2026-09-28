@@ -9,8 +9,11 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"maps"
 	"net/http"
+	"slices"
 	"sync"
 	"time"
 
@@ -450,4 +453,32 @@ func ExampleDecodePolicy() {
 	// Output:
 	// {Version:1 NodeSplit:{CPUWeight:0.7 MemWeight:0.5} Namespaces:[payments]} <nil>
 	// invalid allocation policy: unknown field "node_split.cpu"
+}
+
+// ExampleWithProjectedCostBreakdown reports an EC2 instance's compute and root
+// volume as separate components of cost_per_month, then validates the response.
+func ExampleWithProjectedCostBreakdown() {
+	resp := pluginsdk.NewGetProjectedCostResponse(
+		pluginsdk.WithProjectedCostDetails(0.0104, "USD", 8.392, "On-demand Linux + 8GB gp2 root"),
+		pluginsdk.WithProjectedCostBreakdown(map[string]float64{
+			"compute":     7.592,
+			"root_volume": 0.80,
+		}),
+	)
+
+	breakdown := resp.GetCostBreakdown()
+	for _, name := range slices.Sorted(maps.Keys(breakdown)) {
+		fmt.Printf("%s: %.3f %s\n", name, breakdown[name], resp.GetCurrency())
+	}
+	fmt.Println("valid:", pluginsdk.ValidateGetProjectedCostResponse(resp))
+
+	resp.CostBreakdown["root_volume"] = 1.408
+	err := pluginsdk.ValidateGetProjectedCostResponse(resp)
+	fmt.Println(errors.Is(err, pluginsdk.ErrCostBreakdownSumMismatch), err)
+
+	// Output:
+	// compute: 7.592 USD
+	// root_volume: 0.800 USD
+	// valid: <nil>
+	// true GetProjectedCostResponse: cost_breakdown does not sum to cost_per_month: sum 9, cost_per_month 8.392, tolerance 0.01
 }
