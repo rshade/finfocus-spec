@@ -1763,9 +1763,46 @@ func (m *MockPlugin) GetBudgets(
 	}, nil
 }
 
+// mockSavingsAggregate sums amounts that share at most one non-empty currency.
+// An empty currency does not count as a second currency, and its amount is still added.
+// Two or more distinct non-empty currencies withhold the sum (amount returns 0).
+type mockSavingsAggregate struct {
+	sum   float64
+	first string
+	mixed bool
+}
+
+func (a *mockSavingsAggregate) add(amount float64, currency string) {
+	a.sum += amount
+	if currency == "" {
+		return
+	}
+	if a.first == "" {
+		a.first = currency
+		return
+	}
+	if a.first != currency {
+		a.mixed = true
+	}
+}
+
+func (a *mockSavingsAggregate) amount() float64 {
+	if a.mixed {
+		return 0
+	}
+	return a.sum
+}
+
 // CalculateMockSummary builds a RecommendationSummary from the given recommendations.
 // NOTE: This duplicates pluginsdk.CalculateRecommendationSummary logic to avoid circular
 // imports (pluginsdk imports testing for conformance functions).
+//
+// Savings are summed only within a single non-empty currency. An empty currency does not
+// count as a second currency, and that amount is still included. When the page, a category,
+// or an action contains two or more distinct non-empty currencies, that aggregate is withheld:
+// the page total is 0 and Currency is empty, and a mixed bucket stores 0. A total of 0 with
+// a non-empty Currency is a real zero. Counts are unaffected. Comparison is exact, so "usd"
+// and "USD" differ, and "XXX" is its own currency.
 func CalculateMockSummary(recs []*pbc.Recommendation, projectionPeriod string) *pbc.RecommendationSummary {
 	summary := &pbc.RecommendationSummary{
 		TotalRecommendations: int32(len(recs)), //nolint:gosec // length will not exceed int32 max
@@ -1776,9 +1813,10 @@ func CalculateMockSummary(recs []*pbc.Recommendation, projectionPeriod string) *
 		ProjectionPeriod:     projectionPeriod,
 	}
 
-	var totalSavings float64
-	var detectedCurrency string
-	var currencyMismatch bool
+	categories := make(map[string]*mockSavingsAggregate)
+	actions := make(map[string]*mockSavingsAggregate)
+	var page mockSavingsAggregate
+
 	for _, rec := range recs {
 		catName := rec.GetCategory().String()
 		actionName := rec.GetActionType().String()
@@ -1786,28 +1824,41 @@ func CalculateMockSummary(recs []*pbc.Recommendation, projectionPeriod string) *
 		summary.CountByCategory[catName]++
 		summary.CountByActionType[actionName]++
 
-		if impact := rec.GetImpact(); impact != nil {
-			savings := impact.GetEstimatedSavings()
-			totalSavings += savings
-			summary.SavingsByCategory[catName] += savings
-			summary.SavingsByActionType[actionName] += savings
-			if c := impact.GetCurrency(); c != "" {
-				if detectedCurrency == "" {
-					detectedCurrency = c
-				} else if detectedCurrency != c {
-					currencyMismatch = true
-				}
-			}
+		impact := rec.GetImpact()
+		if impact == nil {
+			continue
 		}
+		amount := impact.GetEstimatedSavings()
+		currency := impact.GetCurrency()
+		addMockSavings(categories, catName, amount, currency)
+		addMockSavings(actions, actionName, amount, currency)
+		page.add(amount, currency)
 	}
-	// Clear currency if recommendations have mixed currencies (sum is ambiguous)
-	if currencyMismatch {
-		detectedCurrency = ""
+
+	for name, bucket := range categories {
+		summary.SavingsByCategory[name] = bucket.amount()
 	}
-	summary.TotalEstimatedSavings = totalSavings
-	summary.Currency = detectedCurrency
+	for name, bucket := range actions {
+		summary.SavingsByActionType[name] = bucket.amount()
+	}
+	if page.mixed {
+		summary.TotalEstimatedSavings = 0
+		summary.Currency = ""
+	} else {
+		summary.TotalEstimatedSavings = page.sum
+		summary.Currency = page.first
+	}
 
 	return summary
+}
+
+func addMockSavings(buckets map[string]*mockSavingsAggregate, name string, amount float64, currency string) {
+	bucket := buckets[name]
+	if bucket == nil {
+		bucket = &mockSavingsAggregate{}
+		buckets[name] = bucket
+	}
+	bucket.add(amount, currency)
 }
 
 // =============================================================================

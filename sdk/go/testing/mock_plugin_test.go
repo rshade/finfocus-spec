@@ -66,6 +66,38 @@ func assertMapFieldsFloat64(t *testing.T, name string, result, expected map[stri
 	}
 }
 
+func mockImpact(currency string, savings float64) *pbc.Recommendation {
+	return &pbc.Recommendation{
+		Category:   pbc.RecommendationCategory_RECOMMENDATION_CATEGORY_COST,
+		ActionType: pbc.RecommendationActionType_RECOMMENDATION_ACTION_TYPE_MODIFY,
+		Impact: &pbc.RecommendationImpact{
+			EstimatedSavings: savings,
+			Currency:         currency,
+		},
+	}
+}
+
+func mockSummary(total float64, currency string) *pbc.RecommendationSummary {
+	return &pbc.RecommendationSummary{
+		TotalRecommendations: 2,
+		CountByCategory: map[string]int32{
+			"RECOMMENDATION_CATEGORY_COST": 2,
+		},
+		SavingsByCategory: map[string]float64{
+			"RECOMMENDATION_CATEGORY_COST": total,
+		},
+		CountByActionType: map[string]int32{
+			"RECOMMENDATION_ACTION_TYPE_MODIFY": 2,
+		},
+		SavingsByActionType: map[string]float64{
+			"RECOMMENDATION_ACTION_TYPE_MODIFY": total,
+		},
+		ProjectionPeriod:      "monthly",
+		TotalEstimatedSavings: total,
+		Currency:              currency,
+	}
+}
+
 func TestCalculateMockSummary(t *testing.T) {
 	tests := []struct {
 		name             string
@@ -204,9 +236,109 @@ func TestCalculateMockSummary(t *testing.T) {
 					"RECOMMENDATION_ACTION_TYPE_RIGHTSIZE": 75.0,
 				},
 				ProjectionPeriod:      "monthly",
-				TotalEstimatedSavings: 125.0,
-				Currency:              "", // Should be empty due to currency mismatch
+				TotalEstimatedSavings: 0,
+				Currency:              "", // withheld: unlike currencies are not added
 			},
+		},
+		{
+			name: "mixed category withheld and single-currency category kept",
+			recommendations: []*pbc.Recommendation{
+				{
+					Category:   pbc.RecommendationCategory_RECOMMENDATION_CATEGORY_COST,
+					ActionType: pbc.RecommendationActionType_RECOMMENDATION_ACTION_TYPE_RIGHTSIZE,
+					Impact: &pbc.RecommendationImpact{
+						EstimatedSavings: 100.0,
+						Currency:         "USD",
+					},
+				},
+				{
+					Category:   pbc.RecommendationCategory_RECOMMENDATION_CATEGORY_COST,
+					ActionType: pbc.RecommendationActionType_RECOMMENDATION_ACTION_TYPE_RIGHTSIZE,
+					Impact: &pbc.RecommendationImpact{
+						EstimatedSavings: 40.0,
+						Currency:         "EUR",
+					},
+				},
+				{
+					Category:   pbc.RecommendationCategory_RECOMMENDATION_CATEGORY_PERFORMANCE,
+					ActionType: pbc.RecommendationActionType_RECOMMENDATION_ACTION_TYPE_TERMINATE,
+					Impact: &pbc.RecommendationImpact{
+						EstimatedSavings: 25.0,
+						Currency:         "USD",
+					},
+				},
+			},
+			projectionPeriod: "monthly",
+			expected: &pbc.RecommendationSummary{
+				TotalRecommendations: 3,
+				CountByCategory: map[string]int32{
+					"RECOMMENDATION_CATEGORY_COST":        2,
+					"RECOMMENDATION_CATEGORY_PERFORMANCE": 1,
+				},
+				SavingsByCategory: map[string]float64{
+					"RECOMMENDATION_CATEGORY_COST":        0,
+					"RECOMMENDATION_CATEGORY_PERFORMANCE": 25.0,
+				},
+				CountByActionType: map[string]int32{
+					"RECOMMENDATION_ACTION_TYPE_RIGHTSIZE": 2,
+					"RECOMMENDATION_ACTION_TYPE_TERMINATE": 1,
+				},
+				SavingsByActionType: map[string]float64{
+					"RECOMMENDATION_ACTION_TYPE_RIGHTSIZE": 0,
+					"RECOMMENDATION_ACTION_TYPE_TERMINATE": 25.0,
+				},
+				ProjectionPeriod:      "monthly",
+				TotalEstimatedSavings: 0,
+				Currency:              "",
+			},
+		},
+		{
+			name: "empty currency folds into USD",
+			recommendations: []*pbc.Recommendation{
+				mockImpact("USD", 100),
+				mockImpact("", 50),
+			},
+			projectionPeriod: "monthly",
+			expected:         mockSummary(150, "USD"),
+		},
+		{
+			name: "XXX counts as its own currency",
+			recommendations: []*pbc.Recommendation{
+				mockImpact("XXX", 100),
+				mockImpact("USD", 50),
+			},
+			projectionPeriod: "monthly",
+			expected:         mockSummary(0, ""),
+		},
+		{
+			name: "only empty currencies keep the sum",
+			recommendations: []*pbc.Recommendation{
+				mockImpact("", 100),
+				mockImpact("", 50),
+			},
+			projectionPeriod: "monthly",
+			expected:         mockSummary(150, ""),
+		},
+		{
+			name: "letter case is a distinct currency",
+			recommendations: []*pbc.Recommendation{
+				mockImpact("usd", 100),
+				mockImpact("USD", 50),
+			},
+			projectionPeriod: "monthly",
+			expected:         mockSummary(0, ""),
+		},
+		{
+			name: "missing impact still counts beside a priced row",
+			recommendations: []*pbc.Recommendation{
+				{
+					Category:   pbc.RecommendationCategory_RECOMMENDATION_CATEGORY_COST,
+					ActionType: pbc.RecommendationActionType_RECOMMENDATION_ACTION_TYPE_MODIFY,
+				},
+				mockImpact("USD", 10),
+			},
+			projectionPeriod: "monthly",
+			expected:         mockSummary(10, "USD"),
 		},
 		{
 			name: "recommendation without impact",

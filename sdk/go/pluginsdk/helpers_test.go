@@ -900,14 +900,193 @@ func TestCalculateRecommendationSummaryMixedCurrency(t *testing.T) {
 
 	summary := pluginsdk.CalculateRecommendationSummary(recs, "monthly")
 
-	// Currency should be empty when mixed
+	// Mixed non-empty currencies withhold the grand total and the shared buckets.
 	if summary.GetCurrency() != "" {
 		t.Errorf("expected empty currency for mixed currencies, got %s", summary.GetCurrency())
 	}
+	if summary.GetTotalEstimatedSavings() != 0 {
+		t.Errorf("expected withheld total 0, got %f", summary.GetTotalEstimatedSavings())
+	}
+	if summary.GetTotalRecommendations() != 2 {
+		t.Errorf("expected count 2, got %d", summary.GetTotalRecommendations())
+	}
+	cost := pbc.RecommendationCategory_RECOMMENDATION_CATEGORY_COST.String()
+	rightsize := pbc.RecommendationActionType_RECOMMENDATION_ACTION_TYPE_RIGHTSIZE.String()
+	if summary.GetSavingsByCategory()[cost] != 0 {
+		t.Errorf("expected mixed cost bucket 0, got %f", summary.GetSavingsByCategory()[cost])
+	}
+	if summary.GetSavingsByActionType()[rightsize] != 0 {
+		t.Errorf("expected mixed rightsize bucket 0, got %f", summary.GetSavingsByActionType()[rightsize])
+	}
+	if summary.GetCountByCategory()[cost] != 2 {
+		t.Errorf("expected cost count 2, got %d", summary.GetCountByCategory()[cost])
+	}
+	if summary.GetCountByActionType()[rightsize] != 2 {
+		t.Errorf("expected rightsize count 2, got %d", summary.GetCountByActionType()[rightsize])
+	}
+}
 
-	// Total savings should still be calculated
-	if summary.GetTotalEstimatedSavings() != 150.0 {
-		t.Errorf("expected 150.0 total savings, got %f", summary.GetTotalEstimatedSavings())
+// TestCalculateRecommendationSummaryRealZero keeps a named currency when the sum is actually zero.
+func TestCalculateRecommendationSummaryRealZero(t *testing.T) {
+	recs := []*pbc.Recommendation{
+		{
+			Category:   pbc.RecommendationCategory_RECOMMENDATION_CATEGORY_COST,
+			ActionType: pbc.RecommendationActionType_RECOMMENDATION_ACTION_TYPE_RIGHTSIZE,
+			Impact:     &pbc.RecommendationImpact{EstimatedSavings: 0, Currency: "USD"},
+		},
+		{
+			Category:   pbc.RecommendationCategory_RECOMMENDATION_CATEGORY_COST,
+			ActionType: pbc.RecommendationActionType_RECOMMENDATION_ACTION_TYPE_TERMINATE,
+			Impact:     &pbc.RecommendationImpact{EstimatedSavings: 0, Currency: "USD"},
+		},
+	}
+
+	summary := pluginsdk.CalculateRecommendationSummary(recs, "monthly")
+	if summary.GetTotalEstimatedSavings() != 0 {
+		t.Errorf("expected 0 savings, got %f", summary.GetTotalEstimatedSavings())
+	}
+	if summary.GetCurrency() != "USD" {
+		t.Errorf("expected USD for a real zero, got %q", summary.GetCurrency())
+	}
+}
+
+// TestCalculateRecommendationSummaryMixedBucketKeepsSingleCurrencyBucket withholds only the mixed bucket.
+func TestCalculateRecommendationSummaryMixedBucketKeepsSingleCurrencyBucket(t *testing.T) {
+	recs := []*pbc.Recommendation{
+		{
+			Category:   pbc.RecommendationCategory_RECOMMENDATION_CATEGORY_COST,
+			ActionType: pbc.RecommendationActionType_RECOMMENDATION_ACTION_TYPE_RIGHTSIZE,
+			Impact:     &pbc.RecommendationImpact{EstimatedSavings: 100, Currency: "USD"},
+		},
+		{
+			Category:   pbc.RecommendationCategory_RECOMMENDATION_CATEGORY_COST,
+			ActionType: pbc.RecommendationActionType_RECOMMENDATION_ACTION_TYPE_RIGHTSIZE,
+			Impact:     &pbc.RecommendationImpact{EstimatedSavings: 40, Currency: "EUR"},
+		},
+		{
+			Category:   pbc.RecommendationCategory_RECOMMENDATION_CATEGORY_PERFORMANCE,
+			ActionType: pbc.RecommendationActionType_RECOMMENDATION_ACTION_TYPE_TERMINATE,
+			Impact:     &pbc.RecommendationImpact{EstimatedSavings: 25, Currency: "USD"},
+		},
+	}
+
+	summary := pluginsdk.CalculateRecommendationSummary(recs, "monthly")
+	cost := pbc.RecommendationCategory_RECOMMENDATION_CATEGORY_COST.String()
+	performance := pbc.RecommendationCategory_RECOMMENDATION_CATEGORY_PERFORMANCE.String()
+	rightsize := pbc.RecommendationActionType_RECOMMENDATION_ACTION_TYPE_RIGHTSIZE.String()
+	terminate := pbc.RecommendationActionType_RECOMMENDATION_ACTION_TYPE_TERMINATE.String()
+
+	if summary.GetTotalEstimatedSavings() != 0 || summary.GetCurrency() != "" {
+		t.Errorf("expected withheld grand total, got %f %q",
+			summary.GetTotalEstimatedSavings(), summary.GetCurrency())
+	}
+	if summary.GetSavingsByCategory()[cost] != 0 {
+		t.Errorf("expected mixed cost bucket 0, got %f", summary.GetSavingsByCategory()[cost])
+	}
+	if summary.GetSavingsByCategory()[performance] != 25 {
+		t.Errorf("expected performance bucket 25, got %f", summary.GetSavingsByCategory()[performance])
+	}
+	if summary.GetSavingsByActionType()[rightsize] != 0 {
+		t.Errorf("expected mixed rightsize bucket 0, got %f", summary.GetSavingsByActionType()[rightsize])
+	}
+	if summary.GetSavingsByActionType()[terminate] != 25 {
+		t.Errorf("expected terminate bucket 25, got %f", summary.GetSavingsByActionType()[terminate])
+	}
+	if summary.GetCountByCategory()[cost] != 2 || summary.GetCountByCategory()[performance] != 1 {
+		t.Errorf("unexpected category counts: %v", summary.GetCountByCategory())
+	}
+	if summary.GetCountByActionType()[rightsize] != 2 || summary.GetCountByActionType()[terminate] != 1 {
+		t.Errorf("unexpected action counts: %v", summary.GetCountByActionType())
+	}
+}
+
+func TestCalculateRecommendationSummaryCurrencyEdges(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		recs     []*pbc.Recommendation
+		total    float64
+		currency string
+		count    int32
+	}{
+		{
+			name: "empty currency folds into the single currency",
+			recs: []*pbc.Recommendation{
+				impactRec(100, "USD"),
+				impactRec(50, ""),
+			},
+			total:    150,
+			currency: "USD",
+			count:    2,
+		},
+		{
+			name: "XXX is its own currency",
+			recs: []*pbc.Recommendation{
+				impactRec(100, "XXX"),
+				impactRec(50, "USD"),
+			},
+			total:    0,
+			currency: "",
+			count:    2,
+		},
+		{
+			name: "only empty currencies keep the sum",
+			recs: []*pbc.Recommendation{
+				impactRec(100, ""),
+				impactRec(50, ""),
+			},
+			total:    150,
+			currency: "",
+			count:    2,
+		},
+		{
+			name: "letter case is distinct",
+			recs: []*pbc.Recommendation{
+				impactRec(100, "usd"),
+				impactRec(50, "USD"),
+			},
+			total:    0,
+			currency: "",
+			count:    2,
+		},
+		{
+			name: "missing impact still counts",
+			recs: []*pbc.Recommendation{
+				{
+					Category:   pbc.RecommendationCategory_RECOMMENDATION_CATEGORY_COST,
+					ActionType: pbc.RecommendationActionType_RECOMMENDATION_ACTION_TYPE_MODIFY,
+				},
+				impactRec(10, "USD"),
+			},
+			total:    10,
+			currency: "USD",
+			count:    2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			summary := pluginsdk.CalculateRecommendationSummary(tt.recs, "monthly")
+			if summary.GetTotalEstimatedSavings() != tt.total {
+				t.Errorf("total = %f, want %f", summary.GetTotalEstimatedSavings(), tt.total)
+			}
+			if summary.GetCurrency() != tt.currency {
+				t.Errorf("currency = %q, want %q", summary.GetCurrency(), tt.currency)
+			}
+			if summary.GetTotalRecommendations() != tt.count {
+				t.Errorf("count = %d, want %d", summary.GetTotalRecommendations(), tt.count)
+			}
+		})
+	}
+}
+
+func impactRec(savings float64, currency string) *pbc.Recommendation {
+	return &pbc.Recommendation{
+		Category:   pbc.RecommendationCategory_RECOMMENDATION_CATEGORY_COST,
+		ActionType: pbc.RecommendationActionType_RECOMMENDATION_ACTION_TYPE_MODIFY,
+		Impact:     &pbc.RecommendationImpact{EstimatedSavings: savings, Currency: currency},
 	}
 }
 
