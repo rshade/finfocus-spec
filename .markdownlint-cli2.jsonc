@@ -16,6 +16,7 @@
     "CodeRabbitPromptGrok.md",
     ".claude/commands/",
     ".claude/skills/speckit-*/**",
+    ".agents/skills/speckit-*/**",
     ".claude/agents/",
     ".claude/ralph-loop.local.md",
     ".specify/templates/",
