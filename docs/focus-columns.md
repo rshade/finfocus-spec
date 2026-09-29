@@ -33,6 +33,10 @@ counts above keep them in their FOCUS 1.2 rows because the SDK still carries bot
 | Conditional | 10     | Classification, periods, and amounts |
 | **Total**   | **12** | Complete commitment dataset          |
 
+FOCUS 1.4 also defines a Billing Period dataset and an Invoice Detail dataset. Column rules
+for those messages are in [Billing Period Dataset](#focus-14-billing-period-dataset) and
+[Invoice Detail Dataset](#focus-14-invoice-detail-dataset).
+
 ### Deprecated Columns (FOCUS 1.3, removed in FOCUS 1.4)
 
 | Column          | Replacement           | Notes                                                        |
@@ -667,4 +671,81 @@ SELECT
 FROM contract_commitments cc
 LEFT JOIN focus_records f ON f.ContractApplied = cc.ContractCommitmentId
 GROUP BY cc.ContractCommitmentId, cc.ContractCommitmentType, cc.ContractCommitmentCost
+```
+
+## FOCUS 1.4 Billing Period Dataset
+
+`BillingPeriod` is the window an invoice covers. The cost-row Billing Period columns above are
+different fields on `FocusCostRecord`. This dataset has six mandatory columns and none of them
+allow null. `Build` rejects a record that breaks these rules. A later phase delivers the rows;
+this dataset has no RPC.
+
+| Column | Type | Nulls | Rule enforced by Build |
+| --- | --- | --- | --- |
+| BillingPeriodStart | Timestamp | No | Required. Inclusive |
+| BillingPeriodEnd | Timestamp | No | Required. Exclusive, and strictly after start |
+| BillingPeriodStatus | enum | No | OPEN or CLOSED. UNSPECIFIED fails |
+| InvoiceIssuerName | string | No | Required |
+| BillingPeriodCreated | Timestamp | No | Required |
+| BillingPeriodLastUpdated | Timestamp | No | Required, and >= Created |
+
+Closed must not return to Open except with customer approval. That transition spans records, so
+`Build` does not check it.
+
+```go
+period, err := pluginsdk.NewBillingPeriodBuilder().
+    WithWindow(start, end).
+    WithStatus(pbc.FocusBillingPeriodStatus_FOCUS_BILLING_PERIOD_STATUS_OPEN).
+    WithInvoiceIssuerName("Example Issuer").
+    WithCreated(start).
+    WithLastUpdated(start).
+    Build()
+```
+
+## FOCUS 1.4 Invoice Detail Dataset
+
+`InvoiceDetail` is one invoice line. Eighteen columns are always present. Four of those allow
+null: description, grain, issue date, and payment due date. Four more are conditional.
+`extended_columns` holds custom monetary metrics that have no FOCUS column. `Build` checks one
+record. Invoice totals, rounding tolerance, joins to cost rows, and status transitions are out
+of scope, and this message has no RPC.
+
+Charge category reuses `FocusChargeCategory`. Allowed values are USAGE, PURCHASE, TAX, CREDIT,
+and ADJUSTMENT. REFUND and UNSPECIFIED fail. FOCUS represents refunds inside those categories.
+
+| Column | Type | Nulls | Rule enforced by Build |
+| --- | --- | --- | --- |
+| InvoiceDetailId | string | No | Required |
+| InvoiceId | string | No | Required |
+| InvoiceIssuerName | string | No | Required |
+| BillingAccountId | string | No | Required |
+| BillingPeriodStart | Timestamp | No | Required. Inclusive |
+| BillingPeriodEnd | Timestamp | No | Required. Exclusive, and strictly after start |
+| BilledCost | double | No | Finite, including zero and negative |
+| BillingCurrency | string | No | ISO 4217 |
+| ChargeCategory | enum | No | USAGE, PURCHASE, TAX, CREDIT, or ADJUSTMENT |
+| InvoiceIssueStatus | enum | No | OPEN, ISSUED, or VOIDED |
+| InvoiceIssueDate | Timestamp | Yes | Valid when set |
+| InvoiceDetailCreated | Timestamp | No | Required |
+| InvoiceDetailLastUpdated | Timestamp | No | Required, and >= Created |
+| InvoiceDetailDescription | string | Yes | Empty means null |
+| InvoiceDetailGrain | map | Yes | Empty means null. Keys are FOCUS names or `x_` plus more characters |
+| PaymentCurrency | string | Conditional | Set together with PaymentCurrencyBilledCost |
+| PaymentCurrencyBilledCost | optional double | Conditional | Zero is present. Unset is absent |
+| PaymentCurrencyInvoiceDetailId | string | Conditional | When cost is non-zero, a set id matches InvoiceDetailId |
+| PaymentDueDate | Timestamp | Yes | Valid when set |
+| PaymentTerms | string | No | Required, for example `Net 30` |
+| PurchaseOrderNumber | string | Yes | Empty means null. Not required on one record |
+| ReferenceInvoiceId | string | No | Required. Not checked against another invoice |
+| extended_columns | map | Yes | Keys start with `x_`. Values are decimal strings |
+
+`WithBaseline` fills the columns that do not allow nulls: a USD usage line, status Issued,
+terms `Net 30`, and a reference id equal to the invoice id. Settlement currency stays absent.
+
+```go
+line, err := pluginsdk.NewInvoiceDetailBuilder().
+    WithBaseline(start).
+    WithPaymentCurrency("EUR").
+    WithPaymentCurrencyBilledCost(0).
+    Build()
 ```

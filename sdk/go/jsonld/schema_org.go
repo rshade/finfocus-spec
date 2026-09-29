@@ -29,7 +29,7 @@ func MonetaryAmountTypeCoercion() map[string]interface{} {
 	return map[string]interface{}{
 		JSONLDTypeKey: MonetaryAmountType,
 		"schema:value": map[string]interface{}{
-			"@id":         SchemaValue,
+			JSONLDIDKey:   SchemaValue,
 			JSONLDTypeKey: "http://www.w3.org/2001/XMLSchema#decimal",
 		},
 		"schema:currency": SchemaCurrency,
@@ -39,7 +39,7 @@ func MonetaryAmountTypeCoercion() map[string]interface{} {
 // DateTimeTypeCoercion returns a JSON-LD type coercion for ISO 8601 dates.
 func DateTimeTypeCoercion() map[string]interface{} {
 	return map[string]interface{}{
-		"@id":         "schema:DateTime",
+		JSONLDIDKey:   "schema:DateTime",
 		JSONLDTypeKey: "http://www.w3.org/2001/XMLSchema#dateTime",
 	}
 }

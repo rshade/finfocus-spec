@@ -287,11 +287,7 @@ func (fw *fieldWriter) addDeprecatedString(name, value string) {
 func (s *Serializer) SerializeCommitment(record *pbc.ContractCommitment) ([]byte, error) {
 	// Validate input
 	if record == nil {
-		return nil, &ValidationError{
-			Field:      "record",
-			Message:    "record cannot be nil",
-			Suggestion: "provide a valid ContractCommitment",
-		}
+		return nil, nilRecordError("provide a valid ContractCommitment")
 	}
 
 	// Build the JSON-LD document
@@ -304,7 +300,7 @@ func (s *Serializer) SerializeCommitment(record *pbc.ContractCommitment) ([]byte
 	doc[JSONLDTypeKey] = ContractCommitmentType
 
 	// Add @id
-	doc["@id"] = s.idGenerator.GenerateCommitment(record)
+	doc[JSONLDIDKey] = s.idGenerator.GenerateCommitment(record)
 
 	// Serialize all fields
 	if err := s.serializeCommitmentFields(doc, record); err != nil {
@@ -379,6 +375,96 @@ func (s *Serializer) serializeCommitmentFields(doc map[string]interface{}, recor
 	return fw.Err()
 }
 
+// SerializeBillingPeriod converts a BillingPeriod to JSON-LD format.
+func (s *Serializer) SerializeBillingPeriod(record *pbc.BillingPeriod) ([]byte, error) {
+	if record == nil {
+		return nil, nilRecordError("provide a valid BillingPeriod")
+	}
+	doc := map[string]interface{}{
+		"@context":    s.context.Build(),
+		JSONLDTypeKey: BillingPeriodType,
+		JSONLDIDKey:   billingPeriodDocumentID(record),
+	}
+	if err := s.serializeBillingPeriodFields(doc, record); err != nil {
+		return nil, err
+	}
+	return s.marshalDoc(doc)
+}
+
+func (s *Serializer) serializeBillingPeriodFields(doc map[string]interface{}, record *pbc.BillingPeriod) error {
+	fw := s.newFieldWriter(doc)
+	fw.addTimestamp("billingPeriodStart", record.GetBillingPeriodStart())
+	fw.addTimestamp("billingPeriodEnd", record.GetBillingPeriodEnd())
+	fw.addEnum("billingPeriodStatus", record.GetBillingPeriodStatus().String())
+	fw.addString("invoiceIssuerName", record.GetInvoiceIssuerName())
+	fw.addTimestamp("billingPeriodCreated", record.GetBillingPeriodCreated())
+	fw.addTimestamp("billingPeriodLastUpdated", record.GetBillingPeriodLastUpdated())
+	return fw.Err()
+}
+
+// SerializeInvoiceDetail converts an InvoiceDetail to JSON-LD format.
+// A present payment-currency billed cost is written even when it is zero.
+// A nil cost is omitted.
+func (s *Serializer) SerializeInvoiceDetail(record *pbc.InvoiceDetail) ([]byte, error) {
+	if record == nil {
+		return nil, nilRecordError("provide a valid InvoiceDetail")
+	}
+	doc := map[string]interface{}{
+		"@context":    s.context.Build(),
+		JSONLDTypeKey: InvoiceDetailType,
+		JSONLDIDKey:   invoiceDetailDocumentID(record),
+	}
+	if err := s.serializeInvoiceDetailFields(doc, record); err != nil {
+		return nil, err
+	}
+	return s.marshalDoc(doc)
+}
+
+func (s *Serializer) serializeInvoiceDetailFields(doc map[string]interface{}, record *pbc.InvoiceDetail) error {
+	fw := s.newFieldWriter(doc)
+	fw.addString("invoiceDetailId", record.GetInvoiceDetailId())
+	fw.addString("invoiceId", record.GetInvoiceId())
+	fw.addString("invoiceIssuerName", record.GetInvoiceIssuerName())
+	fw.addString("billingAccountId", record.GetBillingAccountId())
+	fw.addTimestamp("billingPeriodStart", record.GetBillingPeriodStart())
+	fw.addTimestamp("billingPeriodEnd", record.GetBillingPeriodEnd())
+	doc["billedCost"] = record.GetBilledCost()
+	fw.addString("billingCurrency", record.GetBillingCurrency())
+	fw.addEnum("chargeCategory", record.GetChargeCategory().String())
+	fw.addEnum("invoiceIssueStatus", record.GetInvoiceIssueStatus().String())
+	fw.addTimestamp("invoiceIssueDate", record.GetInvoiceIssueDate())
+	fw.addTimestamp("invoiceDetailCreated", record.GetInvoiceDetailCreated())
+	fw.addTimestamp("invoiceDetailLastUpdated", record.GetInvoiceDetailLastUpdated())
+	fw.addString("invoiceDetailDescription", record.GetInvoiceDetailDescription())
+	fw.addMap("invoiceDetailGrain", record.GetInvoiceDetailGrain())
+	fw.addString("paymentCurrency", record.GetPaymentCurrency())
+	if record.PaymentCurrencyBilledCost != nil {
+		doc["paymentCurrencyBilledCost"] = record.GetPaymentCurrencyBilledCost()
+	}
+	fw.addString("paymentCurrencyInvoiceDetailId", record.GetPaymentCurrencyInvoiceDetailId())
+	fw.addTimestamp("paymentDueDate", record.GetPaymentDueDate())
+	fw.addString("paymentTerms", record.GetPaymentTerms())
+	fw.addString("purchaseOrderNumber", record.GetPurchaseOrderNumber())
+	fw.addString("referenceInvoiceId", record.GetReferenceInvoiceId())
+	fw.addMap("extendedColumns", record.GetExtendedColumns())
+	return fw.Err()
+}
+
+func nilRecordError(suggestion string) error {
+	return &ValidationError{
+		Field:      "record",
+		Message:    "record cannot be nil",
+		Suggestion: suggestion,
+	}
+}
+
+func (s *Serializer) marshalDoc(doc map[string]interface{}) ([]byte, error) {
+	if s.options.PrettyPrint {
+		return json.MarshalIndent(doc, "", "  ")
+	}
+	return json.Marshal(doc)
+}
+
 // Serialize converts a FocusCostRecord to JSON-LD format.
 //
 // Returns an error if:
@@ -388,11 +474,7 @@ func (s *Serializer) serializeCommitmentFields(doc map[string]interface{}, recor
 func (s *Serializer) Serialize(record *pbc.FocusCostRecord) ([]byte, error) {
 	// Validate input
 	if record == nil {
-		return nil, &ValidationError{
-			Field:      "record",
-			Message:    "record cannot be nil",
-			Suggestion: "provide a valid FocusCostRecord",
-		}
+		return nil, nilRecordError("provide a valid FocusCostRecord")
 	}
 
 	// Build the JSON-LD document
@@ -405,7 +487,7 @@ func (s *Serializer) Serialize(record *pbc.FocusCostRecord) ([]byte, error) {
 	doc[JSONLDTypeKey] = FocusCostRecordType
 
 	// Add @id
-	doc["@id"] = s.idGenerator.Generate(record)
+	doc[JSONLDIDKey] = s.idGenerator.Generate(record)
 
 	// Serialize all fields
 	if err := s.serializeCostRecordFields(doc, record); err != nil {
