@@ -35,6 +35,13 @@ func descriptorCloneTestCases() map[string]*pbc.ResourceDescriptor {
 			GrowthType:            pbc.GrowthType_GROWTH_TYPE_EXPONENTIAL,
 			GrowthRate:            &growthRate,
 		},
+		"lineage chain": {
+			Provider: "aws", ResourceType: "ec2", Id: "i-1",
+			Lineage: &pbc.LineageNode{
+				Id:     "child",
+				Parent: &pbc.LineageNode{Id: "parent"},
+			},
+		},
 		"optional explicit zero preserved": {
 			Provider:              "gcp",
 			ResourceType:          "compute_engine",
