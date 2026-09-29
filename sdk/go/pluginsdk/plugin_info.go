@@ -195,8 +195,8 @@ const (
 	// interfaces: RecommendationsProvider, BudgetsProvider, DismissProvider,
 	// DryRunHandler, BatchCostHandler, ResolveResourceTypesProvider,
 	// UsageSourceProvider, AllocatorProvider, ContractCommitmentProvider,
-	// InvoiceDatasetProvider.
-	optionalCapabilities = 10
+	// InvoiceDatasetProvider, RecommendationScorerProvider.
+	optionalCapabilities = 11
 
 	// maxCapabilities is the total maximum number of capabilities a plugin
 	// can have. Used for pre-allocation to minimize allocations during
@@ -206,7 +206,7 @@ const (
 	// MaxConfiguredCapabilities is the maximum number of capabilities allowed
 	// in PluginInfo.Capabilities. This limit prevents DoS attacks where malicious
 	// plugins configure excessive capabilities to exhaust memory. The limit is
-	// generous (64) compared to currently defined capabilities (17) to allow for
+	// generous (64) compared to currently defined capabilities (18) to allow for
 	// future growth while still providing protection.
 	MaxConfiguredCapabilities = 64
 
@@ -216,7 +216,7 @@ const (
 
 	// maxValidCapability is the maximum valid PluginCapability enum value.
 	// This should be updated when new capabilities are added to the proto definition.
-	maxValidCapability = pbc.PluginCapability_PLUGIN_CAPABILITY_INVOICE_DATA // 17
+	maxValidCapability = pbc.PluginCapability_PLUGIN_CAPABILITY_RECOMMENDATION_SCORING // 18
 )
 
 // IsValidCapability reports whether a PluginCapability value is within the
@@ -234,7 +234,8 @@ func IsValidCapability(capability pbc.PluginCapability) bool {
 // additional entries when the plugin implements optional interfaces such as
 // RecommendationsProvider, BudgetsProvider, DismissProvider, DryRunHandler,
 // BatchCostHandler, ResolveResourceTypesProvider, UsageSourceProvider,
-// AllocatorProvider, ContractCommitmentProvider, or InvoiceDatasetProvider.
+// AllocatorProvider, ContractCommitmentProvider, InvoiceDatasetProvider, or
+// RecommendationScorerProvider.
 func inferCapabilities(plugin Plugin) []pbc.PluginCapability {
 	// Defensive nil check to prevent panic on type assertions.
 	// See function documentation for rationale on handling nil plugins gracefully.
@@ -242,7 +243,7 @@ func inferCapabilities(plugin Plugin) []pbc.PluginCapability {
 		return nil
 	}
 
-	// Pre-allocate for common case (4 base + 10 optional = maxCapabilities)
+	// Pre-allocate for common case (4 base + 11 optional = maxCapabilities)
 	// This reduces allocations from ~2-3 (slice growth) to 1 (initial make)
 	capabilities := make([]pbc.PluginCapability, 0, maxCapabilities)
 
@@ -284,6 +285,9 @@ func inferCapabilities(plugin Plugin) []pbc.PluginCapability {
 	}
 	if _, ok := plugin.(InvoiceDatasetProvider); ok {
 		capabilities = append(capabilities, pbc.PluginCapability_PLUGIN_CAPABILITY_INVOICE_DATA)
+	}
+	if _, ok := plugin.(RecommendationScorerProvider); ok {
+		capabilities = append(capabilities, pbc.PluginCapability_PLUGIN_CAPABILITY_RECOMMENDATION_SCORING)
 	}
 
 	return capabilities

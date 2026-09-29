@@ -8,6 +8,7 @@ export * from "./generated/finfocus/v1/registry_pb.js";
 export * from "./generated/finfocus/v1/usage_pb.js";
 export * from "./generated/finfocus/v1/allocation_pb.js";
 export * from "./generated/finfocus/v1/supplemental_pb.js";
+export * from "./generated/finfocus/v1/scoring_pb.js";
 
 // Error handling - our custom ValidationError takes precedence
 export { ValidationError } from "./errors/validation-error.js";
@@ -18,6 +19,7 @@ export { RegistryClient, ObservabilityClient, ClientConfig } from "./clients/aux
 export { UsageSourceClient } from "./clients/usage-source.js";
 export { AllocatorClient } from "./clients/allocator.js";
 export { SupplementalDatasetClient } from "./clients/supplemental-dataset.js";
+export { RecommendationScorerClient } from "./clients/recommendation-scorer.js";
 
 // Builder patterns
 export { ResourceDescriptorBuilder } from "./builders/resource-descriptor.js";

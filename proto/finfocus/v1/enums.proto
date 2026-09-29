@@ -196,6 +196,8 @@ enum PluginCapability {
   // Plugin implements SupplementalDatasetService.GetBillingPeriods and
   // GetInvoiceDetails. The two datasets join, so one capability covers both.
   PLUGIN_CAPABILITY_INVOICE_DATA = 17;
+  // Plugin implements RecommendationScorerService.ScoreRecommendations.
+  PLUGIN_CAPABILITY_RECOMMENDATION_SCORING = 18;
 }
 
 // UsageProfile represents the intended workload context for cost estimation.

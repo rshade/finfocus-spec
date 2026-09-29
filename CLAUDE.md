@@ -1020,6 +1020,19 @@ parallel subtests complete.
 - In an agent worktree, `buf breaking --against '.git#branch=main'` is blocked; `git archive main
   proto buf.yaml` into a scratch dir and run `buf breaking --against <dir>` instead.
 
+### Recommendation Scorer Pattern (556-recommendation-scoring)
+
+- `RecommendationScorerService` (`scoring.proto`) maps to `PLUGIN_CAPABILITY_RECOMMENDATION_SCORING = 18`
+  (legacy `supports_recommendation_scoring`). The issue text said 17, but 17 is `INVOICE_DATA`.
+- `RecommendationScorerProvider` is a field on `optionalServices` (`scorer`), with adapters in
+  `pluginsdk/scorer.go`. Rules live in `sdk/go/testing/scoring.go`; `pluginsdk` delegates.
+- `ValidateScoreRecommendationsRequest(req, maxBatchSize)` (0 means no limit) returns InvalidArgument
+  errors; `ValidateScoreRecommendationsResponse` checks alignment, ranges, signal support, and that a
+  duplicate group has at least two members. The SDK does not cap `max_batch_size`.
+- `MockRecommendationScorer` (fixed rules) and `RunScorerConformance` are model-agnostic; they never
+  check score values. Scenario funcs are named `scorerCheck*` to avoid clashing with allocator ones.
+- Trust rules and threshold guidance (non-normative, synthetic data) are in `docs/recommendation-scoring.md`.
+
 ## Active Technologies
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +

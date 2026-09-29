@@ -37,3 +37,10 @@ func CopiedVocabularyForTest() []string {
 		metricCPURequest, metricMemRequest, metricCPUAllocatable, metricMemAllocatable,
 	}
 }
+
+// RunScorerScenariosForTest exposes the scorer conformance scenario runner,
+// so broken scorers can be asserted to fail specific scenarios without a fake
+// *testing.T.
+//
+//nolint:gochecknoglobals // Test-only export of an unexported function.
+var RunScorerScenariosForTest = runScorerScenarios

@@ -767,6 +767,7 @@ Simply implement the standard interfaces:
 | `ResolveResourceTypesProvider`   | `ResolveResourceTypes`   | `PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES`     |
 | `UsageSourceProvider`            | `GetStats`               | `PLUGIN_CAPABILITY_USAGE_STATS`                |
 | `AllocatorProvider`              | `Allocate`               | `PLUGIN_CAPABILITY_ALLOCATION`                 |
+| `RecommendationScorerProvider`   | `ScoreRecommendations`   | `PLUGIN_CAPABILITY_RECOMMENDATION_SCORING`     |
 | `ContractCommitmentProvider`     | `GetContractCommitments` | `PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS`       |
 | `InvoiceDatasetProvider`         | `GetBillingPeriods`, `GetInvoiceDetails` | `PLUGIN_CAPABILITY_INVOICE_DATA` |
 

@@ -255,6 +255,38 @@ Errors arrive as `ConnectError` with the code the allocator returned; a bad poli
 `Code.InvalidArgument` naming the field's path. The client does not validate requests or check
 conservation.
 
+### RecommendationScorerClient
+
+Calls plugins that serve `RecommendationScorerService` and advertise
+`PluginCapability.RECOMMENDATION_SCORING`. See
+[docs/recommendation-scoring.md](../../docs/recommendation-scoring.md) for signals and trust rules.
+Scores are ranking signals and never approval to act.
+
+```typescript
+import { create } from "@bufbuild/protobuf";
+import {
+  RecommendationScorerClient,
+  ScoreRecommendationsRequestSchema,
+  ScoreSignal,
+} from "@rshade/finfocus-client";
+
+const scorer = new RecommendationScorerClient({ baseUrl: "https://scorer-plugin.example.com" });
+const resp = await scorer.scoreRecommendations(
+  create(ScoreRecommendationsRequestSchema, {
+    recommendations,
+    signals: [ScoreSignal.RISK],
+  }),
+);
+resp.results.forEach((result, i) => {
+  if (result.result.case === "scores") {
+    console.log(recommendations[i].id, result.result.value.risk);
+  }
+});
+```
+
+Results are index-aligned with the request. Errors arrive as `ConnectError` with the scorer's code.
+The client does not validate requests or responses.
+
 ### SupplementalDatasetClient
 
 Calls plugins that serve `SupplementalDatasetService` and advertise

@@ -389,6 +389,17 @@ func (p *warnAllocatorPlugin) Allocate(context.Context, *pbc.AllocateRequest) (*
 	return &pbc.AllocateResponse{}, nil
 }
 
+// warnScorerPlugin is a minimal RecommendationScorerProvider for the startup warning tests.
+type warnScorerPlugin struct {
+	*BasePlugin
+}
+
+func (p *warnScorerPlugin) ScoreRecommendations(
+	context.Context, *pbc.ScoreRecommendationsRequest,
+) (*pbc.ScoreRecommendationsResponse, error) {
+	return &pbc.ScoreRecommendationsResponse{}, nil
+}
+
 // warnUsageAndAllocPlugin implements both service-only providers.
 type warnUsageAndAllocPlugin struct {
 	*usageTestPlugin
@@ -421,6 +432,9 @@ func TestServe_WarnsAllocatorWithoutExplicitCapabilities(t *testing.T) {
 		allocWarning = "allocator relies on inferred capabilities, which include pricing capabilities; " +
 			"allocation-only plugins should set PluginInfo.Capabilities explicitly"
 	)
+	const scorerWarning = "recommendation scorer relies on inferred capabilities, which include pricing " +
+		"capabilities; scorer-only plugins should set PluginInfo.Capabilities explicitly"
+	scorerCap := pbc.PluginCapability_PLUGIN_CAPABILITY_RECOMMENDATION_SCORING.String()
 	usageCap := pbc.PluginCapability_PLUGIN_CAPABILITY_USAGE_STATS.String()
 	allocCap := pbc.PluginCapability_PLUGIN_CAPABILITY_ALLOCATION.String()
 	newAlloc := func() *warnAllocatorPlugin { return &warnAllocatorPlugin{BasePlugin: NewBasePlugin("alloc")} }
@@ -432,6 +446,11 @@ func TestServe_WarnsAllocatorWithoutExplicitCapabilities(t *testing.T) {
 		want   map[string]string // capability -> message
 	}{
 		{name: "inferred capabilities", plugin: newAlloc(), want: map[string]string{allocCap: allocWarning}},
+		{
+			name:   "recommendation scorer",
+			plugin: &warnScorerPlugin{BasePlugin: NewBasePlugin("scorer")},
+			want:   map[string]string{scorerCap: scorerWarning},
+		},
 		{
 			name: "explicit capabilities", plugin: newAlloc(),
 			info: NewPluginInfo("alloc", "v1.0.0", WithCapabilities(pbc.PluginCapability_PLUGIN_CAPABILITY_ALLOCATION)),

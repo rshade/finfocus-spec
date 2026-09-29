@@ -353,6 +353,30 @@ func TestMyUsageSource(t *testing.T) {
 }
 ```
 
+### Recommendation Scorer Testing
+
+Helpers for plugins that implement `RecommendationScorerService.ScoreRecommendations` (see
+[docs/recommendation-scoring.md](../../../docs/recommendation-scoring.md)).
+
+- `ValidateScoreRecommendationsRequest(req, maxBatchSize)` rejects an empty request, nil or repeated
+  ids, a batch above `maxBatchSize`, undefined signals, and an undefined `identifier_mode`, with
+  `codes.InvalidArgument`.
+- `ValidateScoreRecommendationsResponse(req, resp)` checks index alignment, echoed ids, `[0, 1]` and
+  `[0, 3]` ranges, `ResourceError` codes other than OK, `max_batch_size`, signal support, and
+  duplicate groups.
+- `MockRecommendationScorer` is the reference scorer (fixed rules, no model). It is not a
+  `MockPlugin` method, so `MockPlugin` capabilities do not change.
+- `RunScorerConformance(t, impl)` serves `impl` over a `ScorerHarness` and runs ten structural
+  scenarios: `single_recommendation`, `mixed_batch`, `reversed_order`, `signal_subset`,
+  `unsupported_signal`, `unspecified_signal`, `identifier_modes`, `empty_request`, `duplicate_ids`,
+  and `oversize_batch`. It checks no score values.
+
+```go
+func TestMyScorer(t *testing.T) {
+    plugintesting.RunScorerConformance(t, &MyScorer{})
+}
+```
+
 ### Allocator Testing
 
 Helpers for plugins that implement `AllocatorService.Allocate` (see
