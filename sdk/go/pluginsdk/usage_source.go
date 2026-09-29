@@ -54,7 +54,7 @@ func (h *usageSourceConnectHandler) GetStats(
 }
 
 // warnInferredOnlyCapabilities logs one warning per service-only provider
-// (usage source, allocator) the plugin implements when it relies on inferred
+// (usage source, allocator, recommendation scorer) the plugin implements when it relies on inferred
 // capabilities. Inference always adds the four pricing capabilities from the
 // required Plugin interface, so a usage-only or allocation-only plugin would
 // otherwise advertise pricing it does not offer. Plugins that implement
@@ -77,5 +77,11 @@ func warnInferredOnlyCapabilities(logger *zerolog.Logger, plugin Plugin, info *P
 			Str("capability", pbc.PluginCapability_PLUGIN_CAPABILITY_ALLOCATION.String()).
 			Msg("allocator relies on inferred capabilities, which include pricing capabilities; " +
 				"allocation-only plugins should set PluginInfo.Capabilities explicitly")
+	}
+	if _, ok := plugin.(RecommendationScorerProvider); ok {
+		logger.Warn().
+			Str("capability", pbc.PluginCapability_PLUGIN_CAPABILITY_RECOMMENDATION_SCORING.String()).
+			Msg("recommendation scorer relies on inferred capabilities, which include pricing capabilities; " +
+				"scorer-only plugins should set PluginInfo.Capabilities explicitly")
 	}
 }

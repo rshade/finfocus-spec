@@ -834,12 +834,13 @@ func TestIsValidCapability(t *testing.T) {
 		{"ALLOCATION", pbc.PluginCapability_PLUGIN_CAPABILITY_ALLOCATION, true},
 		{"CONTRACT_COMMITMENTS", pbc.PluginCapability_PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS, true},
 		{"INVOICE_DATA", pbc.PluginCapability_PLUGIN_CAPABILITY_INVOICE_DATA, true},
+		{"RECOMMENDATION_SCORING", pbc.PluginCapability_PLUGIN_CAPABILITY_RECOMMENDATION_SCORING, true},
 
 		// Invalid capabilities
 		{"UNSPECIFIED (0)", pbc.PluginCapability_PLUGIN_CAPABILITY_UNSPECIFIED, false},
 		{"negative value (-1)", pbc.PluginCapability(-1), false},
 		{"out of range (999)", pbc.PluginCapability(999), false},
-		{"just above max (18)", pbc.PluginCapability(18), false},
+		{"just above max (19)", pbc.PluginCapability(19), false},
 		{"very large value", pbc.PluginCapability(1000000), false},
 	}
 

@@ -251,6 +251,20 @@ type AllocatorProvider interface {
 	Allocate(ctx context.Context, req *pbc.AllocateRequest) (*pbc.AllocateResponse, error)
 }
 
+// RecommendationScorerProvider is an optional interface for plugins that serve
+// RecommendationScorerService, rating recommendations that other plugins
+// produced. When ServeConfig.Plugin implements it, Serve registers the service
+// in gRPC and Connect modes, reports it in the Connect health checker, and
+// infers PLUGIN_CAPABILITY_RECOMMENDATION_SCORING. Scorer-only plugins should
+// set PluginInfo.Capabilities explicitly. Implementations typically call
+// ValidateScoreRecommendationsRequest first, and hosts check every response
+// with ValidateScoreRecommendationsResponse. A score is never approval to act.
+type RecommendationScorerProvider interface {
+	ScoreRecommendations(
+		ctx context.Context, req *pbc.ScoreRecommendationsRequest,
+	) (*pbc.ScoreRecommendationsResponse, error)
+}
+
 // ContractCommitmentProvider is an optional interface for plugins that serve
 // FOCUS Contract Commitment records through
 // SupplementalDatasetService.GetContractCommitments. When ServeConfig.Plugin
@@ -1349,6 +1363,7 @@ type optionalServices struct {
 	allocator   AllocatorProvider
 	commitments ContractCommitmentProvider
 	invoices    InvoiceDatasetProvider
+	scorer      RecommendationScorerProvider
 }
 
 func newOptionalServices(plugin Plugin) optionalServices {
@@ -1357,6 +1372,7 @@ func newOptionalServices(plugin Plugin) optionalServices {
 	services.allocator, _ = plugin.(AllocatorProvider)
 	services.commitments, _ = plugin.(ContractCommitmentProvider)
 	services.invoices, _ = plugin.(InvoiceDatasetProvider)
+	services.scorer, _ = plugin.(RecommendationScorerProvider)
 	return services
 }
 
@@ -1377,6 +1393,10 @@ func (s optionalServices) registerConnect(mux *http.ServeMux, opts []connect.Han
 		mux.Handle(pbcconnect.NewSupplementalDatasetServiceHandler(
 			&supplementalConnectHandler{commitments: s.commitments, invoices: s.invoices}, opts...))
 	}
+	if s.scorer != nil {
+		mux.Handle(pbcconnect.NewRecommendationScorerServiceHandler(
+			&recommendationScorerConnectHandler{provider: s.scorer}, opts...))
+	}
 }
 
 // healthServiceNames lists CostSourceService and each optional service that is
@@ -1391,6 +1411,9 @@ func (s optionalServices) healthServiceNames() []string {
 	}
 	if s.servesSupplemental() {
 		names = append(names, pbcconnect.SupplementalDatasetServiceName)
+	}
+	if s.scorer != nil {
+		names = append(names, pbcconnect.RecommendationScorerServiceName)
 	}
 	return names
 }
@@ -1424,6 +1447,10 @@ func serveGRPC(
 		pbc.RegisterSupplementalDatasetServiceServer(grpcServer, &supplementalGRPCServer{
 			commitments: services.commitments, invoices: services.invoices,
 		})
+	}
+	if services.scorer != nil {
+		pbc.RegisterRecommendationScorerServiceServer(grpcServer,
+			&recommendationScorerGRPCServer{provider: services.scorer})
 	}
 	reflection.Register(grpcServer)
 
