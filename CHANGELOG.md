@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0](https://github.com/rshade/finfocus-spec/compare/v0.6.2...v0.7.0) (2026-09-29)
+
+
+### Added
+
+* **pluginsdk:** add FOCUS 1.4 cost and usage columns ([#549](https://github.com/rshade/finfocus-spec/issues/549)) ([48b5dcd](https://github.com/rshade/finfocus-spec/commit/48b5dcd8bf0c1387d30ea752d54965ebf47a6ff9)), closes [#541](https://github.com/rshade/finfocus-spec/issues/541)
+* **pluginsdk:** add opt-in per-request credentials ([#550](https://github.com/rshade/finfocus-spec/issues/550)) ([67b47da](https://github.com/rshade/finfocus-spec/commit/67b47da74a541aa11bb42efd6f5f9bac0af4c23f)), closes [#220](https://github.com/rshade/finfocus-spec/issues/220)
+* **proto:** add cost allocation lineage metadata ([#546](https://github.com/rshade/finfocus-spec/issues/546)) ([d85660a](https://github.com/rshade/finfocus-spec/commit/d85660ae273be1e1d41c74b77417e8f76bd2f1f8)), closes [#191](https://github.com/rshade/finfocus-spec/issues/191)
+* **proto:** add cost_breakdown map to GetProjectedCostResponse ([#537](https://github.com/rshade/finfocus-spec/issues/537)) ([7a29919](https://github.com/rshade/finfocus-spec/commit/7a29919480c2e0d3260262387f32a57d1975afed))
+* **proto:** add FOCUS 1.4 billing period and invoice detail ([#554](https://github.com/rshade/finfocus-spec/issues/554)) ([5220a1a](https://github.com/rshade/finfocus-spec/commit/5220a1a44bd6b2406b2e9e5928f4b229fc86ca2a)), closes [#543](https://github.com/rshade/finfocus-spec/issues/543)
+* **proto:** add FOCUS 1.4 contract commitment columns ([#553](https://github.com/rshade/finfocus-spec/issues/553)) ([487e2c0](https://github.com/rshade/finfocus-spec/commit/487e2c049704b9cdfb5f073def4c931ece6490b1)), closes [#542](https://github.com/rshade/finfocus-spec/issues/542)
+* **proto:** add RecommendationScorerService.ScoreRecommendations ([#559](https://github.com/rshade/finfocus-spec/issues/559)) ([8020f96](https://github.com/rshade/finfocus-spec/commit/8020f968a8b9459a26f1b9f9f4be7991cb9a1fe3)), closes [#556](https://github.com/rshade/finfocus-spec/issues/556)
+* **proto:** add SupplementalDatasetService for contract commitments ([#552](https://github.com/rshade/finfocus-spec/issues/552)) ([91c1374](https://github.com/rshade/finfocus-spec/commit/91c13748b4ebe5ceeaee285d097c6dec10901193)), closes [#544](https://github.com/rshade/finfocus-spec/issues/544)
+* **proto:** serve FOCUS billing period and invoice detail ([#555](https://github.com/rshade/finfocus-spec/issues/555)) ([31e9006](https://github.com/rshade/finfocus-spec/commit/31e900635acd053ee17854fd02059828a0a9a2d4))
+
+
+### Fixed
+
+* **pluginsdk:** keep ContractCommitmentBuilder.Build on pre-1.4 rules ([#558](https://github.com/rshade/finfocus-spec/issues/558)) ([b785bcf](https://github.com/rshade/finfocus-spec/commit/b785bcfbca94f73395de0384f5f763d7990049bf))
+* **pluginsdk:** log host trace id on validation failures ([#538](https://github.com/rshade/finfocus-spec/issues/538)) ([a5e6790](https://github.com/rshade/finfocus-spec/commit/a5e6790d0cda2ccfad7e9fa72dbbbec90c8255d9)), closes [#193](https://github.com/rshade/finfocus-spec/issues/193)
+* **pluginsdk:** preserve lineage when cloning batch resource descriptors ([#557](https://github.com/rshade/finfocus-spec/issues/557)) ([02befb9](https://github.com/rshade/finfocus-spec/commit/02befb9073cc205692468adf2272f6abddbcca18))
+* **pluginsdk:** refuse mixed-currency recommendation totals ([#536](https://github.com/rshade/finfocus-spec/issues/536)) ([a7dde3a](https://github.com/rshade/finfocus-spec/commit/a7dde3aa862f4e27b6c58f2e18116c5bc27e4c94)), closes [#190](https://github.com/rshade/finfocus-spec/issues/190)
+* **sdk:** make middleware and framework-plugins build and work ([#529](https://github.com/rshade/finfocus-spec/issues/529)) ([b3ad25c](https://github.com/rshade/finfocus-spec/commit/b3ad25c7fe340f4522537eec6fb73306202d5a1d)), closes [#513](https://github.com/rshade/finfocus-spec/issues/513)
+
+
+### Performance
+
+* **pluginsdk:** replace proto.Clone with manual copy in descriptorClone ([#530](https://github.com/rshade/finfocus-spec/issues/530)) ([6f27a92](https://github.com/rshade/finfocus-spec/commit/6f27a92d165676a90cbff443c6ea2995da100fb3)), closes [#402](https://github.com/rshade/finfocus-spec/issues/402)
+
+
+### Documentation
+
+* **pluginsdk:** plan trace id on validation failures ([#548](https://github.com/rshade/finfocus-spec/issues/548)) ([8a7668f](https://github.com/rshade/finfocus-spec/commit/8a7668f0f65481682da93d602ce49e238dde4059)), closes [#193](https://github.com/rshade/finfocus-spec/issues/193)
+* record cost lineage assessment ([#533](https://github.com/rshade/finfocus-spec/issues/533)) ([79d8b0d](https://github.com/rshade/finfocus-spec/commit/79d8b0d9b21a619ffd2c7b66454518416741f5e3)), closes [#191](https://github.com/rshade/finfocus-spec/issues/191)
+* record FOCUS 1.4 support assessment ([#545](https://github.com/rshade/finfocus-spec/issues/545)) ([538daa8](https://github.com/rshade/finfocus-spec/commit/538daa8d4efb1ba1ddcb061f8f8d4a16c5325307)), closes [#540](https://github.com/rshade/finfocus-spec/issues/540)
+* record per-request credential assessment ([#535](https://github.com/rshade/finfocus-spec/issues/535)) ([6383526](https://github.com/rshade/finfocus-spec/commit/638352619ca660cb01411c58b3bef2a163710271)), closes [#220](https://github.com/rshade/finfocus-spec/issues/220)
+* record trace propagation assessment ([#534](https://github.com/rshade/finfocus-spec/issues/534)) ([90b67ca](https://github.com/rshade/finfocus-spec/commit/90b67ca9de5d14447e00d945ef7e5c6ef62cd3bc)), closes [#193](https://github.com/rshade/finfocus-spec/issues/193)
+
+
+### Chores
+
+* release 0.7.0 ([edb377a](https://github.com/rshade/finfocus-spec/commit/edb377a03ebb38c67c793fd7cf5d986a153b7c32))
+
 ## [0.6.2](https://github.com/rshade/finfocus-spec/compare/v0.6.1...v0.6.2) (2026-09-28)
 
 
