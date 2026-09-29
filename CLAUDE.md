@@ -987,7 +987,9 @@ parallel subtests complete.
   `WithCapabilities` replaces discovery only.
 - `MockInvoiceDatasetSource` is a separate type, so `MockPlugin` capabilities do not change.
   `RunInvoiceDatasetConformance` covers both RPCs over bufconn. The TypeScript client methods are
-  `getBillingPeriods` / `billingPeriods` and `getInvoiceDetails` / `invoiceDetails`.
+  `getBillingPeriods` / `billingPeriods` and `getInvoiceDetails` / `invoiceDetails`. Iterators
+  default only a missing or zero page size, and stop on a repeated page token before yielding
+  that page.
 - Do not add Correction Handling or Delivery Handling fields. Do not change `GetContractCommitments`
   request or response fields. Do not add a second service.
 

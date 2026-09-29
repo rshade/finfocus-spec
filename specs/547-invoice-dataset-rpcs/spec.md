@@ -81,8 +81,10 @@ Invoice Detail validators shipped in spec 546.
   nil, invalid, or duplicate record. `Get` copies the page it returns.
 - Q: What does the TypeScript client do? → A: `getBillingPeriods` / `billingPeriods` and
   `getInvoiceDetails` / `invoiceDetails`, beside the existing commitment methods. Iterators clone
-  the request, treat a missing or non-positive `pageSize` as 50, follow `nextPageToken`, and throw
-  after 10 consecutive empty pages that still carry a token. The client does not re-validate.
+  the request, treat a missing or zero `pageSize` as 50, and send a negative `pageSize` unchanged.
+  They follow `nextPageToken`, throw after 10 consecutive empty pages that still carry a token, and
+  throw `Pagination safety: repeated page token` before yielding a page whose non-empty token was
+  already returned. The client does not re-validate.
 
 ## User Scenarios
 
@@ -210,9 +212,10 @@ missing RPC.
   window filter, one-bound window, inverted window, negative page size, and malformed token.
 - **FR-012**: The TypeScript client exposes `getBillingPeriods`, `billingPeriods`,
   `getInvoiceDetails`, and `invoiceDetails`. Iterators clone the caller's request, follow
-  `nextPageToken`, use page size 50 when the request leaves it unset or non-positive, and throw
-  `Pagination safety: exceeded 10 consecutive empty pages` after that many empty pages that still
-  carry a token.
+  `nextPageToken`, and use page size 50 when `pageSize` is unset or zero. A negative `pageSize` is
+  sent unchanged. They throw `Pagination safety: exceeded 10 consecutive empty pages` after that
+  many empty pages that still carry a token, and `Pagination safety: repeated page token` before
+  yielding a page whose non-empty token was already returned.
 - **FR-013**: Plugin, testing, and project docs name the provider, capability 17, the helpers, the
   mock, the conformance entry point, and the TypeScript methods.
 

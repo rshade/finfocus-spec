@@ -65,9 +65,10 @@ export class SupplementalDatasetClient {
 
   /**
    * Yields every commitment across all pages, following nextPageToken with the
-   * same window and page size. The request is cloned, not modified; a missing
-   * or non-positive pageSize becomes 50. Throws after 10 consecutive empty
-   * pages that still carry a token.
+   * same window and page size. The request is cloned, not modified. A missing
+   * or zero pageSize becomes 50; a negative pageSize is sent unchanged. Throws
+   * after 10 consecutive empty pages that still carry a token, or when a
+   * non-empty page token repeats.
    */
   async *contractCommitments(
     request: GetContractCommitmentsRequest,
@@ -83,7 +84,8 @@ export class SupplementalDatasetClient {
 
   /**
    * Yields every billing period across all pages. The request is cloned, not
-   * modified; a missing or non-positive pageSize becomes 50.
+   * modified. A missing or zero pageSize becomes 50; a negative pageSize is
+   * sent unchanged. A repeated page token stops the walk.
    */
   async *billingPeriods(
     request: GetBillingPeriodsRequest,
@@ -99,7 +101,8 @@ export class SupplementalDatasetClient {
 
   /**
    * Yields every invoice line across all pages. The request is cloned, not
-   * modified; a missing or non-positive pageSize becomes 50.
+   * modified. A missing or zero pageSize becomes 50; a negative pageSize is
+   * sent unchanged. A repeated page token stops the walk.
    */
   async *invoiceDetails(
     request: GetInvoiceDetailsRequest,
@@ -123,14 +126,22 @@ async function* followPages<TReq extends PageRequest, TResp extends PageResponse
   fetchPage: () => Promise<TResp>,
   items: (page: TResp) => readonly TItem[],
 ): AsyncGenerator<TItem, void, unknown> {
-  if (request.pageSize == null || request.pageSize <= 0) {
+  if (request.pageSize == null || request.pageSize === 0) {
     request.pageSize = DEFAULT_PAGE_SIZE;
   }
+  const seenTokens = new Set<string>();
   let emptyPages = 0;
   for (;;) {
     const response = await fetchPage();
+    const nextToken = response.nextPageToken ?? "";
+    if (nextToken !== "" && seenTokens.has(nextToken)) {
+      throw new Error("Pagination safety: repeated page token");
+    }
+    if (nextToken !== "") {
+      seenTokens.add(nextToken);
+    }
     const page = items(response);
-    if (page.length === 0 && response.nextPageToken) {
+    if (page.length === 0 && nextToken !== "") {
       emptyPages++;
       if (emptyPages >= MAX_EMPTY_PAGES) {
         throw new Error(`Pagination safety: exceeded ${MAX_EMPTY_PAGES} consecutive empty pages`);
@@ -139,9 +150,9 @@ async function* followPages<TReq extends PageRequest, TResp extends PageResponse
       emptyPages = 0;
     }
     yield* page;
-    if (!response.nextPageToken) {
+    if (nextToken === "") {
       return;
     }
-    request.pageToken = response.nextPageToken;
+    request.pageToken = nextToken;
   }
 }

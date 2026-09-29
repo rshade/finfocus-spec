@@ -287,9 +287,10 @@ for await (const commitment of client.contractCommitments(request)) {
 }
 ```
 
-`contractCommitments` clones the request, uses a page size of 50 when none is set, and throws
-after 10 consecutive empty pages that still carry a token. Errors arrive as `ConnectError` with the
-plugin's code.
+`contractCommitments`, `billingPeriods`, and `invoiceDetails` clone the request. A missing or zero
+page size becomes 50, and a negative page size is sent unchanged. The iterator throws after 10
+consecutive empty pages that still carry a token, and when a non-empty page token repeats. Errors
+arrive as `ConnectError` with the plugin's code.
 
 ### Pagination
 

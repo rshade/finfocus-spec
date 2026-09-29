@@ -142,8 +142,12 @@ describe("SupplementalDatasetClient", () => {
   });
 
   it("stops after too many consecutive empty pages", async () => {
+    let page = 0;
     server.use(
-      http.post(endpoint, () => HttpResponse.json({ commitments: [], nextPageToken: "again" })),
+      http.post(endpoint, () => {
+        page += 1;
+        return HttpResponse.json({ commitments: [], nextPageToken: `again-${page}` });
+      }),
     );
 
     const iterate = async () => {
@@ -152,6 +156,48 @@ describe("SupplementalDatasetClient", () => {
       }
     };
     await expect(iterate()).rejects.toThrow(/consecutive empty pages/);
+  });
+
+  it("sends a negative page size unchanged and stops on a repeated token", async () => {
+    server.use(
+      http.post(endpoint, async ({ request }) => {
+        const body = (await request.json()) as Record<string, unknown>;
+        requests.push(body);
+        return HttpResponse.json(
+          { code: "invalid_argument", message: "page_size must not be negative" },
+          { status: 400 },
+        );
+      }),
+    );
+    const iterateNegative = async () => {
+      for await (const _ of client.contractCommitments(
+        create(GetContractCommitmentsRequestSchema, { pageSize: -1 }),
+      )) {
+        // the source rejects the request before any record
+      }
+    };
+    await expect(iterateNegative()).rejects.toBeInstanceOf(ConnectError);
+    expect(requests[0]).toMatchObject({ pageSize: -1 });
+
+    requests.length = 0;
+    server.resetHandlers();
+    server.use(
+      http.post(endpoint, () =>
+        HttpResponse.json({
+          commitments: [wireCommitment("ri-1")],
+          nextPageToken: "stuck",
+          totalCount: 1,
+        }),
+      ),
+    );
+    const ids: string[] = [];
+    const iterateRepeat = async () => {
+      for await (const commitment of client.contractCommitments(create(GetContractCommitmentsRequestSchema))) {
+        ids.push(commitment.contractCommitmentId);
+      }
+    };
+    await expect(iterateRepeat()).rejects.toThrow(/repeated page token/);
+    expect(ids).toEqual(["ri-1"]);
   });
 
   it("propagates Connect errors with their code", async () => {

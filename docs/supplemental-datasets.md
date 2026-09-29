@@ -134,4 +134,5 @@ half-set settlement currency fail that check. `total_count` is the exact match c
   `plugintesting.RunInvoiceDatasetConformance` checks a provider end to end.
 - TypeScript hosts use `SupplementalDatasetClient` (`getContractCommitments` /
   `contractCommitments`, `getBillingPeriods` / `billingPeriods`, `getInvoiceDetails` /
-  `invoiceDetails`).
+  `invoiceDetails`). Iterators use page size 50 when it is unset or zero, send a negative size
+  unchanged, and stop when a non-empty page token repeats.
