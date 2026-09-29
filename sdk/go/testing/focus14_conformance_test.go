@@ -188,6 +188,81 @@ func TestFocus14_AggregateMode(t *testing.T) {
 	require.True(t, sawInvoice, "aggregate mode must report the invoice error: %v", errs)
 }
 
+// TestFocus14_BillingPeriodAndInvoiceDetail covers the FOCUS 1.4 datasets:
+// field numbers, a valid baseline, and the per-record rejections from issue 543.
+func TestFocus14_BillingPeriodAndInvoiceDetail(t *testing.T) {
+	at := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	t.Run("billing period fields", func(t *testing.T) {
+		fields := (&pbc.BillingPeriod{}).ProtoReflect().Descriptor().Fields()
+		require.Equal(t, protoreflect.FieldNumber(1), fields.ByName("billing_period_start").Number())
+		require.Equal(t, protoreflect.FieldNumber(2), fields.ByName("billing_period_end").Number())
+		require.Equal(t, protoreflect.FieldNumber(3), fields.ByName("billing_period_status").Number())
+		require.Equal(t, protoreflect.FieldNumber(4), fields.ByName("invoice_issuer_name").Number())
+		require.Equal(t, protoreflect.FieldNumber(5), fields.ByName("billing_period_created").Number())
+		require.Equal(t, protoreflect.FieldNumber(6), fields.ByName("billing_period_last_updated").Number())
+	})
+
+	t.Run("invoice detail fields", func(t *testing.T) {
+		fields := (&pbc.InvoiceDetail{}).ProtoReflect().Descriptor().Fields()
+		want := []string{
+			"invoice_detail_id", "invoice_id", "invoice_issuer_name", "billing_account_id",
+			"billing_period_start", "billing_period_end", "billed_cost", "billing_currency",
+			"charge_category", "invoice_issue_status", "invoice_issue_date", "invoice_detail_created",
+			"invoice_detail_last_updated", "invoice_detail_description", "invoice_detail_grain",
+			"payment_currency", "payment_currency_billed_cost", "payment_currency_invoice_detail_id",
+			"payment_due_date", "payment_terms", "purchase_order_number", "reference_invoice_id",
+			"extended_columns",
+		}
+		for i, name := range want {
+			field := fields.ByName(protoreflect.Name(name))
+			require.NotNil(t, field, name)
+			require.Equal(t, protoreflect.FieldNumber(i+1), field.Number(), name)
+		}
+	})
+
+	t.Run("valid records", func(t *testing.T) {
+		period, err := pluginsdk.NewBillingPeriodBuilder().
+			WithWindow(at, at.AddDate(0, 1, 0)).
+			WithStatus(pbc.FocusBillingPeriodStatus_FOCUS_BILLING_PERIOD_STATUS_OPEN).
+			WithInvoiceIssuerName("Example Issuer").
+			WithCreated(at).
+			WithLastUpdated(at).
+			Build()
+		require.NoError(t, err)
+		require.NoError(t, plugintesting.ValidateBillingPeriod(period))
+
+		line, err := pluginsdk.NewInvoiceDetailBuilder().WithBaseline(at).Build()
+		require.NoError(t, err)
+		require.Nil(t, line.PaymentCurrencyBilledCost)
+		require.NoError(t, plugintesting.ValidateInvoiceDetail(line))
+	})
+
+	t.Run("rejects refund and unspecified category", func(t *testing.T) {
+		for _, category := range []pbc.FocusChargeCategory{
+			pbc.FocusChargeCategory_FOCUS_CHARGE_CATEGORY_REFUND,
+			pbc.FocusChargeCategory_FOCUS_CHARGE_CATEGORY_UNSPECIFIED,
+		} {
+			_, err := pluginsdk.NewInvoiceDetailBuilder().WithBaseline(at).WithChargeCategory(category).Build()
+			require.ErrorIs(t, err, plugintesting.ErrInvalidInvoiceDetail)
+			require.ErrorContains(t, err, "charge_category")
+		}
+	})
+
+	t.Run("settlement currency is all or nothing and zero is present", func(t *testing.T) {
+		_, err := pluginsdk.NewInvoiceDetailBuilder().WithBaseline(at).WithPaymentCurrency("EUR").Build()
+		require.ErrorContains(t, err, "must be set together")
+
+		line, err := pluginsdk.NewInvoiceDetailBuilder().WithBaseline(at).
+			WithPaymentCurrency("EUR").
+			WithPaymentCurrencyBilledCost(0).
+			Build()
+		require.NoError(t, err)
+		require.NotNil(t, line.PaymentCurrencyBilledCost)
+		require.Zero(t, line.GetPaymentCurrencyBilledCost())
+	})
+}
+
 // TestFocus14_FieldNamesMatchProto verifies FocusFieldNames lists exactly the fields
 // of FocusCostRecord, including the FOCUS 1.4 additions.
 func TestFocus14_FieldNamesMatchProto(t *testing.T) {

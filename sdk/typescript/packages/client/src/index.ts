@@ -28,6 +28,7 @@ export {
   formatContractApplied,
   type ContractAppliedElement,
 } from "./builders/contract-commitment.js";
+export { BillingPeriodBuilder, InvoiceDetailBuilder } from "./builders/invoice-datasets.js";
 
 // Utilities
 export { recommendationsIterator } from "./utils/pagination.js";

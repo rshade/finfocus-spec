@@ -500,6 +500,118 @@ func (FocusContractCommitmentPaymentModel) EnumDescriptor() ([]byte, []int) {
 	return file_finfocus_v1_focus_proto_rawDescGZIP(), []int{7}
 }
 
+// FocusBillingPeriodStatus is the state of a FOCUS 1.4 billing period.
+// Reference: FOCUS 1.4 Billing Period Status.
+type FocusBillingPeriodStatus int32
+
+const (
+	// Default/unspecified value. Not a FOCUS status.
+	FocusBillingPeriodStatus_FOCUS_BILLING_PERIOD_STATUS_UNSPECIFIED FocusBillingPeriodStatus = 0
+	// The period is still being processed.
+	FocusBillingPeriodStatus_FOCUS_BILLING_PERIOD_STATUS_OPEN FocusBillingPeriodStatus = 1
+	// Invoices for the period have been issued and the data is finalized.
+	FocusBillingPeriodStatus_FOCUS_BILLING_PERIOD_STATUS_CLOSED FocusBillingPeriodStatus = 2
+)
+
+// Enum value maps for FocusBillingPeriodStatus.
+var (
+	FocusBillingPeriodStatus_name = map[int32]string{
+		0: "FOCUS_BILLING_PERIOD_STATUS_UNSPECIFIED",
+		1: "FOCUS_BILLING_PERIOD_STATUS_OPEN",
+		2: "FOCUS_BILLING_PERIOD_STATUS_CLOSED",
+	}
+	FocusBillingPeriodStatus_value = map[string]int32{
+		"FOCUS_BILLING_PERIOD_STATUS_UNSPECIFIED": 0,
+		"FOCUS_BILLING_PERIOD_STATUS_OPEN":        1,
+		"FOCUS_BILLING_PERIOD_STATUS_CLOSED":      2,
+	}
+)
+
+func (x FocusBillingPeriodStatus) Enum() *FocusBillingPeriodStatus {
+	p := new(FocusBillingPeriodStatus)
+	*p = x
+	return p
+}
+
+func (x FocusBillingPeriodStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (FocusBillingPeriodStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_finfocus_v1_focus_proto_enumTypes[8].Descriptor()
+}
+
+func (FocusBillingPeriodStatus) Type() protoreflect.EnumType {
+	return &file_finfocus_v1_focus_proto_enumTypes[8]
+}
+
+func (x FocusBillingPeriodStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use FocusBillingPeriodStatus.Descriptor instead.
+func (FocusBillingPeriodStatus) EnumDescriptor() ([]byte, []int) {
+	return file_finfocus_v1_focus_proto_rawDescGZIP(), []int{8}
+}
+
+// FocusInvoiceIssueStatus is the publication state of a FOCUS 1.4 invoice.
+// Reference: FOCUS 1.4 Invoice Issue Status.
+type FocusInvoiceIssueStatus int32
+
+const (
+	// Default/unspecified value. Not a FOCUS status.
+	FocusInvoiceIssueStatus_FOCUS_INVOICE_ISSUE_STATUS_UNSPECIFIED FocusInvoiceIssueStatus = 0
+	// Provisional invoice. Not a financial obligation.
+	FocusInvoiceIssueStatus_FOCUS_INVOICE_ISSUE_STATUS_OPEN FocusInvoiceIssueStatus = 1
+	// Formally issued invoice.
+	FocusInvoiceIssueStatus_FOCUS_INVOICE_ISSUE_STATUS_ISSUED FocusInvoiceIssueStatus = 2
+	// Previously issued invoice that was retracted.
+	FocusInvoiceIssueStatus_FOCUS_INVOICE_ISSUE_STATUS_VOIDED FocusInvoiceIssueStatus = 3
+)
+
+// Enum value maps for FocusInvoiceIssueStatus.
+var (
+	FocusInvoiceIssueStatus_name = map[int32]string{
+		0: "FOCUS_INVOICE_ISSUE_STATUS_UNSPECIFIED",
+		1: "FOCUS_INVOICE_ISSUE_STATUS_OPEN",
+		2: "FOCUS_INVOICE_ISSUE_STATUS_ISSUED",
+		3: "FOCUS_INVOICE_ISSUE_STATUS_VOIDED",
+	}
+	FocusInvoiceIssueStatus_value = map[string]int32{
+		"FOCUS_INVOICE_ISSUE_STATUS_UNSPECIFIED": 0,
+		"FOCUS_INVOICE_ISSUE_STATUS_OPEN":        1,
+		"FOCUS_INVOICE_ISSUE_STATUS_ISSUED":      2,
+		"FOCUS_INVOICE_ISSUE_STATUS_VOIDED":      3,
+	}
+)
+
+func (x FocusInvoiceIssueStatus) Enum() *FocusInvoiceIssueStatus {
+	p := new(FocusInvoiceIssueStatus)
+	*p = x
+	return p
+}
+
+func (x FocusInvoiceIssueStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (FocusInvoiceIssueStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_finfocus_v1_focus_proto_enumTypes[9].Descriptor()
+}
+
+func (FocusInvoiceIssueStatus) Type() protoreflect.EnumType {
+	return &file_finfocus_v1_focus_proto_enumTypes[9]
+}
+
+func (x FocusInvoiceIssueStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use FocusInvoiceIssueStatus.Descriptor instead.
+func (FocusInvoiceIssueStatus) EnumDescriptor() ([]byte, []int) {
+	return file_finfocus_v1_focus_proto_rawDescGZIP(), []int{9}
+}
+
 // FocusCostRecord represents a single cost line item normalized to the
 // FinOps FOCUS specification (1.2, 1.3 and 1.4). All field names follow FOCUS naming conventions.
 // Includes FOCUS 1.3 additions: allocation fields, contract commitment linking,
@@ -1596,6 +1708,388 @@ func (x *ContractCommitment) GetContractCommitmentDescription() string {
 	return ""
 }
 
+// BillingPeriod is one FOCUS 1.4 billing cycle for an invoice issuer.
+// All six columns are mandatory and do not allow nulls. The record joins to
+// Cost and Usage and to Invoice Detail on billing period start plus invoice
+// issuer name. One-way status changes are a host concern.
+// Reference: FOCUS 1.4 Billing Period dataset.
+type BillingPeriod struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// BillingPeriodStart: Inclusive start of the billing period.
+	// FOCUS 1.4 Billing Period Start (MANDATORY).
+	BillingPeriodStart *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=billing_period_start,json=billingPeriodStart,proto3" json:"billing_period_start,omitempty"`
+	// BillingPeriodEnd: Exclusive end of the billing period.
+	// FOCUS 1.4 Billing Period End (MANDATORY).
+	BillingPeriodEnd *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=billing_period_end,json=billingPeriodEnd,proto3" json:"billing_period_end,omitempty"`
+	// BillingPeriodStatus: Open or Closed.
+	// FOCUS 1.4 Billing Period Status (MANDATORY).
+	BillingPeriodStatus FocusBillingPeriodStatus `protobuf:"varint,3,opt,name=billing_period_status,json=billingPeriodStatus,proto3,enum=finfocus.v1.FocusBillingPeriodStatus" json:"billing_period_status,omitempty"`
+	// InvoiceIssuerName: The entity that issues invoices for this period.
+	// FOCUS 1.4 Invoice Issuer Name (MANDATORY).
+	InvoiceIssuerName string `protobuf:"bytes,4,opt,name=invoice_issuer_name,json=invoiceIssuerName,proto3" json:"invoice_issuer_name,omitempty"`
+	// BillingPeriodCreated: When this record was instantiated.
+	// FOCUS 1.4 Billing Period Created (MANDATORY).
+	BillingPeriodCreated *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=billing_period_created,json=billingPeriodCreated,proto3" json:"billing_period_created,omitempty"`
+	// BillingPeriodLastUpdated: When this record was last updated. Must be >= created.
+	// FOCUS 1.4 Billing Period Last Updated (MANDATORY).
+	BillingPeriodLastUpdated *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=billing_period_last_updated,json=billingPeriodLastUpdated,proto3" json:"billing_period_last_updated,omitempty"`
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
+}
+
+func (x *BillingPeriod) Reset() {
+	*x = BillingPeriod{}
+	mi := &file_finfocus_v1_focus_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BillingPeriod) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BillingPeriod) ProtoMessage() {}
+
+func (x *BillingPeriod) ProtoReflect() protoreflect.Message {
+	mi := &file_finfocus_v1_focus_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BillingPeriod.ProtoReflect.Descriptor instead.
+func (*BillingPeriod) Descriptor() ([]byte, []int) {
+	return file_finfocus_v1_focus_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *BillingPeriod) GetBillingPeriodStart() *timestamppb.Timestamp {
+	if x != nil {
+		return x.BillingPeriodStart
+	}
+	return nil
+}
+
+func (x *BillingPeriod) GetBillingPeriodEnd() *timestamppb.Timestamp {
+	if x != nil {
+		return x.BillingPeriodEnd
+	}
+	return nil
+}
+
+func (x *BillingPeriod) GetBillingPeriodStatus() FocusBillingPeriodStatus {
+	if x != nil {
+		return x.BillingPeriodStatus
+	}
+	return FocusBillingPeriodStatus_FOCUS_BILLING_PERIOD_STATUS_UNSPECIFIED
+}
+
+func (x *BillingPeriod) GetInvoiceIssuerName() string {
+	if x != nil {
+		return x.InvoiceIssuerName
+	}
+	return ""
+}
+
+func (x *BillingPeriod) GetBillingPeriodCreated() *timestamppb.Timestamp {
+	if x != nil {
+		return x.BillingPeriodCreated
+	}
+	return nil
+}
+
+func (x *BillingPeriod) GetBillingPeriodLastUpdated() *timestamppb.Timestamp {
+	if x != nil {
+		return x.BillingPeriodLastUpdated
+	}
+	return nil
+}
+
+// InvoiceDetail is one FOCUS 1.4 invoice line.
+// Eighteen columns are always present (four of those allow null). Four more are
+// conditional. extended_columns holds custom monetary metrics that have no FOCUS
+// column. Sums, joins, and status transitions are a host concern.
+// Reference: FOCUS 1.4 Invoice Detail dataset.
+type InvoiceDetail struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// InvoiceDetailId: Unique within an InvoiceId.
+	// FOCUS 1.4 Invoice Detail ID (MANDATORY).
+	InvoiceDetailId string `protobuf:"bytes,1,opt,name=invoice_detail_id,json=invoiceDetailId,proto3" json:"invoice_detail_id,omitempty"`
+	// InvoiceId: Issuer-assigned invoice identifier. May exist before issue.
+	// FOCUS 1.4 Invoice ID (MANDATORY).
+	InvoiceId string `protobuf:"bytes,2,opt,name=invoice_id,json=invoiceId,proto3" json:"invoice_id,omitempty"`
+	// InvoiceIssuerName: The entity that issued the invoice.
+	// FOCUS 1.4 Invoice Issuer Name (MANDATORY).
+	InvoiceIssuerName string `protobuf:"bytes,3,opt,name=invoice_issuer_name,json=invoiceIssuerName,proto3" json:"invoice_issuer_name,omitempty"`
+	// BillingAccountId: Unique within the invoice issuer.
+	// FOCUS 1.4 Billing Account ID (MANDATORY).
+	BillingAccountId string `protobuf:"bytes,4,opt,name=billing_account_id,json=billingAccountId,proto3" json:"billing_account_id,omitempty"`
+	// BillingPeriodStart: Inclusive start. Joins to BillingPeriod.
+	// FOCUS 1.4 Billing Period Start (MANDATORY).
+	BillingPeriodStart *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=billing_period_start,json=billingPeriodStart,proto3" json:"billing_period_start,omitempty"`
+	// BillingPeriodEnd: Exclusive end.
+	// FOCUS 1.4 Billing Period End (MANDATORY).
+	BillingPeriodEnd *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=billing_period_end,json=billingPeriodEnd,proto3" json:"billing_period_end,omitempty"`
+	// BilledCost: Invoiced amount in BillingCurrency. Zero and negative values are valid.
+	// FOCUS 1.4 Billed Cost (MANDATORY, nulls not allowed).
+	BilledCost float64 `protobuf:"fixed64,7,opt,name=billed_cost,json=billedCost,proto3" json:"billed_cost,omitempty"`
+	// BillingCurrency: ISO 4217 code printed on the invoice.
+	// FOCUS 1.4 Billing Currency (MANDATORY).
+	BillingCurrency string `protobuf:"bytes,8,opt,name=billing_currency,json=billingCurrency,proto3" json:"billing_currency,omitempty"`
+	// ChargeCategory: Usage, Purchase, Tax, Credit, or Adjustment.
+	// REFUND is not a FOCUS 1.4 invoice value and MUST be rejected.
+	// FOCUS 1.4 Charge Category (MANDATORY).
+	ChargeCategory FocusChargeCategory `protobuf:"varint,9,opt,name=charge_category,json=chargeCategory,proto3,enum=finfocus.v1.FocusChargeCategory" json:"charge_category,omitempty"`
+	// InvoiceIssueStatus: Open, Issued, or Voided.
+	// FOCUS 1.4 Invoice Issue Status (MANDATORY).
+	InvoiceIssueStatus FocusInvoiceIssueStatus `protobuf:"varint,10,opt,name=invoice_issue_status,json=invoiceIssueStatus,proto3,enum=finfocus.v1.FocusInvoiceIssueStatus" json:"invoice_issue_status,omitempty"`
+	// InvoiceIssueDate: Official issue date. Unset means null.
+	// FOCUS 1.4 Invoice Issue Date (MANDATORY column, nulls allowed).
+	InvoiceIssueDate *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=invoice_issue_date,json=invoiceIssueDate,proto3" json:"invoice_issue_date,omitempty"`
+	// InvoiceDetailCreated: When this line was instantiated.
+	// FOCUS 1.4 Invoice Detail Created (MANDATORY).
+	InvoiceDetailCreated *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=invoice_detail_created,json=invoiceDetailCreated,proto3" json:"invoice_detail_created,omitempty"`
+	// InvoiceDetailLastUpdated: When this line was last updated. Must be >= created.
+	// FOCUS 1.4 Invoice Detail Last Updated (MANDATORY).
+	InvoiceDetailLastUpdated *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=invoice_detail_last_updated,json=invoiceDetailLastUpdated,proto3" json:"invoice_detail_last_updated,omitempty"`
+	// InvoiceDetailDescription: Human-readable line text. Empty means null.
+	// FOCUS 1.4 Invoice Detail Description (MANDATORY column, nulls allowed).
+	InvoiceDetailDescription string `protobuf:"bytes,14,opt,name=invoice_detail_description,json=invoiceDetailDescription,proto3" json:"invoice_detail_description,omitempty"`
+	// InvoiceDetailGrain: Properties that define line granularity.
+	// FOCUS keys or x_ custom keys. An empty map means null.
+	// FOCUS 1.4 Invoice Detail Grain (MANDATORY column, nulls allowed).
+	InvoiceDetailGrain map[string]string `protobuf:"bytes,15,rep,name=invoice_detail_grain,json=invoiceDetailGrain,proto3" json:"invoice_detail_grain,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// PaymentCurrency: ISO 4217 settlement currency.
+	// Empty means the conditional column is absent. Set together with
+	// payment_currency_billed_cost when billing and payment currencies differ.
+	// FOCUS 1.4 Payment Currency (CONDITIONAL).
+	PaymentCurrency string `protobuf:"bytes,16,opt,name=payment_currency,json=paymentCurrency,proto3" json:"payment_currency,omitempty"`
+	// PaymentCurrencyBilledCost: BilledCost denominated in PaymentCurrency.
+	// Unset means the column is absent, which differs from 0.
+	// FOCUS 1.4 Payment Currency Billed Cost (CONDITIONAL, nulls not allowed when present).
+	PaymentCurrencyBilledCost *float64 `protobuf:"fixed64,17,opt,name=payment_currency_billed_cost,json=paymentCurrencyBilledCost,proto3,oneof" json:"payment_currency_billed_cost,omitempty"`
+	// PaymentCurrencyInvoiceDetailId: Lineage id when the two currencies are
+	// aggregated at different levels. Empty means the column is absent.
+	// When payment_currency_billed_cost is non-zero, a set id MUST match invoice_detail_id.
+	// FOCUS 1.4 Payment Currency Invoice Detail ID (CONDITIONAL).
+	PaymentCurrencyInvoiceDetailId string `protobuf:"bytes,18,opt,name=payment_currency_invoice_detail_id,json=paymentCurrencyInvoiceDetailId,proto3" json:"payment_currency_invoice_detail_id,omitempty"`
+	// PaymentDueDate: Payment deadline. Unset means null.
+	// FOCUS 1.4 Payment Due Date (MANDATORY column, nulls allowed).
+	PaymentDueDate *timestamppb.Timestamp `protobuf:"bytes,19,opt,name=payment_due_date,json=paymentDueDate,proto3" json:"payment_due_date,omitempty"`
+	// PaymentTerms: For example "Net 30".
+	// FOCUS 1.4 Payment Terms (MANDATORY).
+	PaymentTerms string `protobuf:"bytes,20,opt,name=payment_terms,json=paymentTerms,proto3" json:"payment_terms,omitempty"`
+	// PurchaseOrderNumber: Customer PO number. Empty means null.
+	// Present only when the issuer accepts purchase order numbers.
+	// FOCUS 1.4 Purchase Order Number (CONDITIONAL, nulls allowed).
+	PurchaseOrderNumber string `protobuf:"bytes,21,opt,name=purchase_order_number,json=purchaseOrderNumber,proto3" json:"purchase_order_number,omitempty"`
+	// ReferenceInvoiceId: The original invoice when this line adjusts one,
+	// otherwise this row's own invoice id.
+	// FOCUS 1.4 Reference Invoice ID (MANDATORY).
+	ReferenceInvoiceId string `protobuf:"bytes,22,opt,name=reference_invoice_id,json=referenceInvoiceId,proto3" json:"reference_invoice_id,omitempty"`
+	// ExtendedColumns: Custom monetary metrics with no FOCUS column.
+	// Keys use the x_ prefix. Values are decimal strings.
+	// FOCUS 1.4 custom columns on Invoice Detail.
+	ExtendedColumns map[string]string `protobuf:"bytes,23,rep,name=extended_columns,json=extendedColumns,proto3" json:"extended_columns,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *InvoiceDetail) Reset() {
+	*x = InvoiceDetail{}
+	mi := &file_finfocus_v1_focus_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InvoiceDetail) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InvoiceDetail) ProtoMessage() {}
+
+func (x *InvoiceDetail) ProtoReflect() protoreflect.Message {
+	mi := &file_finfocus_v1_focus_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InvoiceDetail.ProtoReflect.Descriptor instead.
+func (*InvoiceDetail) Descriptor() ([]byte, []int) {
+	return file_finfocus_v1_focus_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *InvoiceDetail) GetInvoiceDetailId() string {
+	if x != nil {
+		return x.InvoiceDetailId
+	}
+	return ""
+}
+
+func (x *InvoiceDetail) GetInvoiceId() string {
+	if x != nil {
+		return x.InvoiceId
+	}
+	return ""
+}
+
+func (x *InvoiceDetail) GetInvoiceIssuerName() string {
+	if x != nil {
+		return x.InvoiceIssuerName
+	}
+	return ""
+}
+
+func (x *InvoiceDetail) GetBillingAccountId() string {
+	if x != nil {
+		return x.BillingAccountId
+	}
+	return ""
+}
+
+func (x *InvoiceDetail) GetBillingPeriodStart() *timestamppb.Timestamp {
+	if x != nil {
+		return x.BillingPeriodStart
+	}
+	return nil
+}
+
+func (x *InvoiceDetail) GetBillingPeriodEnd() *timestamppb.Timestamp {
+	if x != nil {
+		return x.BillingPeriodEnd
+	}
+	return nil
+}
+
+func (x *InvoiceDetail) GetBilledCost() float64 {
+	if x != nil {
+		return x.BilledCost
+	}
+	return 0
+}
+
+func (x *InvoiceDetail) GetBillingCurrency() string {
+	if x != nil {
+		return x.BillingCurrency
+	}
+	return ""
+}
+
+func (x *InvoiceDetail) GetChargeCategory() FocusChargeCategory {
+	if x != nil {
+		return x.ChargeCategory
+	}
+	return FocusChargeCategory_FOCUS_CHARGE_CATEGORY_UNSPECIFIED
+}
+
+func (x *InvoiceDetail) GetInvoiceIssueStatus() FocusInvoiceIssueStatus {
+	if x != nil {
+		return x.InvoiceIssueStatus
+	}
+	return FocusInvoiceIssueStatus_FOCUS_INVOICE_ISSUE_STATUS_UNSPECIFIED
+}
+
+func (x *InvoiceDetail) GetInvoiceIssueDate() *timestamppb.Timestamp {
+	if x != nil {
+		return x.InvoiceIssueDate
+	}
+	return nil
+}
+
+func (x *InvoiceDetail) GetInvoiceDetailCreated() *timestamppb.Timestamp {
+	if x != nil {
+		return x.InvoiceDetailCreated
+	}
+	return nil
+}
+
+func (x *InvoiceDetail) GetInvoiceDetailLastUpdated() *timestamppb.Timestamp {
+	if x != nil {
+		return x.InvoiceDetailLastUpdated
+	}
+	return nil
+}
+
+func (x *InvoiceDetail) GetInvoiceDetailDescription() string {
+	if x != nil {
+		return x.InvoiceDetailDescription
+	}
+	return ""
+}
+
+func (x *InvoiceDetail) GetInvoiceDetailGrain() map[string]string {
+	if x != nil {
+		return x.InvoiceDetailGrain
+	}
+	return nil
+}
+
+func (x *InvoiceDetail) GetPaymentCurrency() string {
+	if x != nil {
+		return x.PaymentCurrency
+	}
+	return ""
+}
+
+func (x *InvoiceDetail) GetPaymentCurrencyBilledCost() float64 {
+	if x != nil && x.PaymentCurrencyBilledCost != nil {
+		return *x.PaymentCurrencyBilledCost
+	}
+	return 0
+}
+
+func (x *InvoiceDetail) GetPaymentCurrencyInvoiceDetailId() string {
+	if x != nil {
+		return x.PaymentCurrencyInvoiceDetailId
+	}
+	return ""
+}
+
+func (x *InvoiceDetail) GetPaymentDueDate() *timestamppb.Timestamp {
+	if x != nil {
+		return x.PaymentDueDate
+	}
+	return nil
+}
+
+func (x *InvoiceDetail) GetPaymentTerms() string {
+	if x != nil {
+		return x.PaymentTerms
+	}
+	return ""
+}
+
+func (x *InvoiceDetail) GetPurchaseOrderNumber() string {
+	if x != nil {
+		return x.PurchaseOrderNumber
+	}
+	return ""
+}
+
+func (x *InvoiceDetail) GetReferenceInvoiceId() string {
+	if x != nil {
+		return x.ReferenceInvoiceId
+	}
+	return ""
+}
+
+func (x *InvoiceDetail) GetExtendedColumns() map[string]string {
+	if x != nil {
+		return x.ExtendedColumns
+	}
+	return nil
+}
+
 var File_finfocus_v1_focus_proto protoreflect.FileDescriptor
 
 const file_finfocus_v1_focus_proto_rawDesc = "" +
@@ -1720,7 +2214,48 @@ const file_finfocus_v1_focus_proto_rawDesc = "" +
 	"\x1fcontract_commitment_description\x18\x1e \x01(\tR\x1dcontractCommitmentDescriptionB*\n" +
 	"(_contract_commitment_discount_percentageB1\n" +
 	"/_contract_commitment_payment_upfront_percentageB,\n" +
-	"*_pricing_currency_contract_commitment_cost*\xb1\x01\n" +
+	"*_pricing_currency_contract_commitment_cost\"\xdf\x03\n" +
+	"\rBillingPeriod\x12L\n" +
+	"\x14billing_period_start\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x12billingPeriodStart\x12H\n" +
+	"\x12billing_period_end\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x10billingPeriodEnd\x12Y\n" +
+	"\x15billing_period_status\x18\x03 \x01(\x0e2%.finfocus.v1.FocusBillingPeriodStatusR\x13billingPeriodStatus\x12.\n" +
+	"\x13invoice_issuer_name\x18\x04 \x01(\tR\x11invoiceIssuerName\x12P\n" +
+	"\x16billing_period_created\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x14billingPeriodCreated\x12Y\n" +
+	"\x1bbilling_period_last_updated\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x18billingPeriodLastUpdated\"\xf0\f\n" +
+	"\rInvoiceDetail\x12*\n" +
+	"\x11invoice_detail_id\x18\x01 \x01(\tR\x0finvoiceDetailId\x12\x1d\n" +
+	"\n" +
+	"invoice_id\x18\x02 \x01(\tR\tinvoiceId\x12.\n" +
+	"\x13invoice_issuer_name\x18\x03 \x01(\tR\x11invoiceIssuerName\x12,\n" +
+	"\x12billing_account_id\x18\x04 \x01(\tR\x10billingAccountId\x12L\n" +
+	"\x14billing_period_start\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x12billingPeriodStart\x12H\n" +
+	"\x12billing_period_end\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x10billingPeriodEnd\x12\x1f\n" +
+	"\vbilled_cost\x18\a \x01(\x01R\n" +
+	"billedCost\x12)\n" +
+	"\x10billing_currency\x18\b \x01(\tR\x0fbillingCurrency\x12I\n" +
+	"\x0fcharge_category\x18\t \x01(\x0e2 .finfocus.v1.FocusChargeCategoryR\x0echargeCategory\x12V\n" +
+	"\x14invoice_issue_status\x18\n" +
+	" \x01(\x0e2$.finfocus.v1.FocusInvoiceIssueStatusR\x12invoiceIssueStatus\x12H\n" +
+	"\x12invoice_issue_date\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\x10invoiceIssueDate\x12P\n" +
+	"\x16invoice_detail_created\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\x14invoiceDetailCreated\x12Y\n" +
+	"\x1binvoice_detail_last_updated\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\x18invoiceDetailLastUpdated\x12<\n" +
+	"\x1ainvoice_detail_description\x18\x0e \x01(\tR\x18invoiceDetailDescription\x12d\n" +
+	"\x14invoice_detail_grain\x18\x0f \x03(\v22.finfocus.v1.InvoiceDetail.InvoiceDetailGrainEntryR\x12invoiceDetailGrain\x12)\n" +
+	"\x10payment_currency\x18\x10 \x01(\tR\x0fpaymentCurrency\x12D\n" +
+	"\x1cpayment_currency_billed_cost\x18\x11 \x01(\x01H\x00R\x19paymentCurrencyBilledCost\x88\x01\x01\x12J\n" +
+	"\"payment_currency_invoice_detail_id\x18\x12 \x01(\tR\x1epaymentCurrencyInvoiceDetailId\x12D\n" +
+	"\x10payment_due_date\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampR\x0epaymentDueDate\x12#\n" +
+	"\rpayment_terms\x18\x14 \x01(\tR\fpaymentTerms\x122\n" +
+	"\x15purchase_order_number\x18\x15 \x01(\tR\x13purchaseOrderNumber\x120\n" +
+	"\x14reference_invoice_id\x18\x16 \x01(\tR\x12referenceInvoiceId\x12Z\n" +
+	"\x10extended_columns\x18\x17 \x03(\v2/.finfocus.v1.InvoiceDetail.ExtendedColumnsEntryR\x0fextendedColumns\x1aE\n" +
+	"\x17InvoiceDetailGrainEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1aB\n" +
+	"\x14ExtendedColumnsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x1f\n" +
+	"\x1d_payment_currency_billed_cost*\xb1\x01\n" +
 	"\x1fFocusContractCommitmentCategory\x122\n" +
 	".FOCUS_CONTRACT_COMMITMENT_CATEGORY_UNSPECIFIED\x10\x00\x12,\n" +
 	"(FOCUS_CONTRACT_COMMITMENT_CATEGORY_SPEND\x10\x01\x12,\n" +
@@ -1773,7 +2308,16 @@ const file_finfocus_v1_focus_proto_rawDesc = "" +
 	"3FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_UNSPECIFIED\x10\x00\x126\n" +
 	"2FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_NO_UPFRONT\x10\x01\x12;\n" +
 	"7FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_PARTIAL_UPFRONT\x10\x02\x127\n" +
-	"3FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_ALL_UPFRONT\x10\x03B\xa8\x01\n" +
+	"3FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_ALL_UPFRONT\x10\x03*\x95\x01\n" +
+	"\x18FocusBillingPeriodStatus\x12+\n" +
+	"'FOCUS_BILLING_PERIOD_STATUS_UNSPECIFIED\x10\x00\x12$\n" +
+	" FOCUS_BILLING_PERIOD_STATUS_OPEN\x10\x01\x12&\n" +
+	"\"FOCUS_BILLING_PERIOD_STATUS_CLOSED\x10\x02*\xb8\x01\n" +
+	"\x17FocusInvoiceIssueStatus\x12*\n" +
+	"&FOCUS_INVOICE_ISSUE_STATUS_UNSPECIFIED\x10\x00\x12#\n" +
+	"\x1fFOCUS_INVOICE_ISSUE_STATUS_OPEN\x10\x01\x12%\n" +
+	"!FOCUS_INVOICE_ISSUE_STATUS_ISSUED\x10\x02\x12%\n" +
+	"!FOCUS_INVOICE_ISSUE_STATUS_VOIDED\x10\x03B\xa8\x01\n" +
 	"\x0fcom.finfocus.v1B\n" +
 	"FocusProtoP\x01Z<github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1;pbc\xa2\x02\x03FXX\xaa\x02\vFinfocus.V1\xca\x02\vFinfocus\\V1\xe2\x02\x17Finfocus\\V1\\GPBMetadata\xea\x02\fFinfocus::V1b\x06proto3"
 
@@ -1789,8 +2333,8 @@ func file_finfocus_v1_focus_proto_rawDescGZIP() []byte {
 	return file_finfocus_v1_focus_proto_rawDescData
 }
 
-var file_finfocus_v1_focus_proto_enumTypes = make([]protoimpl.EnumInfo, 8)
-var file_finfocus_v1_focus_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_finfocus_v1_focus_proto_enumTypes = make([]protoimpl.EnumInfo, 10)
+var file_finfocus_v1_focus_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_finfocus_v1_focus_proto_goTypes = []any{
 	(FocusContractCommitmentCategory)(0),            // 0: finfocus.v1.FocusContractCommitmentCategory
 	(FocusContractCommitmentBenefitCategory)(0),     // 1: finfocus.v1.FocusContractCommitmentBenefitCategory
@@ -1800,56 +2344,77 @@ var file_finfocus_v1_focus_proto_goTypes = []any{
 	(FocusContractCommitmentOfferCategory)(0),       // 5: finfocus.v1.FocusContractCommitmentOfferCategory
 	(FocusContractCommitmentPaymentInterval)(0),     // 6: finfocus.v1.FocusContractCommitmentPaymentInterval
 	(FocusContractCommitmentPaymentModel)(0),        // 7: finfocus.v1.FocusContractCommitmentPaymentModel
-	(*FocusCostRecord)(nil),                         // 8: finfocus.v1.FocusCostRecord
-	(*ContractCommitment)(nil),                      // 9: finfocus.v1.ContractCommitment
-	nil,                                             // 10: finfocus.v1.FocusCostRecord.TagsEntry
-	nil,                                             // 11: finfocus.v1.FocusCostRecord.ExtendedColumnsEntry
-	nil,                                             // 12: finfocus.v1.FocusCostRecord.AllocatedTagsEntry
-	(*timestamppb.Timestamp)(nil),                   // 13: google.protobuf.Timestamp
-	(FocusChargeCategory)(0),                        // 14: finfocus.v1.FocusChargeCategory
-	(FocusChargeClass)(0),                           // 15: finfocus.v1.FocusChargeClass
-	(FocusChargeFrequency)(0),                       // 16: finfocus.v1.FocusChargeFrequency
-	(FocusPricingCategory)(0),                       // 17: finfocus.v1.FocusPricingCategory
-	(FocusServiceCategory)(0),                       // 18: finfocus.v1.FocusServiceCategory
-	(FocusCommitmentDiscountCategory)(0),            // 19: finfocus.v1.FocusCommitmentDiscountCategory
-	(FocusCommitmentDiscountStatus)(0),              // 20: finfocus.v1.FocusCommitmentDiscountStatus
-	(FocusCapacityReservationStatus)(0),             // 21: finfocus.v1.FocusCapacityReservationStatus
+	(FocusBillingPeriodStatus)(0),                   // 8: finfocus.v1.FocusBillingPeriodStatus
+	(FocusInvoiceIssueStatus)(0),                    // 9: finfocus.v1.FocusInvoiceIssueStatus
+	(*FocusCostRecord)(nil),                         // 10: finfocus.v1.FocusCostRecord
+	(*ContractCommitment)(nil),                      // 11: finfocus.v1.ContractCommitment
+	(*BillingPeriod)(nil),                           // 12: finfocus.v1.BillingPeriod
+	(*InvoiceDetail)(nil),                           // 13: finfocus.v1.InvoiceDetail
+	nil,                                             // 14: finfocus.v1.FocusCostRecord.TagsEntry
+	nil,                                             // 15: finfocus.v1.FocusCostRecord.ExtendedColumnsEntry
+	nil,                                             // 16: finfocus.v1.FocusCostRecord.AllocatedTagsEntry
+	nil,                                             // 17: finfocus.v1.InvoiceDetail.InvoiceDetailGrainEntry
+	nil,                                             // 18: finfocus.v1.InvoiceDetail.ExtendedColumnsEntry
+	(*timestamppb.Timestamp)(nil),                   // 19: google.protobuf.Timestamp
+	(FocusChargeCategory)(0),                        // 20: finfocus.v1.FocusChargeCategory
+	(FocusChargeClass)(0),                           // 21: finfocus.v1.FocusChargeClass
+	(FocusChargeFrequency)(0),                       // 22: finfocus.v1.FocusChargeFrequency
+	(FocusPricingCategory)(0),                       // 23: finfocus.v1.FocusPricingCategory
+	(FocusServiceCategory)(0),                       // 24: finfocus.v1.FocusServiceCategory
+	(FocusCommitmentDiscountCategory)(0),            // 25: finfocus.v1.FocusCommitmentDiscountCategory
+	(FocusCommitmentDiscountStatus)(0),              // 26: finfocus.v1.FocusCommitmentDiscountStatus
+	(FocusCapacityReservationStatus)(0),             // 27: finfocus.v1.FocusCapacityReservationStatus
 }
 var file_finfocus_v1_focus_proto_depIdxs = []int32{
-	13, // 0: finfocus.v1.FocusCostRecord.billing_period_start:type_name -> google.protobuf.Timestamp
-	13, // 1: finfocus.v1.FocusCostRecord.billing_period_end:type_name -> google.protobuf.Timestamp
-	13, // 2: finfocus.v1.FocusCostRecord.charge_period_start:type_name -> google.protobuf.Timestamp
-	13, // 3: finfocus.v1.FocusCostRecord.charge_period_end:type_name -> google.protobuf.Timestamp
-	14, // 4: finfocus.v1.FocusCostRecord.charge_category:type_name -> finfocus.v1.FocusChargeCategory
-	15, // 5: finfocus.v1.FocusCostRecord.charge_class:type_name -> finfocus.v1.FocusChargeClass
-	16, // 6: finfocus.v1.FocusCostRecord.charge_frequency:type_name -> finfocus.v1.FocusChargeFrequency
-	17, // 7: finfocus.v1.FocusCostRecord.pricing_category:type_name -> finfocus.v1.FocusPricingCategory
-	18, // 8: finfocus.v1.FocusCostRecord.service_category:type_name -> finfocus.v1.FocusServiceCategory
-	19, // 9: finfocus.v1.FocusCostRecord.commitment_discount_category:type_name -> finfocus.v1.FocusCommitmentDiscountCategory
-	20, // 10: finfocus.v1.FocusCostRecord.commitment_discount_status:type_name -> finfocus.v1.FocusCommitmentDiscountStatus
-	21, // 11: finfocus.v1.FocusCostRecord.capacity_reservation_status:type_name -> finfocus.v1.FocusCapacityReservationStatus
-	10, // 12: finfocus.v1.FocusCostRecord.tags:type_name -> finfocus.v1.FocusCostRecord.TagsEntry
-	11, // 13: finfocus.v1.FocusCostRecord.extended_columns:type_name -> finfocus.v1.FocusCostRecord.ExtendedColumnsEntry
-	12, // 14: finfocus.v1.FocusCostRecord.allocated_tags:type_name -> finfocus.v1.FocusCostRecord.AllocatedTagsEntry
+	19, // 0: finfocus.v1.FocusCostRecord.billing_period_start:type_name -> google.protobuf.Timestamp
+	19, // 1: finfocus.v1.FocusCostRecord.billing_period_end:type_name -> google.protobuf.Timestamp
+	19, // 2: finfocus.v1.FocusCostRecord.charge_period_start:type_name -> google.protobuf.Timestamp
+	19, // 3: finfocus.v1.FocusCostRecord.charge_period_end:type_name -> google.protobuf.Timestamp
+	20, // 4: finfocus.v1.FocusCostRecord.charge_category:type_name -> finfocus.v1.FocusChargeCategory
+	21, // 5: finfocus.v1.FocusCostRecord.charge_class:type_name -> finfocus.v1.FocusChargeClass
+	22, // 6: finfocus.v1.FocusCostRecord.charge_frequency:type_name -> finfocus.v1.FocusChargeFrequency
+	23, // 7: finfocus.v1.FocusCostRecord.pricing_category:type_name -> finfocus.v1.FocusPricingCategory
+	24, // 8: finfocus.v1.FocusCostRecord.service_category:type_name -> finfocus.v1.FocusServiceCategory
+	25, // 9: finfocus.v1.FocusCostRecord.commitment_discount_category:type_name -> finfocus.v1.FocusCommitmentDiscountCategory
+	26, // 10: finfocus.v1.FocusCostRecord.commitment_discount_status:type_name -> finfocus.v1.FocusCommitmentDiscountStatus
+	27, // 11: finfocus.v1.FocusCostRecord.capacity_reservation_status:type_name -> finfocus.v1.FocusCapacityReservationStatus
+	14, // 12: finfocus.v1.FocusCostRecord.tags:type_name -> finfocus.v1.FocusCostRecord.TagsEntry
+	15, // 13: finfocus.v1.FocusCostRecord.extended_columns:type_name -> finfocus.v1.FocusCostRecord.ExtendedColumnsEntry
+	16, // 14: finfocus.v1.FocusCostRecord.allocated_tags:type_name -> finfocus.v1.FocusCostRecord.AllocatedTagsEntry
 	0,  // 15: finfocus.v1.ContractCommitment.contract_commitment_category:type_name -> finfocus.v1.FocusContractCommitmentCategory
-	13, // 16: finfocus.v1.ContractCommitment.contract_commitment_period_start:type_name -> google.protobuf.Timestamp
-	13, // 17: finfocus.v1.ContractCommitment.contract_commitment_period_end:type_name -> google.protobuf.Timestamp
-	13, // 18: finfocus.v1.ContractCommitment.contract_period_start:type_name -> google.protobuf.Timestamp
-	13, // 19: finfocus.v1.ContractCommitment.contract_period_end:type_name -> google.protobuf.Timestamp
+	19, // 16: finfocus.v1.ContractCommitment.contract_commitment_period_start:type_name -> google.protobuf.Timestamp
+	19, // 17: finfocus.v1.ContractCommitment.contract_commitment_period_end:type_name -> google.protobuf.Timestamp
+	19, // 18: finfocus.v1.ContractCommitment.contract_period_start:type_name -> google.protobuf.Timestamp
+	19, // 19: finfocus.v1.ContractCommitment.contract_period_end:type_name -> google.protobuf.Timestamp
 	1,  // 20: finfocus.v1.ContractCommitment.contract_commitment_benefit_category:type_name -> finfocus.v1.FocusContractCommitmentBenefitCategory
-	13, // 21: finfocus.v1.ContractCommitment.contract_commitment_created:type_name -> google.protobuf.Timestamp
+	19, // 21: finfocus.v1.ContractCommitment.contract_commitment_created:type_name -> google.protobuf.Timestamp
 	2,  // 22: finfocus.v1.ContractCommitment.contract_commitment_fulfillment_interval:type_name -> finfocus.v1.FocusContractCommitmentFulfillmentInterval
-	13, // 23: finfocus.v1.ContractCommitment.contract_commitment_last_updated:type_name -> google.protobuf.Timestamp
+	19, // 23: finfocus.v1.ContractCommitment.contract_commitment_last_updated:type_name -> google.protobuf.Timestamp
 	3,  // 24: finfocus.v1.ContractCommitment.contract_commitment_lifecycle_status:type_name -> finfocus.v1.FocusContractCommitmentLifecycleStatus
 	4,  // 25: finfocus.v1.ContractCommitment.contract_commitment_model:type_name -> finfocus.v1.FocusContractCommitmentModel
 	5,  // 26: finfocus.v1.ContractCommitment.contract_commitment_offer_category:type_name -> finfocus.v1.FocusContractCommitmentOfferCategory
 	6,  // 27: finfocus.v1.ContractCommitment.contract_commitment_payment_interval:type_name -> finfocus.v1.FocusContractCommitmentPaymentInterval
 	7,  // 28: finfocus.v1.ContractCommitment.contract_commitment_payment_model:type_name -> finfocus.v1.FocusContractCommitmentPaymentModel
-	29, // [29:29] is the sub-list for method output_type
-	29, // [29:29] is the sub-list for method input_type
-	29, // [29:29] is the sub-list for extension type_name
-	29, // [29:29] is the sub-list for extension extendee
-	0,  // [0:29] is the sub-list for field type_name
+	19, // 29: finfocus.v1.BillingPeriod.billing_period_start:type_name -> google.protobuf.Timestamp
+	19, // 30: finfocus.v1.BillingPeriod.billing_period_end:type_name -> google.protobuf.Timestamp
+	8,  // 31: finfocus.v1.BillingPeriod.billing_period_status:type_name -> finfocus.v1.FocusBillingPeriodStatus
+	19, // 32: finfocus.v1.BillingPeriod.billing_period_created:type_name -> google.protobuf.Timestamp
+	19, // 33: finfocus.v1.BillingPeriod.billing_period_last_updated:type_name -> google.protobuf.Timestamp
+	19, // 34: finfocus.v1.InvoiceDetail.billing_period_start:type_name -> google.protobuf.Timestamp
+	19, // 35: finfocus.v1.InvoiceDetail.billing_period_end:type_name -> google.protobuf.Timestamp
+	20, // 36: finfocus.v1.InvoiceDetail.charge_category:type_name -> finfocus.v1.FocusChargeCategory
+	9,  // 37: finfocus.v1.InvoiceDetail.invoice_issue_status:type_name -> finfocus.v1.FocusInvoiceIssueStatus
+	19, // 38: finfocus.v1.InvoiceDetail.invoice_issue_date:type_name -> google.protobuf.Timestamp
+	19, // 39: finfocus.v1.InvoiceDetail.invoice_detail_created:type_name -> google.protobuf.Timestamp
+	19, // 40: finfocus.v1.InvoiceDetail.invoice_detail_last_updated:type_name -> google.protobuf.Timestamp
+	17, // 41: finfocus.v1.InvoiceDetail.invoice_detail_grain:type_name -> finfocus.v1.InvoiceDetail.InvoiceDetailGrainEntry
+	19, // 42: finfocus.v1.InvoiceDetail.payment_due_date:type_name -> google.protobuf.Timestamp
+	18, // 43: finfocus.v1.InvoiceDetail.extended_columns:type_name -> finfocus.v1.InvoiceDetail.ExtendedColumnsEntry
+	44, // [44:44] is the sub-list for method output_type
+	44, // [44:44] is the sub-list for method input_type
+	44, // [44:44] is the sub-list for extension type_name
+	44, // [44:44] is the sub-list for extension extendee
+	0,  // [0:44] is the sub-list for field type_name
 }
 
 func init() { file_finfocus_v1_focus_proto_init() }
@@ -1859,13 +2424,14 @@ func file_finfocus_v1_focus_proto_init() {
 	}
 	file_finfocus_v1_enums_proto_init()
 	file_finfocus_v1_focus_proto_msgTypes[1].OneofWrappers = []any{}
+	file_finfocus_v1_focus_proto_msgTypes[3].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_finfocus_v1_focus_proto_rawDesc), len(file_finfocus_v1_focus_proto_rawDesc)),
-			NumEnums:      8,
-			NumMessages:   5,
+			NumEnums:      10,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

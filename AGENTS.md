@@ -30,6 +30,12 @@
 
 ## Active Technologies
 
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
+  google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1; stdlib only
+  (546-focus-14-billing-invoice)
+- N/A (stateless BillingPeriod and InvoiceDetail messages, builders, and per-record validation)
+  (546-focus-14-billing-invoice)
+
 - Go 1.27.1 (go.mod) + google.golang.org/protobuf (protojson, protocmp in tests) (055-cost-allocation-lineage)
 - N/A (wire contract and in-memory builder only) (055-cost-allocation-lineage)
 
@@ -51,6 +57,10 @@
 - JSON Schema (Draft 2020-12) for PricingSpec and BudgetSpec validation (001-get-budgets-rpc)
 
 ## Recent Changes
+
+- 546-focus-14-billing-invoice: Added BillingPeriod and InvoiceDetail messages, status enums,
+  pluginsdk builders, per-record validators, JSON-LD serializers, and TypeScript builders.
+  No invoice RPC.
 
 - 545-focus-14-contract-commitment: Added ContractCommitment fields 13-30, seven FOCUS 1.4 enums,
   optional doubles for null-vs-zero, and FormatContractApplied for the ContractApplied JSON object.

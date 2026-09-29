@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file finfocus/v1/focus.proto.
  */
 export const file_finfocus_v1_focus: GenFile = /*@__PURE__*/
-  fileDesc("ChdmaW5mb2N1cy92MS9mb2N1cy5wcm90bxILZmluZm9jdXMudjEiuBQKD0ZvY3VzQ29zdFJlY29yZBIZCg1wcm92aWRlcl9uYW1lGAEgASgJQgIYARIaChJiaWxsaW5nX2FjY291bnRfaWQYAiABKAkSHAoUYmlsbGluZ19hY2NvdW50X25hbWUYAyABKAkSFgoOc3ViX2FjY291bnRfaWQYGCABKAkSGAoQc3ViX2FjY291bnRfbmFtZRgZIAEoCRIcChRiaWxsaW5nX2FjY291bnRfdHlwZRgqIAEoCRIYChBzdWJfYWNjb3VudF90eXBlGCsgASgJEjgKFGJpbGxpbmdfcGVyaW9kX3N0YXJ0GBogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI2ChJiaWxsaW5nX3BlcmlvZF9lbmQYGyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhgKEGJpbGxpbmdfY3VycmVuY3kYEiABKAkSNwoTY2hhcmdlX3BlcmlvZF9zdGFydBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNQoRY2hhcmdlX3BlcmlvZF9lbmQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjkKD2NoYXJnZV9jYXRlZ29yeRgIIAEoDjIgLmZpbmZvY3VzLnYxLkZvY3VzQ2hhcmdlQ2F0ZWdvcnkSMwoMY2hhcmdlX2NsYXNzGBwgASgOMh0uZmluZm9jdXMudjEuRm9jdXNDaGFyZ2VDbGFzcxIaChJjaGFyZ2VfZGVzY3JpcHRpb24YHSABKAkSOwoQY2hhcmdlX2ZyZXF1ZW5jeRgeIAEoDjIhLmZpbmZvY3VzLnYxLkZvY3VzQ2hhcmdlRnJlcXVlbmN5EjsKEHByaWNpbmdfY2F0ZWdvcnkYCSABKA4yIS5maW5mb2N1cy52MS5Gb2N1c1ByaWNpbmdDYXRlZ29yeRIYChBwcmljaW5nX3F1YW50aXR5GB8gASgBEhQKDHByaWNpbmdfdW5pdBggIAEoCRIXCg9saXN0X3VuaXRfcHJpY2UYISABKAESGAoQcHJpY2luZ19jdXJyZW5jeRgzIAEoCRIuCiZwcmljaW5nX2N1cnJlbmN5X2NvbnRyYWN0ZWRfdW5pdF9wcmljZRg0IAEoARInCh9wcmljaW5nX2N1cnJlbmN5X2VmZmVjdGl2ZV9jb3N0GDUgASgBEigKIHByaWNpbmdfY3VycmVuY3lfbGlzdF91bml0X3ByaWNlGDYgASgBEjsKEHNlcnZpY2VfY2F0ZWdvcnkYBiABKA4yIS5maW5mb2N1cy52MS5Gb2N1c1NlcnZpY2VDYXRlZ29yeRIUCgxzZXJ2aWNlX25hbWUYByABKAkSGwoTc2VydmljZV9zdWJjYXRlZ29yeRg4IAEoCRIVCglwdWJsaXNoZXIYNyABKAlCAhgBEhMKC3Jlc291cmNlX2lkGAwgASgJEhUKDXJlc291cmNlX25hbWUYDSABKAkSFQoNcmVzb3VyY2VfdHlwZRgiIAEoCRIOCgZza3VfaWQYDiABKAkSFAoMc2t1X3ByaWNlX2lkGCMgASgJEhEKCXNrdV9tZXRlchg5IAEoCRIZChFza3VfcHJpY2VfZGV0YWlscxg6IAEoCRIRCglyZWdpb25faWQYCiABKAkSEwoLcmVnaW9uX25hbWUYCyABKAkSGQoRYXZhaWxhYmlsaXR5X3pvbmUYJCABKAkSEwoLYmlsbGVkX2Nvc3QYDyABKAESEQoJbGlzdF9jb3N0GBAgASgBEhYKDmVmZmVjdGl2ZV9jb3N0GBEgASgBEhcKD2NvbnRyYWN0ZWRfY29zdBgpIAEoARIdChVjb250cmFjdGVkX3VuaXRfcHJpY2UYMiABKAESGQoRY29uc3VtZWRfcXVhbnRpdHkYFCABKAESFQoNY29uc3VtZWRfdW5pdBgVIAEoCRJSChxjb21taXRtZW50X2Rpc2NvdW50X2NhdGVnb3J5GCUgASgOMiwuZmluZm9jdXMudjEuRm9jdXNDb21taXRtZW50RGlzY291bnRDYXRlZ29yeRIeChZjb21taXRtZW50X2Rpc2NvdW50X2lkGCYgASgJEiAKGGNvbW1pdG1lbnRfZGlzY291bnRfbmFtZRgnIAEoCRIkChxjb21taXRtZW50X2Rpc2NvdW50X3F1YW50aXR5GC4gASgBEk4KGmNvbW1pdG1lbnRfZGlzY291bnRfc3RhdHVzGC8gASgOMiouZmluZm9jdXMudjEuRm9jdXNDb21taXRtZW50RGlzY291bnRTdGF0dXMSIAoYY29tbWl0bWVudF9kaXNjb3VudF90eXBlGDAgASgJEiAKGGNvbW1pdG1lbnRfZGlzY291bnRfdW5pdBgxIAEoCRIfChdjYXBhY2l0eV9yZXNlcnZhdGlvbl9pZBgsIAEoCRJQChtjYXBhY2l0eV9yZXNlcnZhdGlvbl9zdGF0dXMYLSABKA4yKy5maW5mb2N1cy52MS5Gb2N1c0NhcGFjaXR5UmVzZXJ2YXRpb25TdGF0dXMSEgoKaW52b2ljZV9pZBgTIAEoCRIWCg5pbnZvaWNlX2lzc3VlchgoIAEoCRI0CgR0YWdzGBYgAygLMiYuZmluZm9jdXMudjEuRm9jdXNDb3N0UmVjb3JkLlRhZ3NFbnRyeRJLChBleHRlbmRlZF9jb2x1bW5zGBcgAygLMjEuZmluZm9jdXMudjEuRm9jdXNDb3N0UmVjb3JkLkV4dGVuZGVkQ29sdW1uc0VudHJ5Eh0KFXNlcnZpY2VfcHJvdmlkZXJfbmFtZRg7IAEoCRIaChJob3N0X3Byb3ZpZGVyX25hbWUYPCABKAkSGwoTYWxsb2NhdGVkX21ldGhvZF9pZBg9IAEoCRIgChhhbGxvY2F0ZWRfbWV0aG9kX2RldGFpbHMYPiABKAkSHQoVYWxsb2NhdGVkX3Jlc291cmNlX2lkGD8gASgJEh8KF2FsbG9jYXRlZF9yZXNvdXJjZV9uYW1lGEAgASgJEkcKDmFsbG9jYXRlZF90YWdzGEEgAygLMi8uZmluZm9jdXMudjEuRm9jdXNDb3N0UmVjb3JkLkFsbG9jYXRlZFRhZ3NFbnRyeRIYChBjb250cmFjdF9hcHBsaWVkGEIgASgJEhkKEWludm9pY2VfZGV0YWlsX2lkGEMgASgJEi4KJmNvbW1pdG1lbnRfcHJvZ3JhbV9lbGlnaWJpbGl0eV9kZXRhaWxzGEQgASgJGisKCVRhZ3NFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjYKFEV4dGVuZGVkQ29sdW1uc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaNAoSQWxsb2NhdGVkVGFnc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEi8w4KEkNvbnRyYWN0Q29tbWl0bWVudBIeChZjb250cmFjdF9jb21taXRtZW50X2lkGAEgASgJEhMKC2NvbnRyYWN0X2lkGAIgASgJElIKHGNvbnRyYWN0X2NvbW1pdG1lbnRfY2F0ZWdvcnkYAyABKA4yLC5maW5mb2N1cy52MS5Gb2N1c0NvbnRyYWN0Q29tbWl0bWVudENhdGVnb3J5EiAKGGNvbnRyYWN0X2NvbW1pdG1lbnRfdHlwZRgEIAEoCRJECiBjb250cmFjdF9jb21taXRtZW50X3BlcmlvZF9zdGFydBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASQgoeY29udHJhY3RfY29tbWl0bWVudF9wZXJpb2RfZW5kGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI5ChVjb250cmFjdF9wZXJpb2Rfc3RhcnQYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjcKE2NvbnRyYWN0X3BlcmlvZF9lbmQYCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiAKGGNvbnRyYWN0X2NvbW1pdG1lbnRfY29zdBgJIAEoARIkChxjb250cmFjdF9jb21taXRtZW50X3F1YW50aXR5GAogASgBEiAKGGNvbnRyYWN0X2NvbW1pdG1lbnRfdW5pdBgLIAEoCRIYChBiaWxsaW5nX2N1cnJlbmN5GAwgASgJEikKIWNvbnRyYWN0X2NvbW1pdG1lbnRfYXBwbGljYWJpbGl0eRgNIAEoCRJhCiRjb250cmFjdF9jb21taXRtZW50X2JlbmVmaXRfY2F0ZWdvcnkYDiABKA4yMy5maW5mb2N1cy52MS5Gb2N1c0NvbnRyYWN0Q29tbWl0bWVudEJlbmVmaXRDYXRlZ29yeRI/Chtjb250cmFjdF9jb21taXRtZW50X2NyZWF0ZWQYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjQKJ2NvbnRyYWN0X2NvbW1pdG1lbnRfZGlzY291bnRfcGVyY2VudGFnZRgQIAEoAUgAiAEBEikKIWNvbnRyYWN0X2NvbW1pdG1lbnRfZHVyYXRpb25fdHlwZRgRIAEoCRJpCihjb250cmFjdF9jb21taXRtZW50X2Z1bGZpbGxtZW50X2ludGVydmFsGBIgASgOMjcuZmluZm9jdXMudjEuRm9jdXNDb250cmFjdENvbW1pdG1lbnRGdWxmaWxsbWVudEludGVydmFsEkQKIGNvbnRyYWN0X2NvbW1pdG1lbnRfbGFzdF91cGRhdGVkGBMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBJhCiRjb250cmFjdF9jb21taXRtZW50X2xpZmVjeWNsZV9zdGF0dXMYFCABKA4yMy5maW5mb2N1cy52MS5Gb2N1c0NvbnRyYWN0Q29tbWl0bWVudExpZmVjeWNsZVN0YXR1cxJMChljb250cmFjdF9jb21taXRtZW50X21vZGVsGBUgASgOMikuZmluZm9jdXMudjEuRm9jdXNDb250cmFjdENvbW1pdG1lbnRNb2RlbBJdCiJjb250cmFjdF9jb21taXRtZW50X29mZmVyX2NhdGVnb3J5GBYgASgOMjEuZmluZm9jdXMudjEuRm9jdXNDb250cmFjdENvbW1pdG1lbnRPZmZlckNhdGVnb3J5EmEKJGNvbnRyYWN0X2NvbW1pdG1lbnRfcGF5bWVudF9pbnRlcnZhbBgXIAEoDjIzLmZpbmZvY3VzLnYxLkZvY3VzQ29udHJhY3RDb21taXRtZW50UGF5bWVudEludGVydmFsElsKIWNvbnRyYWN0X2NvbW1pdG1lbnRfcGF5bWVudF9tb2RlbBgYIAEoDjIwLmZpbmZvY3VzLnYxLkZvY3VzQ29udHJhY3RDb21taXRtZW50UGF5bWVudE1vZGVsEjsKLmNvbnRyYWN0X2NvbW1pdG1lbnRfcGF5bWVudF91cGZyb250X3BlcmNlbnRhZ2UYGSABKAFIAYgBARIbChNpbnZvaWNlX2lzc3Vlcl9uYW1lGBogASgJEhgKEHByaWNpbmdfY3VycmVuY3kYGyABKAkSNgopcHJpY2luZ19jdXJyZW5jeV9jb250cmFjdF9jb21taXRtZW50X2Nvc3QYHCABKAFIAogBARIdChVzZXJ2aWNlX3Byb3ZpZGVyX25hbWUYHSABKAkSJwofY29udHJhY3RfY29tbWl0bWVudF9kZXNjcmlwdGlvbhgeIAEoCUIqCihfY29udHJhY3RfY29tbWl0bWVudF9kaXNjb3VudF9wZXJjZW50YWdlQjEKL19jb250cmFjdF9jb21taXRtZW50X3BheW1lbnRfdXBmcm9udF9wZXJjZW50YWdlQiwKKl9wcmljaW5nX2N1cnJlbmN5X2NvbnRyYWN0X2NvbW1pdG1lbnRfY29zdCqxAQofRm9jdXNDb250cmFjdENvbW1pdG1lbnRDYXRlZ29yeRIyCi5GT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX0NBVEVHT1JZX1VOU1BFQ0lGSUVEEAASLAooRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9DQVRFR09SWV9TUEVORBABEiwKKEZPQ1VTX0NPTlRSQUNUX0NPTU1JVE1FTlRfQ0FURUdPUllfVVNBR0UQAirMAgomRm9jdXNDb250cmFjdENvbW1pdG1lbnRCZW5lZml0Q2F0ZWdvcnkSOgo2Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9CRU5FRklUX0NBVEVHT1JZX1VOU1BFQ0lGSUVEEAASNwozRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9CRU5FRklUX0NBVEVHT1JZX0RJU0NPVU5UEAESOgo2Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9CRU5FRklUX0NBVEVHT1JZX0VOVElUTEVNRU5UEAISOwo3Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9CRU5FRklUX0NBVEVHT1JZX0FWQUlMQUJJTElUWRADEjQKMEZPQ1VTX0NPTlRSQUNUX0NPTU1JVE1FTlRfQkVORUZJVF9DQVRFR09SWV9PVEhFUhAEKs4FCipGb2N1c0NvbnRyYWN0Q29tbWl0bWVudEZ1bGZpbGxtZW50SW50ZXJ2YWwSPgo6Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9GVUxGSUxMTUVOVF9JTlRFUlZBTF9VTlNQRUNJRklFRBAAEjkKNUZPQ1VTX0NPTlRSQUNUX0NPTU1JVE1FTlRfRlVMRklMTE1FTlRfSU5URVJWQUxfSE9VUkxZEAESOAo0Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9GVUxGSUxMTUVOVF9JTlRFUlZBTF9EQUlMWRACEjkKNUZPQ1VTX0NPTlRSQUNUX0NPTU1JVE1FTlRfRlVMRklMTE1FTlRfSU5URVJWQUxfV0VFS0xZEAMSOgo2Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9GVUxGSUxMTUVOVF9JTlRFUlZBTF9NT05USExZEAQSPAo4Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9GVUxGSUxMTUVOVF9JTlRFUlZBTF9RVUFSVEVSTFkQBRI+CjpGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX0ZVTEZJTExNRU5UX0lOVEVSVkFMX1NFTUlfQU5OVUFMEAYSOQo1Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9GVUxGSUxMTUVOVF9JTlRFUlZBTF9BTk5VQUwQBxI+CjpGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX0ZVTEZJTExNRU5UX0lOVEVSVkFMX0ZVTExfUEVSSU9EEAgSQAo8Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9GVUxGSUxMTUVOVF9JTlRFUlZBTF9UUkFOU0FDVElPTkFMEAkSOQo1Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9GVUxGSUxMTUVOVF9JTlRFUlZBTF9DVVNUT00QCiryAwomRm9jdXNDb250cmFjdENvbW1pdG1lbnRMaWZlY3ljbGVTdGF0dXMSOgo2Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9MSUZFQ1lDTEVfU1RBVFVTX1VOU1BFQ0lGSUVEEAASNwozRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9MSUZFQ1lDTEVfU1RBVFVTX1BST1BPU0VEEAESNgoyRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9MSUZFQ1lDTEVfU1RBVFVTX1BFTkRJTkcQAhI1CjFGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX0xJRkVDWUNMRV9TVEFUVVNfQUNUSVZFEAMSOAo0Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9MSUZFQ1lDTEVfU1RBVFVTX0VYSEFVU1RFRBAEEjYKMkZPQ1VTX0NPTlRSQUNUX0NPTU1JVE1FTlRfTElGRUNZQ0xFX1NUQVRVU19FWFBJUkVEEAUSNwozRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9MSUZFQ1lDTEVfU1RBVFVTX0NBTkNFTEVEEAYSOQo1Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9MSUZFQ1lDTEVfU1RBVFVTX1NVUEVSU0VERUQQByqyAQocRm9jdXNDb250cmFjdENvbW1pdG1lbnRNb2RlbBIvCitGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX01PREVMX1VOU1BFQ0lGSUVEEAASLgoqRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9NT0RFTF9DT05USU5VT1VTEAESMQotRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9NT0RFTF9ESVNDT05USU5VT1VTEAIqzgEKJEZvY3VzQ29udHJhY3RDb21taXRtZW50T2ZmZXJDYXRlZ29yeRI4CjRGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX09GRkVSX0NBVEVHT1JZX1VOU1BFQ0lGSUVEEAASMwovRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9PRkZFUl9DQVRFR09SWV9QVUJMSUMQARI3CjNGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX09GRkVSX0NBVEVHT1JZX05FR09USUFURUQQAiq5AwomRm9jdXNDb250cmFjdENvbW1pdG1lbnRQYXltZW50SW50ZXJ2YWwSOgo2Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9QQVlNRU5UX0lOVEVSVkFMX1VOU1BFQ0lGSUVEEAASNwozRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9QQVlNRU5UX0lOVEVSVkFMX09ORV9USU1FEAESNgoyRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9QQVlNRU5UX0lOVEVSVkFMX01PTlRITFkQAhI4CjRGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX1BBWU1FTlRfSU5URVJWQUxfUVVBUlRFUkxZEAMSOgo2Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9QQVlNRU5UX0lOVEVSVkFMX1NFTUlfQU5OVUFMEAQSNQoxRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9QQVlNRU5UX0lOVEVSVkFMX0FOTlVBTBAFEjUKMUZPQ1VTX0NPTlRSQUNUX0NPTU1JVE1FTlRfUEFZTUVOVF9JTlRFUlZBTF9DVVNUT00QBiqMAgojRm9jdXNDb250cmFjdENvbW1pdG1lbnRQYXltZW50TW9kZWwSNwozRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9QQVlNRU5UX01PREVMX1VOU1BFQ0lGSUVEEAASNgoyRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9QQVlNRU5UX01PREVMX05PX1VQRlJPTlQQARI7CjdGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX1BBWU1FTlRfTU9ERUxfUEFSVElBTF9VUEZST05UEAISNwozRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9QQVlNRU5UX01PREVMX0FMTF9VUEZST05UEANCqAEKD2NvbS5maW5mb2N1cy52MUIKRm9jdXNQcm90b1ABWjxnaXRodWIuY29tL3JzaGFkZS9maW5mb2N1cy1zcGVjL3Nkay9nby9wcm90by9maW5mb2N1cy92MTtwYmOiAgNGWFiqAgtGaW5mb2N1cy5WMcoCC0ZpbmZvY3VzXFYx4gIXRmluZm9jdXNcVjFcR1BCTWV0YWRhdGHqAgxGaW5mb2N1czo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_finfocus_v1_enums]);
+  fileDesc("ChdmaW5mb2N1cy92MS9mb2N1cy5wcm90bxILZmluZm9jdXMudjEiuBQKD0ZvY3VzQ29zdFJlY29yZBIZCg1wcm92aWRlcl9uYW1lGAEgASgJQgIYARIaChJiaWxsaW5nX2FjY291bnRfaWQYAiABKAkSHAoUYmlsbGluZ19hY2NvdW50X25hbWUYAyABKAkSFgoOc3ViX2FjY291bnRfaWQYGCABKAkSGAoQc3ViX2FjY291bnRfbmFtZRgZIAEoCRIcChRiaWxsaW5nX2FjY291bnRfdHlwZRgqIAEoCRIYChBzdWJfYWNjb3VudF90eXBlGCsgASgJEjgKFGJpbGxpbmdfcGVyaW9kX3N0YXJ0GBogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI2ChJiaWxsaW5nX3BlcmlvZF9lbmQYGyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhgKEGJpbGxpbmdfY3VycmVuY3kYEiABKAkSNwoTY2hhcmdlX3BlcmlvZF9zdGFydBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNQoRY2hhcmdlX3BlcmlvZF9lbmQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjkKD2NoYXJnZV9jYXRlZ29yeRgIIAEoDjIgLmZpbmZvY3VzLnYxLkZvY3VzQ2hhcmdlQ2F0ZWdvcnkSMwoMY2hhcmdlX2NsYXNzGBwgASgOMh0uZmluZm9jdXMudjEuRm9jdXNDaGFyZ2VDbGFzcxIaChJjaGFyZ2VfZGVzY3JpcHRpb24YHSABKAkSOwoQY2hhcmdlX2ZyZXF1ZW5jeRgeIAEoDjIhLmZpbmZvY3VzLnYxLkZvY3VzQ2hhcmdlRnJlcXVlbmN5EjsKEHByaWNpbmdfY2F0ZWdvcnkYCSABKA4yIS5maW5mb2N1cy52MS5Gb2N1c1ByaWNpbmdDYXRlZ29yeRIYChBwcmljaW5nX3F1YW50aXR5GB8gASgBEhQKDHByaWNpbmdfdW5pdBggIAEoCRIXCg9saXN0X3VuaXRfcHJpY2UYISABKAESGAoQcHJpY2luZ19jdXJyZW5jeRgzIAEoCRIuCiZwcmljaW5nX2N1cnJlbmN5X2NvbnRyYWN0ZWRfdW5pdF9wcmljZRg0IAEoARInCh9wcmljaW5nX2N1cnJlbmN5X2VmZmVjdGl2ZV9jb3N0GDUgASgBEigKIHByaWNpbmdfY3VycmVuY3lfbGlzdF91bml0X3ByaWNlGDYgASgBEjsKEHNlcnZpY2VfY2F0ZWdvcnkYBiABKA4yIS5maW5mb2N1cy52MS5Gb2N1c1NlcnZpY2VDYXRlZ29yeRIUCgxzZXJ2aWNlX25hbWUYByABKAkSGwoTc2VydmljZV9zdWJjYXRlZ29yeRg4IAEoCRIVCglwdWJsaXNoZXIYNyABKAlCAhgBEhMKC3Jlc291cmNlX2lkGAwgASgJEhUKDXJlc291cmNlX25hbWUYDSABKAkSFQoNcmVzb3VyY2VfdHlwZRgiIAEoCRIOCgZza3VfaWQYDiABKAkSFAoMc2t1X3ByaWNlX2lkGCMgASgJEhEKCXNrdV9tZXRlchg5IAEoCRIZChFza3VfcHJpY2VfZGV0YWlscxg6IAEoCRIRCglyZWdpb25faWQYCiABKAkSEwoLcmVnaW9uX25hbWUYCyABKAkSGQoRYXZhaWxhYmlsaXR5X3pvbmUYJCABKAkSEwoLYmlsbGVkX2Nvc3QYDyABKAESEQoJbGlzdF9jb3N0GBAgASgBEhYKDmVmZmVjdGl2ZV9jb3N0GBEgASgBEhcKD2NvbnRyYWN0ZWRfY29zdBgpIAEoARIdChVjb250cmFjdGVkX3VuaXRfcHJpY2UYMiABKAESGQoRY29uc3VtZWRfcXVhbnRpdHkYFCABKAESFQoNY29uc3VtZWRfdW5pdBgVIAEoCRJSChxjb21taXRtZW50X2Rpc2NvdW50X2NhdGVnb3J5GCUgASgOMiwuZmluZm9jdXMudjEuRm9jdXNDb21taXRtZW50RGlzY291bnRDYXRlZ29yeRIeChZjb21taXRtZW50X2Rpc2NvdW50X2lkGCYgASgJEiAKGGNvbW1pdG1lbnRfZGlzY291bnRfbmFtZRgnIAEoCRIkChxjb21taXRtZW50X2Rpc2NvdW50X3F1YW50aXR5GC4gASgBEk4KGmNvbW1pdG1lbnRfZGlzY291bnRfc3RhdHVzGC8gASgOMiouZmluZm9jdXMudjEuRm9jdXNDb21taXRtZW50RGlzY291bnRTdGF0dXMSIAoYY29tbWl0bWVudF9kaXNjb3VudF90eXBlGDAgASgJEiAKGGNvbW1pdG1lbnRfZGlzY291bnRfdW5pdBgxIAEoCRIfChdjYXBhY2l0eV9yZXNlcnZhdGlvbl9pZBgsIAEoCRJQChtjYXBhY2l0eV9yZXNlcnZhdGlvbl9zdGF0dXMYLSABKA4yKy5maW5mb2N1cy52MS5Gb2N1c0NhcGFjaXR5UmVzZXJ2YXRpb25TdGF0dXMSEgoKaW52b2ljZV9pZBgTIAEoCRIWCg5pbnZvaWNlX2lzc3VlchgoIAEoCRI0CgR0YWdzGBYgAygLMiYuZmluZm9jdXMudjEuRm9jdXNDb3N0UmVjb3JkLlRhZ3NFbnRyeRJLChBleHRlbmRlZF9jb2x1bW5zGBcgAygLMjEuZmluZm9jdXMudjEuRm9jdXNDb3N0UmVjb3JkLkV4dGVuZGVkQ29sdW1uc0VudHJ5Eh0KFXNlcnZpY2VfcHJvdmlkZXJfbmFtZRg7IAEoCRIaChJob3N0X3Byb3ZpZGVyX25hbWUYPCABKAkSGwoTYWxsb2NhdGVkX21ldGhvZF9pZBg9IAEoCRIgChhhbGxvY2F0ZWRfbWV0aG9kX2RldGFpbHMYPiABKAkSHQoVYWxsb2NhdGVkX3Jlc291cmNlX2lkGD8gASgJEh8KF2FsbG9jYXRlZF9yZXNvdXJjZV9uYW1lGEAgASgJEkcKDmFsbG9jYXRlZF90YWdzGEEgAygLMi8uZmluZm9jdXMudjEuRm9jdXNDb3N0UmVjb3JkLkFsbG9jYXRlZFRhZ3NFbnRyeRIYChBjb250cmFjdF9hcHBsaWVkGEIgASgJEhkKEWludm9pY2VfZGV0YWlsX2lkGEMgASgJEi4KJmNvbW1pdG1lbnRfcHJvZ3JhbV9lbGlnaWJpbGl0eV9kZXRhaWxzGEQgASgJGisKCVRhZ3NFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjYKFEV4dGVuZGVkQ29sdW1uc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaNAoSQWxsb2NhdGVkVGFnc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEi8w4KEkNvbnRyYWN0Q29tbWl0bWVudBIeChZjb250cmFjdF9jb21taXRtZW50X2lkGAEgASgJEhMKC2NvbnRyYWN0X2lkGAIgASgJElIKHGNvbnRyYWN0X2NvbW1pdG1lbnRfY2F0ZWdvcnkYAyABKA4yLC5maW5mb2N1cy52MS5Gb2N1c0NvbnRyYWN0Q29tbWl0bWVudENhdGVnb3J5EiAKGGNvbnRyYWN0X2NvbW1pdG1lbnRfdHlwZRgEIAEoCRJECiBjb250cmFjdF9jb21taXRtZW50X3BlcmlvZF9zdGFydBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASQgoeY29udHJhY3RfY29tbWl0bWVudF9wZXJpb2RfZW5kGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI5ChVjb250cmFjdF9wZXJpb2Rfc3RhcnQYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjcKE2NvbnRyYWN0X3BlcmlvZF9lbmQYCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiAKGGNvbnRyYWN0X2NvbW1pdG1lbnRfY29zdBgJIAEoARIkChxjb250cmFjdF9jb21taXRtZW50X3F1YW50aXR5GAogASgBEiAKGGNvbnRyYWN0X2NvbW1pdG1lbnRfdW5pdBgLIAEoCRIYChBiaWxsaW5nX2N1cnJlbmN5GAwgASgJEikKIWNvbnRyYWN0X2NvbW1pdG1lbnRfYXBwbGljYWJpbGl0eRgNIAEoCRJhCiRjb250cmFjdF9jb21taXRtZW50X2JlbmVmaXRfY2F0ZWdvcnkYDiABKA4yMy5maW5mb2N1cy52MS5Gb2N1c0NvbnRyYWN0Q29tbWl0bWVudEJlbmVmaXRDYXRlZ29yeRI/Chtjb250cmFjdF9jb21taXRtZW50X2NyZWF0ZWQYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjQKJ2NvbnRyYWN0X2NvbW1pdG1lbnRfZGlzY291bnRfcGVyY2VudGFnZRgQIAEoAUgAiAEBEikKIWNvbnRyYWN0X2NvbW1pdG1lbnRfZHVyYXRpb25fdHlwZRgRIAEoCRJpCihjb250cmFjdF9jb21taXRtZW50X2Z1bGZpbGxtZW50X2ludGVydmFsGBIgASgOMjcuZmluZm9jdXMudjEuRm9jdXNDb250cmFjdENvbW1pdG1lbnRGdWxmaWxsbWVudEludGVydmFsEkQKIGNvbnRyYWN0X2NvbW1pdG1lbnRfbGFzdF91cGRhdGVkGBMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBJhCiRjb250cmFjdF9jb21taXRtZW50X2xpZmVjeWNsZV9zdGF0dXMYFCABKA4yMy5maW5mb2N1cy52MS5Gb2N1c0NvbnRyYWN0Q29tbWl0bWVudExpZmVjeWNsZVN0YXR1cxJMChljb250cmFjdF9jb21taXRtZW50X21vZGVsGBUgASgOMikuZmluZm9jdXMudjEuRm9jdXNDb250cmFjdENvbW1pdG1lbnRNb2RlbBJdCiJjb250cmFjdF9jb21taXRtZW50X29mZmVyX2NhdGVnb3J5GBYgASgOMjEuZmluZm9jdXMudjEuRm9jdXNDb250cmFjdENvbW1pdG1lbnRPZmZlckNhdGVnb3J5EmEKJGNvbnRyYWN0X2NvbW1pdG1lbnRfcGF5bWVudF9pbnRlcnZhbBgXIAEoDjIzLmZpbmZvY3VzLnYxLkZvY3VzQ29udHJhY3RDb21taXRtZW50UGF5bWVudEludGVydmFsElsKIWNvbnRyYWN0X2NvbW1pdG1lbnRfcGF5bWVudF9tb2RlbBgYIAEoDjIwLmZpbmZvY3VzLnYxLkZvY3VzQ29udHJhY3RDb21taXRtZW50UGF5bWVudE1vZGVsEjsKLmNvbnRyYWN0X2NvbW1pdG1lbnRfcGF5bWVudF91cGZyb250X3BlcmNlbnRhZ2UYGSABKAFIAYgBARIbChNpbnZvaWNlX2lzc3Vlcl9uYW1lGBogASgJEhgKEHByaWNpbmdfY3VycmVuY3kYGyABKAkSNgopcHJpY2luZ19jdXJyZW5jeV9jb250cmFjdF9jb21taXRtZW50X2Nvc3QYHCABKAFIAogBARIdChVzZXJ2aWNlX3Byb3ZpZGVyX25hbWUYHSABKAkSJwofY29udHJhY3RfY29tbWl0bWVudF9kZXNjcmlwdGlvbhgeIAEoCUIqCihfY29udHJhY3RfY29tbWl0bWVudF9kaXNjb3VudF9wZXJjZW50YWdlQjEKL19jb250cmFjdF9jb21taXRtZW50X3BheW1lbnRfdXBmcm9udF9wZXJjZW50YWdlQiwKKl9wcmljaW5nX2N1cnJlbmN5X2NvbnRyYWN0X2NvbW1pdG1lbnRfY29zdCLhAgoNQmlsbGluZ1BlcmlvZBI4ChRiaWxsaW5nX3BlcmlvZF9zdGFydBgBIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNgoSYmlsbGluZ19wZXJpb2RfZW5kGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBJEChViaWxsaW5nX3BlcmlvZF9zdGF0dXMYAyABKA4yJS5maW5mb2N1cy52MS5Gb2N1c0JpbGxpbmdQZXJpb2RTdGF0dXMSGwoTaW52b2ljZV9pc3N1ZXJfbmFtZRgEIAEoCRI6ChZiaWxsaW5nX3BlcmlvZF9jcmVhdGVkGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI/ChtiaWxsaW5nX3BlcmlvZF9sYXN0X3VwZGF0ZWQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIpwJCg1JbnZvaWNlRGV0YWlsEhkKEWludm9pY2VfZGV0YWlsX2lkGAEgASgJEhIKCmludm9pY2VfaWQYAiABKAkSGwoTaW52b2ljZV9pc3N1ZXJfbmFtZRgDIAEoCRIaChJiaWxsaW5nX2FjY291bnRfaWQYBCABKAkSOAoUYmlsbGluZ19wZXJpb2Rfc3RhcnQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjYKEmJpbGxpbmdfcGVyaW9kX2VuZBgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEwoLYmlsbGVkX2Nvc3QYByABKAESGAoQYmlsbGluZ19jdXJyZW5jeRgIIAEoCRI5Cg9jaGFyZ2VfY2F0ZWdvcnkYCSABKA4yIC5maW5mb2N1cy52MS5Gb2N1c0NoYXJnZUNhdGVnb3J5EkIKFGludm9pY2VfaXNzdWVfc3RhdHVzGAogASgOMiQuZmluZm9jdXMudjEuRm9jdXNJbnZvaWNlSXNzdWVTdGF0dXMSNgoSaW52b2ljZV9pc3N1ZV9kYXRlGAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI6ChZpbnZvaWNlX2RldGFpbF9jcmVhdGVkGAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI/ChtpbnZvaWNlX2RldGFpbF9sYXN0X3VwZGF0ZWQYDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiIKGmludm9pY2VfZGV0YWlsX2Rlc2NyaXB0aW9uGA4gASgJElAKFGludm9pY2VfZGV0YWlsX2dyYWluGA8gAygLMjIuZmluZm9jdXMudjEuSW52b2ljZURldGFpbC5JbnZvaWNlRGV0YWlsR3JhaW5FbnRyeRIYChBwYXltZW50X2N1cnJlbmN5GBAgASgJEikKHHBheW1lbnRfY3VycmVuY3lfYmlsbGVkX2Nvc3QYESABKAFIAIgBARIqCiJwYXltZW50X2N1cnJlbmN5X2ludm9pY2VfZGV0YWlsX2lkGBIgASgJEjQKEHBheW1lbnRfZHVlX2RhdGUYEyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhUKDXBheW1lbnRfdGVybXMYFCABKAkSHQoVcHVyY2hhc2Vfb3JkZXJfbnVtYmVyGBUgASgJEhwKFHJlZmVyZW5jZV9pbnZvaWNlX2lkGBYgASgJEkkKEGV4dGVuZGVkX2NvbHVtbnMYFyADKAsyLy5maW5mb2N1cy52MS5JbnZvaWNlRGV0YWlsLkV4dGVuZGVkQ29sdW1uc0VudHJ5GjkKF0ludm9pY2VEZXRhaWxHcmFpbkVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaNgoURXh0ZW5kZWRDb2x1bW5zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4AUIfCh1fcGF5bWVudF9jdXJyZW5jeV9iaWxsZWRfY29zdCqxAQofRm9jdXNDb250cmFjdENvbW1pdG1lbnRDYXRlZ29yeRIyCi5GT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX0NBVEVHT1JZX1VOU1BFQ0lGSUVEEAASLAooRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9DQVRFR09SWV9TUEVORBABEiwKKEZPQ1VTX0NPTlRSQUNUX0NPTU1JVE1FTlRfQ0FURUdPUllfVVNBR0UQAirMAgomRm9jdXNDb250cmFjdENvbW1pdG1lbnRCZW5lZml0Q2F0ZWdvcnkSOgo2Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9CRU5FRklUX0NBVEVHT1JZX1VOU1BFQ0lGSUVEEAASNwozRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9CRU5FRklUX0NBVEVHT1JZX0RJU0NPVU5UEAESOgo2Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9CRU5FRklUX0NBVEVHT1JZX0VOVElUTEVNRU5UEAISOwo3Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9CRU5FRklUX0NBVEVHT1JZX0FWQUlMQUJJTElUWRADEjQKMEZPQ1VTX0NPTlRSQUNUX0NPTU1JVE1FTlRfQkVORUZJVF9DQVRFR09SWV9PVEhFUhAEKs4FCipGb2N1c0NvbnRyYWN0Q29tbWl0bWVudEZ1bGZpbGxtZW50SW50ZXJ2YWwSPgo6Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9GVUxGSUxMTUVOVF9JTlRFUlZBTF9VTlNQRUNJRklFRBAAEjkKNUZPQ1VTX0NPTlRSQUNUX0NPTU1JVE1FTlRfRlVMRklMTE1FTlRfSU5URVJWQUxfSE9VUkxZEAESOAo0Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9GVUxGSUxMTUVOVF9JTlRFUlZBTF9EQUlMWRACEjkKNUZPQ1VTX0NPTlRSQUNUX0NPTU1JVE1FTlRfRlVMRklMTE1FTlRfSU5URVJWQUxfV0VFS0xZEAMSOgo2Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9GVUxGSUxMTUVOVF9JTlRFUlZBTF9NT05USExZEAQSPAo4Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9GVUxGSUxMTUVOVF9JTlRFUlZBTF9RVUFSVEVSTFkQBRI+CjpGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX0ZVTEZJTExNRU5UX0lOVEVSVkFMX1NFTUlfQU5OVUFMEAYSOQo1Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9GVUxGSUxMTUVOVF9JTlRFUlZBTF9BTk5VQUwQBxI+CjpGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX0ZVTEZJTExNRU5UX0lOVEVSVkFMX0ZVTExfUEVSSU9EEAgSQAo8Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9GVUxGSUxMTUVOVF9JTlRFUlZBTF9UUkFOU0FDVElPTkFMEAkSOQo1Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9GVUxGSUxMTUVOVF9JTlRFUlZBTF9DVVNUT00QCiryAwomRm9jdXNDb250cmFjdENvbW1pdG1lbnRMaWZlY3ljbGVTdGF0dXMSOgo2Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9MSUZFQ1lDTEVfU1RBVFVTX1VOU1BFQ0lGSUVEEAASNwozRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9MSUZFQ1lDTEVfU1RBVFVTX1BST1BPU0VEEAESNgoyRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9MSUZFQ1lDTEVfU1RBVFVTX1BFTkRJTkcQAhI1CjFGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX0xJRkVDWUNMRV9TVEFUVVNfQUNUSVZFEAMSOAo0Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9MSUZFQ1lDTEVfU1RBVFVTX0VYSEFVU1RFRBAEEjYKMkZPQ1VTX0NPTlRSQUNUX0NPTU1JVE1FTlRfTElGRUNZQ0xFX1NUQVRVU19FWFBJUkVEEAUSNwozRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9MSUZFQ1lDTEVfU1RBVFVTX0NBTkNFTEVEEAYSOQo1Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9MSUZFQ1lDTEVfU1RBVFVTX1NVUEVSU0VERUQQByqyAQocRm9jdXNDb250cmFjdENvbW1pdG1lbnRNb2RlbBIvCitGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX01PREVMX1VOU1BFQ0lGSUVEEAASLgoqRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9NT0RFTF9DT05USU5VT1VTEAESMQotRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9NT0RFTF9ESVNDT05USU5VT1VTEAIqzgEKJEZvY3VzQ29udHJhY3RDb21taXRtZW50T2ZmZXJDYXRlZ29yeRI4CjRGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX09GRkVSX0NBVEVHT1JZX1VOU1BFQ0lGSUVEEAASMwovRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9PRkZFUl9DQVRFR09SWV9QVUJMSUMQARI3CjNGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX09GRkVSX0NBVEVHT1JZX05FR09USUFURUQQAiq5AwomRm9jdXNDb250cmFjdENvbW1pdG1lbnRQYXltZW50SW50ZXJ2YWwSOgo2Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9QQVlNRU5UX0lOVEVSVkFMX1VOU1BFQ0lGSUVEEAASNwozRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9QQVlNRU5UX0lOVEVSVkFMX09ORV9USU1FEAESNgoyRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9QQVlNRU5UX0lOVEVSVkFMX01PTlRITFkQAhI4CjRGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX1BBWU1FTlRfSU5URVJWQUxfUVVBUlRFUkxZEAMSOgo2Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9QQVlNRU5UX0lOVEVSVkFMX1NFTUlfQU5OVUFMEAQSNQoxRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9QQVlNRU5UX0lOVEVSVkFMX0FOTlVBTBAFEjUKMUZPQ1VTX0NPTlRSQUNUX0NPTU1JVE1FTlRfUEFZTUVOVF9JTlRFUlZBTF9DVVNUT00QBiqMAgojRm9jdXNDb250cmFjdENvbW1pdG1lbnRQYXltZW50TW9kZWwSNwozRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9QQVlNRU5UX01PREVMX1VOU1BFQ0lGSUVEEAASNgoyRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9QQVlNRU5UX01PREVMX05PX1VQRlJPTlQQARI7CjdGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX1BBWU1FTlRfTU9ERUxfUEFSVElBTF9VUEZST05UEAISNwozRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9QQVlNRU5UX01PREVMX0FMTF9VUEZST05UEAMqlQEKGEZvY3VzQmlsbGluZ1BlcmlvZFN0YXR1cxIrCidGT0NVU19CSUxMSU5HX1BFUklPRF9TVEFUVVNfVU5TUEVDSUZJRUQQABIkCiBGT0NVU19CSUxMSU5HX1BFUklPRF9TVEFUVVNfT1BFThABEiYKIkZPQ1VTX0JJTExJTkdfUEVSSU9EX1NUQVRVU19DTE9TRUQQAiq4AQoXRm9jdXNJbnZvaWNlSXNzdWVTdGF0dXMSKgomRk9DVVNfSU5WT0lDRV9JU1NVRV9TVEFUVVNfVU5TUEVDSUZJRUQQABIjCh9GT0NVU19JTlZPSUNFX0lTU1VFX1NUQVRVU19PUEVOEAESJQohRk9DVVNfSU5WT0lDRV9JU1NVRV9TVEFUVVNfSVNTVUVEEAISJQohRk9DVVNfSU5WT0lDRV9JU1NVRV9TVEFUVVNfVk9JREVEEANCqAEKD2NvbS5maW5mb2N1cy52MUIKRm9jdXNQcm90b1ABWjxnaXRodWIuY29tL3JzaGFkZS9maW5mb2N1cy1zcGVjL3Nkay9nby9wcm90by9maW5mb2N1cy92MTtwYmOiAgNGWFiqAgtGaW5mb2N1cy5WMcoCC0ZpbmZvY3VzXFYx4gIXRmluZm9jdXNcVjFcR1BCTWV0YWRhdGHqAgxGaW5mb2N1czo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_finfocus_v1_enums]);
 
 /**
  * FocusCostRecord represents a single cost line item normalized to the
@@ -875,6 +875,284 @@ export const ContractCommitmentSchema: GenMessage<ContractCommitment> = /*@__PUR
   messageDesc(file_finfocus_v1_focus, 1);
 
 /**
+ * BillingPeriod is one FOCUS 1.4 billing cycle for an invoice issuer.
+ * All six columns are mandatory and do not allow nulls. The record joins to
+ * Cost and Usage and to Invoice Detail on billing period start plus invoice
+ * issuer name. One-way status changes are a host concern.
+ * Reference: FOCUS 1.4 Billing Period dataset.
+ *
+ * @generated from message finfocus.v1.BillingPeriod
+ */
+export type BillingPeriod = Message<"finfocus.v1.BillingPeriod"> & {
+  /**
+   * BillingPeriodStart: Inclusive start of the billing period.
+   * FOCUS 1.4 Billing Period Start (MANDATORY).
+   *
+   * @generated from field: google.protobuf.Timestamp billing_period_start = 1;
+   */
+  billingPeriodStart?: Timestamp;
+
+  /**
+   * BillingPeriodEnd: Exclusive end of the billing period.
+   * FOCUS 1.4 Billing Period End (MANDATORY).
+   *
+   * @generated from field: google.protobuf.Timestamp billing_period_end = 2;
+   */
+  billingPeriodEnd?: Timestamp;
+
+  /**
+   * BillingPeriodStatus: Open or Closed.
+   * FOCUS 1.4 Billing Period Status (MANDATORY).
+   *
+   * @generated from field: finfocus.v1.FocusBillingPeriodStatus billing_period_status = 3;
+   */
+  billingPeriodStatus: FocusBillingPeriodStatus;
+
+  /**
+   * InvoiceIssuerName: The entity that issues invoices for this period.
+   * FOCUS 1.4 Invoice Issuer Name (MANDATORY).
+   *
+   * @generated from field: string invoice_issuer_name = 4;
+   */
+  invoiceIssuerName: string;
+
+  /**
+   * BillingPeriodCreated: When this record was instantiated.
+   * FOCUS 1.4 Billing Period Created (MANDATORY).
+   *
+   * @generated from field: google.protobuf.Timestamp billing_period_created = 5;
+   */
+  billingPeriodCreated?: Timestamp;
+
+  /**
+   * BillingPeriodLastUpdated: When this record was last updated. Must be >= created.
+   * FOCUS 1.4 Billing Period Last Updated (MANDATORY).
+   *
+   * @generated from field: google.protobuf.Timestamp billing_period_last_updated = 6;
+   */
+  billingPeriodLastUpdated?: Timestamp;
+};
+
+/**
+ * Describes the message finfocus.v1.BillingPeriod.
+ * Use `create(BillingPeriodSchema)` to create a new message.
+ */
+export const BillingPeriodSchema: GenMessage<BillingPeriod> = /*@__PURE__*/
+  messageDesc(file_finfocus_v1_focus, 2);
+
+/**
+ * InvoiceDetail is one FOCUS 1.4 invoice line.
+ * Eighteen columns are always present (four of those allow null). Four more are
+ * conditional. extended_columns holds custom monetary metrics that have no FOCUS
+ * column. Sums, joins, and status transitions are a host concern.
+ * Reference: FOCUS 1.4 Invoice Detail dataset.
+ *
+ * @generated from message finfocus.v1.InvoiceDetail
+ */
+export type InvoiceDetail = Message<"finfocus.v1.InvoiceDetail"> & {
+  /**
+   * InvoiceDetailId: Unique within an InvoiceId.
+   * FOCUS 1.4 Invoice Detail ID (MANDATORY).
+   *
+   * @generated from field: string invoice_detail_id = 1;
+   */
+  invoiceDetailId: string;
+
+  /**
+   * InvoiceId: Issuer-assigned invoice identifier. May exist before issue.
+   * FOCUS 1.4 Invoice ID (MANDATORY).
+   *
+   * @generated from field: string invoice_id = 2;
+   */
+  invoiceId: string;
+
+  /**
+   * InvoiceIssuerName: The entity that issued the invoice.
+   * FOCUS 1.4 Invoice Issuer Name (MANDATORY).
+   *
+   * @generated from field: string invoice_issuer_name = 3;
+   */
+  invoiceIssuerName: string;
+
+  /**
+   * BillingAccountId: Unique within the invoice issuer.
+   * FOCUS 1.4 Billing Account ID (MANDATORY).
+   *
+   * @generated from field: string billing_account_id = 4;
+   */
+  billingAccountId: string;
+
+  /**
+   * BillingPeriodStart: Inclusive start. Joins to BillingPeriod.
+   * FOCUS 1.4 Billing Period Start (MANDATORY).
+   *
+   * @generated from field: google.protobuf.Timestamp billing_period_start = 5;
+   */
+  billingPeriodStart?: Timestamp;
+
+  /**
+   * BillingPeriodEnd: Exclusive end.
+   * FOCUS 1.4 Billing Period End (MANDATORY).
+   *
+   * @generated from field: google.protobuf.Timestamp billing_period_end = 6;
+   */
+  billingPeriodEnd?: Timestamp;
+
+  /**
+   * BilledCost: Invoiced amount in BillingCurrency. Zero and negative values are valid.
+   * FOCUS 1.4 Billed Cost (MANDATORY, nulls not allowed).
+   *
+   * @generated from field: double billed_cost = 7;
+   */
+  billedCost: number;
+
+  /**
+   * BillingCurrency: ISO 4217 code printed on the invoice.
+   * FOCUS 1.4 Billing Currency (MANDATORY).
+   *
+   * @generated from field: string billing_currency = 8;
+   */
+  billingCurrency: string;
+
+  /**
+   * ChargeCategory: Usage, Purchase, Tax, Credit, or Adjustment.
+   * REFUND is not a FOCUS 1.4 invoice value and MUST be rejected.
+   * FOCUS 1.4 Charge Category (MANDATORY).
+   *
+   * @generated from field: finfocus.v1.FocusChargeCategory charge_category = 9;
+   */
+  chargeCategory: FocusChargeCategory;
+
+  /**
+   * InvoiceIssueStatus: Open, Issued, or Voided.
+   * FOCUS 1.4 Invoice Issue Status (MANDATORY).
+   *
+   * @generated from field: finfocus.v1.FocusInvoiceIssueStatus invoice_issue_status = 10;
+   */
+  invoiceIssueStatus: FocusInvoiceIssueStatus;
+
+  /**
+   * InvoiceIssueDate: Official issue date. Unset means null.
+   * FOCUS 1.4 Invoice Issue Date (MANDATORY column, nulls allowed).
+   *
+   * @generated from field: google.protobuf.Timestamp invoice_issue_date = 11;
+   */
+  invoiceIssueDate?: Timestamp;
+
+  /**
+   * InvoiceDetailCreated: When this line was instantiated.
+   * FOCUS 1.4 Invoice Detail Created (MANDATORY).
+   *
+   * @generated from field: google.protobuf.Timestamp invoice_detail_created = 12;
+   */
+  invoiceDetailCreated?: Timestamp;
+
+  /**
+   * InvoiceDetailLastUpdated: When this line was last updated. Must be >= created.
+   * FOCUS 1.4 Invoice Detail Last Updated (MANDATORY).
+   *
+   * @generated from field: google.protobuf.Timestamp invoice_detail_last_updated = 13;
+   */
+  invoiceDetailLastUpdated?: Timestamp;
+
+  /**
+   * InvoiceDetailDescription: Human-readable line text. Empty means null.
+   * FOCUS 1.4 Invoice Detail Description (MANDATORY column, nulls allowed).
+   *
+   * @generated from field: string invoice_detail_description = 14;
+   */
+  invoiceDetailDescription: string;
+
+  /**
+   * InvoiceDetailGrain: Properties that define line granularity.
+   * FOCUS keys or x_ custom keys. An empty map means null.
+   * FOCUS 1.4 Invoice Detail Grain (MANDATORY column, nulls allowed).
+   *
+   * @generated from field: map<string, string> invoice_detail_grain = 15;
+   */
+  invoiceDetailGrain: { [key: string]: string };
+
+  /**
+   * PaymentCurrency: ISO 4217 settlement currency.
+   * Empty means the conditional column is absent. Set together with
+   * payment_currency_billed_cost when billing and payment currencies differ.
+   * FOCUS 1.4 Payment Currency (CONDITIONAL).
+   *
+   * @generated from field: string payment_currency = 16;
+   */
+  paymentCurrency: string;
+
+  /**
+   * PaymentCurrencyBilledCost: BilledCost denominated in PaymentCurrency.
+   * Unset means the column is absent, which differs from 0.
+   * FOCUS 1.4 Payment Currency Billed Cost (CONDITIONAL, nulls not allowed when present).
+   *
+   * @generated from field: optional double payment_currency_billed_cost = 17;
+   */
+  paymentCurrencyBilledCost?: number;
+
+  /**
+   * PaymentCurrencyInvoiceDetailId: Lineage id when the two currencies are
+   * aggregated at different levels. Empty means the column is absent.
+   * When payment_currency_billed_cost is non-zero, a set id MUST match invoice_detail_id.
+   * FOCUS 1.4 Payment Currency Invoice Detail ID (CONDITIONAL).
+   *
+   * @generated from field: string payment_currency_invoice_detail_id = 18;
+   */
+  paymentCurrencyInvoiceDetailId: string;
+
+  /**
+   * PaymentDueDate: Payment deadline. Unset means null.
+   * FOCUS 1.4 Payment Due Date (MANDATORY column, nulls allowed).
+   *
+   * @generated from field: google.protobuf.Timestamp payment_due_date = 19;
+   */
+  paymentDueDate?: Timestamp;
+
+  /**
+   * PaymentTerms: For example "Net 30".
+   * FOCUS 1.4 Payment Terms (MANDATORY).
+   *
+   * @generated from field: string payment_terms = 20;
+   */
+  paymentTerms: string;
+
+  /**
+   * PurchaseOrderNumber: Customer PO number. Empty means null.
+   * Present only when the issuer accepts purchase order numbers.
+   * FOCUS 1.4 Purchase Order Number (CONDITIONAL, nulls allowed).
+   *
+   * @generated from field: string purchase_order_number = 21;
+   */
+  purchaseOrderNumber: string;
+
+  /**
+   * ReferenceInvoiceId: The original invoice when this line adjusts one,
+   * otherwise this row's own invoice id.
+   * FOCUS 1.4 Reference Invoice ID (MANDATORY).
+   *
+   * @generated from field: string reference_invoice_id = 22;
+   */
+  referenceInvoiceId: string;
+
+  /**
+   * ExtendedColumns: Custom monetary metrics with no FOCUS column.
+   * Keys use the x_ prefix. Values are decimal strings.
+   * FOCUS 1.4 custom columns on Invoice Detail.
+   *
+   * @generated from field: map<string, string> extended_columns = 23;
+   */
+  extendedColumns: { [key: string]: string };
+};
+
+/**
+ * Describes the message finfocus.v1.InvoiceDetail.
+ * Use `create(InvoiceDetailSchema)` to create a new message.
+ */
+export const InvoiceDetailSchema: GenMessage<InvoiceDetail> = /*@__PURE__*/
+  messageDesc(file_finfocus_v1_focus, 3);
+
+/**
  * FocusContractCommitmentCategory represents the type of commitment in the
  * FOCUS 1.3 Contract Commitment Dataset.
  * Reference: FOCUS 1.3 Contract Commitment Category
@@ -1228,4 +1506,81 @@ export enum FocusContractCommitmentPaymentModel {
  */
 export const FocusContractCommitmentPaymentModelSchema: GenEnum<FocusContractCommitmentPaymentModel> = /*@__PURE__*/
   enumDesc(file_finfocus_v1_focus, 7);
+
+/**
+ * FocusBillingPeriodStatus is the state of a FOCUS 1.4 billing period.
+ * Reference: FOCUS 1.4 Billing Period Status.
+ *
+ * @generated from enum finfocus.v1.FocusBillingPeriodStatus
+ */
+export enum FocusBillingPeriodStatus {
+  /**
+   * Default/unspecified value. Not a FOCUS status.
+   *
+   * @generated from enum value: FOCUS_BILLING_PERIOD_STATUS_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * The period is still being processed.
+   *
+   * @generated from enum value: FOCUS_BILLING_PERIOD_STATUS_OPEN = 1;
+   */
+  OPEN = 1,
+
+  /**
+   * Invoices for the period have been issued and the data is finalized.
+   *
+   * @generated from enum value: FOCUS_BILLING_PERIOD_STATUS_CLOSED = 2;
+   */
+  CLOSED = 2,
+}
+
+/**
+ * Describes the enum finfocus.v1.FocusBillingPeriodStatus.
+ */
+export const FocusBillingPeriodStatusSchema: GenEnum<FocusBillingPeriodStatus> = /*@__PURE__*/
+  enumDesc(file_finfocus_v1_focus, 8);
+
+/**
+ * FocusInvoiceIssueStatus is the publication state of a FOCUS 1.4 invoice.
+ * Reference: FOCUS 1.4 Invoice Issue Status.
+ *
+ * @generated from enum finfocus.v1.FocusInvoiceIssueStatus
+ */
+export enum FocusInvoiceIssueStatus {
+  /**
+   * Default/unspecified value. Not a FOCUS status.
+   *
+   * @generated from enum value: FOCUS_INVOICE_ISSUE_STATUS_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * Provisional invoice. Not a financial obligation.
+   *
+   * @generated from enum value: FOCUS_INVOICE_ISSUE_STATUS_OPEN = 1;
+   */
+  OPEN = 1,
+
+  /**
+   * Formally issued invoice.
+   *
+   * @generated from enum value: FOCUS_INVOICE_ISSUE_STATUS_ISSUED = 2;
+   */
+  ISSUED = 2,
+
+  /**
+   * Previously issued invoice that was retracted.
+   *
+   * @generated from enum value: FOCUS_INVOICE_ISSUE_STATUS_VOIDED = 3;
+   */
+  VOIDED = 3,
+}
+
+/**
+ * Describes the enum finfocus.v1.FocusInvoiceIssueStatus.
+ */
+export const FocusInvoiceIssueStatusSchema: GenEnum<FocusInvoiceIssueStatus> = /*@__PURE__*/
+  enumDesc(file_finfocus_v1_focus, 9);
 

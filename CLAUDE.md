@@ -917,9 +917,9 @@ parallel subtests complete.
 - `testing/focus14_conformance_test.go` asserts `FocusFieldNames()` equals the `FocusCostRecord`
   descriptor's fields and the mock's default dry-run mappings; a new proto field fails it until both
   `dry_run.go` and `mock_plugin.go` list it.
-- `buf.yaml` lists `proto/finfocus/v1/focus.proto` under `breaking.ignore` (FOCUS 1.2 renames), so
-  `buf breaking` never checks focus.proto. Verify focus.proto changes against a copy of main with that
-  ignore entry removed.
+- `buf.yaml` checks `proto/finfocus/v1/focus.proto`. `breaking.ignore` lists only the old
+  pulumicost paths. In a worktree, `buf breaking --against '.git#branch=main'` can fail to read
+  the git object; archive origin/main and run `buf breaking` against that directory.
 
 ### FOCUS 1.4 Contract Commitment Pattern (545-focus-14-contract-commitment)
 
@@ -938,14 +938,45 @@ parallel subtests complete.
   `IsValidContractCommitment*` helpers are 0 allocs/op.
 - Spec number 545 follows the highest `specs/` prefix (`544-supplemental-contract-commitments`), not 057.
 
+### FOCUS 1.4 Billing Period and Invoice Detail Pattern (546-focus-14-billing-invoice)
+
+- `BillingPeriod` (fields 1-6) and `InvoiceDetail` (fields 1-23) live in `focus.proto`. Two enums:
+  `FocusBillingPeriodStatus` (OPEN, CLOSED) and `FocusInvoiceIssueStatus` (OPEN, ISSUED, VOIDED).
+  Charge category reuses `FocusChargeCategory`. REFUND and UNSPECIFIED fail invoice validation.
+- No RPC, capability, or `SupplementalDatasetService` method. Delivery is a later phase.
+- `payment_currency_billed_cost` is the only `optional double`. Presence is a non-nil pointer.
+  Zero is present (`proto.Float64`); nil is absent. The currency and that cost are all-or-nothing.
+  The lineage id is separate: when it is set and the cost is non-zero, it must equal
+  `invoice_detail_id`. A zero cost does not require that match.
+- Grain is `map<string,string>` (the 026 Tags decision). FOCUS keys are the nine property names
+  (`ContractId`, `RegionId`, `ResourceId`, `ResourceType`, `ServiceName`, `SkuId`, `SkuMeter`,
+  `SkuPriceId`, `SubAccountId`). Custom keys start with `x_` and are longer than `x_`.
+  `extended_columns` uses the same prefix. Values are decimal strings, scanned without `strconv`
+  so a valid record stays 0 allocs/op. Empty maps mean null.
+- `ValidateBillingPeriod` and `ValidateInvoiceDetail` live in `sdk/go/testing/invoice_focus14.go`.
+  Builders delegate. Errors wrap `ErrInvalidBillingPeriod` or `ErrInvalidInvoiceDetail` through
+  `invalidArgumentError` and name the column. The message is not prefixed with the sentinel text.
+  Mandatory timestamps are compared by seconds and nanos, not `AsTime`.
+- Simple setters (`WithInvoiceIssuerName`, `WithBilledCost`, `WithChargeCategory`) and
+  `IsValidBillingPeriodStatus` / `IsValidInvoiceIssueStatus` are 0 allocs/op. Timestamp setters
+  and map copies allocate. The TypeScript builders clone and do not repeat the Go rules.
+- JSON-LD writes `billedCost` even when it is 0. `paymentCurrencyBilledCost` is written when the
+  pointer is set, including 0, and omitted when nil. Document ids are private hashes.
+  `IDGenerator` is unchanged.
+- `buf.yaml` checks `proto/finfocus/v1/focus.proto` (`breaking.ignore` lists only the old
+  pulumicost paths). In a worktree, `buf breaking --against '.git#branch=main'` can fail to read
+  the git object; `git archive origin/main` into a scratch directory and run `buf breaking`
+  against that directory.
+
 ### Supplemental Dataset Pattern (544-supplemental-contract-commitments)
 
 - `SupplementalDatasetService` (`supplemental.proto`) serves FOCUS supplemental datasets; stage A has
   only `GetContractCommitments` over the existing `ContractCommitment` (focus.proto untouched).
   Each dataset gets its own provider interface and capability (`ContractCommitmentProvider` →
-  `PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS = 16`, `supports_contract_commitments`). Stage B (invoice
-  RPCs, issue 543) adds methods to the same service: the adapters must then return `Unimplemented`
-  for a provider the plugin lacks, and the service registers when either provider exists.
+  `PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS = 16`, `supports_contract_commitments`). Issue 543 adds
+  the BillingPeriod and InvoiceDetail messages only. A later delivery phase would add invoice RPCs
+  on this service: the adapters must then return `Unimplemented` for a provider the plugin lacks,
+  and the service registers when either provider exists.
 - `optionalServices` now has `registerConnect` and `healthServiceNames` (added to keep
   `serveConnect` under funlen); add the next optional service there, not inline.
 - Rules live in `sdk/go/testing/supplemental.go`; `pluginsdk/supplemental.go` delegates, and
@@ -964,6 +995,12 @@ parallel subtests complete.
   proto buf.yaml` into a scratch dir and run `buf breaking --against <dir>` instead.
 
 ## Active Technologies
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
+  google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1; stdlib only
+  (546-focus-14-billing-invoice)
+- N/A (stateless BillingPeriod and InvoiceDetail messages, builders, and per-record validation)
+  (546-focus-14-billing-invoice)
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
   google.golang.org/protobuf, google.golang.org/grpc, connectrpc.com/connect,
@@ -1102,6 +1139,10 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+
+- 546-focus-14-billing-invoice: Added BillingPeriod and InvoiceDetail messages, status enums,
+  pluginsdk builders, per-record validators, JSON-LD serializers, and TypeScript builders.
+  No invoice RPC.
 
 - 544-supplemental-contract-commitments: Added SupplementalDatasetService.GetContractCommitments
   (supplemental.proto), PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS = 16,

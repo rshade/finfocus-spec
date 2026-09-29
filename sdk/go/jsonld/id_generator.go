@@ -158,6 +158,32 @@ func (g *SHA256IDGenerator) GenerateCommitment(record *pbc.ContractCommitment) s
 	return fmt.Sprintf("%s%s", commitmentPrefix, hashHex)
 }
 
+func billingPeriodDocumentID(record *pbc.BillingPeriod) string {
+	const prefix = "urn:focus:billing-period:"
+	if record == nil {
+		return prefix + "nil"
+	}
+	start := ""
+	if ts := record.GetBillingPeriodStart(); ts != nil {
+		start = ts.AsTime().UTC().Format(time.RFC3339)
+	}
+	sum := sha256.Sum256([]byte(record.GetInvoiceIssuerName() + "|" + start))
+	return prefix + hex.EncodeToString(sum[:])
+}
+
+func invoiceDetailDocumentID(record *pbc.InvoiceDetail) string {
+	const prefix = "urn:focus:invoice-detail:"
+	if record == nil {
+		return prefix + "nil"
+	}
+	key := record.GetInvoiceId() + "|" + record.GetInvoiceDetailId()
+	if key == "|" {
+		return prefix + "empty"
+	}
+	sum := sha256.Sum256([]byte(key))
+	return prefix + hex.EncodeToString(sum[:])
+}
+
 // getUserProvidedID extracts a user-provided ID from a FocusCostRecord.
 //
 // This is a simplified version - in production, use reflection to access

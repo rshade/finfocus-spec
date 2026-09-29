@@ -8,6 +8,7 @@ package jsonld
 const (
 	// JSON-LD keywords.
 	JSONLDTypeKey = "@type"
+	JSONLDIDKey   = "@id"
 
 	// FocusNamespace is the base IRI for FOCUS vocabulary terms.
 	FocusNamespace = "https://focus.finops.org/v1#"
@@ -15,6 +16,8 @@ const (
 	// Record type identifiers.
 	FocusCostRecordType    = "focus:FocusCostRecord"
 	ContractCommitmentType = "focus:ContractCommitment"
+	BillingPeriodType      = "focus:BillingPeriod"
+	InvoiceDetailType      = "focus:InvoiceDetail"
 
 	// Identity fields.
 	BillingAccountID   = "focus:billingAccountId"
@@ -148,6 +151,26 @@ const (
 	ContractCommitmentDescription              = "focus:contractCommitmentDescription"
 	PricingCurrency                            = "focus:pricingCurrency"
 	PricingCurrencyContractCommitmentCost      = "focus:pricingCurrencyContractCommitmentCost"
+
+	// FOCUS 1.4 Billing Period columns. Start, end, and issuer reuse the cost-row terms.
+	BillingPeriodCreated     = "focus:billingPeriodCreated"
+	BillingPeriodLastUpdated = "focus:billingPeriodLastUpdated"
+	BillingPeriodStatus      = "focus:billingPeriodStatus"
+
+	// FOCUS 1.4 Invoice Detail columns. Shared cost-row terms are not repeated.
+	InvoiceDetailCreated           = "focus:invoiceDetailCreated"
+	InvoiceDetailDescription       = "focus:invoiceDetailDescription"
+	InvoiceDetailGrain             = "focus:invoiceDetailGrain"
+	InvoiceDetailLastUpdated       = "focus:invoiceDetailLastUpdated"
+	InvoiceIssueDate               = "focus:invoiceIssueDate"
+	InvoiceIssueStatus             = "focus:invoiceIssueStatus"
+	PaymentCurrency                = "focus:paymentCurrency"
+	PaymentCurrencyBilledCost      = "focus:paymentCurrencyBilledCost"
+	PaymentCurrencyInvoiceDetailID = "focus:paymentCurrencyInvoiceDetailId"
+	PaymentDueDate                 = "focus:paymentDueDate"
+	PaymentTerms                   = "focus:paymentTerms"
+	PurchaseOrderNumber            = "focus:purchaseOrderNumber"
+	ReferenceInvoiceID             = "focus:referenceInvoiceId"
 )
 
 //nolint:gochecknoglobals // Intentional optimization for zero-allocation lookup
