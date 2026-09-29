@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.7.0](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.6.6...finfocus-client-v0.7.0) (2026-09-29)
+
+
+### Features
+
+* **pluginsdk:** add FOCUS 1.4 cost and usage columns ([#549](https://github.com/rshade/finfocus-spec/issues/549)) ([48b5dcd](https://github.com/rshade/finfocus-spec/commit/48b5dcd8bf0c1387d30ea752d54965ebf47a6ff9)), closes [#541](https://github.com/rshade/finfocus-spec/issues/541)
+* **proto:** add cost allocation lineage metadata ([#546](https://github.com/rshade/finfocus-spec/issues/546)) ([d85660a](https://github.com/rshade/finfocus-spec/commit/d85660ae273be1e1d41c74b77417e8f76bd2f1f8)), closes [#191](https://github.com/rshade/finfocus-spec/issues/191)
+* **proto:** add cost_breakdown map to GetProjectedCostResponse ([#537](https://github.com/rshade/finfocus-spec/issues/537)) ([7a29919](https://github.com/rshade/finfocus-spec/commit/7a29919480c2e0d3260262387f32a57d1975afed))
+* **proto:** add FOCUS 1.4 billing period and invoice detail ([#554](https://github.com/rshade/finfocus-spec/issues/554)) ([5220a1a](https://github.com/rshade/finfocus-spec/commit/5220a1a44bd6b2406b2e9e5928f4b229fc86ca2a)), closes [#543](https://github.com/rshade/finfocus-spec/issues/543)
+* **proto:** add FOCUS 1.4 contract commitment columns ([#553](https://github.com/rshade/finfocus-spec/issues/553)) ([487e2c0](https://github.com/rshade/finfocus-spec/commit/487e2c049704b9cdfb5f073def4c931ece6490b1)), closes [#542](https://github.com/rshade/finfocus-spec/issues/542)
+* **proto:** add RecommendationScorerService.ScoreRecommendations ([#559](https://github.com/rshade/finfocus-spec/issues/559)) ([8020f96](https://github.com/rshade/finfocus-spec/commit/8020f968a8b9459a26f1b9f9f4be7991cb9a1fe3)), closes [#556](https://github.com/rshade/finfocus-spec/issues/556)
+* **proto:** add SupplementalDatasetService for contract commitments ([#552](https://github.com/rshade/finfocus-spec/issues/552)) ([91c1374](https://github.com/rshade/finfocus-spec/commit/91c13748b4ebe5ceeaee285d097c6dec10901193)), closes [#544](https://github.com/rshade/finfocus-spec/issues/544)
+* **proto:** serve FOCUS billing period and invoice detail ([#555](https://github.com/rshade/finfocus-spec/issues/555)) ([31e9006](https://github.com/rshade/finfocus-spec/commit/31e900635acd053ee17854fd02059828a0a9a2d4))
+
+
+### Miscellaneous Chores
+
+* release 0.7.0 ([edb377a](https://github.com/rshade/finfocus-spec/commit/edb377a03ebb38c67c793fd7cf5d986a153b7c32))
+
 ## [0.6.6](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.6.5...finfocus-client-v0.6.6) (2026-09-28)
 
 
