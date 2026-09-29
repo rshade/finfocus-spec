@@ -284,16 +284,24 @@ func (b *ContractCommitmentBuilder) WithBaselineTerms(at time.Time) *ContractCom
 
 // Build validates and returns the constructed ContractCommitment record.
 // Returns an error if required fields are missing or validation rules are
-// violated; the rules are those of ValidateContractCommitment.
+// violated; the rules are those of plugintesting.ValidateContractCommitmentBase,
+// the ones Build enforced before FOCUS 1.4. It does not require the FOCUS 1.4
+// columns, so existing builder chains keep working. Use BuildFocus14 to also
+// require them.
 func (b *ContractCommitmentBuilder) Build() (*pbc.ContractCommitment, error) {
-	if err := b.validate(); err != nil {
+	if err := plugintesting.ValidateContractCommitmentBase(b.record); err != nil {
 		return nil, err
 	}
 	return b.record, nil
 }
 
-// validate checks the record with ValidateContractCommitment, the rule set
-// hosts and the conformance suite also apply.
-func (b *ContractCommitmentBuilder) validate() error {
-	return plugintesting.ValidateContractCommitment(b.record)
+// BuildFocus14 validates the record with ValidateContractCommitment, which adds
+// the FOCUS 1.4 columns that do not allow nulls to the rules Build enforces, and
+// returns it. Call WithBaselineTerms first to fill them. This is the rule set
+// hosts and the conformance suite apply to served commitments.
+func (b *ContractCommitmentBuilder) BuildFocus14() (*pbc.ContractCommitment, error) {
+	if err := plugintesting.ValidateContractCommitment(b.record); err != nil {
+		return nil, err
+	}
+	return b.record, nil
 }

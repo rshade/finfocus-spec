@@ -48,19 +48,30 @@ func commitmentError(format string, args ...any) error {
 	return &invalidArgumentError{msg: fmt.Sprintf(format, args...), wrapped: ErrInvalidContractCommitment}
 }
 
-// ValidateContractCommitment returns nil if c satisfies the FOCUS Contract
-// Commitment rules that pluginsdk.ContractCommitmentBuilder.Build enforces:
-// contract_commitment_id and contract_id are set; the category is SPEND or
-// USAGE; billing_currency is set for SPEND (USAGE may leave it empty) and is
-// an ISO 4217 code when set; each period's end is not before its start when
-// both bounds are set; cost and quantity are finite and non-negative; and the
-// FOCUS 1.4 columns in validateFocus14Commitment hold. Rules are checked in
-// that order.
+// ValidateContractCommitment returns nil if c satisfies every FOCUS Contract
+// Commitment rule: the ValidateContractCommitmentBase rules, then the FOCUS 1.4
+// columns in validateFocus14Commitment. It is what pluginsdk.ContractCommitmentBuilder.BuildFocus14,
+// the mock source, and the conformance suite enforce.
 //
 // Failures use the builder's messages without a prefix (for example
 // "contract_commitment_id is required"), wrap ErrInvalidContractCommitment, and
 // carry codes.InvalidArgument. It does not allocate on valid input.
 func ValidateContractCommitment(c *pbc.ContractCommitment) error {
+	if err := ValidateContractCommitmentBase(c); err != nil {
+		return err
+	}
+	return validateFocus14Commitment(c)
+}
+
+// ValidateContractCommitmentBase returns nil if c satisfies the rules that
+// predate FOCUS 1.4 and that pluginsdk.ContractCommitmentBuilder.Build enforces:
+// contract_commitment_id and contract_id are set; the category is SPEND or
+// USAGE; billing_currency is set for SPEND (USAGE may leave it empty) and is
+// an ISO 4217 code when set; each period's end is not before its start when
+// both bounds are set; and cost and quantity are finite and non-negative. Rules
+// are checked in that order. Errors and allocation behavior match
+// ValidateContractCommitment.
+func ValidateContractCommitmentBase(c *pbc.ContractCommitment) error {
 	if c == nil {
 		return commitmentError("contract commitment is nil")
 	}
@@ -93,10 +104,7 @@ func ValidateContractCommitment(c *pbc.ContractCommitment) error {
 	if err := validateAmount("contract_commitment_cost", c.GetContractCommitmentCost()); err != nil {
 		return err
 	}
-	if err := validateAmount("contract_commitment_quantity", c.GetContractCommitmentQuantity()); err != nil {
-		return err
-	}
-	return validateFocus14Commitment(c)
+	return validateAmount("contract_commitment_quantity", c.GetContractCommitmentQuantity())
 }
 
 func validatePeriod(name string, start, end *timestamppb.Timestamp) error {
