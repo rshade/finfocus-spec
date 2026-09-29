@@ -9,8 +9,11 @@ record, err := pluginsdk.NewContractCommitmentBuilder().
     WithCategory(pbc.FocusContractCommitmentCategory_FOCUS_CONTRACT_COMMITMENT_CATEGORY_SPEND).
     WithFinancials(12000, 0, "", "USD").
     WithBaselineTerms(at).
-    Build()
+    BuildFocus14()
 ```
+
+`Build` keeps the pre-1.4 rules and does not require the 1.4 columns, so existing builder chains
+keep working. `BuildFocus14` also requires them.
 
 Override a column by calling its setter after `WithBaselineTerms`. Clear a discount with
 `ClearDiscountPercentage` when the benefit is Availability.

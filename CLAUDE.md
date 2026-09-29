@@ -930,6 +930,9 @@ parallel subtests complete.
   The JSON-LD serializer writes that key when the pointer is set, including zero, and omits a nil pointer.
 - `billing_currency` is required for SPEND and may be empty for USAGE. `WithBaselineTerms` fills the
   1.4 columns that do not allow nulls so existing builders can opt into a valid record.
+- `ContractCommitmentBuilder.Build` enforces only `ValidateContractCommitmentBase` (the pre-1.4 rules), so
+  chains written against v0.6.2 still build. `BuildFocus14`, the mock source, and conformance use
+  `ValidateContractCommitment`, which adds the 1.4 rules. Do not make `Build` stricter: that broke callers.
 - `ValidateContractCommitment` enforces the per-record 1.4 rules and stays 0 allocs/op on valid input.
   The JSON object scan does not call `encoding/json`. Cross-row lifecycle rules are out of scope.
 - `WithContractApplied` is deprecated and still stores a bare ID. `FormatContractApplied` emits the
