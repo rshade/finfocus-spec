@@ -77,6 +77,429 @@ func (FocusContractCommitmentCategory) EnumDescriptor() ([]byte, []int) {
 	return file_finfocus_v1_focus_proto_rawDescGZIP(), []int{0}
 }
 
+// FocusContractCommitmentBenefitCategory is the FOCUS 1.4 benefit a commitment grants.
+// Reference: FOCUS 1.4 Contract Commitment Benefit Category.
+type FocusContractCommitmentBenefitCategory int32
+
+const (
+	FocusContractCommitmentBenefitCategory_FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_UNSPECIFIED FocusContractCommitmentBenefitCategory = 0
+	// A price reduction. DiscountPercentage MUST be set.
+	FocusContractCommitmentBenefitCategory_FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_DISCOUNT FocusContractCommitmentBenefitCategory = 1
+	// A right to a product or service.
+	FocusContractCommitmentBenefitCategory_FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_ENTITLEMENT FocusContractCommitmentBenefitCategory = 2
+	// Reserved capacity. DiscountPercentage MUST be null.
+	FocusContractCommitmentBenefitCategory_FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_AVAILABILITY FocusContractCommitmentBenefitCategory = 3
+	// A benefit outside the three named categories.
+	FocusContractCommitmentBenefitCategory_FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_OTHER FocusContractCommitmentBenefitCategory = 4
+)
+
+// Enum value maps for FocusContractCommitmentBenefitCategory.
+var (
+	FocusContractCommitmentBenefitCategory_name = map[int32]string{
+		0: "FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_UNSPECIFIED",
+		1: "FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_DISCOUNT",
+		2: "FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_ENTITLEMENT",
+		3: "FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_AVAILABILITY",
+		4: "FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_OTHER",
+	}
+	FocusContractCommitmentBenefitCategory_value = map[string]int32{
+		"FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_UNSPECIFIED":  0,
+		"FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_DISCOUNT":     1,
+		"FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_ENTITLEMENT":  2,
+		"FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_AVAILABILITY": 3,
+		"FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_OTHER":        4,
+	}
+)
+
+func (x FocusContractCommitmentBenefitCategory) Enum() *FocusContractCommitmentBenefitCategory {
+	p := new(FocusContractCommitmentBenefitCategory)
+	*p = x
+	return p
+}
+
+func (x FocusContractCommitmentBenefitCategory) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (FocusContractCommitmentBenefitCategory) Descriptor() protoreflect.EnumDescriptor {
+	return file_finfocus_v1_focus_proto_enumTypes[1].Descriptor()
+}
+
+func (FocusContractCommitmentBenefitCategory) Type() protoreflect.EnumType {
+	return &file_finfocus_v1_focus_proto_enumTypes[1]
+}
+
+func (x FocusContractCommitmentBenefitCategory) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use FocusContractCommitmentBenefitCategory.Descriptor instead.
+func (FocusContractCommitmentBenefitCategory) EnumDescriptor() ([]byte, []int) {
+	return file_finfocus_v1_focus_proto_rawDescGZIP(), []int{1}
+}
+
+// FocusContractCommitmentFulfillmentInterval is how often a commitment is fulfilled.
+// Reference: FOCUS 1.4 Contract Commitment Fulfillment Interval.
+type FocusContractCommitmentFulfillmentInterval int32
+
+const (
+	FocusContractCommitmentFulfillmentInterval_FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_UNSPECIFIED FocusContractCommitmentFulfillmentInterval = 0
+	FocusContractCommitmentFulfillmentInterval_FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_HOURLY      FocusContractCommitmentFulfillmentInterval = 1
+	FocusContractCommitmentFulfillmentInterval_FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_DAILY       FocusContractCommitmentFulfillmentInterval = 2
+	FocusContractCommitmentFulfillmentInterval_FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_WEEKLY      FocusContractCommitmentFulfillmentInterval = 3
+	FocusContractCommitmentFulfillmentInterval_FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_MONTHLY     FocusContractCommitmentFulfillmentInterval = 4
+	FocusContractCommitmentFulfillmentInterval_FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_QUARTERLY   FocusContractCommitmentFulfillmentInterval = 5
+	FocusContractCommitmentFulfillmentInterval_FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_SEMI_ANNUAL FocusContractCommitmentFulfillmentInterval = 6
+	FocusContractCommitmentFulfillmentInterval_FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_ANNUAL      FocusContractCommitmentFulfillmentInterval = 7
+	// Not valid when the model is Continuous.
+	FocusContractCommitmentFulfillmentInterval_FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_FULL_PERIOD   FocusContractCommitmentFulfillmentInterval = 8
+	FocusContractCommitmentFulfillmentInterval_FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_TRANSACTIONAL FocusContractCommitmentFulfillmentInterval = 9
+	FocusContractCommitmentFulfillmentInterval_FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_CUSTOM        FocusContractCommitmentFulfillmentInterval = 10
+)
+
+// Enum value maps for FocusContractCommitmentFulfillmentInterval.
+var (
+	FocusContractCommitmentFulfillmentInterval_name = map[int32]string{
+		0:  "FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_UNSPECIFIED",
+		1:  "FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_HOURLY",
+		2:  "FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_DAILY",
+		3:  "FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_WEEKLY",
+		4:  "FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_MONTHLY",
+		5:  "FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_QUARTERLY",
+		6:  "FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_SEMI_ANNUAL",
+		7:  "FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_ANNUAL",
+		8:  "FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_FULL_PERIOD",
+		9:  "FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_TRANSACTIONAL",
+		10: "FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_CUSTOM",
+	}
+	FocusContractCommitmentFulfillmentInterval_value = map[string]int32{
+		"FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_UNSPECIFIED":   0,
+		"FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_HOURLY":        1,
+		"FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_DAILY":         2,
+		"FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_WEEKLY":        3,
+		"FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_MONTHLY":       4,
+		"FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_QUARTERLY":     5,
+		"FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_SEMI_ANNUAL":   6,
+		"FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_ANNUAL":        7,
+		"FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_FULL_PERIOD":   8,
+		"FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_TRANSACTIONAL": 9,
+		"FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_CUSTOM":        10,
+	}
+)
+
+func (x FocusContractCommitmentFulfillmentInterval) Enum() *FocusContractCommitmentFulfillmentInterval {
+	p := new(FocusContractCommitmentFulfillmentInterval)
+	*p = x
+	return p
+}
+
+func (x FocusContractCommitmentFulfillmentInterval) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (FocusContractCommitmentFulfillmentInterval) Descriptor() protoreflect.EnumDescriptor {
+	return file_finfocus_v1_focus_proto_enumTypes[2].Descriptor()
+}
+
+func (FocusContractCommitmentFulfillmentInterval) Type() protoreflect.EnumType {
+	return &file_finfocus_v1_focus_proto_enumTypes[2]
+}
+
+func (x FocusContractCommitmentFulfillmentInterval) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use FocusContractCommitmentFulfillmentInterval.Descriptor instead.
+func (FocusContractCommitmentFulfillmentInterval) EnumDescriptor() ([]byte, []int) {
+	return file_finfocus_v1_focus_proto_rawDescGZIP(), []int{2}
+}
+
+// FocusContractCommitmentLifecycleStatus is the FOCUS 1.4 lifecycle of one commitment row.
+// Cross-row transitions (Superseded chains, one-way status changes) are not checked here.
+type FocusContractCommitmentLifecycleStatus int32
+
+const (
+	FocusContractCommitmentLifecycleStatus_FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_UNSPECIFIED FocusContractCommitmentLifecycleStatus = 0
+	FocusContractCommitmentLifecycleStatus_FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_PROPOSED    FocusContractCommitmentLifecycleStatus = 1
+	FocusContractCommitmentLifecycleStatus_FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_PENDING     FocusContractCommitmentLifecycleStatus = 2
+	FocusContractCommitmentLifecycleStatus_FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_ACTIVE      FocusContractCommitmentLifecycleStatus = 3
+	FocusContractCommitmentLifecycleStatus_FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_EXHAUSTED   FocusContractCommitmentLifecycleStatus = 4
+	FocusContractCommitmentLifecycleStatus_FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_EXPIRED     FocusContractCommitmentLifecycleStatus = 5
+	FocusContractCommitmentLifecycleStatus_FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_CANCELED    FocusContractCommitmentLifecycleStatus = 6
+	FocusContractCommitmentLifecycleStatus_FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_SUPERSEDED  FocusContractCommitmentLifecycleStatus = 7
+)
+
+// Enum value maps for FocusContractCommitmentLifecycleStatus.
+var (
+	FocusContractCommitmentLifecycleStatus_name = map[int32]string{
+		0: "FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_UNSPECIFIED",
+		1: "FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_PROPOSED",
+		2: "FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_PENDING",
+		3: "FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_ACTIVE",
+		4: "FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_EXHAUSTED",
+		5: "FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_EXPIRED",
+		6: "FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_CANCELED",
+		7: "FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_SUPERSEDED",
+	}
+	FocusContractCommitmentLifecycleStatus_value = map[string]int32{
+		"FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_UNSPECIFIED": 0,
+		"FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_PROPOSED":    1,
+		"FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_PENDING":     2,
+		"FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_ACTIVE":      3,
+		"FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_EXHAUSTED":   4,
+		"FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_EXPIRED":     5,
+		"FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_CANCELED":    6,
+		"FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_SUPERSEDED":  7,
+	}
+)
+
+func (x FocusContractCommitmentLifecycleStatus) Enum() *FocusContractCommitmentLifecycleStatus {
+	p := new(FocusContractCommitmentLifecycleStatus)
+	*p = x
+	return p
+}
+
+func (x FocusContractCommitmentLifecycleStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (FocusContractCommitmentLifecycleStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_finfocus_v1_focus_proto_enumTypes[3].Descriptor()
+}
+
+func (FocusContractCommitmentLifecycleStatus) Type() protoreflect.EnumType {
+	return &file_finfocus_v1_focus_proto_enumTypes[3]
+}
+
+func (x FocusContractCommitmentLifecycleStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use FocusContractCommitmentLifecycleStatus.Descriptor instead.
+func (FocusContractCommitmentLifecycleStatus) EnumDescriptor() ([]byte, []int) {
+	return file_finfocus_v1_focus_proto_rawDescGZIP(), []int{3}
+}
+
+// FocusContractCommitmentModel is whether fulfillment is continuous or discontinuous.
+type FocusContractCommitmentModel int32
+
+const (
+	FocusContractCommitmentModel_FOCUS_CONTRACT_COMMITMENT_MODEL_UNSPECIFIED FocusContractCommitmentModel = 0
+	FocusContractCommitmentModel_FOCUS_CONTRACT_COMMITMENT_MODEL_CONTINUOUS  FocusContractCommitmentModel = 1
+	// Required when the fulfillment interval is Full Period.
+	FocusContractCommitmentModel_FOCUS_CONTRACT_COMMITMENT_MODEL_DISCONTINUOUS FocusContractCommitmentModel = 2
+)
+
+// Enum value maps for FocusContractCommitmentModel.
+var (
+	FocusContractCommitmentModel_name = map[int32]string{
+		0: "FOCUS_CONTRACT_COMMITMENT_MODEL_UNSPECIFIED",
+		1: "FOCUS_CONTRACT_COMMITMENT_MODEL_CONTINUOUS",
+		2: "FOCUS_CONTRACT_COMMITMENT_MODEL_DISCONTINUOUS",
+	}
+	FocusContractCommitmentModel_value = map[string]int32{
+		"FOCUS_CONTRACT_COMMITMENT_MODEL_UNSPECIFIED":   0,
+		"FOCUS_CONTRACT_COMMITMENT_MODEL_CONTINUOUS":    1,
+		"FOCUS_CONTRACT_COMMITMENT_MODEL_DISCONTINUOUS": 2,
+	}
+)
+
+func (x FocusContractCommitmentModel) Enum() *FocusContractCommitmentModel {
+	p := new(FocusContractCommitmentModel)
+	*p = x
+	return p
+}
+
+func (x FocusContractCommitmentModel) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (FocusContractCommitmentModel) Descriptor() protoreflect.EnumDescriptor {
+	return file_finfocus_v1_focus_proto_enumTypes[4].Descriptor()
+}
+
+func (FocusContractCommitmentModel) Type() protoreflect.EnumType {
+	return &file_finfocus_v1_focus_proto_enumTypes[4]
+}
+
+func (x FocusContractCommitmentModel) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use FocusContractCommitmentModel.Descriptor instead.
+func (FocusContractCommitmentModel) EnumDescriptor() ([]byte, []int) {
+	return file_finfocus_v1_focus_proto_rawDescGZIP(), []int{4}
+}
+
+// FocusContractCommitmentOfferCategory is whether the offer is public or negotiated.
+type FocusContractCommitmentOfferCategory int32
+
+const (
+	FocusContractCommitmentOfferCategory_FOCUS_CONTRACT_COMMITMENT_OFFER_CATEGORY_UNSPECIFIED FocusContractCommitmentOfferCategory = 0
+	FocusContractCommitmentOfferCategory_FOCUS_CONTRACT_COMMITMENT_OFFER_CATEGORY_PUBLIC      FocusContractCommitmentOfferCategory = 1
+	FocusContractCommitmentOfferCategory_FOCUS_CONTRACT_COMMITMENT_OFFER_CATEGORY_NEGOTIATED  FocusContractCommitmentOfferCategory = 2
+)
+
+// Enum value maps for FocusContractCommitmentOfferCategory.
+var (
+	FocusContractCommitmentOfferCategory_name = map[int32]string{
+		0: "FOCUS_CONTRACT_COMMITMENT_OFFER_CATEGORY_UNSPECIFIED",
+		1: "FOCUS_CONTRACT_COMMITMENT_OFFER_CATEGORY_PUBLIC",
+		2: "FOCUS_CONTRACT_COMMITMENT_OFFER_CATEGORY_NEGOTIATED",
+	}
+	FocusContractCommitmentOfferCategory_value = map[string]int32{
+		"FOCUS_CONTRACT_COMMITMENT_OFFER_CATEGORY_UNSPECIFIED": 0,
+		"FOCUS_CONTRACT_COMMITMENT_OFFER_CATEGORY_PUBLIC":      1,
+		"FOCUS_CONTRACT_COMMITMENT_OFFER_CATEGORY_NEGOTIATED":  2,
+	}
+)
+
+func (x FocusContractCommitmentOfferCategory) Enum() *FocusContractCommitmentOfferCategory {
+	p := new(FocusContractCommitmentOfferCategory)
+	*p = x
+	return p
+}
+
+func (x FocusContractCommitmentOfferCategory) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (FocusContractCommitmentOfferCategory) Descriptor() protoreflect.EnumDescriptor {
+	return file_finfocus_v1_focus_proto_enumTypes[5].Descriptor()
+}
+
+func (FocusContractCommitmentOfferCategory) Type() protoreflect.EnumType {
+	return &file_finfocus_v1_focus_proto_enumTypes[5]
+}
+
+func (x FocusContractCommitmentOfferCategory) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use FocusContractCommitmentOfferCategory.Descriptor instead.
+func (FocusContractCommitmentOfferCategory) EnumDescriptor() ([]byte, []int) {
+	return file_finfocus_v1_focus_proto_rawDescGZIP(), []int{5}
+}
+
+// FocusContractCommitmentPaymentInterval is how often the customer pays.
+type FocusContractCommitmentPaymentInterval int32
+
+const (
+	FocusContractCommitmentPaymentInterval_FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_UNSPECIFIED FocusContractCommitmentPaymentInterval = 0
+	// Required when the payment model is All Upfront.
+	FocusContractCommitmentPaymentInterval_FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_ONE_TIME    FocusContractCommitmentPaymentInterval = 1
+	FocusContractCommitmentPaymentInterval_FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_MONTHLY     FocusContractCommitmentPaymentInterval = 2
+	FocusContractCommitmentPaymentInterval_FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_QUARTERLY   FocusContractCommitmentPaymentInterval = 3
+	FocusContractCommitmentPaymentInterval_FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_SEMI_ANNUAL FocusContractCommitmentPaymentInterval = 4
+	FocusContractCommitmentPaymentInterval_FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_ANNUAL      FocusContractCommitmentPaymentInterval = 5
+	FocusContractCommitmentPaymentInterval_FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_CUSTOM      FocusContractCommitmentPaymentInterval = 6
+)
+
+// Enum value maps for FocusContractCommitmentPaymentInterval.
+var (
+	FocusContractCommitmentPaymentInterval_name = map[int32]string{
+		0: "FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_UNSPECIFIED",
+		1: "FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_ONE_TIME",
+		2: "FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_MONTHLY",
+		3: "FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_QUARTERLY",
+		4: "FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_SEMI_ANNUAL",
+		5: "FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_ANNUAL",
+		6: "FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_CUSTOM",
+	}
+	FocusContractCommitmentPaymentInterval_value = map[string]int32{
+		"FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_UNSPECIFIED": 0,
+		"FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_ONE_TIME":    1,
+		"FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_MONTHLY":     2,
+		"FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_QUARTERLY":   3,
+		"FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_SEMI_ANNUAL": 4,
+		"FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_ANNUAL":      5,
+		"FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_CUSTOM":      6,
+	}
+)
+
+func (x FocusContractCommitmentPaymentInterval) Enum() *FocusContractCommitmentPaymentInterval {
+	p := new(FocusContractCommitmentPaymentInterval)
+	*p = x
+	return p
+}
+
+func (x FocusContractCommitmentPaymentInterval) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (FocusContractCommitmentPaymentInterval) Descriptor() protoreflect.EnumDescriptor {
+	return file_finfocus_v1_focus_proto_enumTypes[6].Descriptor()
+}
+
+func (FocusContractCommitmentPaymentInterval) Type() protoreflect.EnumType {
+	return &file_finfocus_v1_focus_proto_enumTypes[6]
+}
+
+func (x FocusContractCommitmentPaymentInterval) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use FocusContractCommitmentPaymentInterval.Descriptor instead.
+func (FocusContractCommitmentPaymentInterval) EnumDescriptor() ([]byte, []int) {
+	return file_finfocus_v1_focus_proto_rawDescGZIP(), []int{6}
+}
+
+// FocusContractCommitmentPaymentModel is how much of the commitment is paid upfront.
+type FocusContractCommitmentPaymentModel int32
+
+const (
+	FocusContractCommitmentPaymentModel_FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_UNSPECIFIED FocusContractCommitmentPaymentModel = 0
+	// PaymentUpfrontPercentage MUST be 0.
+	FocusContractCommitmentPaymentModel_FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_NO_UPFRONT FocusContractCommitmentPaymentModel = 1
+	// PaymentUpfrontPercentage MUST be strictly between 0 and 1.
+	FocusContractCommitmentPaymentModel_FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_PARTIAL_UPFRONT FocusContractCommitmentPaymentModel = 2
+	// PaymentUpfrontPercentage MUST be 1, and the interval MUST be One-Time.
+	FocusContractCommitmentPaymentModel_FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_ALL_UPFRONT FocusContractCommitmentPaymentModel = 3
+)
+
+// Enum value maps for FocusContractCommitmentPaymentModel.
+var (
+	FocusContractCommitmentPaymentModel_name = map[int32]string{
+		0: "FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_UNSPECIFIED",
+		1: "FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_NO_UPFRONT",
+		2: "FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_PARTIAL_UPFRONT",
+		3: "FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_ALL_UPFRONT",
+	}
+	FocusContractCommitmentPaymentModel_value = map[string]int32{
+		"FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_UNSPECIFIED":     0,
+		"FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_NO_UPFRONT":      1,
+		"FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_PARTIAL_UPFRONT": 2,
+		"FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_ALL_UPFRONT":     3,
+	}
+)
+
+func (x FocusContractCommitmentPaymentModel) Enum() *FocusContractCommitmentPaymentModel {
+	p := new(FocusContractCommitmentPaymentModel)
+	*p = x
+	return p
+}
+
+func (x FocusContractCommitmentPaymentModel) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (FocusContractCommitmentPaymentModel) Descriptor() protoreflect.EnumDescriptor {
+	return file_finfocus_v1_focus_proto_enumTypes[7].Descriptor()
+}
+
+func (FocusContractCommitmentPaymentModel) Type() protoreflect.EnumType {
+	return &file_finfocus_v1_focus_proto_enumTypes[7]
+}
+
+func (x FocusContractCommitmentPaymentModel) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use FocusContractCommitmentPaymentModel.Descriptor instead.
+func (FocusContractCommitmentPaymentModel) EnumDescriptor() ([]byte, []int) {
+	return file_finfocus_v1_focus_proto_rawDescGZIP(), []int{7}
+}
+
 // FocusCostRecord represents a single cost line item normalized to the
 // FinOps FOCUS specification (1.2, 1.3 and 1.4). All field names follow FOCUS naming conventions.
 // Includes FOCUS 1.3 additions: allocation fields, contract commitment linking,
@@ -274,9 +697,11 @@ type FocusCostRecord struct {
 	// Follows same map<string, string> pattern as existing tags field.
 	// FOCUS 1.3 Section: Allocated Tags (CONDITIONAL)
 	AllocatedTags map[string]string `protobuf:"bytes,65,rep,name=allocated_tags,json=allocatedTags,proto3" json:"allocated_tags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// ContractApplied: Reference to a ContractCommitmentId in the Contract
-	// Commitment dataset. Treated as opaque reference (no cross-dataset validation).
-	// FOCUS 1.3 Section: Contract Applied (CONDITIONAL)
+	// ContractApplied: FOCUS ContractAppliedObject JSON
+	// ({"Elements":[{"ContractCommitmentID":..., ...}]}).
+	// A bare commitment ID is still accepted on the wire for callers of the
+	// deprecated WithContractApplied setter. No cross-dataset validation.
+	// FOCUS 1.3 and 1.4 Section: Contract Applied (CONDITIONAL)
 	ContractApplied string `protobuf:"bytes,66,opt,name=contract_applied,json=contractApplied,proto3" json:"contract_applied,omitempty"`
 	// InvoiceDetailId: Identifier of the invoice line item this row contributes to.
 	// Unique within an InvoiceId, so invoice_id MUST be set when this is set.
@@ -806,12 +1231,14 @@ func (x *FocusCostRecord) GetCommitmentProgramEligibilityDetails() string {
 }
 
 // ContractCommitment represents a contractual commitment record in the
-// FOCUS 1.3 Contract Commitment supplemental dataset.
+// FOCUS 1.3 and 1.4 Contract Commitment supplemental dataset.
 //
 // This is a separate dataset from Cost and Usage data, allowing practitioners
 // to query contract terms independently from individual cost line items.
+// Fields 13-29 are the FOCUS 1.4 columns. Field 30 closes the 1.3 gap for
+// ContractCommitmentDescription. optional is used only where null differs from 0.
 //
-// Reference: FOCUS 1.3 Contract Commitment Dataset
+// Reference: FOCUS 1.4 Contract Commitment Dataset
 type ContractCommitment struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// ContractCommitmentId: Unique identifier for this specific commitment.
@@ -858,11 +1285,75 @@ type ContractCommitment struct {
 	// FOCUS 1.3 Contract Commitment Unit (CONDITIONAL).
 	ContractCommitmentUnit string `protobuf:"bytes,11,opt,name=contract_commitment_unit,json=contractCommitmentUnit,proto3" json:"contract_commitment_unit,omitempty"`
 	// BillingCurrency: ISO 4217 currency code for monetary values.
-	// REQUIRED. Format: 3-letter currency code (e.g., "USD", "EUR").
-	// FOCUS 1.3 Billing Currency
+	// Empty means null. FOCUS allows null, and the value MUST NOT be null when
+	// the category is SPEND. Format: 3-letter currency code (e.g., "USD", "EUR").
+	// FOCUS 1.3 and 1.4 Billing Currency
 	BillingCurrency string `protobuf:"bytes,12,opt,name=billing_currency,json=billingCurrency,proto3" json:"billing_currency,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// ContractCommitmentApplicability: JSON object of inclusion and exclusion rules.
+	// Stored as a string, like other FOCUS JSON columns. Empty is not valid.
+	// FOCUS 1.4 Contract Commitment Applicability (MANDATORY, nulls not allowed).
+	ContractCommitmentApplicability string `protobuf:"bytes,13,opt,name=contract_commitment_applicability,json=contractCommitmentApplicability,proto3" json:"contract_commitment_applicability,omitempty"`
+	// ContractCommitmentBenefitCategory: Discount, Entitlement, Availability, or Other.
+	// FOCUS 1.4 Contract Commitment Benefit Category (MANDATORY).
+	ContractCommitmentBenefitCategory FocusContractCommitmentBenefitCategory `protobuf:"varint,14,opt,name=contract_commitment_benefit_category,json=contractCommitmentBenefitCategory,proto3,enum=finfocus.v1.FocusContractCommitmentBenefitCategory" json:"contract_commitment_benefit_category,omitempty"`
+	// ContractCommitmentCreated: When this commitment record was instantiated.
+	// FOCUS 1.4 Contract Commitment Created (MANDATORY).
+	ContractCommitmentCreated *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=contract_commitment_created,json=contractCommitmentCreated,proto3" json:"contract_commitment_created,omitempty"`
+	// ContractCommitmentDiscountPercentage: Fraction from 0 to 1.
+	// Unset means null, which differs from 0. MUST be set for Discount and MUST
+	// be null for Availability. One tier per row.
+	// FOCUS 1.4 Contract Commitment Discount Percentage (MANDATORY column, nulls allowed).
+	ContractCommitmentDiscountPercentage *float64 `protobuf:"fixed64,16,opt,name=contract_commitment_discount_percentage,json=contractCommitmentDiscountPercentage,proto3,oneof" json:"contract_commitment_discount_percentage,omitempty"`
+	// ContractCommitmentDurationType: "[positive integer] [unit]", for example "3 Years".
+	// Units: Minute(s), Hour(s), Day(s), Week(s), Month(s), Quarter(s), Year(s).
+	// FOCUS 1.4 Contract Commitment Duration Type (MANDATORY).
+	ContractCommitmentDurationType string `protobuf:"bytes,17,opt,name=contract_commitment_duration_type,json=contractCommitmentDurationType,proto3" json:"contract_commitment_duration_type,omitempty"`
+	// ContractCommitmentFulfillmentInterval: How often the commitment is fulfilled.
+	// FOCUS 1.4 Contract Commitment Fulfillment Interval (MANDATORY).
+	ContractCommitmentFulfillmentInterval FocusContractCommitmentFulfillmentInterval `protobuf:"varint,18,opt,name=contract_commitment_fulfillment_interval,json=contractCommitmentFulfillmentInterval,proto3,enum=finfocus.v1.FocusContractCommitmentFulfillmentInterval" json:"contract_commitment_fulfillment_interval,omitempty"`
+	// ContractCommitmentLastUpdated: When this record was last updated. Must be >= created.
+	// FOCUS 1.4 Contract Commitment Last Updated (MANDATORY).
+	ContractCommitmentLastUpdated *timestamppb.Timestamp `protobuf:"bytes,19,opt,name=contract_commitment_last_updated,json=contractCommitmentLastUpdated,proto3" json:"contract_commitment_last_updated,omitempty"`
+	// ContractCommitmentLifecycleStatus: Proposed through Superseded.
+	// FOCUS 1.4 Contract Commitment Lifecycle Status (MANDATORY).
+	ContractCommitmentLifecycleStatus FocusContractCommitmentLifecycleStatus `protobuf:"varint,20,opt,name=contract_commitment_lifecycle_status,json=contractCommitmentLifecycleStatus,proto3,enum=finfocus.v1.FocusContractCommitmentLifecycleStatus" json:"contract_commitment_lifecycle_status,omitempty"`
+	// ContractCommitmentModel: Continuous or Discontinuous.
+	// FOCUS 1.4 Contract Commitment Model (MANDATORY).
+	ContractCommitmentModel FocusContractCommitmentModel `protobuf:"varint,21,opt,name=contract_commitment_model,json=contractCommitmentModel,proto3,enum=finfocus.v1.FocusContractCommitmentModel" json:"contract_commitment_model,omitempty"`
+	// ContractCommitmentOfferCategory: Public or Negotiated.
+	// FOCUS 1.4 Contract Commitment Offer Category (MANDATORY).
+	ContractCommitmentOfferCategory FocusContractCommitmentOfferCategory `protobuf:"varint,22,opt,name=contract_commitment_offer_category,json=contractCommitmentOfferCategory,proto3,enum=finfocus.v1.FocusContractCommitmentOfferCategory" json:"contract_commitment_offer_category,omitempty"`
+	// ContractCommitmentPaymentInterval: One-Time through Custom.
+	// FOCUS 1.4 Contract Commitment Payment Interval (MANDATORY).
+	ContractCommitmentPaymentInterval FocusContractCommitmentPaymentInterval `protobuf:"varint,23,opt,name=contract_commitment_payment_interval,json=contractCommitmentPaymentInterval,proto3,enum=finfocus.v1.FocusContractCommitmentPaymentInterval" json:"contract_commitment_payment_interval,omitempty"`
+	// ContractCommitmentPaymentModel: No Upfront, Partial Upfront, or All Upfront.
+	// FOCUS 1.4 Contract Commitment Payment Model (MANDATORY).
+	ContractCommitmentPaymentModel FocusContractCommitmentPaymentModel `protobuf:"varint,24,opt,name=contract_commitment_payment_model,json=contractCommitmentPaymentModel,proto3,enum=finfocus.v1.FocusContractCommitmentPaymentModel" json:"contract_commitment_payment_model,omitempty"`
+	// ContractCommitmentPaymentUpfrontPercentage: Fraction of the commitment paid upfront.
+	// Unset means null, which differs from 0. 0 for No Upfront, 1 for All Upfront,
+	// and strictly between 0 and 1 for Partial Upfront.
+	// FOCUS 1.4 Contract Commitment Payment Upfront Percentage (CONDITIONAL).
+	ContractCommitmentPaymentUpfrontPercentage *float64 `protobuf:"fixed64,25,opt,name=contract_commitment_payment_upfront_percentage,json=contractCommitmentPaymentUpfrontPercentage,proto3,oneof" json:"contract_commitment_payment_upfront_percentage,omitempty"`
+	// InvoiceIssuerName: The entity that issues invoices for this commitment.
+	// FOCUS 1.4 Invoice Issuer Name (MANDATORY).
+	InvoiceIssuerName string `protobuf:"bytes,26,opt,name=invoice_issuer_name,json=invoiceIssuerName,proto3" json:"invoice_issuer_name,omitempty"`
+	// PricingCurrency: ISO 4217 code when pricing and billing currencies differ.
+	// Empty means the conditional column is absent.
+	// FOCUS 1.4 Pricing Currency (CONDITIONAL).
+	PricingCurrency string `protobuf:"bytes,27,opt,name=pricing_currency,json=pricingCurrency,proto3" json:"pricing_currency,omitempty"`
+	// PricingCurrencyContractCommitmentCost: Commitment cost in PricingCurrency.
+	// Unset means null. MUST be set for SPEND when PricingCurrency is set.
+	// MAY be null for USAGE.
+	// FOCUS 1.4 Pricing Currency Contract Commitment Cost (CONDITIONAL).
+	PricingCurrencyContractCommitmentCost *float64 `protobuf:"fixed64,28,opt,name=pricing_currency_contract_commitment_cost,json=pricingCurrencyContractCommitmentCost,proto3,oneof" json:"pricing_currency_contract_commitment_cost,omitempty"`
+	// ServiceProviderName: The service provider offering the commitment.
+	// FOCUS 1.4 Service Provider Name (MANDATORY).
+	ServiceProviderName string `protobuf:"bytes,29,opt,name=service_provider_name,json=serviceProviderName,proto3" json:"service_provider_name,omitempty"`
+	// ContractCommitmentDescription: Human-readable terms. Empty means null.
+	// FOCUS 1.3 column that was missing from the original message (nulls allowed).
+	ContractCommitmentDescription string `protobuf:"bytes,30,opt,name=contract_commitment_description,json=contractCommitmentDescription,proto3" json:"contract_commitment_description,omitempty"`
+	unknownFields                 protoimpl.UnknownFields
+	sizeCache                     protoimpl.SizeCache
 }
 
 func (x *ContractCommitment) Reset() {
@@ -979,6 +1470,132 @@ func (x *ContractCommitment) GetBillingCurrency() string {
 	return ""
 }
 
+func (x *ContractCommitment) GetContractCommitmentApplicability() string {
+	if x != nil {
+		return x.ContractCommitmentApplicability
+	}
+	return ""
+}
+
+func (x *ContractCommitment) GetContractCommitmentBenefitCategory() FocusContractCommitmentBenefitCategory {
+	if x != nil {
+		return x.ContractCommitmentBenefitCategory
+	}
+	return FocusContractCommitmentBenefitCategory_FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_UNSPECIFIED
+}
+
+func (x *ContractCommitment) GetContractCommitmentCreated() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ContractCommitmentCreated
+	}
+	return nil
+}
+
+func (x *ContractCommitment) GetContractCommitmentDiscountPercentage() float64 {
+	if x != nil && x.ContractCommitmentDiscountPercentage != nil {
+		return *x.ContractCommitmentDiscountPercentage
+	}
+	return 0
+}
+
+func (x *ContractCommitment) GetContractCommitmentDurationType() string {
+	if x != nil {
+		return x.ContractCommitmentDurationType
+	}
+	return ""
+}
+
+func (x *ContractCommitment) GetContractCommitmentFulfillmentInterval() FocusContractCommitmentFulfillmentInterval {
+	if x != nil {
+		return x.ContractCommitmentFulfillmentInterval
+	}
+	return FocusContractCommitmentFulfillmentInterval_FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_UNSPECIFIED
+}
+
+func (x *ContractCommitment) GetContractCommitmentLastUpdated() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ContractCommitmentLastUpdated
+	}
+	return nil
+}
+
+func (x *ContractCommitment) GetContractCommitmentLifecycleStatus() FocusContractCommitmentLifecycleStatus {
+	if x != nil {
+		return x.ContractCommitmentLifecycleStatus
+	}
+	return FocusContractCommitmentLifecycleStatus_FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_UNSPECIFIED
+}
+
+func (x *ContractCommitment) GetContractCommitmentModel() FocusContractCommitmentModel {
+	if x != nil {
+		return x.ContractCommitmentModel
+	}
+	return FocusContractCommitmentModel_FOCUS_CONTRACT_COMMITMENT_MODEL_UNSPECIFIED
+}
+
+func (x *ContractCommitment) GetContractCommitmentOfferCategory() FocusContractCommitmentOfferCategory {
+	if x != nil {
+		return x.ContractCommitmentOfferCategory
+	}
+	return FocusContractCommitmentOfferCategory_FOCUS_CONTRACT_COMMITMENT_OFFER_CATEGORY_UNSPECIFIED
+}
+
+func (x *ContractCommitment) GetContractCommitmentPaymentInterval() FocusContractCommitmentPaymentInterval {
+	if x != nil {
+		return x.ContractCommitmentPaymentInterval
+	}
+	return FocusContractCommitmentPaymentInterval_FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_UNSPECIFIED
+}
+
+func (x *ContractCommitment) GetContractCommitmentPaymentModel() FocusContractCommitmentPaymentModel {
+	if x != nil {
+		return x.ContractCommitmentPaymentModel
+	}
+	return FocusContractCommitmentPaymentModel_FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_UNSPECIFIED
+}
+
+func (x *ContractCommitment) GetContractCommitmentPaymentUpfrontPercentage() float64 {
+	if x != nil && x.ContractCommitmentPaymentUpfrontPercentage != nil {
+		return *x.ContractCommitmentPaymentUpfrontPercentage
+	}
+	return 0
+}
+
+func (x *ContractCommitment) GetInvoiceIssuerName() string {
+	if x != nil {
+		return x.InvoiceIssuerName
+	}
+	return ""
+}
+
+func (x *ContractCommitment) GetPricingCurrency() string {
+	if x != nil {
+		return x.PricingCurrency
+	}
+	return ""
+}
+
+func (x *ContractCommitment) GetPricingCurrencyContractCommitmentCost() float64 {
+	if x != nil && x.PricingCurrencyContractCommitmentCost != nil {
+		return *x.PricingCurrencyContractCommitmentCost
+	}
+	return 0
+}
+
+func (x *ContractCommitment) GetServiceProviderName() string {
+	if x != nil {
+		return x.ServiceProviderName
+	}
+	return ""
+}
+
+func (x *ContractCommitment) GetContractCommitmentDescription() string {
+	if x != nil {
+		return x.ContractCommitmentDescription
+	}
+	return ""
+}
+
 var File_finfocus_v1_focus_proto protoreflect.FileDescriptor
 
 const file_finfocus_v1_focus_proto_rawDesc = "" +
@@ -1067,7 +1684,7 @@ const file_finfocus_v1_focus_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a@\n" +
 	"\x12AllocatedTagsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd8\x06\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xc4\x15\n" +
 	"\x12ContractCommitment\x124\n" +
 	"\x16contract_commitment_id\x18\x01 \x01(\tR\x14contractCommitmentId\x12\x1f\n" +
 	"\vcontract_id\x18\x02 \x01(\tR\n" +
@@ -1082,11 +1699,81 @@ const file_finfocus_v1_focus_proto_rawDesc = "" +
 	"\x1ccontract_commitment_quantity\x18\n" +
 	" \x01(\x01R\x1acontractCommitmentQuantity\x128\n" +
 	"\x18contract_commitment_unit\x18\v \x01(\tR\x16contractCommitmentUnit\x12)\n" +
-	"\x10billing_currency\x18\f \x01(\tR\x0fbillingCurrency*\xb1\x01\n" +
+	"\x10billing_currency\x18\f \x01(\tR\x0fbillingCurrency\x12J\n" +
+	"!contract_commitment_applicability\x18\r \x01(\tR\x1fcontractCommitmentApplicability\x12\x84\x01\n" +
+	"$contract_commitment_benefit_category\x18\x0e \x01(\x0e23.finfocus.v1.FocusContractCommitmentBenefitCategoryR!contractCommitmentBenefitCategory\x12Z\n" +
+	"\x1bcontract_commitment_created\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\x19contractCommitmentCreated\x12Z\n" +
+	"'contract_commitment_discount_percentage\x18\x10 \x01(\x01H\x00R$contractCommitmentDiscountPercentage\x88\x01\x01\x12I\n" +
+	"!contract_commitment_duration_type\x18\x11 \x01(\tR\x1econtractCommitmentDurationType\x12\x90\x01\n" +
+	"(contract_commitment_fulfillment_interval\x18\x12 \x01(\x0e27.finfocus.v1.FocusContractCommitmentFulfillmentIntervalR%contractCommitmentFulfillmentInterval\x12c\n" +
+	" contract_commitment_last_updated\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampR\x1dcontractCommitmentLastUpdated\x12\x84\x01\n" +
+	"$contract_commitment_lifecycle_status\x18\x14 \x01(\x0e23.finfocus.v1.FocusContractCommitmentLifecycleStatusR!contractCommitmentLifecycleStatus\x12e\n" +
+	"\x19contract_commitment_model\x18\x15 \x01(\x0e2).finfocus.v1.FocusContractCommitmentModelR\x17contractCommitmentModel\x12~\n" +
+	"\"contract_commitment_offer_category\x18\x16 \x01(\x0e21.finfocus.v1.FocusContractCommitmentOfferCategoryR\x1fcontractCommitmentOfferCategory\x12\x84\x01\n" +
+	"$contract_commitment_payment_interval\x18\x17 \x01(\x0e23.finfocus.v1.FocusContractCommitmentPaymentIntervalR!contractCommitmentPaymentInterval\x12{\n" +
+	"!contract_commitment_payment_model\x18\x18 \x01(\x0e20.finfocus.v1.FocusContractCommitmentPaymentModelR\x1econtractCommitmentPaymentModel\x12g\n" +
+	".contract_commitment_payment_upfront_percentage\x18\x19 \x01(\x01H\x01R*contractCommitmentPaymentUpfrontPercentage\x88\x01\x01\x12.\n" +
+	"\x13invoice_issuer_name\x18\x1a \x01(\tR\x11invoiceIssuerName\x12)\n" +
+	"\x10pricing_currency\x18\x1b \x01(\tR\x0fpricingCurrency\x12]\n" +
+	")pricing_currency_contract_commitment_cost\x18\x1c \x01(\x01H\x02R%pricingCurrencyContractCommitmentCost\x88\x01\x01\x122\n" +
+	"\x15service_provider_name\x18\x1d \x01(\tR\x13serviceProviderName\x12F\n" +
+	"\x1fcontract_commitment_description\x18\x1e \x01(\tR\x1dcontractCommitmentDescriptionB*\n" +
+	"(_contract_commitment_discount_percentageB1\n" +
+	"/_contract_commitment_payment_upfront_percentageB,\n" +
+	"*_pricing_currency_contract_commitment_cost*\xb1\x01\n" +
 	"\x1fFocusContractCommitmentCategory\x122\n" +
 	".FOCUS_CONTRACT_COMMITMENT_CATEGORY_UNSPECIFIED\x10\x00\x12,\n" +
 	"(FOCUS_CONTRACT_COMMITMENT_CATEGORY_SPEND\x10\x01\x12,\n" +
-	"(FOCUS_CONTRACT_COMMITMENT_CATEGORY_USAGE\x10\x02B\xa8\x01\n" +
+	"(FOCUS_CONTRACT_COMMITMENT_CATEGORY_USAGE\x10\x02*\xcc\x02\n" +
+	"&FocusContractCommitmentBenefitCategory\x12:\n" +
+	"6FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_UNSPECIFIED\x10\x00\x127\n" +
+	"3FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_DISCOUNT\x10\x01\x12:\n" +
+	"6FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_ENTITLEMENT\x10\x02\x12;\n" +
+	"7FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_AVAILABILITY\x10\x03\x124\n" +
+	"0FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_OTHER\x10\x04*\xce\x05\n" +
+	"*FocusContractCommitmentFulfillmentInterval\x12>\n" +
+	":FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_UNSPECIFIED\x10\x00\x129\n" +
+	"5FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_HOURLY\x10\x01\x128\n" +
+	"4FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_DAILY\x10\x02\x129\n" +
+	"5FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_WEEKLY\x10\x03\x12:\n" +
+	"6FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_MONTHLY\x10\x04\x12<\n" +
+	"8FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_QUARTERLY\x10\x05\x12>\n" +
+	":FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_SEMI_ANNUAL\x10\x06\x129\n" +
+	"5FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_ANNUAL\x10\a\x12>\n" +
+	":FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_FULL_PERIOD\x10\b\x12@\n" +
+	"<FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_TRANSACTIONAL\x10\t\x129\n" +
+	"5FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_CUSTOM\x10\n" +
+	"*\xf2\x03\n" +
+	"&FocusContractCommitmentLifecycleStatus\x12:\n" +
+	"6FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_UNSPECIFIED\x10\x00\x127\n" +
+	"3FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_PROPOSED\x10\x01\x126\n" +
+	"2FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_PENDING\x10\x02\x125\n" +
+	"1FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_ACTIVE\x10\x03\x128\n" +
+	"4FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_EXHAUSTED\x10\x04\x126\n" +
+	"2FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_EXPIRED\x10\x05\x127\n" +
+	"3FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_CANCELED\x10\x06\x129\n" +
+	"5FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_SUPERSEDED\x10\a*\xb2\x01\n" +
+	"\x1cFocusContractCommitmentModel\x12/\n" +
+	"+FOCUS_CONTRACT_COMMITMENT_MODEL_UNSPECIFIED\x10\x00\x12.\n" +
+	"*FOCUS_CONTRACT_COMMITMENT_MODEL_CONTINUOUS\x10\x01\x121\n" +
+	"-FOCUS_CONTRACT_COMMITMENT_MODEL_DISCONTINUOUS\x10\x02*\xce\x01\n" +
+	"$FocusContractCommitmentOfferCategory\x128\n" +
+	"4FOCUS_CONTRACT_COMMITMENT_OFFER_CATEGORY_UNSPECIFIED\x10\x00\x123\n" +
+	"/FOCUS_CONTRACT_COMMITMENT_OFFER_CATEGORY_PUBLIC\x10\x01\x127\n" +
+	"3FOCUS_CONTRACT_COMMITMENT_OFFER_CATEGORY_NEGOTIATED\x10\x02*\xb9\x03\n" +
+	"&FocusContractCommitmentPaymentInterval\x12:\n" +
+	"6FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_UNSPECIFIED\x10\x00\x127\n" +
+	"3FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_ONE_TIME\x10\x01\x126\n" +
+	"2FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_MONTHLY\x10\x02\x128\n" +
+	"4FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_QUARTERLY\x10\x03\x12:\n" +
+	"6FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_SEMI_ANNUAL\x10\x04\x125\n" +
+	"1FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_ANNUAL\x10\x05\x125\n" +
+	"1FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_CUSTOM\x10\x06*\x8c\x02\n" +
+	"#FocusContractCommitmentPaymentModel\x127\n" +
+	"3FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_UNSPECIFIED\x10\x00\x126\n" +
+	"2FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_NO_UPFRONT\x10\x01\x12;\n" +
+	"7FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_PARTIAL_UPFRONT\x10\x02\x127\n" +
+	"3FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_ALL_UPFRONT\x10\x03B\xa8\x01\n" +
 	"\x0fcom.finfocus.v1B\n" +
 	"FocusProtoP\x01Z<github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1;pbc\xa2\x02\x03FXX\xaa\x02\vFinfocus.V1\xca\x02\vFinfocus\\V1\xe2\x02\x17Finfocus\\V1\\GPBMetadata\xea\x02\fFinfocus::V1b\x06proto3"
 
@@ -1102,51 +1789,67 @@ func file_finfocus_v1_focus_proto_rawDescGZIP() []byte {
 	return file_finfocus_v1_focus_proto_rawDescData
 }
 
-var file_finfocus_v1_focus_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_finfocus_v1_focus_proto_enumTypes = make([]protoimpl.EnumInfo, 8)
 var file_finfocus_v1_focus_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_finfocus_v1_focus_proto_goTypes = []any{
-	(FocusContractCommitmentCategory)(0), // 0: finfocus.v1.FocusContractCommitmentCategory
-	(*FocusCostRecord)(nil),              // 1: finfocus.v1.FocusCostRecord
-	(*ContractCommitment)(nil),           // 2: finfocus.v1.ContractCommitment
-	nil,                                  // 3: finfocus.v1.FocusCostRecord.TagsEntry
-	nil,                                  // 4: finfocus.v1.FocusCostRecord.ExtendedColumnsEntry
-	nil,                                  // 5: finfocus.v1.FocusCostRecord.AllocatedTagsEntry
-	(*timestamppb.Timestamp)(nil),        // 6: google.protobuf.Timestamp
-	(FocusChargeCategory)(0),             // 7: finfocus.v1.FocusChargeCategory
-	(FocusChargeClass)(0),                // 8: finfocus.v1.FocusChargeClass
-	(FocusChargeFrequency)(0),            // 9: finfocus.v1.FocusChargeFrequency
-	(FocusPricingCategory)(0),            // 10: finfocus.v1.FocusPricingCategory
-	(FocusServiceCategory)(0),            // 11: finfocus.v1.FocusServiceCategory
-	(FocusCommitmentDiscountCategory)(0), // 12: finfocus.v1.FocusCommitmentDiscountCategory
-	(FocusCommitmentDiscountStatus)(0),   // 13: finfocus.v1.FocusCommitmentDiscountStatus
-	(FocusCapacityReservationStatus)(0),  // 14: finfocus.v1.FocusCapacityReservationStatus
+	(FocusContractCommitmentCategory)(0),            // 0: finfocus.v1.FocusContractCommitmentCategory
+	(FocusContractCommitmentBenefitCategory)(0),     // 1: finfocus.v1.FocusContractCommitmentBenefitCategory
+	(FocusContractCommitmentFulfillmentInterval)(0), // 2: finfocus.v1.FocusContractCommitmentFulfillmentInterval
+	(FocusContractCommitmentLifecycleStatus)(0),     // 3: finfocus.v1.FocusContractCommitmentLifecycleStatus
+	(FocusContractCommitmentModel)(0),               // 4: finfocus.v1.FocusContractCommitmentModel
+	(FocusContractCommitmentOfferCategory)(0),       // 5: finfocus.v1.FocusContractCommitmentOfferCategory
+	(FocusContractCommitmentPaymentInterval)(0),     // 6: finfocus.v1.FocusContractCommitmentPaymentInterval
+	(FocusContractCommitmentPaymentModel)(0),        // 7: finfocus.v1.FocusContractCommitmentPaymentModel
+	(*FocusCostRecord)(nil),                         // 8: finfocus.v1.FocusCostRecord
+	(*ContractCommitment)(nil),                      // 9: finfocus.v1.ContractCommitment
+	nil,                                             // 10: finfocus.v1.FocusCostRecord.TagsEntry
+	nil,                                             // 11: finfocus.v1.FocusCostRecord.ExtendedColumnsEntry
+	nil,                                             // 12: finfocus.v1.FocusCostRecord.AllocatedTagsEntry
+	(*timestamppb.Timestamp)(nil),                   // 13: google.protobuf.Timestamp
+	(FocusChargeCategory)(0),                        // 14: finfocus.v1.FocusChargeCategory
+	(FocusChargeClass)(0),                           // 15: finfocus.v1.FocusChargeClass
+	(FocusChargeFrequency)(0),                       // 16: finfocus.v1.FocusChargeFrequency
+	(FocusPricingCategory)(0),                       // 17: finfocus.v1.FocusPricingCategory
+	(FocusServiceCategory)(0),                       // 18: finfocus.v1.FocusServiceCategory
+	(FocusCommitmentDiscountCategory)(0),            // 19: finfocus.v1.FocusCommitmentDiscountCategory
+	(FocusCommitmentDiscountStatus)(0),              // 20: finfocus.v1.FocusCommitmentDiscountStatus
+	(FocusCapacityReservationStatus)(0),             // 21: finfocus.v1.FocusCapacityReservationStatus
 }
 var file_finfocus_v1_focus_proto_depIdxs = []int32{
-	6,  // 0: finfocus.v1.FocusCostRecord.billing_period_start:type_name -> google.protobuf.Timestamp
-	6,  // 1: finfocus.v1.FocusCostRecord.billing_period_end:type_name -> google.protobuf.Timestamp
-	6,  // 2: finfocus.v1.FocusCostRecord.charge_period_start:type_name -> google.protobuf.Timestamp
-	6,  // 3: finfocus.v1.FocusCostRecord.charge_period_end:type_name -> google.protobuf.Timestamp
-	7,  // 4: finfocus.v1.FocusCostRecord.charge_category:type_name -> finfocus.v1.FocusChargeCategory
-	8,  // 5: finfocus.v1.FocusCostRecord.charge_class:type_name -> finfocus.v1.FocusChargeClass
-	9,  // 6: finfocus.v1.FocusCostRecord.charge_frequency:type_name -> finfocus.v1.FocusChargeFrequency
-	10, // 7: finfocus.v1.FocusCostRecord.pricing_category:type_name -> finfocus.v1.FocusPricingCategory
-	11, // 8: finfocus.v1.FocusCostRecord.service_category:type_name -> finfocus.v1.FocusServiceCategory
-	12, // 9: finfocus.v1.FocusCostRecord.commitment_discount_category:type_name -> finfocus.v1.FocusCommitmentDiscountCategory
-	13, // 10: finfocus.v1.FocusCostRecord.commitment_discount_status:type_name -> finfocus.v1.FocusCommitmentDiscountStatus
-	14, // 11: finfocus.v1.FocusCostRecord.capacity_reservation_status:type_name -> finfocus.v1.FocusCapacityReservationStatus
-	3,  // 12: finfocus.v1.FocusCostRecord.tags:type_name -> finfocus.v1.FocusCostRecord.TagsEntry
-	4,  // 13: finfocus.v1.FocusCostRecord.extended_columns:type_name -> finfocus.v1.FocusCostRecord.ExtendedColumnsEntry
-	5,  // 14: finfocus.v1.FocusCostRecord.allocated_tags:type_name -> finfocus.v1.FocusCostRecord.AllocatedTagsEntry
+	13, // 0: finfocus.v1.FocusCostRecord.billing_period_start:type_name -> google.protobuf.Timestamp
+	13, // 1: finfocus.v1.FocusCostRecord.billing_period_end:type_name -> google.protobuf.Timestamp
+	13, // 2: finfocus.v1.FocusCostRecord.charge_period_start:type_name -> google.protobuf.Timestamp
+	13, // 3: finfocus.v1.FocusCostRecord.charge_period_end:type_name -> google.protobuf.Timestamp
+	14, // 4: finfocus.v1.FocusCostRecord.charge_category:type_name -> finfocus.v1.FocusChargeCategory
+	15, // 5: finfocus.v1.FocusCostRecord.charge_class:type_name -> finfocus.v1.FocusChargeClass
+	16, // 6: finfocus.v1.FocusCostRecord.charge_frequency:type_name -> finfocus.v1.FocusChargeFrequency
+	17, // 7: finfocus.v1.FocusCostRecord.pricing_category:type_name -> finfocus.v1.FocusPricingCategory
+	18, // 8: finfocus.v1.FocusCostRecord.service_category:type_name -> finfocus.v1.FocusServiceCategory
+	19, // 9: finfocus.v1.FocusCostRecord.commitment_discount_category:type_name -> finfocus.v1.FocusCommitmentDiscountCategory
+	20, // 10: finfocus.v1.FocusCostRecord.commitment_discount_status:type_name -> finfocus.v1.FocusCommitmentDiscountStatus
+	21, // 11: finfocus.v1.FocusCostRecord.capacity_reservation_status:type_name -> finfocus.v1.FocusCapacityReservationStatus
+	10, // 12: finfocus.v1.FocusCostRecord.tags:type_name -> finfocus.v1.FocusCostRecord.TagsEntry
+	11, // 13: finfocus.v1.FocusCostRecord.extended_columns:type_name -> finfocus.v1.FocusCostRecord.ExtendedColumnsEntry
+	12, // 14: finfocus.v1.FocusCostRecord.allocated_tags:type_name -> finfocus.v1.FocusCostRecord.AllocatedTagsEntry
 	0,  // 15: finfocus.v1.ContractCommitment.contract_commitment_category:type_name -> finfocus.v1.FocusContractCommitmentCategory
-	6,  // 16: finfocus.v1.ContractCommitment.contract_commitment_period_start:type_name -> google.protobuf.Timestamp
-	6,  // 17: finfocus.v1.ContractCommitment.contract_commitment_period_end:type_name -> google.protobuf.Timestamp
-	6,  // 18: finfocus.v1.ContractCommitment.contract_period_start:type_name -> google.protobuf.Timestamp
-	6,  // 19: finfocus.v1.ContractCommitment.contract_period_end:type_name -> google.protobuf.Timestamp
-	20, // [20:20] is the sub-list for method output_type
-	20, // [20:20] is the sub-list for method input_type
-	20, // [20:20] is the sub-list for extension type_name
-	20, // [20:20] is the sub-list for extension extendee
-	0,  // [0:20] is the sub-list for field type_name
+	13, // 16: finfocus.v1.ContractCommitment.contract_commitment_period_start:type_name -> google.protobuf.Timestamp
+	13, // 17: finfocus.v1.ContractCommitment.contract_commitment_period_end:type_name -> google.protobuf.Timestamp
+	13, // 18: finfocus.v1.ContractCommitment.contract_period_start:type_name -> google.protobuf.Timestamp
+	13, // 19: finfocus.v1.ContractCommitment.contract_period_end:type_name -> google.protobuf.Timestamp
+	1,  // 20: finfocus.v1.ContractCommitment.contract_commitment_benefit_category:type_name -> finfocus.v1.FocusContractCommitmentBenefitCategory
+	13, // 21: finfocus.v1.ContractCommitment.contract_commitment_created:type_name -> google.protobuf.Timestamp
+	2,  // 22: finfocus.v1.ContractCommitment.contract_commitment_fulfillment_interval:type_name -> finfocus.v1.FocusContractCommitmentFulfillmentInterval
+	13, // 23: finfocus.v1.ContractCommitment.contract_commitment_last_updated:type_name -> google.protobuf.Timestamp
+	3,  // 24: finfocus.v1.ContractCommitment.contract_commitment_lifecycle_status:type_name -> finfocus.v1.FocusContractCommitmentLifecycleStatus
+	4,  // 25: finfocus.v1.ContractCommitment.contract_commitment_model:type_name -> finfocus.v1.FocusContractCommitmentModel
+	5,  // 26: finfocus.v1.ContractCommitment.contract_commitment_offer_category:type_name -> finfocus.v1.FocusContractCommitmentOfferCategory
+	6,  // 27: finfocus.v1.ContractCommitment.contract_commitment_payment_interval:type_name -> finfocus.v1.FocusContractCommitmentPaymentInterval
+	7,  // 28: finfocus.v1.ContractCommitment.contract_commitment_payment_model:type_name -> finfocus.v1.FocusContractCommitmentPaymentModel
+	29, // [29:29] is the sub-list for method output_type
+	29, // [29:29] is the sub-list for method input_type
+	29, // [29:29] is the sub-list for extension type_name
+	29, // [29:29] is the sub-list for extension extendee
+	0,  // [0:29] is the sub-list for field type_name
 }
 
 func init() { file_finfocus_v1_focus_proto_init() }
@@ -1155,12 +1858,13 @@ func file_finfocus_v1_focus_proto_init() {
 		return
 	}
 	file_finfocus_v1_enums_proto_init()
+	file_finfocus_v1_focus_proto_msgTypes[1].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_finfocus_v1_focus_proto_rawDesc), len(file_finfocus_v1_focus_proto_rawDesc)),
-			NumEnums:      1,
+			NumEnums:      8,
 			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,

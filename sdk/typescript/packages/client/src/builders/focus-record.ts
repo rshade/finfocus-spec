@@ -2,6 +2,7 @@ import { create, clone } from "@bufbuild/protobuf";
 import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { FocusCostRecord, FocusCostRecordSchema } from "../generated/finfocus/v1/focus_pb.js";
 import { ValidationError } from "../errors/validation-error.js";
+import { formatContractApplied, type ContractAppliedElement } from "./contract-commitment.js";
 
 export class FocusRecordBuilder {
   private record: FocusCostRecord;
@@ -61,6 +62,17 @@ export class FocusRecordBuilder {
    * {"CommitmentPrograms":[{"ProgramType":"Savings Plan"}]}. Throws a ValidationError
    * unless the value parses to a JSON object (not an array, null, or a scalar).
    */
+  /**
+   * Stores a FOCUS ContractApplied JSON object. Use formatContractApplied to build one.
+   * A value that is not a JSON object is rejected. A legacy bare commitment ID is not
+   * accepted here; that remains the deprecated Go setter.
+   */
+  withContractAppliedObject(elements: ContractAppliedElement[]): this {
+    const objectJson = formatContractApplied(elements);
+    this.record.contractApplied = objectJson;
+    return this;
+  }
+
   withCommitmentProgramEligibilityDetails(detailsJson: string): this {
     let parsed: unknown;
     try {

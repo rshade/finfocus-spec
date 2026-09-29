@@ -52,6 +52,9 @@
 
 ## Recent Changes
 
+- 545-focus-14-contract-commitment: Added ContractCommitment fields 13-30, seven FOCUS 1.4 enums,
+  optional doubles for null-vs-zero, and FormatContractApplied for the ContractApplied JSON object.
+
 - 055-cost-allocation-lineage: Added Go 1.27.1 (go.mod) + google.golang.org/protobuf (protojson, protocmp in tests)
 - 001-get-budgets-rpc: Added Go 1.25.5 (per go.mod) + gRPC, protobuf, buf v1.32.1
 

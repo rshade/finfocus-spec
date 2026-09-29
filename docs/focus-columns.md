@@ -398,6 +398,35 @@ discount programs separately from cost records.
 | **ContractCommitmentUnit**     | string  | Conditional | Unit of measure (Hours, GB)     |
 | **BillingCurrency**            | string  | Required    | ISO 4217 currency code          |
 
+### FOCUS 1.4 Columns
+
+FOCUS 1.4 adds lifecycle, payment, and benefit columns. `optional` doubles keep null
+distinct from 0. Applicability is a JSON object string. `WithBaselineTerms` fills the
+columns that do not allow nulls with a public monthly no-upfront discount.
+
+| Column | Type | Nulls | Rule enforced by Build |
+| --- | --- | --- | --- |
+| ContractCommitmentApplicability | JSON object string | No | Must be one JSON object |
+| ContractCommitmentBenefitCategory | enum | No | Not UNSPECIFIED |
+| ContractCommitmentCreated | Timestamp | No | Required |
+| ContractCommitmentDiscountPercentage | optional double | Yes | Required for Discount; null for Availability; 0 to 1 |
+| ContractCommitmentDurationType | string | No | Positive integer plus a FOCUS unit, for example `1 Year` |
+| ContractCommitmentFulfillmentInterval | enum | No | Full Period requires a Discontinuous model |
+| ContractCommitmentLastUpdated | Timestamp | No | Must be >= Created |
+| ContractCommitmentLifecycleStatus | enum | No | Not UNSPECIFIED |
+| ContractCommitmentModel | enum | No | Not UNSPECIFIED |
+| ContractCommitmentOfferCategory | enum | No | Not UNSPECIFIED |
+| ContractCommitmentPaymentInterval | enum | No | One-Time when the model is All Upfront |
+| ContractCommitmentPaymentModel | enum | No | Not UNSPECIFIED |
+| ContractCommitmentPaymentUpfrontPercentage | optional double | No when the model is set | 0, 1, or strictly between, matching the model |
+| InvoiceIssuerName | string | No | Required |
+| PricingCurrency | string | Yes | ISO 4217 when set |
+| PricingCurrencyContractCommitmentCost | optional double | Yes | Required for SPEND when PricingCurrency is set |
+| ServiceProviderName | string | No | Required |
+| ContractCommitmentDescription | string | Yes | 1.3 column; empty means null |
+
+BillingCurrency stays required for SPEND. USAGE may leave it empty.
+
 ### ContractCommitment Example
 
 ```go
@@ -412,6 +441,7 @@ commitment := pluginsdk.NewContractCommitmentBuilder().
         time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC),
     ).
     WithFinancials(0, 8760, "Hours", "USD").  // USAGE: quantity=8760 hours, cost=0
+    WithBaselineTerms(time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)).
     Build()
 ```
 

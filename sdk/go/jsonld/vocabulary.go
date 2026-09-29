@@ -130,6 +130,24 @@ const (
 	ContractCommitmentQuantity    = "focus:contractCommitmentQuantity"
 	ContractCommitmentUnit        = "focus:contractCommitmentUnit"
 	BillingCurrency               = "focus:billingCurrency"
+
+	// FOCUS 1.4 Contract Commitment columns, plus the 1.3 description gap.
+	ContractCommitmentApplicability            = "focus:contractCommitmentApplicability"
+	ContractCommitmentBenefitCategory          = "focus:contractCommitmentBenefitCategory"
+	ContractCommitmentCreated                  = "focus:contractCommitmentCreated"
+	ContractCommitmentDiscountPercentage       = "focus:contractCommitmentDiscountPercentage"
+	ContractCommitmentDurationType             = "focus:contractCommitmentDurationType"
+	ContractCommitmentFulfillmentInterval      = "focus:contractCommitmentFulfillmentInterval"
+	ContractCommitmentLastUpdated              = "focus:contractCommitmentLastUpdated"
+	ContractCommitmentLifecycleStatus          = "focus:contractCommitmentLifecycleStatus"
+	ContractCommitmentModel                    = "focus:contractCommitmentModel"
+	ContractCommitmentOfferCategory            = "focus:contractCommitmentOfferCategory"
+	ContractCommitmentPaymentInterval          = "focus:contractCommitmentPaymentInterval"
+	ContractCommitmentPaymentModel             = "focus:contractCommitmentPaymentModel"
+	ContractCommitmentPaymentUpfrontPercentage = "focus:contractCommitmentPaymentUpfrontPercentage"
+	ContractCommitmentDescription              = "focus:contractCommitmentDescription"
+	PricingCurrency                            = "focus:pricingCurrency"
+	PricingCurrencyContractCommitmentCost      = "focus:pricingCurrencyContractCommitmentCost"
 )
 
 //nolint:gochecknoglobals // Intentional optimization for zero-allocation lookup

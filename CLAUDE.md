@@ -921,6 +921,20 @@ parallel subtests complete.
   `buf breaking` never checks focus.proto. Verify focus.proto changes against a copy of main with that
   ignore entry removed.
 
+### FOCUS 1.4 Contract Commitment Pattern (545-focus-14-contract-commitment)
+
+- `ContractCommitment` fields 13-29 are the FOCUS 1.4 columns. Field 30 is the 1.3
+  `contract_commitment_description` gap. Applicability stays a JSON string.
+- `optional double` is used for discount percentage, upfront percentage, and pricing-currency cost.
+  Generated Go has no `Has*` method: presence is a non-nil pointer. Zero is present, nil is null.
+- `billing_currency` is required for SPEND and may be empty for USAGE. `WithBaselineTerms` fills the
+  1.4 columns that do not allow nulls so existing builders can opt into a valid record.
+- `ValidateContractCommitment` enforces the per-record 1.4 rules and stays 0 allocs/op on valid input.
+  The JSON object scan does not call `encoding/json`. Cross-row lifecycle rules are out of scope.
+- `WithContractApplied` is deprecated and still stores a bare ID. `FormatContractApplied` emits the
+  `{"Elements":[...]}` object. Seven `IsValidContractCommitment*` helpers are 0 allocs/op.
+- Spec number 545 follows the highest `specs/` prefix (`544-supplemental-contract-commitments`), not 057.
+
 ### Supplemental Dataset Pattern (544-supplemental-contract-commitments)
 
 - `SupplementalDatasetService` (`supplemental.proto`) serves FOCUS supplemental datasets; stage A has

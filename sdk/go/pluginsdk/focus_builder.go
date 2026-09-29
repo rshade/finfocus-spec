@@ -58,7 +58,6 @@ var (
 //     host_provider_name (underlying cloud platform)
 //  4. Adopt new allocation methods (WithAllocation, WithAllocatedResource, WithAllocatedTags)
 //     for split cost allocation scenarios
-//  5. Link to contract commitments using WithContractApplied(commitmentId)
 //
 // ## Example Migration
 //
@@ -97,9 +96,11 @@ var (
 //
 // Direct Cloud Usage (no marketplace):
 //
-//	builder.WithIdentity("AWS", billingAccountID, billingAccountName).
-//	    WithServiceProvider("AWS").       // AWS is both service provider
-//	    WithHostProvider("AWS")           // and host provider
+//		builder.WithIdentity("AWS", billingAccountID, billingAccountName).
+//		    WithServiceProvider("AWS").       // AWS is both service provider
+//		    WithHostProvider("AWS")           // and host provider
+//
+//	 5. Link to contract commitments with FormatContractApplied and WithContractAppliedObject
 type FocusRecordBuilder struct {
 	record *pbc.FocusCostRecord
 }
@@ -490,11 +491,11 @@ func (b *FocusRecordBuilder) WithHostProvider(
 // FOCUS 1.3 Contract Commitment Link Builder Method
 // =============================================================================
 
-// WithContractApplied sets the contract commitment reference per FOCUS 1.3.
-// This links the cost record to a ContractCommitmentId in the Contract
-// Commitment supplemental dataset. Treated as an opaque reference (no
-// cross-dataset validation is performed).
-// FOCUS 1.3 Section: Contract Applied.
+// WithContractApplied stores a bare commitment ID in contract_applied.
+//
+// Deprecated: FOCUS 1.3 and 1.4 require a ContractApplied JSON object. Use
+// FormatContractApplied and WithContractAppliedObject. This setter remains so
+// existing callers keep a bare ID on the wire.
 func (b *FocusRecordBuilder) WithContractApplied(
 	commitmentID string,
 ) *FocusRecordBuilder {

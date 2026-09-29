@@ -3,6 +3,7 @@ package pluginsdk
 import (
 	"time"
 
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
@@ -115,11 +116,170 @@ func (b *ContractCommitmentBuilder) WithQuantity(quantity float64, unit string) 
 }
 
 // WithCurrency sets the ISO 4217 currency code for the commitment.
-// This field is REQUIRED for all commitments.
-// FOCUS 1.3 Section: Billing Currency.
+// FOCUS requires it when the category is SPEND. USAGE may leave it empty.
+// FOCUS 1.3 and 1.4 Section: Billing Currency.
 func (b *ContractCommitmentBuilder) WithCurrency(currencyCode string) *ContractCommitmentBuilder {
 	b.record.BillingCurrency = currencyCode
 	return b
+}
+
+// WithApplicability sets the FOCUS 1.4 applicability column. applicability is a
+// JSON object string. Build rejects anything that is not one JSON object.
+func (b *ContractCommitmentBuilder) WithApplicability(applicability string) *ContractCommitmentBuilder {
+	b.record.ContractCommitmentApplicability = applicability
+	return b
+}
+
+// WithBenefitCategory sets the FOCUS 1.4 benefit category.
+func (b *ContractCommitmentBuilder) WithBenefitCategory(
+	category pbc.FocusContractCommitmentBenefitCategory,
+) *ContractCommitmentBuilder {
+	b.record.ContractCommitmentBenefitCategory = category
+	return b
+}
+
+// WithCreated sets ContractCommitmentCreated.
+func (b *ContractCommitmentBuilder) WithCreated(created time.Time) *ContractCommitmentBuilder {
+	b.record.ContractCommitmentCreated = timestamppb.New(created)
+	return b
+}
+
+// WithDiscountPercentage sets the discount fraction. Zero is stored as a present
+// value, which FOCUS treats differently from null. Use ClearDiscountPercentage
+// when the benefit category is Availability.
+func (b *ContractCommitmentBuilder) WithDiscountPercentage(percentage float64) *ContractCommitmentBuilder {
+	b.record.ContractCommitmentDiscountPercentage = proto.Float64(percentage)
+	return b
+}
+
+// ClearDiscountPercentage marks the discount percentage null.
+func (b *ContractCommitmentBuilder) ClearDiscountPercentage() *ContractCommitmentBuilder {
+	b.record.ContractCommitmentDiscountPercentage = nil
+	return b
+}
+
+// WithDurationType sets the FOCUS duration, for example "3 Years".
+func (b *ContractCommitmentBuilder) WithDurationType(duration string) *ContractCommitmentBuilder {
+	b.record.ContractCommitmentDurationType = duration
+	return b
+}
+
+// WithFulfillmentInterval sets how often the commitment is fulfilled.
+func (b *ContractCommitmentBuilder) WithFulfillmentInterval(
+	interval pbc.FocusContractCommitmentFulfillmentInterval,
+) *ContractCommitmentBuilder {
+	b.record.ContractCommitmentFulfillmentInterval = interval
+	return b
+}
+
+// WithLastUpdated sets ContractCommitmentLastUpdated.
+func (b *ContractCommitmentBuilder) WithLastUpdated(updated time.Time) *ContractCommitmentBuilder {
+	b.record.ContractCommitmentLastUpdated = timestamppb.New(updated)
+	return b
+}
+
+// WithLifecycleStatus sets the FOCUS 1.4 lifecycle status.
+func (b *ContractCommitmentBuilder) WithLifecycleStatus(
+	status pbc.FocusContractCommitmentLifecycleStatus,
+) *ContractCommitmentBuilder {
+	b.record.ContractCommitmentLifecycleStatus = status
+	return b
+}
+
+// WithModel sets Continuous or Discontinuous.
+func (b *ContractCommitmentBuilder) WithModel(model pbc.FocusContractCommitmentModel) *ContractCommitmentBuilder {
+	b.record.ContractCommitmentModel = model
+	return b
+}
+
+// WithOfferCategory sets Public or Negotiated.
+func (b *ContractCommitmentBuilder) WithOfferCategory(
+	category pbc.FocusContractCommitmentOfferCategory,
+) *ContractCommitmentBuilder {
+	b.record.ContractCommitmentOfferCategory = category
+	return b
+}
+
+// WithPaymentInterval sets how often the customer pays.
+func (b *ContractCommitmentBuilder) WithPaymentInterval(
+	interval pbc.FocusContractCommitmentPaymentInterval,
+) *ContractCommitmentBuilder {
+	b.record.ContractCommitmentPaymentInterval = interval
+	return b
+}
+
+// WithPaymentModel sets No Upfront, Partial Upfront, or All Upfront.
+func (b *ContractCommitmentBuilder) WithPaymentModel(
+	model pbc.FocusContractCommitmentPaymentModel,
+) *ContractCommitmentBuilder {
+	b.record.ContractCommitmentPaymentModel = model
+	return b
+}
+
+// WithPaymentUpfrontPercentage sets the upfront fraction. Zero is present, not null.
+func (b *ContractCommitmentBuilder) WithPaymentUpfrontPercentage(percentage float64) *ContractCommitmentBuilder {
+	b.record.ContractCommitmentPaymentUpfrontPercentage = proto.Float64(percentage)
+	return b
+}
+
+// WithInvoiceIssuerName sets the entity that invoices the commitment.
+func (b *ContractCommitmentBuilder) WithInvoiceIssuerName(name string) *ContractCommitmentBuilder {
+	b.record.InvoiceIssuerName = name
+	return b
+}
+
+// WithPricingCurrency sets the conditional pricing currency. Empty leaves it absent.
+func (b *ContractCommitmentBuilder) WithPricingCurrency(currencyCode string) *ContractCommitmentBuilder {
+	b.record.PricingCurrency = currencyCode
+	return b
+}
+
+// WithPricingCurrencyCost sets the commitment cost denominated in the pricing currency.
+// Zero is present, not null.
+func (b *ContractCommitmentBuilder) WithPricingCurrencyCost(cost float64) *ContractCommitmentBuilder {
+	b.record.PricingCurrencyContractCommitmentCost = proto.Float64(cost)
+	return b
+}
+
+// WithServiceProviderName sets the service provider that offers the commitment.
+func (b *ContractCommitmentBuilder) WithServiceProviderName(name string) *ContractCommitmentBuilder {
+	b.record.ServiceProviderName = name
+	return b
+}
+
+// WithDescription sets ContractCommitmentDescription. Empty means null.
+func (b *ContractCommitmentBuilder) WithDescription(description string) *ContractCommitmentBuilder {
+	b.record.ContractCommitmentDescription = description
+	return b
+}
+
+// WithBaselineTerms fills the FOCUS 1.4 columns that do not allow nulls with a
+// public, continuous, monthly, no-upfront discount created at at. The discount
+// and upfront percentages are 0, which is present rather than null. Applicability
+// is {"IsGlobalScope":true}. Call the specific setter afterwards to override one column.
+func (b *ContractCommitmentBuilder) WithBaselineTerms(at time.Time) *ContractCommitmentBuilder {
+	return b.
+		WithApplicability(`{"IsGlobalScope":true}`).
+		WithBenefitCategory(
+			pbc.FocusContractCommitmentBenefitCategory_FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_DISCOUNT).
+		WithCreated(at).
+		WithDiscountPercentage(0).
+		WithDurationType("1 Year").
+		WithFulfillmentInterval(
+			pbc.FocusContractCommitmentFulfillmentInterval_FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_MONTHLY).
+		WithLastUpdated(at).
+		WithLifecycleStatus(
+			pbc.FocusContractCommitmentLifecycleStatus_FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_ACTIVE).
+		WithModel(pbc.FocusContractCommitmentModel_FOCUS_CONTRACT_COMMITMENT_MODEL_CONTINUOUS).
+		WithOfferCategory(
+			pbc.FocusContractCommitmentOfferCategory_FOCUS_CONTRACT_COMMITMENT_OFFER_CATEGORY_PUBLIC).
+		WithPaymentInterval(
+			pbc.FocusContractCommitmentPaymentInterval_FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_MONTHLY).
+		WithPaymentModel(
+			pbc.FocusContractCommitmentPaymentModel_FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_NO_UPFRONT).
+		WithPaymentUpfrontPercentage(0).
+		WithInvoiceIssuerName("Example Issuer").
+		WithServiceProviderName("Example Provider")
 }
 
 // Build validates and returns the constructed ContractCommitment record.

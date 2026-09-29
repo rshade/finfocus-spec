@@ -23,6 +23,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
@@ -227,4 +228,50 @@ func TestFocus14_MockDryRunFieldParity(t *testing.T) {
 	sort.Strings(mockNames)
 	sort.Strings(sdkNames)
 	require.Equal(t, sdkNames, mockNames)
+}
+
+// TestFocus14_ContractCommitmentColumns checks fields 13-30 and that a baseline
+// spend commitment distinguishes a present 0 discount from an unset one.
+func TestFocus14_ContractCommitmentColumns(t *testing.T) {
+	fields := (&pbc.ContractCommitment{}).ProtoReflect().Descriptor().Fields()
+	want := map[int]string{
+		13: "contract_commitment_applicability",
+		14: "contract_commitment_benefit_category",
+		15: "contract_commitment_created",
+		16: "contract_commitment_discount_percentage",
+		17: "contract_commitment_duration_type",
+		18: "contract_commitment_fulfillment_interval",
+		19: "contract_commitment_last_updated",
+		20: "contract_commitment_lifecycle_status",
+		21: "contract_commitment_model",
+		22: "contract_commitment_offer_category",
+		23: "contract_commitment_payment_interval",
+		24: "contract_commitment_payment_model",
+		25: "contract_commitment_payment_upfront_percentage",
+		26: "invoice_issuer_name",
+		27: "pricing_currency",
+		28: "pricing_currency_contract_commitment_cost",
+		29: "service_provider_name",
+		30: "contract_commitment_description",
+	}
+	for number, name := range want {
+		field := fields.ByNumber(protoreflect.FieldNumber(number))
+		require.NotNil(t, field, "field %d", number)
+		require.Equal(t, name, string(field.Name()))
+	}
+
+	at := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	record, err := pluginsdk.NewContractCommitmentBuilder().
+		WithIdentity("commit-1", "contract-1").
+		WithCategory(pbc.FocusContractCommitmentCategory_FOCUS_CONTRACT_COMMITMENT_CATEGORY_SPEND).
+		WithFinancials(10, 0, "", "USD").
+		WithBaselineTerms(at).
+		Build()
+	require.NoError(t, err)
+	require.NotNil(t, record.ContractCommitmentDiscountPercentage)
+	require.Zero(t, record.GetContractCommitmentDiscountPercentage())
+
+	record.ContractCommitmentDiscountPercentage = nil
+	err = plugintesting.ValidateContractCommitment(record)
+	require.ErrorContains(t, err, "contract_commitment_discount_percentage is required")
 }

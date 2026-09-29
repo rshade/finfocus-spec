@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file finfocus/v1/focus.proto.
  */
 export const file_finfocus_v1_focus: GenFile = /*@__PURE__*/
-  fileDesc("ChdmaW5mb2N1cy92MS9mb2N1cy5wcm90bxILZmluZm9jdXMudjEiuBQKD0ZvY3VzQ29zdFJlY29yZBIZCg1wcm92aWRlcl9uYW1lGAEgASgJQgIYARIaChJiaWxsaW5nX2FjY291bnRfaWQYAiABKAkSHAoUYmlsbGluZ19hY2NvdW50X25hbWUYAyABKAkSFgoOc3ViX2FjY291bnRfaWQYGCABKAkSGAoQc3ViX2FjY291bnRfbmFtZRgZIAEoCRIcChRiaWxsaW5nX2FjY291bnRfdHlwZRgqIAEoCRIYChBzdWJfYWNjb3VudF90eXBlGCsgASgJEjgKFGJpbGxpbmdfcGVyaW9kX3N0YXJ0GBogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI2ChJiaWxsaW5nX3BlcmlvZF9lbmQYGyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhgKEGJpbGxpbmdfY3VycmVuY3kYEiABKAkSNwoTY2hhcmdlX3BlcmlvZF9zdGFydBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNQoRY2hhcmdlX3BlcmlvZF9lbmQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjkKD2NoYXJnZV9jYXRlZ29yeRgIIAEoDjIgLmZpbmZvY3VzLnYxLkZvY3VzQ2hhcmdlQ2F0ZWdvcnkSMwoMY2hhcmdlX2NsYXNzGBwgASgOMh0uZmluZm9jdXMudjEuRm9jdXNDaGFyZ2VDbGFzcxIaChJjaGFyZ2VfZGVzY3JpcHRpb24YHSABKAkSOwoQY2hhcmdlX2ZyZXF1ZW5jeRgeIAEoDjIhLmZpbmZvY3VzLnYxLkZvY3VzQ2hhcmdlRnJlcXVlbmN5EjsKEHByaWNpbmdfY2F0ZWdvcnkYCSABKA4yIS5maW5mb2N1cy52MS5Gb2N1c1ByaWNpbmdDYXRlZ29yeRIYChBwcmljaW5nX3F1YW50aXR5GB8gASgBEhQKDHByaWNpbmdfdW5pdBggIAEoCRIXCg9saXN0X3VuaXRfcHJpY2UYISABKAESGAoQcHJpY2luZ19jdXJyZW5jeRgzIAEoCRIuCiZwcmljaW5nX2N1cnJlbmN5X2NvbnRyYWN0ZWRfdW5pdF9wcmljZRg0IAEoARInCh9wcmljaW5nX2N1cnJlbmN5X2VmZmVjdGl2ZV9jb3N0GDUgASgBEigKIHByaWNpbmdfY3VycmVuY3lfbGlzdF91bml0X3ByaWNlGDYgASgBEjsKEHNlcnZpY2VfY2F0ZWdvcnkYBiABKA4yIS5maW5mb2N1cy52MS5Gb2N1c1NlcnZpY2VDYXRlZ29yeRIUCgxzZXJ2aWNlX25hbWUYByABKAkSGwoTc2VydmljZV9zdWJjYXRlZ29yeRg4IAEoCRIVCglwdWJsaXNoZXIYNyABKAlCAhgBEhMKC3Jlc291cmNlX2lkGAwgASgJEhUKDXJlc291cmNlX25hbWUYDSABKAkSFQoNcmVzb3VyY2VfdHlwZRgiIAEoCRIOCgZza3VfaWQYDiABKAkSFAoMc2t1X3ByaWNlX2lkGCMgASgJEhEKCXNrdV9tZXRlchg5IAEoCRIZChFza3VfcHJpY2VfZGV0YWlscxg6IAEoCRIRCglyZWdpb25faWQYCiABKAkSEwoLcmVnaW9uX25hbWUYCyABKAkSGQoRYXZhaWxhYmlsaXR5X3pvbmUYJCABKAkSEwoLYmlsbGVkX2Nvc3QYDyABKAESEQoJbGlzdF9jb3N0GBAgASgBEhYKDmVmZmVjdGl2ZV9jb3N0GBEgASgBEhcKD2NvbnRyYWN0ZWRfY29zdBgpIAEoARIdChVjb250cmFjdGVkX3VuaXRfcHJpY2UYMiABKAESGQoRY29uc3VtZWRfcXVhbnRpdHkYFCABKAESFQoNY29uc3VtZWRfdW5pdBgVIAEoCRJSChxjb21taXRtZW50X2Rpc2NvdW50X2NhdGVnb3J5GCUgASgOMiwuZmluZm9jdXMudjEuRm9jdXNDb21taXRtZW50RGlzY291bnRDYXRlZ29yeRIeChZjb21taXRtZW50X2Rpc2NvdW50X2lkGCYgASgJEiAKGGNvbW1pdG1lbnRfZGlzY291bnRfbmFtZRgnIAEoCRIkChxjb21taXRtZW50X2Rpc2NvdW50X3F1YW50aXR5GC4gASgBEk4KGmNvbW1pdG1lbnRfZGlzY291bnRfc3RhdHVzGC8gASgOMiouZmluZm9jdXMudjEuRm9jdXNDb21taXRtZW50RGlzY291bnRTdGF0dXMSIAoYY29tbWl0bWVudF9kaXNjb3VudF90eXBlGDAgASgJEiAKGGNvbW1pdG1lbnRfZGlzY291bnRfdW5pdBgxIAEoCRIfChdjYXBhY2l0eV9yZXNlcnZhdGlvbl9pZBgsIAEoCRJQChtjYXBhY2l0eV9yZXNlcnZhdGlvbl9zdGF0dXMYLSABKA4yKy5maW5mb2N1cy52MS5Gb2N1c0NhcGFjaXR5UmVzZXJ2YXRpb25TdGF0dXMSEgoKaW52b2ljZV9pZBgTIAEoCRIWCg5pbnZvaWNlX2lzc3VlchgoIAEoCRI0CgR0YWdzGBYgAygLMiYuZmluZm9jdXMudjEuRm9jdXNDb3N0UmVjb3JkLlRhZ3NFbnRyeRJLChBleHRlbmRlZF9jb2x1bW5zGBcgAygLMjEuZmluZm9jdXMudjEuRm9jdXNDb3N0UmVjb3JkLkV4dGVuZGVkQ29sdW1uc0VudHJ5Eh0KFXNlcnZpY2VfcHJvdmlkZXJfbmFtZRg7IAEoCRIaChJob3N0X3Byb3ZpZGVyX25hbWUYPCABKAkSGwoTYWxsb2NhdGVkX21ldGhvZF9pZBg9IAEoCRIgChhhbGxvY2F0ZWRfbWV0aG9kX2RldGFpbHMYPiABKAkSHQoVYWxsb2NhdGVkX3Jlc291cmNlX2lkGD8gASgJEh8KF2FsbG9jYXRlZF9yZXNvdXJjZV9uYW1lGEAgASgJEkcKDmFsbG9jYXRlZF90YWdzGEEgAygLMi8uZmluZm9jdXMudjEuRm9jdXNDb3N0UmVjb3JkLkFsbG9jYXRlZFRhZ3NFbnRyeRIYChBjb250cmFjdF9hcHBsaWVkGEIgASgJEhkKEWludm9pY2VfZGV0YWlsX2lkGEMgASgJEi4KJmNvbW1pdG1lbnRfcHJvZ3JhbV9lbGlnaWJpbGl0eV9kZXRhaWxzGEQgASgJGisKCVRhZ3NFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjYKFEV4dGVuZGVkQ29sdW1uc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaNAoSQWxsb2NhdGVkVGFnc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiwQQKEkNvbnRyYWN0Q29tbWl0bWVudBIeChZjb250cmFjdF9jb21taXRtZW50X2lkGAEgASgJEhMKC2NvbnRyYWN0X2lkGAIgASgJElIKHGNvbnRyYWN0X2NvbW1pdG1lbnRfY2F0ZWdvcnkYAyABKA4yLC5maW5mb2N1cy52MS5Gb2N1c0NvbnRyYWN0Q29tbWl0bWVudENhdGVnb3J5EiAKGGNvbnRyYWN0X2NvbW1pdG1lbnRfdHlwZRgEIAEoCRJECiBjb250cmFjdF9jb21taXRtZW50X3BlcmlvZF9zdGFydBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASQgoeY29udHJhY3RfY29tbWl0bWVudF9wZXJpb2RfZW5kGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI5ChVjb250cmFjdF9wZXJpb2Rfc3RhcnQYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjcKE2NvbnRyYWN0X3BlcmlvZF9lbmQYCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiAKGGNvbnRyYWN0X2NvbW1pdG1lbnRfY29zdBgJIAEoARIkChxjb250cmFjdF9jb21taXRtZW50X3F1YW50aXR5GAogASgBEiAKGGNvbnRyYWN0X2NvbW1pdG1lbnRfdW5pdBgLIAEoCRIYChBiaWxsaW5nX2N1cnJlbmN5GAwgASgJKrEBCh9Gb2N1c0NvbnRyYWN0Q29tbWl0bWVudENhdGVnb3J5EjIKLkZPQ1VTX0NPTlRSQUNUX0NPTU1JVE1FTlRfQ0FURUdPUllfVU5TUEVDSUZJRUQQABIsCihGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX0NBVEVHT1JZX1NQRU5EEAESLAooRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9DQVRFR09SWV9VU0FHRRACQqgBCg9jb20uZmluZm9jdXMudjFCCkZvY3VzUHJvdG9QAVo8Z2l0aHViLmNvbS9yc2hhZGUvZmluZm9jdXMtc3BlYy9zZGsvZ28vcHJvdG8vZmluZm9jdXMvdjE7cGJjogIDRlhYqgILRmluZm9jdXMuVjHKAgtGaW5mb2N1c1xWMeICF0ZpbmZvY3VzXFYxXEdQQk1ldGFkYXRh6gIMRmluZm9jdXM6OlYxYgZwcm90bzM", [file_google_protobuf_timestamp, file_finfocus_v1_enums]);
+  fileDesc("ChdmaW5mb2N1cy92MS9mb2N1cy5wcm90bxILZmluZm9jdXMudjEiuBQKD0ZvY3VzQ29zdFJlY29yZBIZCg1wcm92aWRlcl9uYW1lGAEgASgJQgIYARIaChJiaWxsaW5nX2FjY291bnRfaWQYAiABKAkSHAoUYmlsbGluZ19hY2NvdW50X25hbWUYAyABKAkSFgoOc3ViX2FjY291bnRfaWQYGCABKAkSGAoQc3ViX2FjY291bnRfbmFtZRgZIAEoCRIcChRiaWxsaW5nX2FjY291bnRfdHlwZRgqIAEoCRIYChBzdWJfYWNjb3VudF90eXBlGCsgASgJEjgKFGJpbGxpbmdfcGVyaW9kX3N0YXJ0GBogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI2ChJiaWxsaW5nX3BlcmlvZF9lbmQYGyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhgKEGJpbGxpbmdfY3VycmVuY3kYEiABKAkSNwoTY2hhcmdlX3BlcmlvZF9zdGFydBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNQoRY2hhcmdlX3BlcmlvZF9lbmQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjkKD2NoYXJnZV9jYXRlZ29yeRgIIAEoDjIgLmZpbmZvY3VzLnYxLkZvY3VzQ2hhcmdlQ2F0ZWdvcnkSMwoMY2hhcmdlX2NsYXNzGBwgASgOMh0uZmluZm9jdXMudjEuRm9jdXNDaGFyZ2VDbGFzcxIaChJjaGFyZ2VfZGVzY3JpcHRpb24YHSABKAkSOwoQY2hhcmdlX2ZyZXF1ZW5jeRgeIAEoDjIhLmZpbmZvY3VzLnYxLkZvY3VzQ2hhcmdlRnJlcXVlbmN5EjsKEHByaWNpbmdfY2F0ZWdvcnkYCSABKA4yIS5maW5mb2N1cy52MS5Gb2N1c1ByaWNpbmdDYXRlZ29yeRIYChBwcmljaW5nX3F1YW50aXR5GB8gASgBEhQKDHByaWNpbmdfdW5pdBggIAEoCRIXCg9saXN0X3VuaXRfcHJpY2UYISABKAESGAoQcHJpY2luZ19jdXJyZW5jeRgzIAEoCRIuCiZwcmljaW5nX2N1cnJlbmN5X2NvbnRyYWN0ZWRfdW5pdF9wcmljZRg0IAEoARInCh9wcmljaW5nX2N1cnJlbmN5X2VmZmVjdGl2ZV9jb3N0GDUgASgBEigKIHByaWNpbmdfY3VycmVuY3lfbGlzdF91bml0X3ByaWNlGDYgASgBEjsKEHNlcnZpY2VfY2F0ZWdvcnkYBiABKA4yIS5maW5mb2N1cy52MS5Gb2N1c1NlcnZpY2VDYXRlZ29yeRIUCgxzZXJ2aWNlX25hbWUYByABKAkSGwoTc2VydmljZV9zdWJjYXRlZ29yeRg4IAEoCRIVCglwdWJsaXNoZXIYNyABKAlCAhgBEhMKC3Jlc291cmNlX2lkGAwgASgJEhUKDXJlc291cmNlX25hbWUYDSABKAkSFQoNcmVzb3VyY2VfdHlwZRgiIAEoCRIOCgZza3VfaWQYDiABKAkSFAoMc2t1X3ByaWNlX2lkGCMgASgJEhEKCXNrdV9tZXRlchg5IAEoCRIZChFza3VfcHJpY2VfZGV0YWlscxg6IAEoCRIRCglyZWdpb25faWQYCiABKAkSEwoLcmVnaW9uX25hbWUYCyABKAkSGQoRYXZhaWxhYmlsaXR5X3pvbmUYJCABKAkSEwoLYmlsbGVkX2Nvc3QYDyABKAESEQoJbGlzdF9jb3N0GBAgASgBEhYKDmVmZmVjdGl2ZV9jb3N0GBEgASgBEhcKD2NvbnRyYWN0ZWRfY29zdBgpIAEoARIdChVjb250cmFjdGVkX3VuaXRfcHJpY2UYMiABKAESGQoRY29uc3VtZWRfcXVhbnRpdHkYFCABKAESFQoNY29uc3VtZWRfdW5pdBgVIAEoCRJSChxjb21taXRtZW50X2Rpc2NvdW50X2NhdGVnb3J5GCUgASgOMiwuZmluZm9jdXMudjEuRm9jdXNDb21taXRtZW50RGlzY291bnRDYXRlZ29yeRIeChZjb21taXRtZW50X2Rpc2NvdW50X2lkGCYgASgJEiAKGGNvbW1pdG1lbnRfZGlzY291bnRfbmFtZRgnIAEoCRIkChxjb21taXRtZW50X2Rpc2NvdW50X3F1YW50aXR5GC4gASgBEk4KGmNvbW1pdG1lbnRfZGlzY291bnRfc3RhdHVzGC8gASgOMiouZmluZm9jdXMudjEuRm9jdXNDb21taXRtZW50RGlzY291bnRTdGF0dXMSIAoYY29tbWl0bWVudF9kaXNjb3VudF90eXBlGDAgASgJEiAKGGNvbW1pdG1lbnRfZGlzY291bnRfdW5pdBgxIAEoCRIfChdjYXBhY2l0eV9yZXNlcnZhdGlvbl9pZBgsIAEoCRJQChtjYXBhY2l0eV9yZXNlcnZhdGlvbl9zdGF0dXMYLSABKA4yKy5maW5mb2N1cy52MS5Gb2N1c0NhcGFjaXR5UmVzZXJ2YXRpb25TdGF0dXMSEgoKaW52b2ljZV9pZBgTIAEoCRIWCg5pbnZvaWNlX2lzc3VlchgoIAEoCRI0CgR0YWdzGBYgAygLMiYuZmluZm9jdXMudjEuRm9jdXNDb3N0UmVjb3JkLlRhZ3NFbnRyeRJLChBleHRlbmRlZF9jb2x1bW5zGBcgAygLMjEuZmluZm9jdXMudjEuRm9jdXNDb3N0UmVjb3JkLkV4dGVuZGVkQ29sdW1uc0VudHJ5Eh0KFXNlcnZpY2VfcHJvdmlkZXJfbmFtZRg7IAEoCRIaChJob3N0X3Byb3ZpZGVyX25hbWUYPCABKAkSGwoTYWxsb2NhdGVkX21ldGhvZF9pZBg9IAEoCRIgChhhbGxvY2F0ZWRfbWV0aG9kX2RldGFpbHMYPiABKAkSHQoVYWxsb2NhdGVkX3Jlc291cmNlX2lkGD8gASgJEh8KF2FsbG9jYXRlZF9yZXNvdXJjZV9uYW1lGEAgASgJEkcKDmFsbG9jYXRlZF90YWdzGEEgAygLMi8uZmluZm9jdXMudjEuRm9jdXNDb3N0UmVjb3JkLkFsbG9jYXRlZFRhZ3NFbnRyeRIYChBjb250cmFjdF9hcHBsaWVkGEIgASgJEhkKEWludm9pY2VfZGV0YWlsX2lkGEMgASgJEi4KJmNvbW1pdG1lbnRfcHJvZ3JhbV9lbGlnaWJpbGl0eV9kZXRhaWxzGEQgASgJGisKCVRhZ3NFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjYKFEV4dGVuZGVkQ29sdW1uc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaNAoSQWxsb2NhdGVkVGFnc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEi8w4KEkNvbnRyYWN0Q29tbWl0bWVudBIeChZjb250cmFjdF9jb21taXRtZW50X2lkGAEgASgJEhMKC2NvbnRyYWN0X2lkGAIgASgJElIKHGNvbnRyYWN0X2NvbW1pdG1lbnRfY2F0ZWdvcnkYAyABKA4yLC5maW5mb2N1cy52MS5Gb2N1c0NvbnRyYWN0Q29tbWl0bWVudENhdGVnb3J5EiAKGGNvbnRyYWN0X2NvbW1pdG1lbnRfdHlwZRgEIAEoCRJECiBjb250cmFjdF9jb21taXRtZW50X3BlcmlvZF9zdGFydBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASQgoeY29udHJhY3RfY29tbWl0bWVudF9wZXJpb2RfZW5kGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI5ChVjb250cmFjdF9wZXJpb2Rfc3RhcnQYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjcKE2NvbnRyYWN0X3BlcmlvZF9lbmQYCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiAKGGNvbnRyYWN0X2NvbW1pdG1lbnRfY29zdBgJIAEoARIkChxjb250cmFjdF9jb21taXRtZW50X3F1YW50aXR5GAogASgBEiAKGGNvbnRyYWN0X2NvbW1pdG1lbnRfdW5pdBgLIAEoCRIYChBiaWxsaW5nX2N1cnJlbmN5GAwgASgJEikKIWNvbnRyYWN0X2NvbW1pdG1lbnRfYXBwbGljYWJpbGl0eRgNIAEoCRJhCiRjb250cmFjdF9jb21taXRtZW50X2JlbmVmaXRfY2F0ZWdvcnkYDiABKA4yMy5maW5mb2N1cy52MS5Gb2N1c0NvbnRyYWN0Q29tbWl0bWVudEJlbmVmaXRDYXRlZ29yeRI/Chtjb250cmFjdF9jb21taXRtZW50X2NyZWF0ZWQYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjQKJ2NvbnRyYWN0X2NvbW1pdG1lbnRfZGlzY291bnRfcGVyY2VudGFnZRgQIAEoAUgAiAEBEikKIWNvbnRyYWN0X2NvbW1pdG1lbnRfZHVyYXRpb25fdHlwZRgRIAEoCRJpCihjb250cmFjdF9jb21taXRtZW50X2Z1bGZpbGxtZW50X2ludGVydmFsGBIgASgOMjcuZmluZm9jdXMudjEuRm9jdXNDb250cmFjdENvbW1pdG1lbnRGdWxmaWxsbWVudEludGVydmFsEkQKIGNvbnRyYWN0X2NvbW1pdG1lbnRfbGFzdF91cGRhdGVkGBMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBJhCiRjb250cmFjdF9jb21taXRtZW50X2xpZmVjeWNsZV9zdGF0dXMYFCABKA4yMy5maW5mb2N1cy52MS5Gb2N1c0NvbnRyYWN0Q29tbWl0bWVudExpZmVjeWNsZVN0YXR1cxJMChljb250cmFjdF9jb21taXRtZW50X21vZGVsGBUgASgOMikuZmluZm9jdXMudjEuRm9jdXNDb250cmFjdENvbW1pdG1lbnRNb2RlbBJdCiJjb250cmFjdF9jb21taXRtZW50X29mZmVyX2NhdGVnb3J5GBYgASgOMjEuZmluZm9jdXMudjEuRm9jdXNDb250cmFjdENvbW1pdG1lbnRPZmZlckNhdGVnb3J5EmEKJGNvbnRyYWN0X2NvbW1pdG1lbnRfcGF5bWVudF9pbnRlcnZhbBgXIAEoDjIzLmZpbmZvY3VzLnYxLkZvY3VzQ29udHJhY3RDb21taXRtZW50UGF5bWVudEludGVydmFsElsKIWNvbnRyYWN0X2NvbW1pdG1lbnRfcGF5bWVudF9tb2RlbBgYIAEoDjIwLmZpbmZvY3VzLnYxLkZvY3VzQ29udHJhY3RDb21taXRtZW50UGF5bWVudE1vZGVsEjsKLmNvbnRyYWN0X2NvbW1pdG1lbnRfcGF5bWVudF91cGZyb250X3BlcmNlbnRhZ2UYGSABKAFIAYgBARIbChNpbnZvaWNlX2lzc3Vlcl9uYW1lGBogASgJEhgKEHByaWNpbmdfY3VycmVuY3kYGyABKAkSNgopcHJpY2luZ19jdXJyZW5jeV9jb250cmFjdF9jb21taXRtZW50X2Nvc3QYHCABKAFIAogBARIdChVzZXJ2aWNlX3Byb3ZpZGVyX25hbWUYHSABKAkSJwofY29udHJhY3RfY29tbWl0bWVudF9kZXNjcmlwdGlvbhgeIAEoCUIqCihfY29udHJhY3RfY29tbWl0bWVudF9kaXNjb3VudF9wZXJjZW50YWdlQjEKL19jb250cmFjdF9jb21taXRtZW50X3BheW1lbnRfdXBmcm9udF9wZXJjZW50YWdlQiwKKl9wcmljaW5nX2N1cnJlbmN5X2NvbnRyYWN0X2NvbW1pdG1lbnRfY29zdCqxAQofRm9jdXNDb250cmFjdENvbW1pdG1lbnRDYXRlZ29yeRIyCi5GT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX0NBVEVHT1JZX1VOU1BFQ0lGSUVEEAASLAooRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9DQVRFR09SWV9TUEVORBABEiwKKEZPQ1VTX0NPTlRSQUNUX0NPTU1JVE1FTlRfQ0FURUdPUllfVVNBR0UQAirMAgomRm9jdXNDb250cmFjdENvbW1pdG1lbnRCZW5lZml0Q2F0ZWdvcnkSOgo2Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9CRU5FRklUX0NBVEVHT1JZX1VOU1BFQ0lGSUVEEAASNwozRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9CRU5FRklUX0NBVEVHT1JZX0RJU0NPVU5UEAESOgo2Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9CRU5FRklUX0NBVEVHT1JZX0VOVElUTEVNRU5UEAISOwo3Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9CRU5FRklUX0NBVEVHT1JZX0FWQUlMQUJJTElUWRADEjQKMEZPQ1VTX0NPTlRSQUNUX0NPTU1JVE1FTlRfQkVORUZJVF9DQVRFR09SWV9PVEhFUhAEKs4FCipGb2N1c0NvbnRyYWN0Q29tbWl0bWVudEZ1bGZpbGxtZW50SW50ZXJ2YWwSPgo6Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9GVUxGSUxMTUVOVF9JTlRFUlZBTF9VTlNQRUNJRklFRBAAEjkKNUZPQ1VTX0NPTlRSQUNUX0NPTU1JVE1FTlRfRlVMRklMTE1FTlRfSU5URVJWQUxfSE9VUkxZEAESOAo0Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9GVUxGSUxMTUVOVF9JTlRFUlZBTF9EQUlMWRACEjkKNUZPQ1VTX0NPTlRSQUNUX0NPTU1JVE1FTlRfRlVMRklMTE1FTlRfSU5URVJWQUxfV0VFS0xZEAMSOgo2Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9GVUxGSUxMTUVOVF9JTlRFUlZBTF9NT05USExZEAQSPAo4Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9GVUxGSUxMTUVOVF9JTlRFUlZBTF9RVUFSVEVSTFkQBRI+CjpGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX0ZVTEZJTExNRU5UX0lOVEVSVkFMX1NFTUlfQU5OVUFMEAYSOQo1Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9GVUxGSUxMTUVOVF9JTlRFUlZBTF9BTk5VQUwQBxI+CjpGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX0ZVTEZJTExNRU5UX0lOVEVSVkFMX0ZVTExfUEVSSU9EEAgSQAo8Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9GVUxGSUxMTUVOVF9JTlRFUlZBTF9UUkFOU0FDVElPTkFMEAkSOQo1Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9GVUxGSUxMTUVOVF9JTlRFUlZBTF9DVVNUT00QCiryAwomRm9jdXNDb250cmFjdENvbW1pdG1lbnRMaWZlY3ljbGVTdGF0dXMSOgo2Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9MSUZFQ1lDTEVfU1RBVFVTX1VOU1BFQ0lGSUVEEAASNwozRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9MSUZFQ1lDTEVfU1RBVFVTX1BST1BPU0VEEAESNgoyRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9MSUZFQ1lDTEVfU1RBVFVTX1BFTkRJTkcQAhI1CjFGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX0xJRkVDWUNMRV9TVEFUVVNfQUNUSVZFEAMSOAo0Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9MSUZFQ1lDTEVfU1RBVFVTX0VYSEFVU1RFRBAEEjYKMkZPQ1VTX0NPTlRSQUNUX0NPTU1JVE1FTlRfTElGRUNZQ0xFX1NUQVRVU19FWFBJUkVEEAUSNwozRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9MSUZFQ1lDTEVfU1RBVFVTX0NBTkNFTEVEEAYSOQo1Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9MSUZFQ1lDTEVfU1RBVFVTX1NVUEVSU0VERUQQByqyAQocRm9jdXNDb250cmFjdENvbW1pdG1lbnRNb2RlbBIvCitGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX01PREVMX1VOU1BFQ0lGSUVEEAASLgoqRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9NT0RFTF9DT05USU5VT1VTEAESMQotRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9NT0RFTF9ESVNDT05USU5VT1VTEAIqzgEKJEZvY3VzQ29udHJhY3RDb21taXRtZW50T2ZmZXJDYXRlZ29yeRI4CjRGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX09GRkVSX0NBVEVHT1JZX1VOU1BFQ0lGSUVEEAASMwovRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9PRkZFUl9DQVRFR09SWV9QVUJMSUMQARI3CjNGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX09GRkVSX0NBVEVHT1JZX05FR09USUFURUQQAiq5AwomRm9jdXNDb250cmFjdENvbW1pdG1lbnRQYXltZW50SW50ZXJ2YWwSOgo2Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9QQVlNRU5UX0lOVEVSVkFMX1VOU1BFQ0lGSUVEEAASNwozRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9QQVlNRU5UX0lOVEVSVkFMX09ORV9USU1FEAESNgoyRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9QQVlNRU5UX0lOVEVSVkFMX01PTlRITFkQAhI4CjRGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX1BBWU1FTlRfSU5URVJWQUxfUVVBUlRFUkxZEAMSOgo2Rk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9QQVlNRU5UX0lOVEVSVkFMX1NFTUlfQU5OVUFMEAQSNQoxRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9QQVlNRU5UX0lOVEVSVkFMX0FOTlVBTBAFEjUKMUZPQ1VTX0NPTlRSQUNUX0NPTU1JVE1FTlRfUEFZTUVOVF9JTlRFUlZBTF9DVVNUT00QBiqMAgojRm9jdXNDb250cmFjdENvbW1pdG1lbnRQYXltZW50TW9kZWwSNwozRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9QQVlNRU5UX01PREVMX1VOU1BFQ0lGSUVEEAASNgoyRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9QQVlNRU5UX01PREVMX05PX1VQRlJPTlQQARI7CjdGT0NVU19DT05UUkFDVF9DT01NSVRNRU5UX1BBWU1FTlRfTU9ERUxfUEFSVElBTF9VUEZST05UEAISNwozRk9DVVNfQ09OVFJBQ1RfQ09NTUlUTUVOVF9QQVlNRU5UX01PREVMX0FMTF9VUEZST05UEANCqAEKD2NvbS5maW5mb2N1cy52MUIKRm9jdXNQcm90b1ABWjxnaXRodWIuY29tL3JzaGFkZS9maW5mb2N1cy1zcGVjL3Nkay9nby9wcm90by9maW5mb2N1cy92MTtwYmOiAgNGWFiqAgtGaW5mb2N1cy5WMcoCC0ZpbmZvY3VzXFYx4gIXRmluZm9jdXNcVjFcR1BCTWV0YWRhdGHqAgxGaW5mb2N1czo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_finfocus_v1_enums]);
 
 /**
  * FocusCostRecord represents a single cost line item normalized to the
@@ -544,9 +544,11 @@ export type FocusCostRecord = Message<"finfocus.v1.FocusCostRecord"> & {
   allocatedTags: { [key: string]: string };
 
   /**
-   * ContractApplied: Reference to a ContractCommitmentId in the Contract
-   * Commitment dataset. Treated as opaque reference (no cross-dataset validation).
-   * FOCUS 1.3 Section: Contract Applied (CONDITIONAL)
+   * ContractApplied: FOCUS ContractAppliedObject JSON
+   * ({"Elements":[{"ContractCommitmentID":..., ...}]}).
+   * A bare commitment ID is still accepted on the wire for callers of the
+   * deprecated WithContractApplied setter. No cross-dataset validation.
+   * FOCUS 1.3 and 1.4 Section: Contract Applied (CONDITIONAL)
    *
    * @generated from field: string contract_applied = 66;
    */
@@ -587,12 +589,14 @@ export const FocusCostRecordSchema: GenMessage<FocusCostRecord> = /*@__PURE__*/
 
 /**
  * ContractCommitment represents a contractual commitment record in the
- * FOCUS 1.3 Contract Commitment supplemental dataset.
+ * FOCUS 1.3 and 1.4 Contract Commitment supplemental dataset.
  *
  * This is a separate dataset from Cost and Usage data, allowing practitioners
  * to query contract terms independently from individual cost line items.
+ * Fields 13-29 are the FOCUS 1.4 columns. Field 30 closes the 1.3 gap for
+ * ContractCommitmentDescription. optional is used only where null differs from 0.
  *
- * Reference: FOCUS 1.3 Contract Commitment Dataset
+ * Reference: FOCUS 1.4 Contract Commitment Dataset
  *
  * ==========================================================================
  * Identity Fields
@@ -701,12 +705,166 @@ export type ContractCommitment = Message<"finfocus.v1.ContractCommitment"> & {
 
   /**
    * BillingCurrency: ISO 4217 currency code for monetary values.
-   * REQUIRED. Format: 3-letter currency code (e.g., "USD", "EUR").
-   * FOCUS 1.3 Billing Currency
+   * Empty means null. FOCUS allows null, and the value MUST NOT be null when
+   * the category is SPEND. Format: 3-letter currency code (e.g., "USD", "EUR").
+   * FOCUS 1.3 and 1.4 Billing Currency
    *
    * @generated from field: string billing_currency = 12;
    */
   billingCurrency: string;
+
+  /**
+   * ContractCommitmentApplicability: JSON object of inclusion and exclusion rules.
+   * Stored as a string, like other FOCUS JSON columns. Empty is not valid.
+   * FOCUS 1.4 Contract Commitment Applicability (MANDATORY, nulls not allowed).
+   *
+   * @generated from field: string contract_commitment_applicability = 13;
+   */
+  contractCommitmentApplicability: string;
+
+  /**
+   * ContractCommitmentBenefitCategory: Discount, Entitlement, Availability, or Other.
+   * FOCUS 1.4 Contract Commitment Benefit Category (MANDATORY).
+   *
+   * @generated from field: finfocus.v1.FocusContractCommitmentBenefitCategory contract_commitment_benefit_category = 14;
+   */
+  contractCommitmentBenefitCategory: FocusContractCommitmentBenefitCategory;
+
+  /**
+   * ContractCommitmentCreated: When this commitment record was instantiated.
+   * FOCUS 1.4 Contract Commitment Created (MANDATORY).
+   *
+   * @generated from field: google.protobuf.Timestamp contract_commitment_created = 15;
+   */
+  contractCommitmentCreated?: Timestamp;
+
+  /**
+   * ContractCommitmentDiscountPercentage: Fraction from 0 to 1.
+   * Unset means null, which differs from 0. MUST be set for Discount and MUST
+   * be null for Availability. One tier per row.
+   * FOCUS 1.4 Contract Commitment Discount Percentage (MANDATORY column, nulls allowed).
+   *
+   * @generated from field: optional double contract_commitment_discount_percentage = 16;
+   */
+  contractCommitmentDiscountPercentage?: number;
+
+  /**
+   * ContractCommitmentDurationType: "[positive integer] [unit]", for example "3 Years".
+   * Units: Minute(s), Hour(s), Day(s), Week(s), Month(s), Quarter(s), Year(s).
+   * FOCUS 1.4 Contract Commitment Duration Type (MANDATORY).
+   *
+   * @generated from field: string contract_commitment_duration_type = 17;
+   */
+  contractCommitmentDurationType: string;
+
+  /**
+   * ContractCommitmentFulfillmentInterval: How often the commitment is fulfilled.
+   * FOCUS 1.4 Contract Commitment Fulfillment Interval (MANDATORY).
+   *
+   * @generated from field: finfocus.v1.FocusContractCommitmentFulfillmentInterval contract_commitment_fulfillment_interval = 18;
+   */
+  contractCommitmentFulfillmentInterval: FocusContractCommitmentFulfillmentInterval;
+
+  /**
+   * ContractCommitmentLastUpdated: When this record was last updated. Must be >= created.
+   * FOCUS 1.4 Contract Commitment Last Updated (MANDATORY).
+   *
+   * @generated from field: google.protobuf.Timestamp contract_commitment_last_updated = 19;
+   */
+  contractCommitmentLastUpdated?: Timestamp;
+
+  /**
+   * ContractCommitmentLifecycleStatus: Proposed through Superseded.
+   * FOCUS 1.4 Contract Commitment Lifecycle Status (MANDATORY).
+   *
+   * @generated from field: finfocus.v1.FocusContractCommitmentLifecycleStatus contract_commitment_lifecycle_status = 20;
+   */
+  contractCommitmentLifecycleStatus: FocusContractCommitmentLifecycleStatus;
+
+  /**
+   * ContractCommitmentModel: Continuous or Discontinuous.
+   * FOCUS 1.4 Contract Commitment Model (MANDATORY).
+   *
+   * @generated from field: finfocus.v1.FocusContractCommitmentModel contract_commitment_model = 21;
+   */
+  contractCommitmentModel: FocusContractCommitmentModel;
+
+  /**
+   * ContractCommitmentOfferCategory: Public or Negotiated.
+   * FOCUS 1.4 Contract Commitment Offer Category (MANDATORY).
+   *
+   * @generated from field: finfocus.v1.FocusContractCommitmentOfferCategory contract_commitment_offer_category = 22;
+   */
+  contractCommitmentOfferCategory: FocusContractCommitmentOfferCategory;
+
+  /**
+   * ContractCommitmentPaymentInterval: One-Time through Custom.
+   * FOCUS 1.4 Contract Commitment Payment Interval (MANDATORY).
+   *
+   * @generated from field: finfocus.v1.FocusContractCommitmentPaymentInterval contract_commitment_payment_interval = 23;
+   */
+  contractCommitmentPaymentInterval: FocusContractCommitmentPaymentInterval;
+
+  /**
+   * ContractCommitmentPaymentModel: No Upfront, Partial Upfront, or All Upfront.
+   * FOCUS 1.4 Contract Commitment Payment Model (MANDATORY).
+   *
+   * @generated from field: finfocus.v1.FocusContractCommitmentPaymentModel contract_commitment_payment_model = 24;
+   */
+  contractCommitmentPaymentModel: FocusContractCommitmentPaymentModel;
+
+  /**
+   * ContractCommitmentPaymentUpfrontPercentage: Fraction of the commitment paid upfront.
+   * Unset means null, which differs from 0. 0 for No Upfront, 1 for All Upfront,
+   * and strictly between 0 and 1 for Partial Upfront.
+   * FOCUS 1.4 Contract Commitment Payment Upfront Percentage (CONDITIONAL).
+   *
+   * @generated from field: optional double contract_commitment_payment_upfront_percentage = 25;
+   */
+  contractCommitmentPaymentUpfrontPercentage?: number;
+
+  /**
+   * InvoiceIssuerName: The entity that issues invoices for this commitment.
+   * FOCUS 1.4 Invoice Issuer Name (MANDATORY).
+   *
+   * @generated from field: string invoice_issuer_name = 26;
+   */
+  invoiceIssuerName: string;
+
+  /**
+   * PricingCurrency: ISO 4217 code when pricing and billing currencies differ.
+   * Empty means the conditional column is absent.
+   * FOCUS 1.4 Pricing Currency (CONDITIONAL).
+   *
+   * @generated from field: string pricing_currency = 27;
+   */
+  pricingCurrency: string;
+
+  /**
+   * PricingCurrencyContractCommitmentCost: Commitment cost in PricingCurrency.
+   * Unset means null. MUST be set for SPEND when PricingCurrency is set.
+   * MAY be null for USAGE.
+   * FOCUS 1.4 Pricing Currency Contract Commitment Cost (CONDITIONAL).
+   *
+   * @generated from field: optional double pricing_currency_contract_commitment_cost = 28;
+   */
+  pricingCurrencyContractCommitmentCost?: number;
+
+  /**
+   * ServiceProviderName: The service provider offering the commitment.
+   * FOCUS 1.4 Service Provider Name (MANDATORY).
+   *
+   * @generated from field: string service_provider_name = 29;
+   */
+  serviceProviderName: string;
+
+  /**
+   * ContractCommitmentDescription: Human-readable terms. Empty means null.
+   * FOCUS 1.3 column that was missing from the original message (nulls allowed).
+   *
+   * @generated from field: string contract_commitment_description = 30;
+   */
+  contractCommitmentDescription: string;
 };
 
 /**
@@ -751,4 +909,323 @@ export enum FocusContractCommitmentCategory {
  */
 export const FocusContractCommitmentCategorySchema: GenEnum<FocusContractCommitmentCategory> = /*@__PURE__*/
   enumDesc(file_finfocus_v1_focus, 0);
+
+/**
+ * FocusContractCommitmentBenefitCategory is the FOCUS 1.4 benefit a commitment grants.
+ * Reference: FOCUS 1.4 Contract Commitment Benefit Category.
+ *
+ * @generated from enum finfocus.v1.FocusContractCommitmentBenefitCategory
+ */
+export enum FocusContractCommitmentBenefitCategory {
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * A price reduction. DiscountPercentage MUST be set.
+   *
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_DISCOUNT = 1;
+   */
+  DISCOUNT = 1,
+
+  /**
+   * A right to a product or service.
+   *
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_ENTITLEMENT = 2;
+   */
+  ENTITLEMENT = 2,
+
+  /**
+   * Reserved capacity. DiscountPercentage MUST be null.
+   *
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_AVAILABILITY = 3;
+   */
+  AVAILABILITY = 3,
+
+  /**
+   * A benefit outside the three named categories.
+   *
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_OTHER = 4;
+   */
+  OTHER = 4,
+}
+
+/**
+ * Describes the enum finfocus.v1.FocusContractCommitmentBenefitCategory.
+ */
+export const FocusContractCommitmentBenefitCategorySchema: GenEnum<FocusContractCommitmentBenefitCategory> = /*@__PURE__*/
+  enumDesc(file_finfocus_v1_focus, 1);
+
+/**
+ * FocusContractCommitmentFulfillmentInterval is how often a commitment is fulfilled.
+ * Reference: FOCUS 1.4 Contract Commitment Fulfillment Interval.
+ *
+ * @generated from enum finfocus.v1.FocusContractCommitmentFulfillmentInterval
+ */
+export enum FocusContractCommitmentFulfillmentInterval {
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_HOURLY = 1;
+   */
+  HOURLY = 1,
+
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_DAILY = 2;
+   */
+  DAILY = 2,
+
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_WEEKLY = 3;
+   */
+  WEEKLY = 3,
+
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_MONTHLY = 4;
+   */
+  MONTHLY = 4,
+
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_QUARTERLY = 5;
+   */
+  QUARTERLY = 5,
+
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_SEMI_ANNUAL = 6;
+   */
+  SEMI_ANNUAL = 6,
+
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_ANNUAL = 7;
+   */
+  ANNUAL = 7,
+
+  /**
+   * Not valid when the model is Continuous.
+   *
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_FULL_PERIOD = 8;
+   */
+  FULL_PERIOD = 8,
+
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_TRANSACTIONAL = 9;
+   */
+  TRANSACTIONAL = 9,
+
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_CUSTOM = 10;
+   */
+  CUSTOM = 10,
+}
+
+/**
+ * Describes the enum finfocus.v1.FocusContractCommitmentFulfillmentInterval.
+ */
+export const FocusContractCommitmentFulfillmentIntervalSchema: GenEnum<FocusContractCommitmentFulfillmentInterval> = /*@__PURE__*/
+  enumDesc(file_finfocus_v1_focus, 2);
+
+/**
+ * FocusContractCommitmentLifecycleStatus is the FOCUS 1.4 lifecycle of one commitment row.
+ * Cross-row transitions (Superseded chains, one-way status changes) are not checked here.
+ *
+ * @generated from enum finfocus.v1.FocusContractCommitmentLifecycleStatus
+ */
+export enum FocusContractCommitmentLifecycleStatus {
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_PROPOSED = 1;
+   */
+  PROPOSED = 1,
+
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_PENDING = 2;
+   */
+  PENDING = 2,
+
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_ACTIVE = 3;
+   */
+  ACTIVE = 3,
+
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_EXHAUSTED = 4;
+   */
+  EXHAUSTED = 4,
+
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_EXPIRED = 5;
+   */
+  EXPIRED = 5,
+
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_CANCELED = 6;
+   */
+  CANCELED = 6,
+
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_SUPERSEDED = 7;
+   */
+  SUPERSEDED = 7,
+}
+
+/**
+ * Describes the enum finfocus.v1.FocusContractCommitmentLifecycleStatus.
+ */
+export const FocusContractCommitmentLifecycleStatusSchema: GenEnum<FocusContractCommitmentLifecycleStatus> = /*@__PURE__*/
+  enumDesc(file_finfocus_v1_focus, 3);
+
+/**
+ * FocusContractCommitmentModel is whether fulfillment is continuous or discontinuous.
+ *
+ * @generated from enum finfocus.v1.FocusContractCommitmentModel
+ */
+export enum FocusContractCommitmentModel {
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_MODEL_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_MODEL_CONTINUOUS = 1;
+   */
+  CONTINUOUS = 1,
+
+  /**
+   * Required when the fulfillment interval is Full Period.
+   *
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_MODEL_DISCONTINUOUS = 2;
+   */
+  DISCONTINUOUS = 2,
+}
+
+/**
+ * Describes the enum finfocus.v1.FocusContractCommitmentModel.
+ */
+export const FocusContractCommitmentModelSchema: GenEnum<FocusContractCommitmentModel> = /*@__PURE__*/
+  enumDesc(file_finfocus_v1_focus, 4);
+
+/**
+ * FocusContractCommitmentOfferCategory is whether the offer is public or negotiated.
+ *
+ * @generated from enum finfocus.v1.FocusContractCommitmentOfferCategory
+ */
+export enum FocusContractCommitmentOfferCategory {
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_OFFER_CATEGORY_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_OFFER_CATEGORY_PUBLIC = 1;
+   */
+  PUBLIC = 1,
+
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_OFFER_CATEGORY_NEGOTIATED = 2;
+   */
+  NEGOTIATED = 2,
+}
+
+/**
+ * Describes the enum finfocus.v1.FocusContractCommitmentOfferCategory.
+ */
+export const FocusContractCommitmentOfferCategorySchema: GenEnum<FocusContractCommitmentOfferCategory> = /*@__PURE__*/
+  enumDesc(file_finfocus_v1_focus, 5);
+
+/**
+ * FocusContractCommitmentPaymentInterval is how often the customer pays.
+ *
+ * @generated from enum finfocus.v1.FocusContractCommitmentPaymentInterval
+ */
+export enum FocusContractCommitmentPaymentInterval {
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * Required when the payment model is All Upfront.
+   *
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_ONE_TIME = 1;
+   */
+  ONE_TIME = 1,
+
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_MONTHLY = 2;
+   */
+  MONTHLY = 2,
+
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_QUARTERLY = 3;
+   */
+  QUARTERLY = 3,
+
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_SEMI_ANNUAL = 4;
+   */
+  SEMI_ANNUAL = 4,
+
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_ANNUAL = 5;
+   */
+  ANNUAL = 5,
+
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_CUSTOM = 6;
+   */
+  CUSTOM = 6,
+}
+
+/**
+ * Describes the enum finfocus.v1.FocusContractCommitmentPaymentInterval.
+ */
+export const FocusContractCommitmentPaymentIntervalSchema: GenEnum<FocusContractCommitmentPaymentInterval> = /*@__PURE__*/
+  enumDesc(file_finfocus_v1_focus, 6);
+
+/**
+ * FocusContractCommitmentPaymentModel is how much of the commitment is paid upfront.
+ *
+ * @generated from enum finfocus.v1.FocusContractCommitmentPaymentModel
+ */
+export enum FocusContractCommitmentPaymentModel {
+  /**
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * PaymentUpfrontPercentage MUST be 0.
+   *
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_NO_UPFRONT = 1;
+   */
+  NO_UPFRONT = 1,
+
+  /**
+   * PaymentUpfrontPercentage MUST be strictly between 0 and 1.
+   *
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_PARTIAL_UPFRONT = 2;
+   */
+  PARTIAL_UPFRONT = 2,
+
+  /**
+   * PaymentUpfrontPercentage MUST be 1, and the interval MUST be One-Time.
+   *
+   * @generated from enum value: FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_ALL_UPFRONT = 3;
+   */
+  ALL_UPFRONT = 3,
+}
+
+/**
+ * Describes the enum finfocus.v1.FocusContractCommitmentPaymentModel.
+ */
+export const FocusContractCommitmentPaymentModelSchema: GenEnum<FocusContractCommitmentPaymentModel> = /*@__PURE__*/
+  enumDesc(file_finfocus_v1_focus, 7);
 
