@@ -187,6 +187,298 @@ func (x *GetContractCommitmentsResponse) GetTotalCount() int32 {
 	return 0
 }
 
+// GetBillingPeriodsRequest selects billing periods by time window and page.
+// The window rules match GetContractCommitmentsRequest: both bounds or
+// neither, half-open [start, end), page_size 0 means 50, above 1000 clamps,
+// negative is INVALID_ARGUMENT, and page_token is opaque.
+type GetBillingPeriodsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Start of the window (inclusive). Leave both start and end unset to
+	// request every billing period; setting exactly one is INVALID_ARGUMENT.
+	Start *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=start,proto3" json:"start,omitempty"`
+	// End of the window (exclusive). Must be after start.
+	End *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=end,proto3" json:"end,omitempty"`
+	// Maximum number of billing periods to return. 0 means the default of 50;
+	// values above 1000 are served as 1000; negative values are
+	// INVALID_ARGUMENT.
+	PageSize int32 `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// Continuation token from a previous response's next_page_token; empty for
+	// the first page. OPAQUE.
+	PageToken     string `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetBillingPeriodsRequest) Reset() {
+	*x = GetBillingPeriodsRequest{}
+	mi := &file_finfocus_v1_supplemental_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetBillingPeriodsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetBillingPeriodsRequest) ProtoMessage() {}
+
+func (x *GetBillingPeriodsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_finfocus_v1_supplemental_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetBillingPeriodsRequest.ProtoReflect.Descriptor instead.
+func (*GetBillingPeriodsRequest) Descriptor() ([]byte, []int) {
+	return file_finfocus_v1_supplemental_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *GetBillingPeriodsRequest) GetStart() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Start
+	}
+	return nil
+}
+
+func (x *GetBillingPeriodsRequest) GetEnd() *timestamppb.Timestamp {
+	if x != nil {
+		return x.End
+	}
+	return nil
+}
+
+func (x *GetBillingPeriodsRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *GetBillingPeriodsRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
+// GetBillingPeriodsResponse carries one page of billing periods.
+type GetBillingPeriodsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Billing periods on this page, in an order that is stable across calls.
+	// Each record passes the BillingPeriod rules, overlaps the window, and the
+	// pair (invoice_issuer_name, billing_period_start) is unique within the
+	// response and across the pages of one walk.
+	BillingPeriods []*BillingPeriod `protobuf:"bytes,1,rep,name=billing_periods,json=billingPeriods,proto3" json:"billing_periods,omitempty"`
+	// Token for the next page; empty on the last page. OPAQUE.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	// Exact number of billing periods matching the window across all pages.
+	TotalCount    int32 `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetBillingPeriodsResponse) Reset() {
+	*x = GetBillingPeriodsResponse{}
+	mi := &file_finfocus_v1_supplemental_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetBillingPeriodsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetBillingPeriodsResponse) ProtoMessage() {}
+
+func (x *GetBillingPeriodsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_finfocus_v1_supplemental_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetBillingPeriodsResponse.ProtoReflect.Descriptor instead.
+func (*GetBillingPeriodsResponse) Descriptor() ([]byte, []int) {
+	return file_finfocus_v1_supplemental_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GetBillingPeriodsResponse) GetBillingPeriods() []*BillingPeriod {
+	if x != nil {
+		return x.BillingPeriods
+	}
+	return nil
+}
+
+func (x *GetBillingPeriodsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+func (x *GetBillingPeriodsResponse) GetTotalCount() int32 {
+	if x != nil {
+		return x.TotalCount
+	}
+	return 0
+}
+
+// GetInvoiceDetailsRequest selects invoice lines by time window and page.
+// The window rules match GetBillingPeriodsRequest.
+type GetInvoiceDetailsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Start of the window (inclusive). Leave both start and end unset to
+	// request every invoice line; setting exactly one is INVALID_ARGUMENT.
+	Start *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=start,proto3" json:"start,omitempty"`
+	// End of the window (exclusive). Must be after start.
+	End *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=end,proto3" json:"end,omitempty"`
+	// Maximum number of invoice lines to return. 0 means the default of 50;
+	// values above 1000 are served as 1000; negative values are
+	// INVALID_ARGUMENT.
+	PageSize int32 `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// Continuation token from a previous response's next_page_token; empty for
+	// the first page. OPAQUE.
+	PageToken     string `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetInvoiceDetailsRequest) Reset() {
+	*x = GetInvoiceDetailsRequest{}
+	mi := &file_finfocus_v1_supplemental_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetInvoiceDetailsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetInvoiceDetailsRequest) ProtoMessage() {}
+
+func (x *GetInvoiceDetailsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_finfocus_v1_supplemental_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetInvoiceDetailsRequest.ProtoReflect.Descriptor instead.
+func (*GetInvoiceDetailsRequest) Descriptor() ([]byte, []int) {
+	return file_finfocus_v1_supplemental_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *GetInvoiceDetailsRequest) GetStart() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Start
+	}
+	return nil
+}
+
+func (x *GetInvoiceDetailsRequest) GetEnd() *timestamppb.Timestamp {
+	if x != nil {
+		return x.End
+	}
+	return nil
+}
+
+func (x *GetInvoiceDetailsRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *GetInvoiceDetailsRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
+// GetInvoiceDetailsResponse carries one page of invoice lines.
+type GetInvoiceDetailsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Invoice lines on this page, in an order that is stable across calls.
+	// Each record passes the InvoiceDetail rules, its billing period overlaps
+	// the window, and invoice_detail_id is unique within the response and
+	// across the pages of one walk.
+	InvoiceDetails []*InvoiceDetail `protobuf:"bytes,1,rep,name=invoice_details,json=invoiceDetails,proto3" json:"invoice_details,omitempty"`
+	// Token for the next page; empty on the last page. OPAQUE.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	// Exact number of invoice lines matching the window across all pages.
+	TotalCount    int32 `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetInvoiceDetailsResponse) Reset() {
+	*x = GetInvoiceDetailsResponse{}
+	mi := &file_finfocus_v1_supplemental_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetInvoiceDetailsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetInvoiceDetailsResponse) ProtoMessage() {}
+
+func (x *GetInvoiceDetailsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_finfocus_v1_supplemental_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetInvoiceDetailsResponse.ProtoReflect.Descriptor instead.
+func (*GetInvoiceDetailsResponse) Descriptor() ([]byte, []int) {
+	return file_finfocus_v1_supplemental_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *GetInvoiceDetailsResponse) GetInvoiceDetails() []*InvoiceDetail {
+	if x != nil {
+		return x.InvoiceDetails
+	}
+	return nil
+}
+
+func (x *GetInvoiceDetailsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+func (x *GetInvoiceDetailsResponse) GetTotalCount() int32 {
+	if x != nil {
+		return x.TotalCount
+	}
+	return 0
+}
+
 var File_finfocus_v1_supplemental_proto protoreflect.FileDescriptor
 
 const file_finfocus_v1_supplemental_proto_rawDesc = "" +
@@ -202,9 +494,33 @@ const file_finfocus_v1_supplemental_proto_rawDesc = "" +
 	"\vcommitments\x18\x01 \x03(\v2\x1f.finfocus.v1.ContractCommitmentR\vcommitments\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
 	"\vtotal_count\x18\x03 \x01(\x05R\n" +
-	"totalCount2\x8f\x01\n" +
+	"totalCount\"\xb6\x01\n" +
+	"\x18GetBillingPeriodsRequest\x120\n" +
+	"\x05start\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x05start\x12,\n" +
+	"\x03end\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x03end\x12\x1b\n" +
+	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x04 \x01(\tR\tpageToken\"\xa9\x01\n" +
+	"\x19GetBillingPeriodsResponse\x12C\n" +
+	"\x0fbilling_periods\x18\x01 \x03(\v2\x1a.finfocus.v1.BillingPeriodR\x0ebillingPeriods\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
+	"\vtotal_count\x18\x03 \x01(\x05R\n" +
+	"totalCount\"\xb6\x01\n" +
+	"\x18GetInvoiceDetailsRequest\x120\n" +
+	"\x05start\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x05start\x12,\n" +
+	"\x03end\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x03end\x12\x1b\n" +
+	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x04 \x01(\tR\tpageToken\"\xa9\x01\n" +
+	"\x19GetInvoiceDetailsResponse\x12C\n" +
+	"\x0finvoice_details\x18\x01 \x03(\v2\x1a.finfocus.v1.InvoiceDetailR\x0einvoiceDetails\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
+	"\vtotal_count\x18\x03 \x01(\x05R\n" +
+	"totalCount2\xd7\x02\n" +
 	"\x1aSupplementalDatasetService\x12q\n" +
-	"\x16GetContractCommitments\x12*.finfocus.v1.GetContractCommitmentsRequest\x1a+.finfocus.v1.GetContractCommitmentsResponseB\xaf\x01\n" +
+	"\x16GetContractCommitments\x12*.finfocus.v1.GetContractCommitmentsRequest\x1a+.finfocus.v1.GetContractCommitmentsResponse\x12b\n" +
+	"\x11GetBillingPeriods\x12%.finfocus.v1.GetBillingPeriodsRequest\x1a&.finfocus.v1.GetBillingPeriodsResponse\x12b\n" +
+	"\x11GetInvoiceDetails\x12%.finfocus.v1.GetInvoiceDetailsRequest\x1a&.finfocus.v1.GetInvoiceDetailsResponseB\xaf\x01\n" +
 	"\x0fcom.finfocus.v1B\x11SupplementalProtoP\x01Z<github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1;pbc\xa2\x02\x03FXX\xaa\x02\vFinfocus.V1\xca\x02\vFinfocus\\V1\xe2\x02\x17Finfocus\\V1\\GPBMetadata\xea\x02\fFinfocus::V1b\x06proto3"
 
 var (
@@ -219,24 +535,40 @@ func file_finfocus_v1_supplemental_proto_rawDescGZIP() []byte {
 	return file_finfocus_v1_supplemental_proto_rawDescData
 }
 
-var file_finfocus_v1_supplemental_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_finfocus_v1_supplemental_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_finfocus_v1_supplemental_proto_goTypes = []any{
 	(*GetContractCommitmentsRequest)(nil),  // 0: finfocus.v1.GetContractCommitmentsRequest
 	(*GetContractCommitmentsResponse)(nil), // 1: finfocus.v1.GetContractCommitmentsResponse
-	(*timestamppb.Timestamp)(nil),          // 2: google.protobuf.Timestamp
-	(*ContractCommitment)(nil),             // 3: finfocus.v1.ContractCommitment
+	(*GetBillingPeriodsRequest)(nil),       // 2: finfocus.v1.GetBillingPeriodsRequest
+	(*GetBillingPeriodsResponse)(nil),      // 3: finfocus.v1.GetBillingPeriodsResponse
+	(*GetInvoiceDetailsRequest)(nil),       // 4: finfocus.v1.GetInvoiceDetailsRequest
+	(*GetInvoiceDetailsResponse)(nil),      // 5: finfocus.v1.GetInvoiceDetailsResponse
+	(*timestamppb.Timestamp)(nil),          // 6: google.protobuf.Timestamp
+	(*ContractCommitment)(nil),             // 7: finfocus.v1.ContractCommitment
+	(*BillingPeriod)(nil),                  // 8: finfocus.v1.BillingPeriod
+	(*InvoiceDetail)(nil),                  // 9: finfocus.v1.InvoiceDetail
 }
 var file_finfocus_v1_supplemental_proto_depIdxs = []int32{
-	2, // 0: finfocus.v1.GetContractCommitmentsRequest.start:type_name -> google.protobuf.Timestamp
-	2, // 1: finfocus.v1.GetContractCommitmentsRequest.end:type_name -> google.protobuf.Timestamp
-	3, // 2: finfocus.v1.GetContractCommitmentsResponse.commitments:type_name -> finfocus.v1.ContractCommitment
-	0, // 3: finfocus.v1.SupplementalDatasetService.GetContractCommitments:input_type -> finfocus.v1.GetContractCommitmentsRequest
-	1, // 4: finfocus.v1.SupplementalDatasetService.GetContractCommitments:output_type -> finfocus.v1.GetContractCommitmentsResponse
-	4, // [4:5] is the sub-list for method output_type
-	3, // [3:4] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	6,  // 0: finfocus.v1.GetContractCommitmentsRequest.start:type_name -> google.protobuf.Timestamp
+	6,  // 1: finfocus.v1.GetContractCommitmentsRequest.end:type_name -> google.protobuf.Timestamp
+	7,  // 2: finfocus.v1.GetContractCommitmentsResponse.commitments:type_name -> finfocus.v1.ContractCommitment
+	6,  // 3: finfocus.v1.GetBillingPeriodsRequest.start:type_name -> google.protobuf.Timestamp
+	6,  // 4: finfocus.v1.GetBillingPeriodsRequest.end:type_name -> google.protobuf.Timestamp
+	8,  // 5: finfocus.v1.GetBillingPeriodsResponse.billing_periods:type_name -> finfocus.v1.BillingPeriod
+	6,  // 6: finfocus.v1.GetInvoiceDetailsRequest.start:type_name -> google.protobuf.Timestamp
+	6,  // 7: finfocus.v1.GetInvoiceDetailsRequest.end:type_name -> google.protobuf.Timestamp
+	9,  // 8: finfocus.v1.GetInvoiceDetailsResponse.invoice_details:type_name -> finfocus.v1.InvoiceDetail
+	0,  // 9: finfocus.v1.SupplementalDatasetService.GetContractCommitments:input_type -> finfocus.v1.GetContractCommitmentsRequest
+	2,  // 10: finfocus.v1.SupplementalDatasetService.GetBillingPeriods:input_type -> finfocus.v1.GetBillingPeriodsRequest
+	4,  // 11: finfocus.v1.SupplementalDatasetService.GetInvoiceDetails:input_type -> finfocus.v1.GetInvoiceDetailsRequest
+	1,  // 12: finfocus.v1.SupplementalDatasetService.GetContractCommitments:output_type -> finfocus.v1.GetContractCommitmentsResponse
+	3,  // 13: finfocus.v1.SupplementalDatasetService.GetBillingPeriods:output_type -> finfocus.v1.GetBillingPeriodsResponse
+	5,  // 14: finfocus.v1.SupplementalDatasetService.GetInvoiceDetails:output_type -> finfocus.v1.GetInvoiceDetailsResponse
+	12, // [12:15] is the sub-list for method output_type
+	9,  // [9:12] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_finfocus_v1_supplemental_proto_init() }
@@ -251,7 +583,7 @@ func file_finfocus_v1_supplemental_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_finfocus_v1_supplemental_proto_rawDesc), len(file_finfocus_v1_supplemental_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

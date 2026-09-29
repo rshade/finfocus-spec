@@ -193,6 +193,9 @@ enum PluginCapability {
   PLUGIN_CAPABILITY_ALLOCATION = 15;
   // Plugin implements SupplementalDatasetService.GetContractCommitments.
   PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS = 16;
+  // Plugin implements SupplementalDatasetService.GetBillingPeriods and
+  // GetInvoiceDetails. The two datasets join, so one capability covers both.
+  PLUGIN_CAPABILITY_INVOICE_DATA = 17;
 }
 
 // UsageProfile represents the intended workload context for cost estimation.

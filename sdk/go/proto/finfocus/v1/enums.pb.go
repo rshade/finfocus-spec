@@ -720,6 +720,9 @@ const (
 	PluginCapability_PLUGIN_CAPABILITY_ALLOCATION PluginCapability = 15
 	// Plugin implements SupplementalDatasetService.GetContractCommitments.
 	PluginCapability_PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS PluginCapability = 16
+	// Plugin implements SupplementalDatasetService.GetBillingPeriods and
+	// GetInvoiceDetails. The two datasets join, so one capability covers both.
+	PluginCapability_PLUGIN_CAPABILITY_INVOICE_DATA PluginCapability = 17
 )
 
 // Enum value maps for PluginCapability.
@@ -742,6 +745,7 @@ var (
 		14: "PLUGIN_CAPABILITY_USAGE_STATS",
 		15: "PLUGIN_CAPABILITY_ALLOCATION",
 		16: "PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS",
+		17: "PLUGIN_CAPABILITY_INVOICE_DATA",
 	}
 	PluginCapability_value = map[string]int32{
 		"PLUGIN_CAPABILITY_UNSPECIFIED":             0,
@@ -761,6 +765,7 @@ var (
 		"PLUGIN_CAPABILITY_USAGE_STATS":             14,
 		"PLUGIN_CAPABILITY_ALLOCATION":              15,
 		"PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS":    16,
+		"PLUGIN_CAPABILITY_INVOICE_DATA":            17,
 	}
 )
 
@@ -1163,7 +1168,7 @@ const file_finfocus_v1_enums_proto_rawDesc = "" +
 	"'RECOMMENDATION_REASON_UNDER_PROVISIONED\x10\x02\x12\x1e\n" +
 	"\x1aRECOMMENDATION_REASON_IDLE\x10\x03\x12#\n" +
 	"\x1fRECOMMENDATION_REASON_REDUNDANT\x10\x04\x12-\n" +
-	")RECOMMENDATION_REASON_OBSOLETE_GENERATION\x10\x05*\xf7\x04\n" +
+	")RECOMMENDATION_REASON_OBSOLETE_GENERATION\x10\x05*\x9b\x05\n" +
 	"\x10PluginCapability\x12!\n" +
 	"\x1dPLUGIN_CAPABILITY_UNSPECIFIED\x10\x00\x12%\n" +
 	"!PLUGIN_CAPABILITY_PROJECTED_COSTS\x10\x01\x12\"\n" +
@@ -1182,7 +1187,8 @@ const file_finfocus_v1_enums_proto_rawDesc = "" +
 	"(PLUGIN_CAPABILITY_RESOLVE_RESOURCE_TYPES\x10\r\x12!\n" +
 	"\x1dPLUGIN_CAPABILITY_USAGE_STATS\x10\x0e\x12 \n" +
 	"\x1cPLUGIN_CAPABILITY_ALLOCATION\x10\x0f\x12*\n" +
-	"&PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS\x10\x10*u\n" +
+	"&PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS\x10\x10\x12\"\n" +
+	"\x1ePLUGIN_CAPABILITY_INVOICE_DATA\x10\x11*u\n" +
 	"\fUsageProfile\x12\x1d\n" +
 	"\x19USAGE_PROFILE_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12USAGE_PROFILE_PROD\x10\x01\x12\x15\n" +

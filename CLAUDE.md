@@ -943,7 +943,7 @@ parallel subtests complete.
 - `BillingPeriod` (fields 1-6) and `InvoiceDetail` (fields 1-23) live in `focus.proto`. Two enums:
   `FocusBillingPeriodStatus` (OPEN, CLOSED) and `FocusInvoiceIssueStatus` (OPEN, ISSUED, VOIDED).
   Charge category reuses `FocusChargeCategory`. REFUND and UNSPECIFIED fail invoice validation.
-- No RPC, capability, or `SupplementalDatasetService` method. Delivery is a later phase.
+- Issue 546 added the messages, builders, and per-record validators only. The RPCs are spec 547.
 - `payment_currency_billed_cost` is the only `optional double`. Presence is a non-nil pointer.
   Zero is present (`proto.Float64`); nil is absent. The currency and that cost are all-or-nothing.
   The lineage id is separate: when it is set and the cost is non-zero, it must equal
@@ -968,15 +968,36 @@ parallel subtests complete.
   the git object; `git archive origin/main` into a scratch directory and run `buf breaking`
   against that directory.
 
+### Invoice Dataset RPC Pattern (547-invoice-dataset-rpcs)
+
+- `GetBillingPeriods` and `GetInvoiceDetails` are on the existing `SupplementalDatasetService`.
+  One provider, `InvoiceDatasetProvider`, implements both. `PLUGIN_CAPABILITY_INVOICE_DATA = 17`,
+  legacy `supports_invoice_data`. `Serve` registers the service when `ContractCommitmentProvider`
+  or `InvoiceDatasetProvider` is present and lists it once in the Connect health checker. The RPC
+  whose provider is nil returns `codes.Unimplemented` on gRPC and Connect (`toConnectError`), with
+  no `rpc error:` prefix. The other RPC still serves.
+- Request, page, and token rules are shared with commitments through `validateDatasetRequest` and
+  `paginateRecords` in `sdk/go/testing/supplemental.go`. Billing-period overlap uses
+  `timestampBefore` / `timestampAfter` (seconds, then nanos). A period that ends exactly at the
+  window start does not match. A token past the match count is an empty page; a token that does
+  not decode to a non-negative offset is `InvalidArgument`. Uniqueness is
+  `(invoice_issuer_name, billing_period_start)` for periods (seconds and nanos; a different end is
+  still a duplicate) and `invoice_detail_id` for lines. Response validators stay 0 allocs up to 64
+  records. The missing-provider message is `method <RpcName> not implemented`.
+  `WithCapabilities` replaces discovery only.
+- `MockInvoiceDatasetSource` is a separate type, so `MockPlugin` capabilities do not change.
+  `RunInvoiceDatasetConformance` covers both RPCs over bufconn. The TypeScript client methods are
+  `getBillingPeriods` / `billingPeriods` and `getInvoiceDetails` / `invoiceDetails`.
+- Do not add Correction Handling or Delivery Handling fields. Do not change `GetContractCommitments`
+  request or response fields. Do not add a second service.
+
 ### Supplemental Dataset Pattern (544-supplemental-contract-commitments)
 
-- `SupplementalDatasetService` (`supplemental.proto`) serves FOCUS supplemental datasets; stage A has
-  only `GetContractCommitments` over the existing `ContractCommitment` (focus.proto untouched).
-  Each dataset gets its own provider interface and capability (`ContractCommitmentProvider` →
-  `PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS = 16`, `supports_contract_commitments`). Issue 543 adds
-  the BillingPeriod and InvoiceDetail messages only. A later delivery phase would add invoice RPCs
-  on this service: the adapters must then return `Unimplemented` for a provider the plugin lacks,
-  and the service registers when either provider exists.
+- `SupplementalDatasetService` (`supplemental.proto`) serves FOCUS supplemental datasets.
+  `ContractCommitmentProvider` maps to `PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS = 16`
+  (`supports_contract_commitments`). Invoice RPCs share that service (see 547). The combined
+  adapter returns `Unimplemented` for a provider the plugin lacks, and the service registers when
+  either provider exists.
 - `optionalServices` now has `registerConnect` and `healthServiceNames` (added to keep
   `serveConnect` under funlen); add the next optional service there, not inline.
 - Rules live in `sdk/go/testing/supplemental.go`; `pluginsdk/supplemental.go` delegates, and
@@ -995,6 +1016,12 @@ parallel subtests complete.
   proto buf.yaml` into a scratch dir and run `buf breaking --against <dir>` instead.
 
 ## Active Technologies
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
+  google.golang.org/protobuf, google.golang.org/grpc, connectrpc.com/connect,
+  buf v1.32.1; no new dependencies (547-invoice-dataset-rpcs)
+- N/A (paged RPCs over the existing BillingPeriod and InvoiceDetail messages)
+  (547-invoice-dataset-rpcs)
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
   google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1; stdlib only
@@ -1139,6 +1166,11 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+
+- 547-invoice-dataset-rpcs: Added SupplementalDatasetService.GetBillingPeriods and
+  GetInvoiceDetails, PLUGIN_CAPABILITY_INVOICE_DATA = 17, pluginsdk.InvoiceDatasetProvider,
+  shared window and page helpers, MockInvoiceDatasetSource, RunInvoiceDatasetConformance,
+  and TypeScript iterators. Closes the FOCUS 1.4 delivery gap on issue 540.
 
 - 546-focus-14-billing-invoice: Added BillingPeriod and InvoiceDetail messages, status enums,
   pluginsdk builders, per-record validators, JSON-LD serializers, and TypeScript builders.

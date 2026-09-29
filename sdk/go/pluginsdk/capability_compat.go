@@ -13,7 +13,7 @@ const capabilityTrue = "true"
 // Exhaustive Nolint Rationale:
 // This map intentionally excludes PLUGIN_CAPABILITY_UNSPECIFIED (value 0) because
 // it is the protobuf default sentinel value, not a real capability. All other
-// PluginCapability values (1-16) MUST be included in this map.
+// PluginCapability values (1-17) MUST be included in this map.
 //
 // When adding new capabilities to the proto definition:
 // 1. Add a corresponding entry to this map with a "supports_" prefix
@@ -38,6 +38,7 @@ var legacyCapabilityNames = map[pbc.PluginCapability]string{
 	pbc.PluginCapability_PLUGIN_CAPABILITY_USAGE_STATS:             "supports_usage_stats",
 	pbc.PluginCapability_PLUGIN_CAPABILITY_ALLOCATION:              "supports_allocation",
 	pbc.PluginCapability_PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS:    "supports_contract_commitments",
+	pbc.PluginCapability_PLUGIN_CAPABILITY_INVOICE_DATA:            "supports_invoice_data",
 }
 
 // CapabilityToLegacyName converts a PluginCapability enum to its legacy string name.

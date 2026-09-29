@@ -22,9 +22,12 @@ import "finfocus/v1/focus.proto";
 
 // SupplementalDatasetService is implemented by plugins that deliver FOCUS
 // supplemental datasets: records that sit beside Cost and Usage rows and join
-// to them by key. Each dataset has its own RPC and its own plugin capability,
-// so a plugin serves only the datasets it has. Stage A defines Contract
-// Commitment (FOCUS 1.3); PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS advertises it.
+// to them by key. Each dataset has its own RPC. Contract Commitment
+// (FOCUS 1.3) is advertised by PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS.
+// Billing Period and Invoice Detail (FOCUS 1.4) join each other and are
+// advertised together by PLUGIN_CAPABILITY_INVOICE_DATA. A plugin may
+// implement either provider, or both. An RPC whose provider is absent
+// returns UNIMPLEMENTED.
 //
 // Every call returns the source's current view of the requested records
 // (FOCUS Replacement / Overwrite semantics): a host replaces what it holds for
@@ -40,6 +43,14 @@ service SupplementalDatasetService {
   // GetContractCommitments returns a page of FOCUS Contract Commitment records
   // whose period overlaps the requested window.
   rpc GetContractCommitments(GetContractCommitmentsRequest) returns (GetContractCommitmentsResponse);
+
+  // GetBillingPeriods returns a page of FOCUS Billing Period records whose
+  // period overlaps the requested window.
+  rpc GetBillingPeriods(GetBillingPeriodsRequest) returns (GetBillingPeriodsResponse);
+
+  // GetInvoiceDetails returns a page of FOCUS Invoice Detail records whose
+  // billing period overlaps the requested window.
+  rpc GetInvoiceDetails(GetInvoiceDetailsRequest) returns (GetInvoiceDetailsResponse);
 }
 
 // GetContractCommitmentsRequest selects commitments by time window and page.
@@ -81,5 +92,77 @@ message GetContractCommitmentsResponse {
 
   // Exact number of commitments matching the window across all pages; 0 only
   // when none match.
+  int32 total_count = 3;
+}
+
+// GetBillingPeriodsRequest selects billing periods by time window and page.
+// The window rules match GetContractCommitmentsRequest: both bounds or
+// neither, half-open [start, end), page_size 0 means 50, above 1000 clamps,
+// negative is INVALID_ARGUMENT, and page_token is opaque.
+message GetBillingPeriodsRequest {
+  // Start of the window (inclusive). Leave both start and end unset to
+  // request every billing period; setting exactly one is INVALID_ARGUMENT.
+  google.protobuf.Timestamp start = 1;
+
+  // End of the window (exclusive). Must be after start.
+  google.protobuf.Timestamp end = 2;
+
+  // Maximum number of billing periods to return. 0 means the default of 50;
+  // values above 1000 are served as 1000; negative values are
+  // INVALID_ARGUMENT.
+  int32 page_size = 3;
+
+  // Continuation token from a previous response's next_page_token; empty for
+  // the first page. OPAQUE.
+  string page_token = 4;
+}
+
+// GetBillingPeriodsResponse carries one page of billing periods.
+message GetBillingPeriodsResponse {
+  // Billing periods on this page, in an order that is stable across calls.
+  // Each record passes the BillingPeriod rules, overlaps the window, and the
+  // pair (invoice_issuer_name, billing_period_start) is unique within the
+  // response and across the pages of one walk.
+  repeated BillingPeriod billing_periods = 1;
+
+  // Token for the next page; empty on the last page. OPAQUE.
+  string next_page_token = 2;
+
+  // Exact number of billing periods matching the window across all pages.
+  int32 total_count = 3;
+}
+
+// GetInvoiceDetailsRequest selects invoice lines by time window and page.
+// The window rules match GetBillingPeriodsRequest.
+message GetInvoiceDetailsRequest {
+  // Start of the window (inclusive). Leave both start and end unset to
+  // request every invoice line; setting exactly one is INVALID_ARGUMENT.
+  google.protobuf.Timestamp start = 1;
+
+  // End of the window (exclusive). Must be after start.
+  google.protobuf.Timestamp end = 2;
+
+  // Maximum number of invoice lines to return. 0 means the default of 50;
+  // values above 1000 are served as 1000; negative values are
+  // INVALID_ARGUMENT.
+  int32 page_size = 3;
+
+  // Continuation token from a previous response's next_page_token; empty for
+  // the first page. OPAQUE.
+  string page_token = 4;
+}
+
+// GetInvoiceDetailsResponse carries one page of invoice lines.
+message GetInvoiceDetailsResponse {
+  // Invoice lines on this page, in an order that is stable across calls.
+  // Each record passes the InvoiceDetail rules, its billing period overlaps
+  // the window, and invoice_detail_id is unique within the response and
+  // across the pages of one walk.
+  repeated InvoiceDetail invoice_details = 1;
+
+  // Token for the next page; empty on the last page. OPAQUE.
+  string next_page_token = 2;
+
+  // Exact number of invoice lines matching the window across all pages.
   int32 total_count = 3;
 }

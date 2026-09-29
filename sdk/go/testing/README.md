@@ -485,6 +485,21 @@ check the source's own data for consistency (valid pages, no duplicates across p
 `total_count`, stable order, window matching) and that bad requests fail with InvalidArgument, so
 they pass for an empty source too.
 
+### Invoice Dataset Testing
+
+`GetBillingPeriods` and `GetInvoiceDetails` use the same window and page rules. Failures wrap
+`ErrInvalidBillingPeriodsRequest`, `ErrInvalidBillingPeriodsResponse`,
+`ErrInvalidInvoiceDetailsRequest`, or `ErrInvalidInvoiceDetailsResponse`.
+
+- `BillingPeriodMatchesWindow` and `InvoiceDetailMatchesWindow` compare the billing period to the
+  half-open window without allocating. A period that ends exactly at the window start does not match.
+- `ValidateGetBillingPeriodsResponse` requires a valid billing period and a unique
+  `(invoice_issuer_name, billing_period_start)` on the page.
+- `ValidateGetInvoiceDetailsResponse` requires a valid invoice line and a unique `invoice_detail_id`.
+- `MockInvoiceDatasetSource` serves both datasets. It is not a `MockPlugin` method.
+- `RunInvoiceDatasetConformance` serves the provider over bufconn and runs the commitment scenarios
+  for each RPC.
+
 ### FOCUS Record Validation (Contextual FinOps)
 
 The `pluginsdk` package provides comprehensive FOCUS 1.2/1.3 validation for cost records:

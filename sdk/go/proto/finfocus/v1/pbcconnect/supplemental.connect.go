@@ -50,6 +50,12 @@ const (
 	// SupplementalDatasetServiceGetContractCommitmentsProcedure is the fully-qualified name of the
 	// SupplementalDatasetService's GetContractCommitments RPC.
 	SupplementalDatasetServiceGetContractCommitmentsProcedure = "/finfocus.v1.SupplementalDatasetService/GetContractCommitments"
+	// SupplementalDatasetServiceGetBillingPeriodsProcedure is the fully-qualified name of the
+	// SupplementalDatasetService's GetBillingPeriods RPC.
+	SupplementalDatasetServiceGetBillingPeriodsProcedure = "/finfocus.v1.SupplementalDatasetService/GetBillingPeriods"
+	// SupplementalDatasetServiceGetInvoiceDetailsProcedure is the fully-qualified name of the
+	// SupplementalDatasetService's GetInvoiceDetails RPC.
+	SupplementalDatasetServiceGetInvoiceDetailsProcedure = "/finfocus.v1.SupplementalDatasetService/GetInvoiceDetails"
 )
 
 // SupplementalDatasetServiceClient is a client for the finfocus.v1.SupplementalDatasetService
@@ -58,6 +64,12 @@ type SupplementalDatasetServiceClient interface {
 	// GetContractCommitments returns a page of FOCUS Contract Commitment records
 	// whose period overlaps the requested window.
 	GetContractCommitments(context.Context, *connect.Request[v1.GetContractCommitmentsRequest]) (*connect.Response[v1.GetContractCommitmentsResponse], error)
+	// GetBillingPeriods returns a page of FOCUS Billing Period records whose
+	// period overlaps the requested window.
+	GetBillingPeriods(context.Context, *connect.Request[v1.GetBillingPeriodsRequest]) (*connect.Response[v1.GetBillingPeriodsResponse], error)
+	// GetInvoiceDetails returns a page of FOCUS Invoice Detail records whose
+	// billing period overlaps the requested window.
+	GetInvoiceDetails(context.Context, *connect.Request[v1.GetInvoiceDetailsRequest]) (*connect.Response[v1.GetInvoiceDetailsResponse], error)
 }
 
 // NewSupplementalDatasetServiceClient constructs a client for the
@@ -77,17 +89,41 @@ func NewSupplementalDatasetServiceClient(httpClient connect.HTTPClient, baseURL 
 			connect.WithSchema(supplementalDatasetServiceMethods.ByName("GetContractCommitments")),
 			connect.WithClientOptions(opts...),
 		),
+		getBillingPeriods: connect.NewClient[v1.GetBillingPeriodsRequest, v1.GetBillingPeriodsResponse](
+			httpClient,
+			baseURL+SupplementalDatasetServiceGetBillingPeriodsProcedure,
+			connect.WithSchema(supplementalDatasetServiceMethods.ByName("GetBillingPeriods")),
+			connect.WithClientOptions(opts...),
+		),
+		getInvoiceDetails: connect.NewClient[v1.GetInvoiceDetailsRequest, v1.GetInvoiceDetailsResponse](
+			httpClient,
+			baseURL+SupplementalDatasetServiceGetInvoiceDetailsProcedure,
+			connect.WithSchema(supplementalDatasetServiceMethods.ByName("GetInvoiceDetails")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // supplementalDatasetServiceClient implements SupplementalDatasetServiceClient.
 type supplementalDatasetServiceClient struct {
 	getContractCommitments *connect.Client[v1.GetContractCommitmentsRequest, v1.GetContractCommitmentsResponse]
+	getBillingPeriods      *connect.Client[v1.GetBillingPeriodsRequest, v1.GetBillingPeriodsResponse]
+	getInvoiceDetails      *connect.Client[v1.GetInvoiceDetailsRequest, v1.GetInvoiceDetailsResponse]
 }
 
 // GetContractCommitments calls finfocus.v1.SupplementalDatasetService.GetContractCommitments.
 func (c *supplementalDatasetServiceClient) GetContractCommitments(ctx context.Context, req *connect.Request[v1.GetContractCommitmentsRequest]) (*connect.Response[v1.GetContractCommitmentsResponse], error) {
 	return c.getContractCommitments.CallUnary(ctx, req)
+}
+
+// GetBillingPeriods calls finfocus.v1.SupplementalDatasetService.GetBillingPeriods.
+func (c *supplementalDatasetServiceClient) GetBillingPeriods(ctx context.Context, req *connect.Request[v1.GetBillingPeriodsRequest]) (*connect.Response[v1.GetBillingPeriodsResponse], error) {
+	return c.getBillingPeriods.CallUnary(ctx, req)
+}
+
+// GetInvoiceDetails calls finfocus.v1.SupplementalDatasetService.GetInvoiceDetails.
+func (c *supplementalDatasetServiceClient) GetInvoiceDetails(ctx context.Context, req *connect.Request[v1.GetInvoiceDetailsRequest]) (*connect.Response[v1.GetInvoiceDetailsResponse], error) {
+	return c.getInvoiceDetails.CallUnary(ctx, req)
 }
 
 // SupplementalDatasetServiceHandler is an implementation of the
@@ -96,6 +132,12 @@ type SupplementalDatasetServiceHandler interface {
 	// GetContractCommitments returns a page of FOCUS Contract Commitment records
 	// whose period overlaps the requested window.
 	GetContractCommitments(context.Context, *connect.Request[v1.GetContractCommitmentsRequest]) (*connect.Response[v1.GetContractCommitmentsResponse], error)
+	// GetBillingPeriods returns a page of FOCUS Billing Period records whose
+	// period overlaps the requested window.
+	GetBillingPeriods(context.Context, *connect.Request[v1.GetBillingPeriodsRequest]) (*connect.Response[v1.GetBillingPeriodsResponse], error)
+	// GetInvoiceDetails returns a page of FOCUS Invoice Detail records whose
+	// billing period overlaps the requested window.
+	GetInvoiceDetails(context.Context, *connect.Request[v1.GetInvoiceDetailsRequest]) (*connect.Response[v1.GetInvoiceDetailsResponse], error)
 }
 
 // NewSupplementalDatasetServiceHandler builds an HTTP handler from the service implementation. It
@@ -111,10 +153,26 @@ func NewSupplementalDatasetServiceHandler(svc SupplementalDatasetServiceHandler,
 		connect.WithSchema(supplementalDatasetServiceMethods.ByName("GetContractCommitments")),
 		connect.WithHandlerOptions(opts...),
 	)
+	supplementalDatasetServiceGetBillingPeriodsHandler := connect.NewUnaryHandler(
+		SupplementalDatasetServiceGetBillingPeriodsProcedure,
+		svc.GetBillingPeriods,
+		connect.WithSchema(supplementalDatasetServiceMethods.ByName("GetBillingPeriods")),
+		connect.WithHandlerOptions(opts...),
+	)
+	supplementalDatasetServiceGetInvoiceDetailsHandler := connect.NewUnaryHandler(
+		SupplementalDatasetServiceGetInvoiceDetailsProcedure,
+		svc.GetInvoiceDetails,
+		connect.WithSchema(supplementalDatasetServiceMethods.ByName("GetInvoiceDetails")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/finfocus.v1.SupplementalDatasetService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case SupplementalDatasetServiceGetContractCommitmentsProcedure:
 			supplementalDatasetServiceGetContractCommitmentsHandler.ServeHTTP(w, r)
+		case SupplementalDatasetServiceGetBillingPeriodsProcedure:
+			supplementalDatasetServiceGetBillingPeriodsHandler.ServeHTTP(w, r)
+		case SupplementalDatasetServiceGetInvoiceDetailsProcedure:
+			supplementalDatasetServiceGetInvoiceDetailsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -126,4 +184,12 @@ type UnimplementedSupplementalDatasetServiceHandler struct{}
 
 func (UnimplementedSupplementalDatasetServiceHandler) GetContractCommitments(context.Context, *connect.Request[v1.GetContractCommitmentsRequest]) (*connect.Response[v1.GetContractCommitmentsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("finfocus.v1.SupplementalDatasetService.GetContractCommitments is not implemented"))
+}
+
+func (UnimplementedSupplementalDatasetServiceHandler) GetBillingPeriods(context.Context, *connect.Request[v1.GetBillingPeriodsRequest]) (*connect.Response[v1.GetBillingPeriodsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("finfocus.v1.SupplementalDatasetService.GetBillingPeriods is not implemented"))
+}
+
+func (UnimplementedSupplementalDatasetServiceHandler) GetInvoiceDetails(context.Context, *connect.Request[v1.GetInvoiceDetailsRequest]) (*connect.Response[v1.GetInvoiceDetailsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("finfocus.v1.SupplementalDatasetService.GetInvoiceDetails is not implemented"))
 }

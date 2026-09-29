@@ -27,6 +27,7 @@ utilities for plugin development.
 - [FOCUS 1.4 Cost and Usage Columns](#focus-14-cost-and-usage-columns)
 - [Contract Commitment Dataset](#contract-commitment-dataset-focus-13)
 - [Serving Contract Commitments](#serving-contract-commitments-supplementaldatasetservice)
+- [Serving Invoice Datasets](#serving-invoice-datasets-supplementaldatasetservice)
 - [Manifest Management](#manifest-management)
 - [Property Mapping](#property-mapping-mapping-subpackage)
 - [Dry Run Mode](#dry-run-mode)
@@ -767,6 +768,7 @@ Simply implement the standard interfaces:
 | `UsageSourceProvider`            | `GetStats`               | `PLUGIN_CAPABILITY_USAGE_STATS`                |
 | `AllocatorProvider`              | `Allocate`               | `PLUGIN_CAPABILITY_ALLOCATION`                 |
 | `ContractCommitmentProvider`     | `GetContractCommitments` | `PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS`       |
+| `InvoiceDatasetProvider`         | `GetBillingPeriods`, `GetInvoiceDetails` | `PLUGIN_CAPABILITY_INVOICE_DATA` |
 
 ```go
 // Example: Implementing DryRunHandler
@@ -1259,6 +1261,18 @@ type AllocatorProvider interface {
 type ContractCommitmentProvider interface {
     GetContractCommitments(ctx context.Context, req *pbc.GetContractCommitmentsRequest) (
         *pbc.GetContractCommitmentsResponse, error)
+}
+```
+
+**InvoiceDatasetProvider** - Serves `GetBillingPeriods` and `GetInvoiceDetails`; see
+[Serving Invoice Datasets](#serving-invoice-datasets-supplementaldatasetservice).
+
+```go
+type InvoiceDatasetProvider interface {
+    GetBillingPeriods(ctx context.Context, req *pbc.GetBillingPeriodsRequest) (
+        *pbc.GetBillingPeriodsResponse, error)
+    GetInvoiceDetails(ctx context.Context, req *pbc.GetInvoiceDetailsRequest) (
+        *pbc.GetInvoiceDetailsResponse, error)
 }
 ```
 
@@ -2551,6 +2565,43 @@ and response validation about 4 µs for a 50-record page (0 allocs) and 57 µs f
 
 The compiled version is `Example_contractCommitmentProvider` in `example_test.go`. Test a provider
 with `plugintesting.RunContractCommitmentConformance` (see the testing package README).
+
+## Serving Invoice Datasets (SupplementalDatasetService)
+
+`GetBillingPeriods` and `GetInvoiceDetails` deliver FOCUS 1.4 Billing Period and Invoice Detail
+records. They share `PLUGIN_CAPABILITY_INVOICE_DATA` (legacy metadata `supports_invoice_data=true`)
+because the datasets join. The window, page size, and token rules are the same rules as
+[Serving Contract Commitments](#serving-contract-commitments-supplementaldatasetservice). See
+[docs/supplemental-datasets.md](../../../docs/supplemental-datasets.md).
+
+Implement both methods. `Serve` registers `SupplementalDatasetService` when this provider or
+`ContractCommitmentProvider` is present, and returns `codes.Unimplemented` for the RPCs whose
+provider is absent. The service is listed once in the Connect health check.
+
+```go
+func (p *MyPlugin) GetBillingPeriods(
+    ctx context.Context, req *pbc.GetBillingPeriodsRequest,
+) (*pbc.GetBillingPeriodsResponse, error) {
+    if err := pluginsdk.ValidateGetBillingPeriodsRequest(req); err != nil {
+        return nil, err
+    }
+    var matching []*pbc.BillingPeriod
+    for _, period := range p.periods {
+        if pluginsdk.BillingPeriodMatchesWindow(period, req.GetStart(), req.GetEnd()) {
+            matching = append(matching, period)
+        }
+    }
+    page, next, total, err := pluginsdk.PaginateBillingPeriods(matching, req.GetPageSize(), req.GetPageToken())
+    if err != nil {
+        return nil, err
+    }
+    return &pbc.GetBillingPeriodsResponse{BillingPeriods: page, NextPageToken: next, TotalCount: total}, nil
+}
+```
+
+`GetInvoiceDetails` is the same shape with `InvoiceDetailMatchesWindow` and `PaginateInvoiceDetails`.
+Valid request checks, window checks, and duplicate checks on a page of at most 64 records allocate
+nothing. Test a provider with `plugintesting.RunInvoiceDatasetConformance`.
 
 ## Manifest Management
 
