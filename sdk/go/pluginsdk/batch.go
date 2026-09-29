@@ -24,6 +24,7 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/rshade/finfocus-spec/sdk/go/internal/grpcconv"
@@ -869,8 +870,9 @@ func copyStringMap(in map[string]string) map[string]string {
 // If resource is nil, descriptorClone returns nil.
 //
 // The copy is field-wise rather than proto.Clone: ResourceDescriptor has only
-// scalar fields, one string map, and two optional scalars, so a manual copy
-// avoids reflection overhead (see BenchmarkDescriptorClone). Unknown fields
+// scalar fields, one string map, two optional scalars, and an optional lineage
+// chain (cloned only when set), so a manual copy avoids reflection overhead
+// on the common path (see BenchmarkDescriptorClone). Unknown fields
 // are preserved so wire round-trips lose nothing. The copy is kept (rather
 // than aliasing the request descriptor) because callers may retain and mutate
 // request descriptors after BatchCost returns; results must stay independent.
@@ -895,6 +897,9 @@ func descriptorClone(resource *pbc.ResourceDescriptor) *pbc.ResourceDescriptor {
 	if resource.GrowthRate != nil {
 		v := resource.GetGrowthRate()
 		out.GrowthRate = &v
+	}
+	if lineage := resource.GetLineage(); lineage != nil {
+		out.Lineage = proto.CloneOf(lineage)
 	}
 	if unknown := resource.ProtoReflect().GetUnknown(); len(unknown) > 0 {
 		out.ProtoReflect().SetUnknown(append(protoreflect.RawFields(nil), unknown...))
