@@ -349,6 +349,33 @@ func (s *Serializer) serializeCommitmentFields(doc map[string]interface{}, recor
 	// Currency
 	fw.addString("billingCurrency", record.GetBillingCurrency())
 
+	// FOCUS 1.4 columns. Optional doubles are written even when the value is 0,
+	// because an unset field (null) is a different FOCUS value.
+	fw.addString("contractCommitmentApplicability", record.GetContractCommitmentApplicability())
+	fw.addEnum("contractCommitmentBenefitCategory", record.GetContractCommitmentBenefitCategory().String())
+	fw.addTimestamp("contractCommitmentCreated", record.GetContractCommitmentCreated())
+	if record.ContractCommitmentDiscountPercentage != nil {
+		doc["contractCommitmentDiscountPercentage"] = record.GetContractCommitmentDiscountPercentage()
+	}
+	fw.addString("contractCommitmentDurationType", record.GetContractCommitmentDurationType())
+	fw.addEnum("contractCommitmentFulfillmentInterval", record.GetContractCommitmentFulfillmentInterval().String())
+	fw.addTimestamp("contractCommitmentLastUpdated", record.GetContractCommitmentLastUpdated())
+	fw.addEnum("contractCommitmentLifecycleStatus", record.GetContractCommitmentLifecycleStatus().String())
+	fw.addEnum("contractCommitmentModel", record.GetContractCommitmentModel().String())
+	fw.addEnum("contractCommitmentOfferCategory", record.GetContractCommitmentOfferCategory().String())
+	fw.addEnum("contractCommitmentPaymentInterval", record.GetContractCommitmentPaymentInterval().String())
+	fw.addEnum("contractCommitmentPaymentModel", record.GetContractCommitmentPaymentModel().String())
+	if record.ContractCommitmentPaymentUpfrontPercentage != nil {
+		doc["contractCommitmentPaymentUpfrontPercentage"] = record.GetContractCommitmentPaymentUpfrontPercentage()
+	}
+	fw.addString("invoiceIssuerName", record.GetInvoiceIssuerName())
+	fw.addString("pricingCurrency", record.GetPricingCurrency())
+	if record.PricingCurrencyContractCommitmentCost != nil {
+		doc["pricingCurrencyContractCommitmentCost"] = record.GetPricingCurrencyContractCommitmentCost()
+	}
+	fw.addString("serviceProviderName", record.GetServiceProviderName())
+	fw.addString("contractCommitmentDescription", record.GetContractCommitmentDescription())
+
 	return fw.Err()
 }
 

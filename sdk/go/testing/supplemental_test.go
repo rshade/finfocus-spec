@@ -40,13 +40,37 @@ func ts(t time.Time) *timestamppb.Timestamp { return timestamppb.New(t) }
 // commitment returns a valid SPEND commitment whose commitment period is
 // [start, end); zero times leave that bound unset.
 func commitment(id string, start, end time.Time) *pbc.ContractCommitment {
+	discount := 0.0
+	upfront := 0.0
+	created := ts(date(2025, 1, 1))
 	c := &pbc.ContractCommitment{
-		ContractCommitmentId:       id,
-		ContractId:                 "contract-1",
-		ContractCommitmentCategory: pbc.FocusContractCommitmentCategory_FOCUS_CONTRACT_COMMITMENT_CATEGORY_SPEND,
-		ContractCommitmentType:     "Savings Plan",
-		ContractCommitmentCost:     1200,
-		BillingCurrency:            "USD",
+		ContractCommitmentId:            id,
+		ContractId:                      "contract-1",
+		ContractCommitmentCategory:      pbc.FocusContractCommitmentCategory_FOCUS_CONTRACT_COMMITMENT_CATEGORY_SPEND,
+		ContractCommitmentType:          "Savings Plan",
+		ContractCommitmentCost:          1200,
+		BillingCurrency:                 "USD",
+		ContractCommitmentApplicability: `{"IsGlobalScope":true}`,
+		ContractCommitmentBenefitCategory: pbc.
+			FocusContractCommitmentBenefitCategory_FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_DISCOUNT,
+		ContractCommitmentCreated:            created,
+		ContractCommitmentDiscountPercentage: &discount,
+		ContractCommitmentDurationType:       "1 Year",
+		ContractCommitmentFulfillmentInterval: pbc.
+			FocusContractCommitmentFulfillmentInterval_FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_MONTHLY,
+		ContractCommitmentLastUpdated: created,
+		ContractCommitmentLifecycleStatus: pbc.
+			FocusContractCommitmentLifecycleStatus_FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_ACTIVE,
+		ContractCommitmentModel: pbc.FocusContractCommitmentModel_FOCUS_CONTRACT_COMMITMENT_MODEL_CONTINUOUS,
+		ContractCommitmentOfferCategory: pbc.
+			FocusContractCommitmentOfferCategory_FOCUS_CONTRACT_COMMITMENT_OFFER_CATEGORY_PUBLIC,
+		ContractCommitmentPaymentInterval: pbc.
+			FocusContractCommitmentPaymentInterval_FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_MONTHLY,
+		ContractCommitmentPaymentModel: pbc.
+			FocusContractCommitmentPaymentModel_FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_NO_UPFRONT,
+		ContractCommitmentPaymentUpfrontPercentage: &upfront,
+		InvoiceIssuerName:                          "Example Issuer",
+		ServiceProviderName:                        "Example Provider",
 	}
 	if !start.IsZero() {
 		c.ContractCommitmentPeriodStart = ts(start)
@@ -121,6 +145,34 @@ func TestValidateContractCommitment(t *testing.T) {
 		{name: "infinite quantity", mutate: func(c *pbc.ContractCommitment) {
 			c.ContractCommitmentQuantity = math.Inf(1)
 		}, wantMsg: "contract_commitment_quantity must be finite"},
+		{name: "usage may omit billing currency", mutate: func(c *pbc.ContractCommitment) {
+			c.ContractCommitmentCategory = pbc.FocusContractCommitmentCategory_FOCUS_CONTRACT_COMMITMENT_CATEGORY_USAGE
+			c.BillingCurrency = ""
+		}},
+		{name: "discount zero is present", mutate: func(c *pbc.ContractCommitment) {
+			zero := 0.0
+			c.ContractCommitmentDiscountPercentage = &zero
+		}},
+		{name: "discount required for discount benefit", mutate: func(c *pbc.ContractCommitment) {
+			c.ContractCommitmentDiscountPercentage = nil
+		}, wantMsg: "contract_commitment_discount_percentage is required"},
+		{name: "availability rejects discount", mutate: func(c *pbc.ContractCommitment) {
+			c.ContractCommitmentBenefitCategory = pbc.
+				FocusContractCommitmentBenefitCategory_FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_AVAILABILITY
+		}, wantMsg: "contract_commitment_discount_percentage must be null"},
+		{name: "applicability must be an object", mutate: func(c *pbc.ContractCommitment) {
+			c.ContractCommitmentApplicability = `["global"]`
+		}, wantMsg: "contract_commitment_applicability must be a JSON object"},
+		{name: "full period requires discontinuous", mutate: func(c *pbc.ContractCommitment) {
+			c.ContractCommitmentFulfillmentInterval = pbc.
+				FocusContractCommitmentFulfillmentInterval_FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_FULL_PERIOD
+		}, wantMsg: "contract_commitment_model must be DISCONTINUOUS"},
+		{name: "all upfront requires one-time and 1", mutate: func(c *pbc.ContractCommitment) {
+			one := 1.0
+			c.ContractCommitmentPaymentModel = pbc.
+				FocusContractCommitmentPaymentModel_FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_ALL_UPFRONT
+			c.ContractCommitmentPaymentUpfrontPercentage = &one
+		}, wantMsg: "contract_commitment_payment_interval must be ONE_TIME"},
 	}
 
 	for _, tt := range tests {

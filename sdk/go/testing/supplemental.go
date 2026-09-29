@@ -50,10 +50,12 @@ func commitmentError(format string, args ...any) error {
 
 // ValidateContractCommitment returns nil if c satisfies the FOCUS Contract
 // Commitment rules that pluginsdk.ContractCommitmentBuilder.Build enforces:
-// contract_commitment_id, contract_id, and billing_currency are set; the
-// category is SPEND or USAGE; billing_currency is an ISO 4217 code; each
-// period's end is not before its start when both bounds are set; and cost and
-// quantity are finite and non-negative. Rules are checked in that order.
+// contract_commitment_id and contract_id are set; the category is SPEND or
+// USAGE; billing_currency is set for SPEND (USAGE may leave it empty) and is
+// an ISO 4217 code when set; each period's end is not before its start when
+// both bounds are set; cost and quantity are finite and non-negative; and the
+// FOCUS 1.4 columns in validateFocus14Commitment hold. Rules are checked in
+// that order.
 //
 // Failures use the builder's messages without a prefix (for example
 // "contract_commitment_id is required"), wrap ErrInvalidContractCommitment, and
@@ -68,15 +70,16 @@ func ValidateContractCommitment(c *pbc.ContractCommitment) error {
 	if c.GetContractId() == "" {
 		return commitmentError("contract_id is required")
 	}
-	if c.GetBillingCurrency() == "" {
+	category := c.GetContractCommitmentCategory()
+	if c.GetBillingCurrency() == "" &&
+		category != pbc.FocusContractCommitmentCategory_FOCUS_CONTRACT_COMMITMENT_CATEGORY_USAGE {
 		return commitmentError("billing_currency is required")
 	}
-	category := c.GetContractCommitmentCategory()
 	if category != pbc.FocusContractCommitmentCategory_FOCUS_CONTRACT_COMMITMENT_CATEGORY_SPEND &&
 		category != pbc.FocusContractCommitmentCategory_FOCUS_CONTRACT_COMMITMENT_CATEGORY_USAGE {
 		return commitmentError("contract_commitment_category must be SPEND or USAGE, got %v", category)
 	}
-	if !currency.IsValid(c.GetBillingCurrency()) {
+	if c.GetBillingCurrency() != "" && !currency.IsValid(c.GetBillingCurrency()) {
 		return commitmentError("billing_currency must be a valid ISO 4217 currency code, got %q",
 			c.GetBillingCurrency())
 	}
@@ -90,7 +93,10 @@ func ValidateContractCommitment(c *pbc.ContractCommitment) error {
 	if err := validateAmount("contract_commitment_cost", c.GetContractCommitmentCost()); err != nil {
 		return err
 	}
-	return validateAmount("contract_commitment_quantity", c.GetContractCommitmentQuantity())
+	if err := validateAmount("contract_commitment_quantity", c.GetContractCommitmentQuantity()); err != nil {
+		return err
+	}
+	return validateFocus14Commitment(c)
 }
 
 func validatePeriod(name string, start, end *timestamppb.Timestamp) error {

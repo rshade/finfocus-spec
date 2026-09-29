@@ -80,6 +80,7 @@ func fixtureCommitments() []*pbc.ContractCommitment {
 			WithCommitmentPeriod(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC),
 				time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)).
 			WithFinancials(1200, 0, "", "USD").
+			WithBaselineTerms(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)).
 			Build()
 		if err != nil {
 			panic(err)

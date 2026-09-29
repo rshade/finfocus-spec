@@ -249,6 +249,7 @@ func TestFocus13_ContractApplied(t *testing.T) {
 			WithCategory(pbc.FocusContractCommitmentCategory_FOCUS_CONTRACT_COMMITMENT_CATEGORY_SPEND).
 			WithType("Reserved Instance").
 			WithFinancials(10000.00, 0, "", "USD").
+			WithBaselineTerms(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)).
 			Build()
 
 		if err != nil {
@@ -256,9 +257,9 @@ func TestFocus13_ContractApplied(t *testing.T) {
 		}
 
 		// Then link a cost record to it
-		record, err := buildValidFocusRecord().
-			WithContractApplied(commitment.GetContractCommitmentId()). // Link to commitment
-			Build()
+		record, err := buildValidFocusRecord(). //nolint:staticcheck // SA1019: bare-ID setter keeps the legacy wire value
+							WithContractApplied(commitment.GetContractCommitmentId()).
+							Build()
 
 		if err != nil {
 			t.Fatalf("Record with contract applied failed: %v", err)
@@ -272,9 +273,9 @@ func TestFocus13_ContractApplied(t *testing.T) {
 
 	t.Run("accepts any string as opaque reference", func(t *testing.T) {
 		// ContractApplied accepts any string - no validation against commitment dataset
-		record, err := buildValidFocusRecord().
-			WithContractApplied("any-arbitrary-commitment-id"). // No validation
-			Build()
+		record, err := buildValidFocusRecord(). //nolint:staticcheck // SA1019: bare-ID setter keeps the legacy wire value
+							WithContractApplied("any-arbitrary-commitment-id").
+							Build()
 
 		if err != nil {
 			t.Fatalf("Record with arbitrary contract_applied failed: %v", err)
@@ -299,6 +300,7 @@ func TestFocus13_ContractCommitmentBuilder_SPEND(t *testing.T) {
 		WithCommitmentPeriod(start, end).
 		WithContractPeriod(start, end.AddDate(2, 0, 0)).
 		WithFinancials(100000.00, 0, "", "USD").
+		WithBaselineTerms(start).
 		Build()
 
 	if err != nil {
@@ -335,6 +337,7 @@ func TestFocus13_ContractCommitmentBuilder_USAGE(t *testing.T) {
 		WithType("Committed Use Discount").
 		WithCommitmentPeriod(start, end).
 		WithFinancials(0, 10000, "vCPU-Hours", "USD").
+		WithBaselineTerms(start).
 		Build()
 
 	if err != nil {
@@ -422,7 +425,7 @@ func TestFocus13_ContractCommitmentBuilder_Validation(t *testing.T) {
 // TestFocus13_MixedVersionRecords validates records with both FOCUS 1.2 and 1.3 fields.
 func TestFocus13_MixedVersionRecords(t *testing.T) {
 	t.Run("all FOCUS 1.3 fields populated", func(t *testing.T) {
-		record, err := buildValidFocusRecord().
+		record, err := buildValidFocusRecord(). //nolint:staticcheck // SA1019: bare-ID setter keeps the legacy wire value
 			// FOCUS 1.3 fields
 			WithServiceProvider("AWS").
 			WithHostProvider("AWS").

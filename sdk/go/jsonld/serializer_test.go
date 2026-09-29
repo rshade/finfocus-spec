@@ -368,6 +368,53 @@ func TestSerializeCommitment(t *testing.T) {
 	}
 }
 
+func TestSerializeCommitment_OptionalDoublesKeepZero(t *testing.T) {
+	serializer := jsonld.NewSerializer()
+	zero := 0.0
+	present := &pbc.ContractCommitment{
+		ContractCommitmentDiscountPercentage:       &zero,
+		ContractCommitmentPaymentUpfrontPercentage: &zero,
+		PricingCurrencyContractCommitmentCost:      &zero,
+	}
+	output, err := serializer.SerializeCommitment(present)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var result map[string]interface{}
+	if unmarshalErr := json.Unmarshal(output, &result); unmarshalErr != nil {
+		t.Fatal(unmarshalErr)
+	}
+	keys := []string{
+		"contractCommitmentDiscountPercentage",
+		"contractCommitmentPaymentUpfrontPercentage",
+		"pricingCurrencyContractCommitmentCost",
+	}
+	for _, key := range keys {
+		value, ok := result[key]
+		if !ok {
+			t.Errorf("%s omitted; a zero pointer must stay present", key)
+			continue
+		}
+		if value != 0.0 {
+			t.Errorf("%s = %v, want 0", key, value)
+		}
+	}
+
+	absentOutput, absentErr := serializer.SerializeCommitment(&pbc.ContractCommitment{})
+	if absentErr != nil {
+		t.Fatal(absentErr)
+	}
+	var absent map[string]interface{}
+	if unmarshalErr := json.Unmarshal(absentOutput, &absent); unmarshalErr != nil {
+		t.Fatal(unmarshalErr)
+	}
+	for _, key := range keys {
+		if _, ok := absent[key]; ok {
+			t.Errorf("%s present when the pointer is nil", key)
+		}
+	}
+}
+
 func TestConformance_CommitmentCostRecordLinking(t *testing.T) {
 	serializer := jsonld.NewSerializer()
 

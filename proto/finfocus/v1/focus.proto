@@ -23,6 +23,88 @@ enum FocusContractCommitmentCategory {
   FOCUS_CONTRACT_COMMITMENT_CATEGORY_USAGE = 2;
 }
 
+// FocusContractCommitmentBenefitCategory is the FOCUS 1.4 benefit a commitment grants.
+// Reference: FOCUS 1.4 Contract Commitment Benefit Category.
+enum FocusContractCommitmentBenefitCategory {
+  FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_UNSPECIFIED = 0;
+  // A price reduction. DiscountPercentage MUST be set.
+  FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_DISCOUNT = 1;
+  // A right to a product or service.
+  FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_ENTITLEMENT = 2;
+  // Reserved capacity. DiscountPercentage MUST be null.
+  FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_AVAILABILITY = 3;
+  // A benefit outside the three named categories.
+  FOCUS_CONTRACT_COMMITMENT_BENEFIT_CATEGORY_OTHER = 4;
+}
+
+// FocusContractCommitmentFulfillmentInterval is how often a commitment is fulfilled.
+// Reference: FOCUS 1.4 Contract Commitment Fulfillment Interval.
+enum FocusContractCommitmentFulfillmentInterval {
+  FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_UNSPECIFIED = 0;
+  FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_HOURLY = 1;
+  FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_DAILY = 2;
+  FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_WEEKLY = 3;
+  FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_MONTHLY = 4;
+  FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_QUARTERLY = 5;
+  FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_SEMI_ANNUAL = 6;
+  FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_ANNUAL = 7;
+  // Not valid when the model is Continuous.
+  FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_FULL_PERIOD = 8;
+  FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_TRANSACTIONAL = 9;
+  FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_CUSTOM = 10;
+}
+
+// FocusContractCommitmentLifecycleStatus is the FOCUS 1.4 lifecycle of one commitment row.
+// Cross-row transitions (Superseded chains, one-way status changes) are not checked here.
+enum FocusContractCommitmentLifecycleStatus {
+  FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_UNSPECIFIED = 0;
+  FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_PROPOSED = 1;
+  FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_PENDING = 2;
+  FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_ACTIVE = 3;
+  FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_EXHAUSTED = 4;
+  FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_EXPIRED = 5;
+  FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_CANCELED = 6;
+  FOCUS_CONTRACT_COMMITMENT_LIFECYCLE_STATUS_SUPERSEDED = 7;
+}
+
+// FocusContractCommitmentModel is whether fulfillment is continuous or discontinuous.
+enum FocusContractCommitmentModel {
+  FOCUS_CONTRACT_COMMITMENT_MODEL_UNSPECIFIED = 0;
+  FOCUS_CONTRACT_COMMITMENT_MODEL_CONTINUOUS = 1;
+  // Required when the fulfillment interval is Full Period.
+  FOCUS_CONTRACT_COMMITMENT_MODEL_DISCONTINUOUS = 2;
+}
+
+// FocusContractCommitmentOfferCategory is whether the offer is public or negotiated.
+enum FocusContractCommitmentOfferCategory {
+  FOCUS_CONTRACT_COMMITMENT_OFFER_CATEGORY_UNSPECIFIED = 0;
+  FOCUS_CONTRACT_COMMITMENT_OFFER_CATEGORY_PUBLIC = 1;
+  FOCUS_CONTRACT_COMMITMENT_OFFER_CATEGORY_NEGOTIATED = 2;
+}
+
+// FocusContractCommitmentPaymentInterval is how often the customer pays.
+enum FocusContractCommitmentPaymentInterval {
+  FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_UNSPECIFIED = 0;
+  // Required when the payment model is All Upfront.
+  FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_ONE_TIME = 1;
+  FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_MONTHLY = 2;
+  FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_QUARTERLY = 3;
+  FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_SEMI_ANNUAL = 4;
+  FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_ANNUAL = 5;
+  FOCUS_CONTRACT_COMMITMENT_PAYMENT_INTERVAL_CUSTOM = 6;
+}
+
+// FocusContractCommitmentPaymentModel is how much of the commitment is paid upfront.
+enum FocusContractCommitmentPaymentModel {
+  FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_UNSPECIFIED = 0;
+  // PaymentUpfrontPercentage MUST be 0.
+  FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_NO_UPFRONT = 1;
+  // PaymentUpfrontPercentage MUST be strictly between 0 and 1.
+  FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_PARTIAL_UPFRONT = 2;
+  // PaymentUpfrontPercentage MUST be 1, and the interval MUST be One-Time.
+  FOCUS_CONTRACT_COMMITMENT_PAYMENT_MODEL_ALL_UPFRONT = 3;
+}
+
 // FocusCostRecord represents a single cost line item normalized to the
 // FinOps FOCUS specification (1.2, 1.3 and 1.4). All field names follow FOCUS naming conventions.
 // Includes FOCUS 1.3 additions: allocation fields, contract commitment linking,
@@ -364,9 +446,11 @@ message FocusCostRecord {
   // FOCUS 1.3 Contract Commitment Link (NEW)
   // ==========================================================================
 
-  // ContractApplied: Reference to a ContractCommitmentId in the Contract
-  // Commitment dataset. Treated as opaque reference (no cross-dataset validation).
-  // FOCUS 1.3 Section: Contract Applied (CONDITIONAL)
+  // ContractApplied: FOCUS 1.4 ContractAppliedObject JSON
+  // ({"Elements":[{"ContractId":...,"ContractCommitmentId":..., ...}]}).
+  // A bare commitment ID is still accepted on the wire for callers of the
+  // deprecated WithContractApplied setter. No cross-dataset validation.
+  // FOCUS 1.3 and 1.4 Section: Contract Applied (CONDITIONAL)
   string contract_applied = 66;
 
   // ==========================================================================
@@ -404,12 +488,14 @@ message FocusCostRecord {
 // =============================================================================
 
 // ContractCommitment represents a contractual commitment record in the
-// FOCUS 1.3 Contract Commitment supplemental dataset.
+// FOCUS 1.3 and 1.4 Contract Commitment supplemental dataset.
 //
 // This is a separate dataset from Cost and Usage data, allowing practitioners
 // to query contract terms independently from individual cost line items.
+// Fields 13-29 are the FOCUS 1.4 columns. Field 30 closes the 1.3 gap for
+// ContractCommitmentDescription. optional is used only where null differs from 0.
 //
-// Reference: FOCUS 1.3 Contract Commitment Dataset
+// Reference: FOCUS 1.4 Contract Commitment Dataset
 message ContractCommitment {
   // ==========================================================================
   // Identity Fields
@@ -486,7 +572,93 @@ message ContractCommitment {
   string contract_commitment_unit = 11;
 
   // BillingCurrency: ISO 4217 currency code for monetary values.
-  // REQUIRED. Format: 3-letter currency code (e.g., "USD", "EUR").
-  // FOCUS 1.3 Billing Currency
+  // Empty means null. FOCUS allows null, and the value MUST NOT be null when
+  // the category is SPEND. Format: 3-letter currency code (e.g., "USD", "EUR").
+  // FOCUS 1.3 and 1.4 Billing Currency
   string billing_currency = 12;
+
+  // ==========================================================================
+  // FOCUS 1.4 columns (fields 13-29) and the 1.3 description gap (field 30)
+  // ==========================================================================
+
+  // ContractCommitmentApplicability: JSON object of inclusion and exclusion rules.
+  // Stored as a string, like other FOCUS JSON columns. Empty is not valid.
+  // FOCUS 1.4 Contract Commitment Applicability (MANDATORY, nulls not allowed).
+  string contract_commitment_applicability = 13;
+
+  // ContractCommitmentBenefitCategory: Discount, Entitlement, Availability, or Other.
+  // FOCUS 1.4 Contract Commitment Benefit Category (MANDATORY).
+  FocusContractCommitmentBenefitCategory contract_commitment_benefit_category = 14;
+
+  // ContractCommitmentCreated: When this commitment record was instantiated.
+  // FOCUS 1.4 Contract Commitment Created (MANDATORY).
+  google.protobuf.Timestamp contract_commitment_created = 15;
+
+  // ContractCommitmentDiscountPercentage: Fraction from 0 to 1.
+  // Unset means null, which differs from 0. MUST be set for Discount and MUST
+  // be null for Availability. One tier per row.
+  // FOCUS 1.4 Contract Commitment Discount Percentage (MANDATORY column, nulls allowed).
+  optional double contract_commitment_discount_percentage = 16;
+
+  // ContractCommitmentDurationType: "[positive integer] [unit]", for example "3 Years".
+  // Units: Minute(s), Hour(s), Day(s), Week(s), Month(s), Quarter(s), Year(s).
+  // FOCUS 1.4 Contract Commitment Duration Type (MANDATORY).
+  string contract_commitment_duration_type = 17;
+
+  // ContractCommitmentFulfillmentInterval: How often the commitment is fulfilled.
+  // FOCUS 1.4 Contract Commitment Fulfillment Interval (MANDATORY).
+  FocusContractCommitmentFulfillmentInterval contract_commitment_fulfillment_interval = 18;
+
+  // ContractCommitmentLastUpdated: When this record was last updated. Must be >= created.
+  // FOCUS 1.4 Contract Commitment Last Updated (MANDATORY).
+  google.protobuf.Timestamp contract_commitment_last_updated = 19;
+
+  // ContractCommitmentLifecycleStatus: Proposed through Superseded.
+  // FOCUS 1.4 Contract Commitment Lifecycle Status (MANDATORY).
+  FocusContractCommitmentLifecycleStatus contract_commitment_lifecycle_status = 20;
+
+  // ContractCommitmentModel: Continuous or Discontinuous.
+  // FOCUS 1.4 Contract Commitment Model (MANDATORY).
+  FocusContractCommitmentModel contract_commitment_model = 21;
+
+  // ContractCommitmentOfferCategory: Public or Negotiated.
+  // FOCUS 1.4 Contract Commitment Offer Category (MANDATORY).
+  FocusContractCommitmentOfferCategory contract_commitment_offer_category = 22;
+
+  // ContractCommitmentPaymentInterval: One-Time through Custom.
+  // FOCUS 1.4 Contract Commitment Payment Interval (MANDATORY).
+  FocusContractCommitmentPaymentInterval contract_commitment_payment_interval = 23;
+
+  // ContractCommitmentPaymentModel: No Upfront, Partial Upfront, or All Upfront.
+  // FOCUS 1.4 Contract Commitment Payment Model (MANDATORY).
+  FocusContractCommitmentPaymentModel contract_commitment_payment_model = 24;
+
+  // ContractCommitmentPaymentUpfrontPercentage: Fraction of the commitment paid upfront.
+  // Unset means null, which differs from 0. 0 for No Upfront, 1 for All Upfront,
+  // and strictly between 0 and 1 for Partial Upfront.
+  // FOCUS 1.4 Contract Commitment Payment Upfront Percentage (CONDITIONAL).
+  optional double contract_commitment_payment_upfront_percentage = 25;
+
+  // InvoiceIssuerName: The entity that issues invoices for this commitment.
+  // FOCUS 1.4 Invoice Issuer Name (MANDATORY).
+  string invoice_issuer_name = 26;
+
+  // PricingCurrency: ISO 4217 code when pricing and billing currencies differ.
+  // Empty means the conditional column is absent.
+  // FOCUS 1.4 Pricing Currency (CONDITIONAL).
+  string pricing_currency = 27;
+
+  // PricingCurrencyContractCommitmentCost: Commitment cost in PricingCurrency.
+  // Unset means null. MUST be set for SPEND when PricingCurrency is set.
+  // MAY be null for USAGE.
+  // FOCUS 1.4 Pricing Currency Contract Commitment Cost (CONDITIONAL).
+  optional double pricing_currency_contract_commitment_cost = 28;
+
+  // ServiceProviderName: The service provider offering the commitment.
+  // FOCUS 1.4 Service Provider Name (MANDATORY).
+  string service_provider_name = 29;
+
+  // ContractCommitmentDescription: Human-readable terms. Empty means null.
+  // FOCUS 1.3 column that was missing from the original message (nulls allowed).
+  string contract_commitment_description = 30;
 }

@@ -23,6 +23,11 @@ export { SupplementalDatasetClient } from "./clients/supplemental-dataset.js";
 export { ResourceDescriptorBuilder } from "./builders/resource-descriptor.js";
 export { RecommendationFilterBuilder } from "./builders/recommendation-filter.js";
 export { FocusRecordBuilder } from "./builders/focus-record.js";
+export {
+  ContractCommitmentBuilder,
+  formatContractApplied,
+  type ContractAppliedElement,
+} from "./builders/contract-commitment.js";
 
 // Utilities
 export { recommendationsIterator } from "./utils/pagination.js";

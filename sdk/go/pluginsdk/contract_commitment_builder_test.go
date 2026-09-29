@@ -28,6 +28,7 @@ func TestContractCommitmentBuilder_Build_HappyPath(t *testing.T) {
 		WithCommitmentPeriod(commitmentStart, commitmentEnd).
 		WithContractPeriod(contractStart, contractEnd).
 		WithFinancials(120000.00, 0, "", "USD").
+		WithBaselineTerms(commitmentStart).
 		Build()
 
 	if err != nil {
@@ -111,7 +112,8 @@ func TestContractCommitmentBuilder_WithCategory(t *testing.T) {
 			builder := pluginsdk.NewContractCommitmentBuilder().
 				WithIdentity("commitment-123", "contract-456").
 				WithCategory(tt.category).
-				WithFinancials(100, 0, "", "USD")
+				WithFinancials(100, 0, "", "USD").
+				WithBaselineTerms(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC))
 			record, err := builder.Build()
 			if tt.expectError {
 				if err == nil {
@@ -242,7 +244,8 @@ func TestContractCommitmentBuilder_Validation_RequiredFields(t *testing.T) {
 				return pluginsdk.NewContractCommitmentBuilder().
 					WithIdentity("commitment-123", "contract-456").
 					WithCategory(pbc.FocusContractCommitmentCategory_FOCUS_CONTRACT_COMMITMENT_CATEGORY_SPEND).
-					WithFinancials(100, 0, "", "USD")
+					WithFinancials(100, 0, "", "USD").
+					WithBaselineTerms(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC))
 			},
 			expectError: false,
 			errContains: "",
@@ -301,7 +304,8 @@ func TestContractCommitmentBuilder_Validation_PeriodConsistency(t *testing.T) {
 				WithIdentity("commitment-123", "contract-456").
 				WithCategory(pbc.FocusContractCommitmentCategory_FOCUS_CONTRACT_COMMITMENT_CATEGORY_SPEND).
 				WithCommitmentPeriod(tt.start, tt.end).
-				WithFinancials(100, 0, "", "USD")
+				WithFinancials(100, 0, "", "USD").
+				WithBaselineTerms(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC))
 
 			_, err := builder.Build()
 			if tt.expectError {
@@ -337,7 +341,8 @@ func TestContractCommitmentBuilder_Validation_NonNegativeValues(t *testing.T) {
 			builder := pluginsdk.NewContractCommitmentBuilder().
 				WithIdentity("commitment-123", "contract-456").
 				WithCategory(pbc.FocusContractCommitmentCategory_FOCUS_CONTRACT_COMMITMENT_CATEGORY_SPEND).
-				WithFinancials(tt.cost, tt.quantity, "Units", "USD")
+				WithFinancials(tt.cost, tt.quantity, "Units", "USD").
+				WithBaselineTerms(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC))
 
 			_, err := builder.Build()
 			if tt.expectError {
@@ -374,7 +379,8 @@ func TestContractCommitmentBuilder_Validation_Currency(t *testing.T) {
 			builder := pluginsdk.NewContractCommitmentBuilder().
 				WithIdentity("commitment-123", "contract-456").
 				WithCategory(pbc.FocusContractCommitmentCategory_FOCUS_CONTRACT_COMMITMENT_CATEGORY_SPEND).
-				WithFinancials(100, 0, "", tt.currency)
+				WithFinancials(100, 0, "", tt.currency).
+				WithBaselineTerms(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC))
 
 			_, err := builder.Build()
 			if tt.expectError {
@@ -405,6 +411,7 @@ func TestContractCommitmentBuilder_ChainMethods(t *testing.T) {
 		WithCommitmentPeriod(commitmentStart, commitmentEnd).
 		WithContractPeriod(contractStart, contractEnd).
 		WithFinancials(0, 1000, "vCPU-Hours", "USD").
+		WithBaselineTerms(commitmentStart).
 		Build()
 
 	if err != nil {
@@ -441,7 +448,8 @@ func createValidCommitmentBuilder() *pluginsdk.ContractCommitmentBuilder {
 	return pluginsdk.NewContractCommitmentBuilder().
 		WithIdentity("commitment-123", "contract-456").
 		WithCategory(pbc.FocusContractCommitmentCategory_FOCUS_CONTRACT_COMMITMENT_CATEGORY_SPEND).
-		WithFinancials(100, 0, "", "USD")
+		WithFinancials(100, 0, "", "USD").
+		WithBaselineTerms(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC))
 }
 
 // =============================================================================
@@ -463,6 +471,7 @@ func BenchmarkContractCommitmentBuilder_Build(b *testing.B) {
 			WithType("Reserved Instance").
 			WithCommitmentPeriod(start, end).
 			WithFinancials(10000, 0, "", "USD").
+			WithBaselineTerms(start).
 			Build()
 	}
 }

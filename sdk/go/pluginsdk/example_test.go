@@ -599,6 +599,7 @@ func Example_contractCommitmentProvider() {
 			WithType("Reserved Instance").
 			WithCommitmentPeriod(start, end).
 			WithFinancials(12000, 0, "", "USD").
+			WithBaselineTerms(start).
 			Build()
 		if err != nil {
 			panic(err)
