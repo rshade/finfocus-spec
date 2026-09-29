@@ -33,6 +33,8 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	SupplementalDatasetService_GetContractCommitments_FullMethodName = "/finfocus.v1.SupplementalDatasetService/GetContractCommitments"
+	SupplementalDatasetService_GetBillingPeriods_FullMethodName      = "/finfocus.v1.SupplementalDatasetService/GetBillingPeriods"
+	SupplementalDatasetService_GetInvoiceDetails_FullMethodName      = "/finfocus.v1.SupplementalDatasetService/GetInvoiceDetails"
 )
 
 // SupplementalDatasetServiceClient is the client API for SupplementalDatasetService service.
@@ -41,9 +43,12 @@ const (
 //
 // SupplementalDatasetService is implemented by plugins that deliver FOCUS
 // supplemental datasets: records that sit beside Cost and Usage rows and join
-// to them by key. Each dataset has its own RPC and its own plugin capability,
-// so a plugin serves only the datasets it has. Stage A defines Contract
-// Commitment (FOCUS 1.3); PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS advertises it.
+// to them by key. Each dataset has its own RPC. Contract Commitment
+// (FOCUS 1.3) is advertised by PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS.
+// Billing Period and Invoice Detail (FOCUS 1.4) join each other and are
+// advertised together by PLUGIN_CAPABILITY_INVOICE_DATA. A plugin may
+// implement either provider, or both. An RPC whose provider is absent
+// returns UNIMPLEMENTED.
 //
 // Every call returns the source's current view of the requested records
 // (FOCUS Replacement / Overwrite semantics): a host replaces what it holds for
@@ -59,6 +64,12 @@ type SupplementalDatasetServiceClient interface {
 	// GetContractCommitments returns a page of FOCUS Contract Commitment records
 	// whose period overlaps the requested window.
 	GetContractCommitments(ctx context.Context, in *GetContractCommitmentsRequest, opts ...grpc.CallOption) (*GetContractCommitmentsResponse, error)
+	// GetBillingPeriods returns a page of FOCUS Billing Period records whose
+	// period overlaps the requested window.
+	GetBillingPeriods(ctx context.Context, in *GetBillingPeriodsRequest, opts ...grpc.CallOption) (*GetBillingPeriodsResponse, error)
+	// GetInvoiceDetails returns a page of FOCUS Invoice Detail records whose
+	// billing period overlaps the requested window.
+	GetInvoiceDetails(ctx context.Context, in *GetInvoiceDetailsRequest, opts ...grpc.CallOption) (*GetInvoiceDetailsResponse, error)
 }
 
 type supplementalDatasetServiceClient struct {
@@ -79,15 +90,38 @@ func (c *supplementalDatasetServiceClient) GetContractCommitments(ctx context.Co
 	return out, nil
 }
 
+func (c *supplementalDatasetServiceClient) GetBillingPeriods(ctx context.Context, in *GetBillingPeriodsRequest, opts ...grpc.CallOption) (*GetBillingPeriodsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetBillingPeriodsResponse)
+	err := c.cc.Invoke(ctx, SupplementalDatasetService_GetBillingPeriods_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *supplementalDatasetServiceClient) GetInvoiceDetails(ctx context.Context, in *GetInvoiceDetailsRequest, opts ...grpc.CallOption) (*GetInvoiceDetailsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetInvoiceDetailsResponse)
+	err := c.cc.Invoke(ctx, SupplementalDatasetService_GetInvoiceDetails_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SupplementalDatasetServiceServer is the server API for SupplementalDatasetService service.
 // All implementations must embed UnimplementedSupplementalDatasetServiceServer
 // for forward compatibility.
 //
 // SupplementalDatasetService is implemented by plugins that deliver FOCUS
 // supplemental datasets: records that sit beside Cost and Usage rows and join
-// to them by key. Each dataset has its own RPC and its own plugin capability,
-// so a plugin serves only the datasets it has. Stage A defines Contract
-// Commitment (FOCUS 1.3); PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS advertises it.
+// to them by key. Each dataset has its own RPC. Contract Commitment
+// (FOCUS 1.3) is advertised by PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS.
+// Billing Period and Invoice Detail (FOCUS 1.4) join each other and are
+// advertised together by PLUGIN_CAPABILITY_INVOICE_DATA. A plugin may
+// implement either provider, or both. An RPC whose provider is absent
+// returns UNIMPLEMENTED.
 //
 // Every call returns the source's current view of the requested records
 // (FOCUS Replacement / Overwrite semantics): a host replaces what it holds for
@@ -103,6 +137,12 @@ type SupplementalDatasetServiceServer interface {
 	// GetContractCommitments returns a page of FOCUS Contract Commitment records
 	// whose period overlaps the requested window.
 	GetContractCommitments(context.Context, *GetContractCommitmentsRequest) (*GetContractCommitmentsResponse, error)
+	// GetBillingPeriods returns a page of FOCUS Billing Period records whose
+	// period overlaps the requested window.
+	GetBillingPeriods(context.Context, *GetBillingPeriodsRequest) (*GetBillingPeriodsResponse, error)
+	// GetInvoiceDetails returns a page of FOCUS Invoice Detail records whose
+	// billing period overlaps the requested window.
+	GetInvoiceDetails(context.Context, *GetInvoiceDetailsRequest) (*GetInvoiceDetailsResponse, error)
 	mustEmbedUnimplementedSupplementalDatasetServiceServer()
 }
 
@@ -115,6 +155,12 @@ type UnimplementedSupplementalDatasetServiceServer struct{}
 
 func (UnimplementedSupplementalDatasetServiceServer) GetContractCommitments(context.Context, *GetContractCommitmentsRequest) (*GetContractCommitmentsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetContractCommitments not implemented")
+}
+func (UnimplementedSupplementalDatasetServiceServer) GetBillingPeriods(context.Context, *GetBillingPeriodsRequest) (*GetBillingPeriodsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetBillingPeriods not implemented")
+}
+func (UnimplementedSupplementalDatasetServiceServer) GetInvoiceDetails(context.Context, *GetInvoiceDetailsRequest) (*GetInvoiceDetailsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetInvoiceDetails not implemented")
 }
 func (UnimplementedSupplementalDatasetServiceServer) mustEmbedUnimplementedSupplementalDatasetServiceServer() {
 }
@@ -156,6 +202,42 @@ func _SupplementalDatasetService_GetContractCommitments_Handler(srv interface{},
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SupplementalDatasetService_GetBillingPeriods_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBillingPeriodsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SupplementalDatasetServiceServer).GetBillingPeriods(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SupplementalDatasetService_GetBillingPeriods_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SupplementalDatasetServiceServer).GetBillingPeriods(ctx, req.(*GetBillingPeriodsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SupplementalDatasetService_GetInvoiceDetails_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetInvoiceDetailsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SupplementalDatasetServiceServer).GetInvoiceDetails(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SupplementalDatasetService_GetInvoiceDetails_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SupplementalDatasetServiceServer).GetInvoiceDetails(ctx, req.(*GetInvoiceDetailsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SupplementalDatasetService_ServiceDesc is the grpc.ServiceDesc for SupplementalDatasetService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -166,6 +248,14 @@ var SupplementalDatasetService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetContractCommitments",
 			Handler:    _SupplementalDatasetService_GetContractCommitments_Handler,
+		},
+		{
+			MethodName: "GetBillingPeriods",
+			Handler:    _SupplementalDatasetService_GetBillingPeriods_Handler,
+		},
+		{
+			MethodName: "GetInvoiceDetails",
+			Handler:    _SupplementalDatasetService_GetInvoiceDetails_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

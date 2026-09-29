@@ -178,6 +178,23 @@ func TestLegacyMetadata_Allocation(t *testing.T) {
 	}
 }
 
+func TestLegacyMetadata_InvoiceData(t *testing.T) {
+	name := pluginsdk.CapabilityToLegacyName(pbc.PluginCapability_PLUGIN_CAPABILITY_INVOICE_DATA)
+	if name != "supports_invoice_data" {
+		t.Errorf("expected supports_invoice_data, got %q", name)
+	}
+
+	metadata, warnings := pluginsdk.CapabilitiesToLegacyMetadataWithWarnings([]pbc.PluginCapability{
+		pbc.PluginCapability_PLUGIN_CAPABILITY_INVOICE_DATA,
+	})
+	if metadata["supports_invoice_data"] != "true" {
+		t.Errorf("expected supports_invoice_data=true, got %q", metadata["supports_invoice_data"])
+	}
+	if len(warnings) != 0 {
+		t.Errorf("expected no warnings, got %v", warnings)
+	}
+}
+
 func TestLegacyMetadata_ContractCommitments(t *testing.T) {
 	name := pluginsdk.CapabilityToLegacyName(pbc.PluginCapability_PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS)
 	if name != "supports_contract_commitments" {

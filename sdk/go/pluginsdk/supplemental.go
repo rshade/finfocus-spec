@@ -18,6 +18,8 @@ import (
 	"context"
 
 	"connectrpc.com/connect"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
@@ -73,32 +75,143 @@ func PaginateContractCommitments(
 	return plugintesting.PaginateContractCommitments(commitments, pageSize, pageToken)
 }
 
-// contractCommitmentGRPCServer adapts a ContractCommitmentProvider to the
-// generated gRPC server interface, so plugins need not embed the
-// Unimplemented server.
-type contractCommitmentGRPCServer struct {
+// ValidateGetBillingPeriodsRequest is identical to the sdk/go/testing function
+// of the same name. Providers call it first and may return its error unchanged.
+func ValidateGetBillingPeriodsRequest(req *pbc.GetBillingPeriodsRequest) error {
+	return plugintesting.ValidateGetBillingPeriodsRequest(req)
+}
+
+// ValidateGetInvoiceDetailsRequest is identical to the sdk/go/testing function
+// of the same name.
+func ValidateGetInvoiceDetailsRequest(req *pbc.GetInvoiceDetailsRequest) error {
+	return plugintesting.ValidateGetInvoiceDetailsRequest(req)
+}
+
+// ValidateGetBillingPeriodsResponse is identical to the sdk/go/testing function
+// of the same name. Hosts call it on every response.
+func ValidateGetBillingPeriodsResponse(
+	req *pbc.GetBillingPeriodsRequest, resp *pbc.GetBillingPeriodsResponse,
+) error {
+	return plugintesting.ValidateGetBillingPeriodsResponse(req, resp)
+}
+
+// ValidateGetInvoiceDetailsResponse is identical to the sdk/go/testing function
+// of the same name. Hosts call it on every response.
+func ValidateGetInvoiceDetailsResponse(
+	req *pbc.GetInvoiceDetailsRequest, resp *pbc.GetInvoiceDetailsResponse,
+) error {
+	return plugintesting.ValidateGetInvoiceDetailsResponse(req, resp)
+}
+
+// BillingPeriodMatchesWindow is identical to the sdk/go/testing function of
+// the same name.
+func BillingPeriodMatchesWindow(p *pbc.BillingPeriod, start, end *timestamppb.Timestamp) bool {
+	return plugintesting.BillingPeriodMatchesWindow(p, start, end)
+}
+
+// InvoiceDetailMatchesWindow is identical to the sdk/go/testing function of
+// the same name.
+func InvoiceDetailMatchesWindow(d *pbc.InvoiceDetail, start, end *timestamppb.Timestamp) bool {
+	return plugintesting.InvoiceDetailMatchesWindow(d, start, end)
+}
+
+// PaginateBillingPeriods is identical to the sdk/go/testing function of the
+// same name.
+func PaginateBillingPeriods(
+	periods []*pbc.BillingPeriod, pageSize int32, pageToken string,
+) ([]*pbc.BillingPeriod, string, int32, error) {
+	return plugintesting.PaginateBillingPeriods(periods, pageSize, pageToken)
+}
+
+// PaginateInvoiceDetails is identical to the sdk/go/testing function of the
+// same name.
+func PaginateInvoiceDetails(
+	details []*pbc.InvoiceDetail, pageSize int32, pageToken string,
+) ([]*pbc.InvoiceDetail, string, int32, error) {
+	return plugintesting.PaginateInvoiceDetails(details, pageSize, pageToken)
+}
+
+func unimplementedDataset(method string) error {
+	return status.Errorf(codes.Unimplemented, "method %s not implemented", method)
+}
+
+// supplementalGRPCServer adapts the supplemental providers a plugin implements.
+// A nil provider returns codes.Unimplemented for that RPC. The other RPCs
+// still serve.
+type supplementalGRPCServer struct {
 	pbc.UnimplementedSupplementalDatasetServiceServer
 
-	provider ContractCommitmentProvider
+	commitments ContractCommitmentProvider
+	invoices    InvoiceDatasetProvider
 }
 
-func (s *contractCommitmentGRPCServer) GetContractCommitments(
+func (s *supplementalGRPCServer) GetContractCommitments(
 	ctx context.Context, req *pbc.GetContractCommitmentsRequest,
 ) (*pbc.GetContractCommitmentsResponse, error) {
-	return s.provider.GetContractCommitments(ctx, req)
+	if s.commitments == nil {
+		return nil, unimplementedDataset("GetContractCommitments")
+	}
+	return s.commitments.GetContractCommitments(ctx, req)
 }
 
-// contractCommitmentConnectHandler adapts a ContractCommitmentProvider to the
-// generated Connect handler interface, preserving gRPC status codes via
-// toConnectError.
-type contractCommitmentConnectHandler struct {
-	provider ContractCommitmentProvider
+func (s *supplementalGRPCServer) GetBillingPeriods(
+	ctx context.Context, req *pbc.GetBillingPeriodsRequest,
+) (*pbc.GetBillingPeriodsResponse, error) {
+	if s.invoices == nil {
+		return nil, unimplementedDataset("GetBillingPeriods")
+	}
+	return s.invoices.GetBillingPeriods(ctx, req)
 }
 
-func (h *contractCommitmentConnectHandler) GetContractCommitments(
+func (s *supplementalGRPCServer) GetInvoiceDetails(
+	ctx context.Context, req *pbc.GetInvoiceDetailsRequest,
+) (*pbc.GetInvoiceDetailsResponse, error) {
+	if s.invoices == nil {
+		return nil, unimplementedDataset("GetInvoiceDetails")
+	}
+	return s.invoices.GetInvoiceDetails(ctx, req)
+}
+
+// supplementalConnectHandler adapts the same providers to Connect, preserving
+// gRPC status codes via toConnectError.
+type supplementalConnectHandler struct {
+	commitments ContractCommitmentProvider
+	invoices    InvoiceDatasetProvider
+}
+
+func (h *supplementalConnectHandler) GetContractCommitments(
 	ctx context.Context, req *connect.Request[pbc.GetContractCommitmentsRequest],
 ) (*connect.Response[pbc.GetContractCommitmentsResponse], error) {
-	resp, err := h.provider.GetContractCommitments(ctx, req.Msg)
+	if h.commitments == nil {
+		return nil, toConnectError(unimplementedDataset("GetContractCommitments"))
+	}
+	resp, err := h.commitments.GetContractCommitments(ctx, req.Msg)
+	if err != nil {
+		return nil, toConnectError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (h *supplementalConnectHandler) GetBillingPeriods(
+	ctx context.Context, req *connect.Request[pbc.GetBillingPeriodsRequest],
+) (*connect.Response[pbc.GetBillingPeriodsResponse], error) {
+	if h.invoices == nil {
+		return nil, toConnectError(unimplementedDataset("GetBillingPeriods"))
+	}
+	resp, err := h.invoices.GetBillingPeriods(ctx, req.Msg)
+	if err != nil {
+		return nil, toConnectError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (h *supplementalConnectHandler) GetInvoiceDetails(
+	ctx context.Context, req *connect.Request[pbc.GetInvoiceDetailsRequest],
+) (*connect.Response[pbc.GetInvoiceDetailsResponse], error) {
+	if h.invoices == nil {
+		return nil, toConnectError(unimplementedDataset("GetInvoiceDetails"))
+	}
+	resp, err := h.invoices.GetInvoiceDetails(ctx, req.Msg)
 	if err != nil {
 		return nil, toConnectError(err)
 	}

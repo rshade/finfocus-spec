@@ -26,8 +26,8 @@ import (
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
 
-// pairwiseDuplicateLimit is the largest page ValidateGetContractCommitmentsResponse
-// checks for duplicate IDs by comparing pairs, which allocates nothing. Larger
+// pairwiseDuplicateLimit is the largest page a supplemental response validator
+// checks for duplicate keys by comparing pairs, which allocates nothing. Larger
 // pages use a map, which is faster there but allocates.
 const pairwiseDuplicateLimit = 64
 
@@ -121,12 +121,131 @@ func validateAmount(name string, v float64) error {
 	return nil
 }
 
-func requestError(format string, args ...any) error {
-	return newInvalidArgument(ErrInvalidContractCommitmentsRequest, format, args...)
-}
-
 func responseError(format string, args ...any) error {
 	return newInvalidArgument(ErrInvalidContractCommitmentsResponse, format, args...)
+}
+
+// validateDatasetRequest checks the window and page size shared by every
+// supplemental dataset request. missing reports a nil request. A valid call
+// does not allocate.
+func validateDatasetRequest(
+	sentinel error, missing bool, start, end *timestamppb.Timestamp, pageSize int32,
+) error {
+	if missing {
+		return newInvalidArgument(sentinel, "request is nil")
+	}
+	if (start == nil) != (end == nil) {
+		return newInvalidArgument(sentinel, "start and end must both be set or both be unset")
+	}
+	if start != nil {
+		if err := start.CheckValid(); err != nil {
+			return newInvalidArgument(sentinel, "start: %v", err)
+		}
+		if err := end.CheckValid(); err != nil {
+			return newInvalidArgument(sentinel, "end: %v", err)
+		}
+		if !end.AsTime().After(start.AsTime()) {
+			return newInvalidArgument(sentinel, "end must be after start")
+		}
+	}
+	if pageSize < 0 {
+		return newInvalidArgument(sentinel, "page_size must not be negative, got %d", pageSize)
+	}
+	return nil
+}
+
+// effectiveDatasetPageSize maps a requested page size to the number of records
+// a source serves: 0 (or less) means DefaultPageSize, and values above
+// MaxPageSize mean MaxPageSize.
+func effectiveDatasetPageSize(pageSize int32) int {
+	switch {
+	case pageSize <= 0:
+		return DefaultPageSize
+	case pageSize > MaxPageSize:
+		return MaxPageSize
+	default:
+		return int(pageSize)
+	}
+}
+
+// paginateRecords returns one page of records, the token for the next page
+// (empty on the last page), and the total count, len(records) clamped to
+// math.MaxInt32. Tokens are base64-encoded offsets. The page does not share
+// backing array past its end; only a next-page token allocates.
+func paginateRecords[T any](records []T, pageSize int32, pageToken string, sentinel error) (
+	[]T, string, int32, error,
+) {
+	if pageSize < 0 {
+		return nil, "", 0, newInvalidArgument(sentinel, "page_size must not be negative, got %d", pageSize)
+	}
+	offset := 0
+	if pageToken != "" {
+		decoded, err := decodeMockPageToken(pageToken)
+		if err != nil {
+			return nil, "", 0, newInvalidArgument(sentinel, "page_token is malformed: %v", err)
+		}
+		offset = decoded
+	}
+	total := int32(math.MaxInt32)
+	if len(records) < math.MaxInt32 {
+		total = int32(len(records)) //nolint:gosec // bounded by the check above
+	}
+	if offset >= len(records) {
+		return nil, "", total, nil
+	}
+	end := min(offset+effectiveDatasetPageSize(pageSize), len(records))
+	next := ""
+	if end < len(records) {
+		next = encodeMockPageToken(end)
+	}
+	return records[offset:end:end], next, total, nil
+}
+
+func checkPageBound(sentinel error, noun string, n int, pageSize int32) error {
+	if limit := effectiveDatasetPageSize(pageSize); n > limit {
+		return newInvalidArgument(sentinel, "%d %s exceed page size %d", n, noun, limit)
+	}
+	return nil
+}
+
+func checkTotalCount(sentinel error, noun string, total int32, n int) error {
+	if total < 0 {
+		return newInvalidArgument(sentinel, "total_count must not be negative, got %d", total)
+	}
+	if int(total) < n {
+		return newInvalidArgument(sentinel, "total_count %d is less than the %d %s returned", total, n, noun)
+	}
+	return nil
+}
+
+func invalidRecord(sentinel error, field string, i int, err error) error {
+	return &invalidArgumentError{
+		msg:     fmt.Sprintf("%s: %s[%d]: %s", sentinel, field, i, err),
+		wrapped: errors.Join(sentinel, err),
+	}
+}
+
+// validatePagedResponse applies the page-size, per-record, duplicate, and
+// total_count checks shared by supplemental dataset responses.
+func validatePagedResponse(
+	respNil bool, n int, pageSize int32, noun string, sentinel error, total int32,
+	each func(i int) error, duplicates func() error,
+) error {
+	if respNil {
+		return newInvalidArgument(sentinel, "response is nil")
+	}
+	if err := checkPageBound(sentinel, noun, n, pageSize); err != nil {
+		return err
+	}
+	for i := range n {
+		if err := each(i); err != nil {
+			return err
+		}
+	}
+	if err := duplicates(); err != nil {
+		return err
+	}
+	return checkTotalCount(sentinel, noun, total, n)
 }
 
 // ValidateGetContractCommitmentsRequest returns nil if req is a well-formed
@@ -141,27 +260,10 @@ func responseError(format string, args ...any) error {
 // not allocate on valid input.
 func ValidateGetContractCommitmentsRequest(req *pbc.GetContractCommitmentsRequest) error {
 	if req == nil {
-		return requestError("request is nil")
+		return validateDatasetRequest(ErrInvalidContractCommitmentsRequest, true, nil, nil, 0)
 	}
-	start, end := req.GetStart(), req.GetEnd()
-	if (start == nil) != (end == nil) {
-		return requestError("start and end must both be set or both be unset")
-	}
-	if start != nil {
-		if err := start.CheckValid(); err != nil {
-			return requestError("start: %v", err)
-		}
-		if err := end.CheckValid(); err != nil {
-			return requestError("end: %v", err)
-		}
-		if !end.AsTime().After(start.AsTime()) {
-			return requestError("end must be after start")
-		}
-	}
-	if req.GetPageSize() < 0 {
-		return requestError("page_size must not be negative, got %d", req.GetPageSize())
-	}
-	return nil
+	return validateDatasetRequest(
+		ErrInvalidContractCommitmentsRequest, false, req.GetStart(), req.GetEnd(), req.GetPageSize())
 }
 
 // ContractCommitmentMatchesWindow reports whether c's period overlaps the
@@ -190,20 +292,6 @@ func ContractCommitmentMatchesWindow(c *pbc.ContractCommitment, start, end *time
 	return true
 }
 
-// effectiveCommitmentsPageSize maps a requested page size to the number of
-// records a source serves: 0 (or less) means DefaultPageSize, and values above
-// MaxPageSize mean MaxPageSize.
-func effectiveCommitmentsPageSize(pageSize int32) int {
-	switch {
-	case pageSize <= 0:
-		return DefaultPageSize
-	case pageSize > MaxPageSize:
-		return MaxPageSize
-	default:
-		return int(pageSize)
-	}
-}
-
 // PaginateContractCommitments returns one page of commitments, the token for
 // the next page (empty on the last page), and the total count, len(commitments)
 // clamped to math.MaxInt32. A page_size of 0 means DefaultPageSize and values
@@ -218,30 +306,7 @@ func effectiveCommitmentsPageSize(pageSize int32) int {
 func PaginateContractCommitments(
 	commitments []*pbc.ContractCommitment, pageSize int32, pageToken string,
 ) ([]*pbc.ContractCommitment, string, int32, error) {
-	if pageSize < 0 {
-		return nil, "", 0, requestError("page_size must not be negative, got %d", pageSize)
-	}
-	offset := 0
-	if pageToken != "" {
-		decoded, err := decodeMockPageToken(pageToken)
-		if err != nil {
-			return nil, "", 0, requestError("page_token is malformed: %v", err)
-		}
-		offset = decoded
-	}
-	total := int32(math.MaxInt32)
-	if len(commitments) < math.MaxInt32 {
-		total = int32(len(commitments)) //nolint:gosec // bounded by the check above
-	}
-	if offset >= len(commitments) {
-		return nil, "", total, nil
-	}
-	end := min(offset+effectiveCommitmentsPageSize(pageSize), len(commitments))
-	next := ""
-	if end < len(commitments) {
-		next = encodeMockPageToken(end)
-	}
-	return commitments[offset:end:end], next, total, nil
+	return paginateRecords(commitments, pageSize, pageToken, ErrInvalidContractCommitmentsRequest)
 }
 
 // ValidateGetContractCommitmentsResponse returns nil if resp is a valid answer
@@ -259,30 +324,18 @@ func PaginateContractCommitments(
 func ValidateGetContractCommitmentsResponse(
 	req *pbc.GetContractCommitmentsRequest, resp *pbc.GetContractCommitmentsResponse,
 ) error {
-	if resp == nil {
-		return responseError("response is nil")
-	}
-	list := resp.GetCommitments()
-	if limit := effectiveCommitmentsPageSize(req.GetPageSize()); len(list) > limit {
-		return responseError("%d commitments exceed page size %d", len(list), limit)
+	var list []*pbc.ContractCommitment
+	var total int32
+	if resp != nil {
+		list = resp.GetCommitments()
+		total = resp.GetTotalCount()
 	}
 	start, end := req.GetStart(), req.GetEnd()
-	for i, c := range list {
-		if err := validateResponseCommitment(i, c, start, end); err != nil {
-			return err
-		}
-	}
-	if err := checkDuplicateCommitmentIDs(list); err != nil {
-		return err
-	}
-	total := resp.GetTotalCount()
-	if total < 0 {
-		return responseError("total_count must not be negative, got %d", total)
-	}
-	if int(total) < len(list) {
-		return responseError("total_count %d is less than the %d commitments returned", total, len(list))
-	}
-	return nil
+	return validatePagedResponse(resp == nil, len(list), req.GetPageSize(), "commitments",
+		ErrInvalidContractCommitmentsResponse, total,
+		func(i int) error { return validateResponseCommitment(i, list[i], start, end) },
+		func() error { return checkDuplicateCommitmentIDs(list) },
+	)
 }
 
 func validateResponseCommitment(i int, c *pbc.ContractCommitment, start, end *timestamppb.Timestamp) error {
@@ -290,10 +343,7 @@ func validateResponseCommitment(i int, c *pbc.ContractCommitment, start, end *ti
 		return responseError("commitments[%d]: record is nil", i)
 	}
 	if err := ValidateContractCommitment(c); err != nil {
-		return &invalidArgumentError{
-			msg:     fmt.Sprintf("%s: commitments[%d]: %s", ErrInvalidContractCommitmentsResponse, i, err),
-			wrapped: errors.Join(ErrInvalidContractCommitmentsResponse, err),
-		}
+		return invalidRecord(ErrInvalidContractCommitmentsResponse, "commitments", i, err)
 	}
 	if !ContractCommitmentMatchesWindow(c, start, end) {
 		return responseError("commitments[%d]: contract_commitment_id %q does not overlap the requested window",

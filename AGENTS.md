@@ -31,6 +31,12 @@
 ## Active Technologies
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
+  google.golang.org/protobuf, google.golang.org/grpc, connectrpc.com/connect,
+  buf v1.32.1; no new dependencies (547-invoice-dataset-rpcs)
+- N/A (paged RPCs over the existing BillingPeriod and InvoiceDetail messages)
+  (547-invoice-dataset-rpcs)
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
   google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1; stdlib only
   (546-focus-14-billing-invoice)
 - N/A (stateless BillingPeriod and InvoiceDetail messages, builders, and per-record validation)
@@ -58,9 +64,14 @@
 
 ## Recent Changes
 
+- 547-invoice-dataset-rpcs: Added GetBillingPeriods and GetInvoiceDetails on
+  SupplementalDatasetService, capability 17 (`supports_invoice_data`), and the Go and
+  TypeScript clients. One provider implements both RPCs. A missing provider returns
+  UNIMPLEMENTED. GetContractCommitments fields are unchanged.
+
 - 546-focus-14-billing-invoice: Added BillingPeriod and InvoiceDetail messages, status enums,
   pluginsdk builders, per-record validators, JSON-LD serializers, and TypeScript builders.
-  No invoice RPC.
+  Messages only; the RPCs are 547.
 
 - 545-focus-14-contract-commitment: Added ContractCommitment fields 13-30, seven FOCUS 1.4 enums,
   optional doubles for null-vs-zero, and FormatContractApplied for the ContractApplied JSON object.

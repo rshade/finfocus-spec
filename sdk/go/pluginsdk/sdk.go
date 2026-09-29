@@ -254,15 +254,34 @@ type AllocatorProvider interface {
 // ContractCommitmentProvider is an optional interface for plugins that serve
 // FOCUS Contract Commitment records through
 // SupplementalDatasetService.GetContractCommitments. When ServeConfig.Plugin
-// implements it, Serve registers the service in gRPC and Connect modes, reports
-// it in the Connect health checker, and infers
-// PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS. Implementations typically call
-// ValidateGetContractCommitmentsRequest, filter with
-// ContractCommitmentMatchesWindow, and page with PaginateContractCommitments.
-// Commitment-only plugins should set PluginInfo.Capabilities explicitly.
+// implements it, or InvoiceDatasetProvider, Serve registers the service in
+// gRPC and Connect modes and reports it once in the Connect health checker.
+// Serve infers PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS from this interface.
+// The invoice RPCs return codes.Unimplemented when InvoiceDatasetProvider is
+// absent. Implementations typically call ValidateGetContractCommitmentsRequest,
+// filter with ContractCommitmentMatchesWindow, and page with
+// PaginateContractCommitments. Commitment-only plugins should set
+// PluginInfo.Capabilities explicitly.
 type ContractCommitmentProvider interface {
 	GetContractCommitments(ctx context.Context, req *pbc.GetContractCommitmentsRequest) (
 		*pbc.GetContractCommitmentsResponse, error)
+}
+
+// InvoiceDatasetProvider is an optional interface for plugins that serve FOCUS
+// Billing Period and Invoice Detail. The two datasets join, so one capability
+// covers both methods. When ServeConfig.Plugin implements it, Serve registers
+// SupplementalDatasetService (also registered for ContractCommitmentProvider),
+// reports it once in the Connect health checker, and infers
+// PLUGIN_CAPABILITY_INVOICE_DATA. GetContractCommitments returns
+// codes.Unimplemented when ContractCommitmentProvider is absent.
+// Implementations typically validate the request, filter with
+// BillingPeriodMatchesWindow or InvoiceDetailMatchesWindow, and page with
+// PaginateBillingPeriods or PaginateInvoiceDetails.
+type InvoiceDatasetProvider interface {
+	GetBillingPeriods(ctx context.Context, req *pbc.GetBillingPeriodsRequest) (
+		*pbc.GetBillingPeriodsResponse, error)
+	GetInvoiceDetails(ctx context.Context, req *pbc.GetInvoiceDetailsRequest) (
+		*pbc.GetInvoiceDetailsResponse, error)
 }
 
 // BatchCostHandler is an optional interface that plugins can implement
@@ -1329,6 +1348,7 @@ type optionalServices struct {
 	usage       UsageSourceProvider
 	allocator   AllocatorProvider
 	commitments ContractCommitmentProvider
+	invoices    InvoiceDatasetProvider
 }
 
 func newOptionalServices(plugin Plugin) optionalServices {
@@ -1336,7 +1356,12 @@ func newOptionalServices(plugin Plugin) optionalServices {
 	services.usage, _ = plugin.(UsageSourceProvider)
 	services.allocator, _ = plugin.(AllocatorProvider)
 	services.commitments, _ = plugin.(ContractCommitmentProvider)
+	services.invoices, _ = plugin.(InvoiceDatasetProvider)
 	return services
+}
+
+func (s optionalServices) servesSupplemental() bool {
+	return s.commitments != nil || s.invoices != nil
 }
 
 // registerConnect mounts a Connect handler on mux for each optional service
@@ -1348,9 +1373,9 @@ func (s optionalServices) registerConnect(mux *http.ServeMux, opts []connect.Han
 	if s.allocator != nil {
 		mux.Handle(pbcconnect.NewAllocatorServiceHandler(&allocatorConnectHandler{provider: s.allocator}, opts...))
 	}
-	if s.commitments != nil {
+	if s.servesSupplemental() {
 		mux.Handle(pbcconnect.NewSupplementalDatasetServiceHandler(
-			&contractCommitmentConnectHandler{provider: s.commitments}, opts...))
+			&supplementalConnectHandler{commitments: s.commitments, invoices: s.invoices}, opts...))
 	}
 }
 
@@ -1364,7 +1389,7 @@ func (s optionalServices) healthServiceNames() []string {
 	if s.allocator != nil {
 		names = append(names, pbcconnect.AllocatorServiceName)
 	}
-	if s.commitments != nil {
+	if s.servesSupplemental() {
 		names = append(names, pbcconnect.SupplementalDatasetServiceName)
 	}
 	return names
@@ -1395,9 +1420,10 @@ func serveGRPC(
 	if services.allocator != nil {
 		pbc.RegisterAllocatorServiceServer(grpcServer, &allocatorGRPCServer{provider: services.allocator})
 	}
-	if services.commitments != nil {
-		pbc.RegisterSupplementalDatasetServiceServer(grpcServer,
-			&contractCommitmentGRPCServer{provider: services.commitments})
+	if services.servesSupplemental() {
+		pbc.RegisterSupplementalDatasetServiceServer(grpcServer, &supplementalGRPCServer{
+			commitments: services.commitments, invoices: services.invoices,
+		})
 	}
 	reflection.Register(grpcServer)
 

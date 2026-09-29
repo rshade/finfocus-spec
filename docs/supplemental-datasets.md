@@ -8,8 +8,13 @@ plugin serves only the datasets it holds.
 | Dataset | FOCUS | RPC | Capability | Legacy metadata key |
 | --- | --- | --- | --- | --- |
 | Contract Commitment | 1.3 | `GetContractCommitments` | `PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS` (16) | `supports_contract_commitments` |
+| Billing Period | 1.4 | `GetBillingPeriods` | `PLUGIN_CAPABILITY_INVOICE_DATA` (17) | `supports_invoice_data` |
+| Invoice Detail | 1.4 | `GetInvoiceDetails` | `PLUGIN_CAPABILITY_INVOICE_DATA` (17) | `supports_invoice_data` |
 
-Billing Period and Invoice Detail (FOCUS 1.4) are not served yet.
+Billing Period and Invoice Detail join each other, so one capability covers both RPCs. A plugin
+implements both or neither. Contract Commitment stays its own capability. `Serve` registers this
+service when either provider is present, lists it once in the Connect health checker, and returns
+`UNIMPLEMENTED` for an RPC whose provider is absent.
 
 ## GetContractCommitments
 
@@ -83,6 +88,33 @@ Provider examples:
 
 A plugin that does not serve the dataset returns `UNIMPLEMENTED`; hosts check the capability first.
 
+## GetBillingPeriods and GetInvoiceDetails
+
+These two RPCs use the same request fields, page-size rules, opaque tokens, error codes, and
+Replacement / Overwrite semantics as `GetContractCommitments`. There is no return-everything mode.
+
+A billing period matches when `[billing_period_start, billing_period_end)` overlaps `[start, end)`.
+An invoice line matches on that same pair of columns. An unset window matches every record. A
+period that ends exactly at the window start does not match, and neither does one that starts
+exactly at the window end. The match helper treats a nil period bound as open-ended.
+`ValidateBillingPeriod` and `ValidateInvoiceDetail` require both bounds, with the end strictly
+after the start, so a successful response has no open-ended record.
+
+A token that does not decode to a non-negative offset is `INVALID_ARGUMENT`. An offset at or past
+the match count returns an empty page, an empty next token, and that count. The missing-provider
+message is `method <RpcName> not implemented` on gRPC and Connect. Explicit capabilities replace
+discovery and do not unregister the RPCs.
+
+| Response | Records | Uniqueness within one walk |
+| --- | --- | --- |
+| `GetBillingPeriods` | `billing_periods` | `(invoice_issuer_name, billing_period_start)` |
+| `GetInvoiceDetails` | `invoice_details` | `invoice_detail_id` |
+
+Every returned billing period passes `ValidateBillingPeriod`. Every returned invoice line passes
+`ValidateInvoiceDetail`, including a present zero settlement cost. A refund charge category and a
+half-set settlement currency fail that check. `total_count` is the exact match count.
+`next_page_token` is empty on the last page.
+
 ## SDK support
 
 - Go plugins implement `pluginsdk.ContractCommitmentProvider`. `Serve` registers the service over
@@ -94,5 +126,13 @@ A plugin that does not serve the dataset returns `UNIMPLEMENTED`; hosts check th
 - `plugintesting.RunContractCommitmentConformance` checks a provider end to end, and
   `plugintesting.MockContractCommitmentSource` is the reference producer. See
   [the testing README](../sdk/go/testing/README.md#contract-commitment-testing).
-- TypeScript hosts use `SupplementalDatasetClient` (`getContractCommitments` for one page,
-  `contractCommitments` to iterate every page).
+- Go plugins that serve billing periods and invoice lines implement `pluginsdk.InvoiceDatasetProvider`
+  (`GetBillingPeriods` and `GetInvoiceDetails`). Helpers: `ValidateGetBillingPeriodsRequest`,
+  `ValidateGetInvoiceDetailsRequest`, `BillingPeriodMatchesWindow`, `InvoiceDetailMatchesWindow`,
+  `PaginateBillingPeriods`, `PaginateInvoiceDetails`, and the matching response validators.
+  `plugintesting.MockInvoiceDatasetSource` is the reference producer, and
+  `plugintesting.RunInvoiceDatasetConformance` checks a provider end to end.
+- TypeScript hosts use `SupplementalDatasetClient` (`getContractCommitments` /
+  `contractCommitments`, `getBillingPeriods` / `billingPeriods`, `getInvoiceDetails` /
+  `invoiceDetails`). Iterators use page size 50 when it is unset or zero, send a negative size
+  unchanged, and stop when a non-empty page token repeats.

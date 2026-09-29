@@ -19,7 +19,7 @@ import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegen
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv1";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
-import type { ContractCommitment } from "./focus_pb";
+import type { BillingPeriod, ContractCommitment, InvoiceDetail } from "./focus_pb";
 import { file_finfocus_v1_focus } from "./focus_pb";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -27,7 +27,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file finfocus/v1/supplemental.proto.
  */
 export const file_finfocus_v1_supplemental: GenFile = /*@__PURE__*/
-  fileDesc("Ch5maW5mb2N1cy92MS9zdXBwbGVtZW50YWwucHJvdG8SC2ZpbmZvY3VzLnYxIpoBCh1HZXRDb250cmFjdENvbW1pdG1lbnRzUmVxdWVzdBIpCgVzdGFydBgBIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASJwoDZW5kGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIRCglwYWdlX3NpemUYAyABKAUSEgoKcGFnZV90b2tlbhgEIAEoCSKEAQoeR2V0Q29udHJhY3RDb21taXRtZW50c1Jlc3BvbnNlEjQKC2NvbW1pdG1lbnRzGAEgAygLMh8uZmluZm9jdXMudjEuQ29udHJhY3RDb21taXRtZW50EhcKD25leHRfcGFnZV90b2tlbhgCIAEoCRITCgt0b3RhbF9jb3VudBgDIAEoBTKPAQoaU3VwcGxlbWVudGFsRGF0YXNldFNlcnZpY2UScQoWR2V0Q29udHJhY3RDb21taXRtZW50cxIqLmZpbmZvY3VzLnYxLkdldENvbnRyYWN0Q29tbWl0bWVudHNSZXF1ZXN0GisuZmluZm9jdXMudjEuR2V0Q29udHJhY3RDb21taXRtZW50c1Jlc3BvbnNlQq8BCg9jb20uZmluZm9jdXMudjFCEVN1cHBsZW1lbnRhbFByb3RvUAFaPGdpdGh1Yi5jb20vcnNoYWRlL2ZpbmZvY3VzLXNwZWMvc2RrL2dvL3Byb3RvL2ZpbmZvY3VzL3YxO3BiY6ICA0ZYWKoCC0ZpbmZvY3VzLlYxygILRmluZm9jdXNcVjHiAhdGaW5mb2N1c1xWMVxHUEJNZXRhZGF0YeoCDEZpbmZvY3VzOjpWMWIGcHJvdG8z", [file_google_protobuf_timestamp, file_finfocus_v1_focus]);
+  fileDesc("Ch5maW5mb2N1cy92MS9zdXBwbGVtZW50YWwucHJvdG8SC2ZpbmZvY3VzLnYxIpoBCh1HZXRDb250cmFjdENvbW1pdG1lbnRzUmVxdWVzdBIpCgVzdGFydBgBIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASJwoDZW5kGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIRCglwYWdlX3NpemUYAyABKAUSEgoKcGFnZV90b2tlbhgEIAEoCSKEAQoeR2V0Q29udHJhY3RDb21taXRtZW50c1Jlc3BvbnNlEjQKC2NvbW1pdG1lbnRzGAEgAygLMh8uZmluZm9jdXMudjEuQ29udHJhY3RDb21taXRtZW50EhcKD25leHRfcGFnZV90b2tlbhgCIAEoCRITCgt0b3RhbF9jb3VudBgDIAEoBSKVAQoYR2V0QmlsbGluZ1BlcmlvZHNSZXF1ZXN0EikKBXN0YXJ0GAEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBInCgNlbmQYAiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCXBhZ2Vfc2l6ZRgDIAEoBRISCgpwYWdlX3Rva2VuGAQgASgJIn4KGUdldEJpbGxpbmdQZXJpb2RzUmVzcG9uc2USMwoPYmlsbGluZ19wZXJpb2RzGAEgAygLMhouZmluZm9jdXMudjEuQmlsbGluZ1BlcmlvZBIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkSEwoLdG90YWxfY291bnQYAyABKAUilQEKGEdldEludm9pY2VEZXRhaWxzUmVxdWVzdBIpCgVzdGFydBgBIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASJwoDZW5kGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIRCglwYWdlX3NpemUYAyABKAUSEgoKcGFnZV90b2tlbhgEIAEoCSJ+ChlHZXRJbnZvaWNlRGV0YWlsc1Jlc3BvbnNlEjMKD2ludm9pY2VfZGV0YWlscxgBIAMoCzIaLmZpbmZvY3VzLnYxLkludm9pY2VEZXRhaWwSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJEhMKC3RvdGFsX2NvdW50GAMgASgFMtcCChpTdXBwbGVtZW50YWxEYXRhc2V0U2VydmljZRJxChZHZXRDb250cmFjdENvbW1pdG1lbnRzEiouZmluZm9jdXMudjEuR2V0Q29udHJhY3RDb21taXRtZW50c1JlcXVlc3QaKy5maW5mb2N1cy52MS5HZXRDb250cmFjdENvbW1pdG1lbnRzUmVzcG9uc2USYgoRR2V0QmlsbGluZ1BlcmlvZHMSJS5maW5mb2N1cy52MS5HZXRCaWxsaW5nUGVyaW9kc1JlcXVlc3QaJi5maW5mb2N1cy52MS5HZXRCaWxsaW5nUGVyaW9kc1Jlc3BvbnNlEmIKEUdldEludm9pY2VEZXRhaWxzEiUuZmluZm9jdXMudjEuR2V0SW52b2ljZURldGFpbHNSZXF1ZXN0GiYuZmluZm9jdXMudjEuR2V0SW52b2ljZURldGFpbHNSZXNwb25zZUKvAQoPY29tLmZpbmZvY3VzLnYxQhFTdXBwbGVtZW50YWxQcm90b1ABWjxnaXRodWIuY29tL3JzaGFkZS9maW5mb2N1cy1zcGVjL3Nkay9nby9wcm90by9maW5mb2N1cy92MTtwYmOiAgNGWFiqAgtGaW5mb2N1cy5WMcoCC0ZpbmZvY3VzXFYx4gIXRmluZm9jdXNcVjFcR1BCTWV0YWRhdGHqAgxGaW5mb2N1czo6VjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_finfocus_v1_focus]);
 
 /**
  * GetContractCommitmentsRequest selects commitments by time window and page.
@@ -122,11 +122,186 @@ export const GetContractCommitmentsResponseSchema: GenMessage<GetContractCommitm
   messageDesc(file_finfocus_v1_supplemental, 1);
 
 /**
+ * GetBillingPeriodsRequest selects billing periods by time window and page.
+ * The window rules match GetContractCommitmentsRequest: both bounds or
+ * neither, half-open [start, end), page_size 0 means 50, above 1000 clamps,
+ * negative is INVALID_ARGUMENT, and page_token is opaque.
+ *
+ * @generated from message finfocus.v1.GetBillingPeriodsRequest
+ */
+export type GetBillingPeriodsRequest = Message<"finfocus.v1.GetBillingPeriodsRequest"> & {
+  /**
+   * Start of the window (inclusive). Leave both start and end unset to
+   * request every billing period; setting exactly one is INVALID_ARGUMENT.
+   *
+   * @generated from field: google.protobuf.Timestamp start = 1;
+   */
+  start?: Timestamp;
+
+  /**
+   * End of the window (exclusive). Must be after start.
+   *
+   * @generated from field: google.protobuf.Timestamp end = 2;
+   */
+  end?: Timestamp;
+
+  /**
+   * Maximum number of billing periods to return. 0 means the default of 50;
+   * values above 1000 are served as 1000; negative values are
+   * INVALID_ARGUMENT.
+   *
+   * @generated from field: int32 page_size = 3;
+   */
+  pageSize: number;
+
+  /**
+   * Continuation token from a previous response's next_page_token; empty for
+   * the first page. OPAQUE.
+   *
+   * @generated from field: string page_token = 4;
+   */
+  pageToken: string;
+};
+
+/**
+ * Describes the message finfocus.v1.GetBillingPeriodsRequest.
+ * Use `create(GetBillingPeriodsRequestSchema)` to create a new message.
+ */
+export const GetBillingPeriodsRequestSchema: GenMessage<GetBillingPeriodsRequest> = /*@__PURE__*/
+  messageDesc(file_finfocus_v1_supplemental, 2);
+
+/**
+ * GetBillingPeriodsResponse carries one page of billing periods.
+ *
+ * @generated from message finfocus.v1.GetBillingPeriodsResponse
+ */
+export type GetBillingPeriodsResponse = Message<"finfocus.v1.GetBillingPeriodsResponse"> & {
+  /**
+   * Billing periods on this page, in an order that is stable across calls.
+   * Each record passes the BillingPeriod rules, overlaps the window, and the
+   * pair (invoice_issuer_name, billing_period_start) is unique within the
+   * response and across the pages of one walk.
+   *
+   * @generated from field: repeated finfocus.v1.BillingPeriod billing_periods = 1;
+   */
+  billingPeriods: BillingPeriod[];
+
+  /**
+   * Token for the next page; empty on the last page. OPAQUE.
+   *
+   * @generated from field: string next_page_token = 2;
+   */
+  nextPageToken: string;
+
+  /**
+   * Exact number of billing periods matching the window across all pages.
+   *
+   * @generated from field: int32 total_count = 3;
+   */
+  totalCount: number;
+};
+
+/**
+ * Describes the message finfocus.v1.GetBillingPeriodsResponse.
+ * Use `create(GetBillingPeriodsResponseSchema)` to create a new message.
+ */
+export const GetBillingPeriodsResponseSchema: GenMessage<GetBillingPeriodsResponse> = /*@__PURE__*/
+  messageDesc(file_finfocus_v1_supplemental, 3);
+
+/**
+ * GetInvoiceDetailsRequest selects invoice lines by time window and page.
+ * The window rules match GetBillingPeriodsRequest.
+ *
+ * @generated from message finfocus.v1.GetInvoiceDetailsRequest
+ */
+export type GetInvoiceDetailsRequest = Message<"finfocus.v1.GetInvoiceDetailsRequest"> & {
+  /**
+   * Start of the window (inclusive). Leave both start and end unset to
+   * request every invoice line; setting exactly one is INVALID_ARGUMENT.
+   *
+   * @generated from field: google.protobuf.Timestamp start = 1;
+   */
+  start?: Timestamp;
+
+  /**
+   * End of the window (exclusive). Must be after start.
+   *
+   * @generated from field: google.protobuf.Timestamp end = 2;
+   */
+  end?: Timestamp;
+
+  /**
+   * Maximum number of invoice lines to return. 0 means the default of 50;
+   * values above 1000 are served as 1000; negative values are
+   * INVALID_ARGUMENT.
+   *
+   * @generated from field: int32 page_size = 3;
+   */
+  pageSize: number;
+
+  /**
+   * Continuation token from a previous response's next_page_token; empty for
+   * the first page. OPAQUE.
+   *
+   * @generated from field: string page_token = 4;
+   */
+  pageToken: string;
+};
+
+/**
+ * Describes the message finfocus.v1.GetInvoiceDetailsRequest.
+ * Use `create(GetInvoiceDetailsRequestSchema)` to create a new message.
+ */
+export const GetInvoiceDetailsRequestSchema: GenMessage<GetInvoiceDetailsRequest> = /*@__PURE__*/
+  messageDesc(file_finfocus_v1_supplemental, 4);
+
+/**
+ * GetInvoiceDetailsResponse carries one page of invoice lines.
+ *
+ * @generated from message finfocus.v1.GetInvoiceDetailsResponse
+ */
+export type GetInvoiceDetailsResponse = Message<"finfocus.v1.GetInvoiceDetailsResponse"> & {
+  /**
+   * Invoice lines on this page, in an order that is stable across calls.
+   * Each record passes the InvoiceDetail rules, its billing period overlaps
+   * the window, and invoice_detail_id is unique within the response and
+   * across the pages of one walk.
+   *
+   * @generated from field: repeated finfocus.v1.InvoiceDetail invoice_details = 1;
+   */
+  invoiceDetails: InvoiceDetail[];
+
+  /**
+   * Token for the next page; empty on the last page. OPAQUE.
+   *
+   * @generated from field: string next_page_token = 2;
+   */
+  nextPageToken: string;
+
+  /**
+   * Exact number of invoice lines matching the window across all pages.
+   *
+   * @generated from field: int32 total_count = 3;
+   */
+  totalCount: number;
+};
+
+/**
+ * Describes the message finfocus.v1.GetInvoiceDetailsResponse.
+ * Use `create(GetInvoiceDetailsResponseSchema)` to create a new message.
+ */
+export const GetInvoiceDetailsResponseSchema: GenMessage<GetInvoiceDetailsResponse> = /*@__PURE__*/
+  messageDesc(file_finfocus_v1_supplemental, 5);
+
+/**
  * SupplementalDatasetService is implemented by plugins that deliver FOCUS
  * supplemental datasets: records that sit beside Cost and Usage rows and join
- * to them by key. Each dataset has its own RPC and its own plugin capability,
- * so a plugin serves only the datasets it has. Stage A defines Contract
- * Commitment (FOCUS 1.3); PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS advertises it.
+ * to them by key. Each dataset has its own RPC. Contract Commitment
+ * (FOCUS 1.3) is advertised by PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS.
+ * Billing Period and Invoice Detail (FOCUS 1.4) join each other and are
+ * advertised together by PLUGIN_CAPABILITY_INVOICE_DATA. A plugin may
+ * implement either provider, or both. An RPC whose provider is absent
+ * returns UNIMPLEMENTED.
  *
  * Every call returns the source's current view of the requested records
  * (FOCUS Replacement / Overwrite semantics): a host replaces what it holds for
@@ -152,6 +327,28 @@ export const SupplementalDatasetService: GenService<{
     methodKind: "unary";
     input: typeof GetContractCommitmentsRequestSchema;
     output: typeof GetContractCommitmentsResponseSchema;
+  },
+  /**
+   * GetBillingPeriods returns a page of FOCUS Billing Period records whose
+   * period overlaps the requested window.
+   *
+   * @generated from rpc finfocus.v1.SupplementalDatasetService.GetBillingPeriods
+   */
+  getBillingPeriods: {
+    methodKind: "unary";
+    input: typeof GetBillingPeriodsRequestSchema;
+    output: typeof GetBillingPeriodsResponseSchema;
+  },
+  /**
+   * GetInvoiceDetails returns a page of FOCUS Invoice Detail records whose
+   * billing period overlaps the requested window.
+   *
+   * @generated from rpc finfocus.v1.SupplementalDatasetService.GetInvoiceDetails
+   */
+  getInvoiceDetails: {
+    methodKind: "unary";
+    input: typeof GetInvoiceDetailsRequestSchema;
+    output: typeof GetInvoiceDetailsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_finfocus_v1_supplemental, 0);

@@ -42,6 +42,14 @@ const (
 	// stableOrderPages is how many page-size-1 pages stable_order compares.
 	stableOrderPages   = 25
 	malformedPageToken = "!not-a-token!"
+
+	nameFullWalk         = "full_walk"
+	nameStableOrder      = "stable_order"
+	nameWindowFilter     = "window_filter"
+	nameWindowOneBound   = "window_one_bound"
+	nameWindowInverted   = "window_inverted"
+	nameNegativePageSize = "negative_page_size"
+	nameMalformedPage    = "malformed_page_token"
 )
 
 // ContractCommitmentServer is satisfied by any type with a
@@ -306,13 +314,13 @@ type commitmentScenario struct {
 // commitmentScenarios lists the conformance scenarios in suite order.
 func commitmentScenarios() []commitmentScenario {
 	return []commitmentScenario{
-		{name: "full_walk", run: scenarioFullWalk},
-		{name: "stable_order", run: scenarioStableOrder},
-		{name: "window_filter", run: scenarioWindowFilter},
-		{name: "window_one_bound", run: scenarioWindowOneBound},
-		{name: "window_inverted", run: scenarioWindowInverted},
-		{name: "negative_page_size", run: scenarioNegativePageSize},
-		{name: "malformed_page_token", run: scenarioMalformedPageToken},
+		{name: nameFullWalk, run: scenarioFullWalk},
+		{name: nameStableOrder, run: scenarioStableOrder},
+		{name: nameWindowFilter, run: scenarioWindowFilter},
+		{name: nameWindowOneBound, run: scenarioWindowOneBound},
+		{name: nameWindowInverted, run: scenarioWindowInverted},
+		{name: nameNegativePageSize, run: scenarioNegativePageSize},
+		{name: nameMalformedPage, run: scenarioMalformedPageToken},
 	}
 }
 
