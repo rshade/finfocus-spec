@@ -45,6 +45,11 @@ and SDK. Use this guide to navigate to the appropriate documentation for your ne
   - The five invariants, including conservation and its tolerance
   - Strict policy decoding, errors, and host verification
 
+- **[Recommendation Scoring](recommendation-scoring.md)** - `RecommendationScorerService.ScoreRecommendations`
+  - Signals, ranges, calibration, and index-aligned results
+  - Normative trust rules and identifier-mode data handling
+  - Non-normative threshold guidance from synthetic data
+
 - **[Supplemental Dataset Service](supplemental-datasets.md)** - FOCUS supplemental datasets
   - `GetContractCommitments`: window matching, pagination, and snapshot semantics
   - Record rules, provider examples, and error codes
