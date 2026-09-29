@@ -544,8 +544,8 @@ export type FocusCostRecord = Message<"finfocus.v1.FocusCostRecord"> & {
   allocatedTags: { [key: string]: string };
 
   /**
-   * ContractApplied: FOCUS ContractAppliedObject JSON
-   * ({"Elements":[{"ContractCommitmentID":..., ...}]}).
+   * ContractApplied: FOCUS 1.4 ContractAppliedObject JSON
+   * ({"Elements":[{"ContractId":...,"ContractCommitmentId":..., ...}]}).
    * A bare commitment ID is still accepted on the wire for callers of the
    * deprecated WithContractApplied setter. No cross-dataset validation.
    * FOCUS 1.3 and 1.4 Section: Contract Applied (CONDITIONAL)

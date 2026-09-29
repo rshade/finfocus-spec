@@ -35,10 +35,10 @@ Semi-Annual, Annual, Custom. Payment model: No Upfront, Partial Upfront, All Upf
 ## Contract applied object
 
 ```text
-{"Elements":[{"ContractID":"...","ContractCommitmentID":"...",
-  "ContractCommitmentAppliedCost":null,
-  "ContractCommitmentAppliedQuantity":null,
-  "ContractCommitmentAppliedUnit":null}]}
+{"Elements":[{"ContractId":"...","ContractCommitmentId":"...",
+  "ContractCommitmentAppliedCost":12.5}]}
 ```
 
-ContractID is omitted when empty. The three applied fields are JSON null when omitted.
+ContractId and ContractCommitmentId are required. An absent applied metric is omitted.
+A zero cost or quantity is written as 0. A quantity requires a unit. Cost and quantity
+may both be set.

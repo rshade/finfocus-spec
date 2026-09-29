@@ -927,12 +927,15 @@ parallel subtests complete.
   `contract_commitment_description` gap. Applicability stays a JSON string.
 - `optional double` is used for discount percentage, upfront percentage, and pricing-currency cost.
   Generated Go has no `Has*` method: presence is a non-nil pointer. Zero is present, nil is null.
+  The JSON-LD serializer writes that key when the pointer is set, including zero, and omits a nil pointer.
 - `billing_currency` is required for SPEND and may be empty for USAGE. `WithBaselineTerms` fills the
   1.4 columns that do not allow nulls so existing builders can opt into a valid record.
 - `ValidateContractCommitment` enforces the per-record 1.4 rules and stays 0 allocs/op on valid input.
   The JSON object scan does not call `encoding/json`. Cross-row lifecycle rules are out of scope.
 - `WithContractApplied` is deprecated and still stores a bare ID. `FormatContractApplied` emits the
-  `{"Elements":[...]}` object. Seven `IsValidContractCommitment*` helpers are 0 allocs/op.
+  FOCUS 1.4 object. Keys are `ContractId` and `ContractCommitmentId`. An element needs a cost, or a
+  quantity with a unit; zero is present, and both metrics may be set. Seven
+  `IsValidContractCommitment*` helpers are 0 allocs/op.
 - Spec number 545 follows the highest `specs/` prefix (`544-supplemental-contract-commitments`), not 057.
 
 ### Supplemental Dataset Pattern (544-supplemental-contract-commitments)

@@ -16,6 +16,6 @@
 
 - Issue 542 and `.specify/assessments/focus-1-4-support/research.md`
 - FOCUS 1.4 Contract Commitment dataset column list
-- FOCUS 1.3 Contract Applied column: Elements must include ContractCommitmentID,
-  ContractCommitmentAppliedCost, ContractCommitmentAppliedQuantity, and
-  ContractCommitmentAppliedUnit
+- FOCUS 1.4 Contract Applied object: each element uses ContractId and
+  ContractCommitmentId. Cost is required when quantity is absent. Quantity requires
+  a unit. Zero is present. Cost and quantity may both be set.

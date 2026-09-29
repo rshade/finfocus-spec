@@ -40,13 +40,13 @@ instead of only a bare commitment ID.
 
 **Why this priority**: The bare ID was already non-conformant in FOCUS 1.3.
 
-**Independent Test**: Format one element and read back ContractCommitmentID, applied cost,
-quantity, and unit.
+**Independent Test**: Format one element and read back ContractId, ContractCommitmentId,
+and the applied cost.
 
 **Acceptance Scenarios**:
 
-1. **Given** a commitment ID and an applied cost, **When** the object is formatted, **Then**
-   the JSON has an Elements array with those four FOCUS keys.
+1. **Given** a contract ID, a commitment ID, and an applied cost, **When** the object is
+   formatted, **Then** the JSON Elements entry uses those 1.4 keys and includes the cost.
 2. **Given** an existing caller that still passes a bare ID, **When** the deprecated setter is
    used, **Then** the stored value is still that ID.
 

@@ -15,6 +15,7 @@
 package pluginsdk_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
@@ -136,13 +137,61 @@ func TestFormatContractApplied(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := `{"Elements":[{"ContractID":"contract-1","ContractCommitmentID":"commit-1",` +
-		`"ContractCommitmentAppliedCost":12.5,"ContractCommitmentAppliedQuantity":null,` +
-		`"ContractCommitmentAppliedUnit":null}]}`
+	want := `{"Elements":[{"ContractId":"contract-1","ContractCommitmentId":"commit-1",` +
+		`"ContractCommitmentAppliedCost":12.5}]}`
 	if raw != want {
 		t.Fatalf("got %s", raw)
 	}
 	if _, emptyErr := pluginsdk.FormatContractApplied(nil); emptyErr == nil {
 		t.Fatal("expected an error for no elements")
+	}
+}
+
+func TestFormatContractApplied_MetricRules(t *testing.T) {
+	zero := 0.0
+	hours := "Hours"
+	quantity := 3.0
+	cost := 1.0
+	blank := " "
+
+	raw, err := pluginsdk.FormatContractApplied([]pluginsdk.ContractAppliedElement{{
+		ContractID:   "contract-1",
+		CommitmentID: "commit-1",
+		AppliedCost:  &zero,
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(raw, `"ContractCommitmentAppliedCost":0`) {
+		t.Fatalf("zero cost omitted: %s", raw)
+	}
+
+	raw, err = pluginsdk.FormatContractApplied([]pluginsdk.ContractAppliedElement{{
+		ContractID:      "contract-1",
+		CommitmentID:    "commit-1",
+		AppliedCost:     &cost,
+		AppliedQuantity: &quantity,
+		AppliedUnit:     &hours,
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(raw, `"ContractCommitmentAppliedQuantity":3`) ||
+		!strings.Contains(raw, `"ContractCommitmentAppliedUnit":"Hours"`) {
+		t.Fatalf("both metrics should be kept: %s", raw)
+	}
+
+	cases := []pluginsdk.ContractAppliedElement{
+		{CommitmentID: "commit-1", AppliedCost: &cost},
+		{ContractID: blank, CommitmentID: "commit-1", AppliedCost: &cost},
+		{ContractID: "contract-1", CommitmentID: "commit-1"},
+		{ContractID: "contract-1", CommitmentID: "commit-1", AppliedQuantity: &quantity},
+		{ContractID: "contract-1", CommitmentID: "commit-1", AppliedCost: &cost, AppliedUnit: &hours},
+		{ContractID: "contract-1", CommitmentID: "commit-1", AppliedQuantity: &zero, AppliedUnit: &blank},
+	}
+	for i, element := range cases {
+		if _, caseErr := pluginsdk.FormatContractApplied([]pluginsdk.ContractAppliedElement{element}); caseErr == nil {
+			t.Fatalf("case %d accepted an incomplete element", i)
+		}
 	}
 }

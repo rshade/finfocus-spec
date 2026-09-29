@@ -446,8 +446,8 @@ message FocusCostRecord {
   // FOCUS 1.3 Contract Commitment Link (NEW)
   // ==========================================================================
 
-  // ContractApplied: FOCUS ContractAppliedObject JSON
-  // ({"Elements":[{"ContractCommitmentID":..., ...}]}).
+  // ContractApplied: FOCUS 1.4 ContractAppliedObject JSON
+  // ({"Elements":[{"ContractId":...,"ContractCommitmentId":..., ...}]}).
   // A bare commitment ID is still accepted on the wire for callers of the
   // deprecated WithContractApplied setter. No cross-dataset validation.
   // FOCUS 1.3 and 1.4 Section: Contract Applied (CONDITIONAL)

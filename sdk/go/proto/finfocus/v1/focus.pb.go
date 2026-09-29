@@ -697,8 +697,8 @@ type FocusCostRecord struct {
 	// Follows same map<string, string> pattern as existing tags field.
 	// FOCUS 1.3 Section: Allocated Tags (CONDITIONAL)
 	AllocatedTags map[string]string `protobuf:"bytes,65,rep,name=allocated_tags,json=allocatedTags,proto3" json:"allocated_tags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// ContractApplied: FOCUS ContractAppliedObject JSON
-	// ({"Elements":[{"ContractCommitmentID":..., ...}]}).
+	// ContractApplied: FOCUS 1.4 ContractAppliedObject JSON
+	// ({"Elements":[{"ContractId":...,"ContractCommitmentId":..., ...}]}).
 	// A bare commitment ID is still accepted on the wire for callers of the
 	// deprecated WithContractApplied setter. No cross-dataset validation.
 	// FOCUS 1.3 and 1.4 Section: Contract Applied (CONDITIONAL)

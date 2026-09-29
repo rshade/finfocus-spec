@@ -1,4 +1,4 @@
-import { create } from "@bufbuild/protobuf";
+import { clone, create } from "@bufbuild/protobuf";
 import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { ValidationError } from "../errors/validation-error.js";
 import {
@@ -15,40 +15,87 @@ import {
 } from "../generated/finfocus/v1/focus_pb.js";
 
 /**
- * One entry in a FOCUS ContractApplied Elements array.
- * Omitted applied cost, quantity, and unit are emitted as JSON null.
+ * One entry in a FOCUS 1.4 ContractApplied Elements array.
+ * A null or omitted applied cost or quantity is left out of the JSON.
+ * Zero is present and is written as 0.
  */
 export interface ContractAppliedElement {
-  contractId?: string;
+  contractId: string;
   commitmentId: string;
   appliedCost?: number | null;
   appliedQuantity?: number | null;
   appliedUnit?: string | null;
 }
 
-/** Builds the FOCUS ContractAppliedObject JSON: {"Elements":[...]}. */
+/** Builds the FOCUS 1.4 ContractAppliedObject JSON: {"Elements":[...]}. */
 export function formatContractApplied(elements: ContractAppliedElement[]): string {
   if (elements.length === 0) {
     throw new ValidationError("Contract applied requires at least one element", "contractApplied");
   }
   const payload = {
-    Elements: elements.map((element, index) => {
-      if (!element.commitmentId || element.commitmentId.trim() === "") {
-        throw new ValidationError(
-          `Contract applied element ${index} requires a commitment ID`,
-          "contractApplied",
-        );
-      }
-      return {
-        ...(element.contractId ? { ContractID: element.contractId } : {}),
-        ContractCommitmentID: element.commitmentId,
-        ContractCommitmentAppliedCost: element.appliedCost ?? null,
-        ContractCommitmentAppliedQuantity: element.appliedQuantity ?? null,
-        ContractCommitmentAppliedUnit: element.appliedUnit ?? null,
-      };
-    }),
+    Elements: elements.map((element, index) => appliedElement(element, index)),
   };
   return JSON.stringify(payload);
+}
+
+function appliedElement(element: ContractAppliedElement, index: number): Record<string, unknown> {
+  if (!element.contractId || element.contractId.trim() === "") {
+    throw new ValidationError(
+      `Contract applied element ${index} requires a contract ID`,
+      "contractApplied",
+    );
+  }
+  if (!element.commitmentId || element.commitmentId.trim() === "") {
+    throw new ValidationError(
+      `Contract applied element ${index} requires a commitment ID`,
+      "contractApplied",
+    );
+  }
+  const costPresent = typeof element.appliedCost === "number";
+  const quantityPresent = typeof element.appliedQuantity === "number";
+  const unitPresent = typeof element.appliedUnit === "string" && element.appliedUnit.trim() !== "";
+  const unitProvided = element.appliedUnit !== undefined && element.appliedUnit !== null;
+  if (!costPresent && !quantityPresent) {
+    throw new ValidationError(
+      `Contract applied element ${index} requires a cost or a quantity`,
+      "contractApplied",
+    );
+  }
+  if (costPresent && !Number.isFinite(element.appliedCost)) {
+    throw new ValidationError(
+      `Contract applied element ${index} cost must be a finite number`,
+      "contractApplied",
+    );
+  }
+  if (quantityPresent && !Number.isFinite(element.appliedQuantity)) {
+    throw new ValidationError(
+      `Contract applied element ${index} quantity must be a finite number`,
+      "contractApplied",
+    );
+  }
+  if (quantityPresent && !unitPresent) {
+    throw new ValidationError(
+      `Contract applied element ${index} requires a unit when quantity is set`,
+      "contractApplied",
+    );
+  }
+  if (!quantityPresent && unitProvided) {
+    throw new ValidationError(
+      `Contract applied element ${index} unit requires a quantity`,
+      "contractApplied",
+    );
+  }
+  return {
+    ContractId: element.contractId,
+    ContractCommitmentId: element.commitmentId,
+    ...(costPresent ? { ContractCommitmentAppliedCost: element.appliedCost } : {}),
+    ...(quantityPresent
+      ? {
+          ContractCommitmentAppliedQuantity: element.appliedQuantity,
+          ContractCommitmentAppliedUnit: element.appliedUnit,
+        }
+      : {}),
+  };
 }
 
 /**
@@ -176,6 +223,6 @@ export class ContractCommitmentBuilder {
   }
 
   build(): ContractCommitment {
-    return this.record;
+    return clone(ContractCommitmentSchema, this.record);
   }
 }
