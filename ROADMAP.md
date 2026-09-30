@@ -7,16 +7,7 @@ centered around the FinOps Foundation's FOCUS standard.
 
 ---
 
-## Immediate Focus (Q2 2026)
-
-### SDK Enhancements
-
-- [ ] **Integrate ValidationError Type**
-  ([#210](https://github.com/rshade/finfocus-spec/issues/210)) [M] -
-  Integrate ValidationError type with validation implementation.
-- [ ] **Extract ResourceDescriptor Test Helper**
-  ([#204](https://github.com/rshade/finfocus-spec/issues/204)) [S] -
-  Refactor test helper for ResourceDescriptor creation.
+## Immediate Focus
 
 ### Stability & Maintenance
 
@@ -27,23 +18,26 @@ centered around the FinOps Foundation's FOCUS standard.
 
 ## Near-Term Vision
 
-### Batch RPC Code Quality
+### Post-0.7.0 Review Follow-ups
 
-- [ ] **Benchmark descriptorClone Overhead**
-  ([#402](https://github.com/rshade/finfocus-spec/issues/402)) [M] -
-  Benchmark and evaluate descriptorClone overhead in batch result construction.
-- [ ] **Resolve Concurrency TODO in BatchCost Tests**
-  ([#403](https://github.com/rshade/finfocus-spec/issues/403)) [M] -
-  Resolve TODO in TestBatchCostFallbackWorkerPoolConfig for concurrency assertions.
-
-### Protocol Enhancements
-
-- [ ] **Add expires_at to EstimateCostResponse**
-  ([#434](https://github.com/rshade/finfocus-spec/issues/434)) [M] -
-  Add optional expires_at field for cache-hint parity across all cost RPCs.
-- [ ] **Add CostBreakdown Map to GetProjectedCostResponse**
-  ([#433](https://github.com/rshade/finfocus-spec/issues/433)) [M] -
-  Add structured cost component breakdown map for projected cost responses.
+- [ ] **isJSONObject Accepts Invalid JSON**
+  ([#562](https://github.com/rshade/finfocus-spec/issues/562)) [S] -
+  Contract commitment applicability check is a bracket scanner, not a JSON parser.
+- [ ] **stampValidationTrace Mutates Returned Error**
+  ([#563](https://github.com/rshade/finfocus-spec/issues/563)) [S] -
+  Writes a trace id into a `ValidationError` the handler owns; races on shared error values.
+- [ ] **REST Gateway Error Text and Body Drain**
+  ([#565](https://github.com/rshade/finfocus-spec/issues/565)) [M] -
+  TypeScript gateway returns upstream error text and keeps draining oversized request bodies.
+- [ ] **Pin Release and Publish Actions to SHAs**
+  ([#564](https://github.com/rshade/finfocus-spec/issues/564)) [S] -
+  Actions holding a PAT or package-write token use mutable tags.
+- [ ] **Credential Handling Docs**
+  ([#566](https://github.com/rshade/finfocus-spec/issues/566)) [S] -
+  Document fail-closed `ExtractCredentials` and filtering credential headers in plugin interceptors.
+- [ ] **Deduplicate Supplemental Test Harnesses**
+  ([#561](https://github.com/rshade/finfocus-spec/issues/561)) [M] -
+  Merge copy-pasted bufconn harnesses and duplicate-key checks in `sdk/go/testing`.
 
 ---
 
@@ -51,8 +45,6 @@ centered around the FinOps Foundation's FOCUS standard.
 
 ### Active Research
 
-- [ ] **Distributed Tracing Propagation (Contextual Visibility)**
-  ([#193](https://github.com/rshade/finfocus-spec/issues/193)) [L]
 - [ ] **Authorization Middleware (OIDC/IAM)**
   ([#195](https://github.com/rshade/finfocus-spec/issues/195)) [L] -
   Standardizing how plugins receive and validate identity without violating "Stateless" boundaries.
@@ -87,16 +79,41 @@ centered around the FinOps Foundation's FOCUS standard.
 - [ ] **Signed Page Tokens for v2.0**
   ([#370](https://github.com/rshade/finfocus-spec/issues/370)) [L] -
   Research HMAC-signed tokens to prevent token manipulation in pagination.
-- [ ] **Multi-Currency Segregation Pattern**
-  ([#190](https://github.com/rshade/finfocus-spec/issues/190)) [L]
-- [ ] **Per-Request Credential Passing** ([#220](https://github.com/rshade/finfocus-spec/issues/220)) [L] -
-  Multi-tenant optimization allowing per-request cloud credentials.
 
 ---
 
 ## Completed Milestones
 
+### Q3 2026
+
+- [x] #556 `proto`: RecommendationScorerService.ScoreRecommendations for scorer plugins. Closed 2026-09-29. [L]
+- [x] #540 `proto`: Support FOCUS 1.4 billing, invoice, and commitment datasets. Closed 2026-09-29. [L]
+- [x] #543 `proto`: FOCUS 1.4 Billing Period and Invoice Detail datasets. Closed 2026-09-29. [L]
+- [x] #542 `proto`: FOCUS 1.4 Contract Commitment columns. Closed 2026-09-29. [M]
+- [x] #544 `proto`: Decide delivery path for supplemental datasets. Closed 2026-09-28. [S]
+- [x] #541 `pluginsdk`: FOCUS 1.4 Cost and Usage columns. Closed 2026-09-28. [S]
+- [x] #433 `proto`: Add cost_breakdown map to GetProjectedCostResponse. Closed 2026-09-28. [M]
+- [x] #220 `pluginsdk`: Opt-in per-request credential passing. Closed 2026-09-28. [L]
+- [x] #193 `pluginsdk`: Log host trace id on validation failures. Closed 2026-09-28. [L]
+- [x] #190 `pluginsdk`: Multi-currency segregation pattern. Closed 2026-09-28. [L]
+- [x] #514 `ts-sdk`: Remove ignoreDeprecations before TypeScript 7. Closed 2026-09-28. [S]
+- [x] #513 `ts-sdk`: Make middleware and framework-plugins packages compile. Closed 2026-09-28. [M]
+- [x] #506 `proto`: AllocatorService.Allocate for cost allocation plugins. Closed 2026-09-28. [M]
+- [x] #403 `pluginsdk`: Resolve concurrency TODO in BatchCost worker-pool test. Closed 2026-09-28. [M]
+- [x] #402 `pluginsdk`: Benchmark descriptorClone overhead in batch results. Closed 2026-09-28. [M]
+- [x] #504 `pluginsdk`: Backfill inferred capabilities for PluginInfoProvider. Closed 2026-09-26. [S]
+- [x] #507 `pluginsdk`: Fix Supports always failing with default registry. Closed 2026-09-26. [S]
+- [x] #505 `proto`: UsageSourceService.GetStats for workload usage plugins. Closed 2026-09-25. [M]
+- [x] #494 `pluginsdk`: Adopt ax-go v0.6.0 CLI in Serve for plugin binaries. Closed 2026-09-08. [L]
+
+### Q2 2026
+
+- [x] #434 `proto`: Add expires_at to EstimateCostResponse. Closed 2026-04-03. [M]
+
 ### Q1 2026
+
+- [x] #204 `pluginsdk`: Extract ResourceDescriptor test helper. Closed 2026-03-13. [S]
+- [x] #210 `pluginsdk`: Integrate ValidationError with validation. Closed 2026-03-11. [M]
 
 #### Protocol & Modeling
 
@@ -285,46 +302,18 @@ centered around the FinOps Foundation's FOCUS standard.
 
 #### Protocol & Modeling
 
-- [x] **GreenOps Standardization** ([#176](https://github.com/rshade/finfocus-spec/issues/176)) -
-  Sustainability metrics (carbon footprint, energy utilization) integrated into the core protocol.
-- [x] **Recommendation Enhancements**
-  ([#173](https://github.com/rshade/finfocus-spec/issues/173),
-  [#171](https://github.com/rshade/finfocus-spec/issues/171),
-  [#166](https://github.com/rshade/finfocus-spec/issues/166)) -
-  Added resource-scoped targets, filtering, and extended action types.
-- [x] **FOCUS 1.2 Integration**
-  ([#100](https://github.com/rshade/finfocus-spec/issues/100),
-  [#99](https://github.com/rshade/finfocus-spec/issues/99)) -
-  Full schema coverage and builder API for FOCUS 1.2.
-- [x] **RPC Expansion**
-  ([#125](https://github.com/rshade/finfocus-spec/issues/125),
-  [#123](https://github.com/rshade/finfocus-spec/issues/123),
-  [#90](https://github.com/rshade/finfocus-spec/issues/90)) -
-  Implemented `EstimateCost`, `GetBudgets`, and `GetRecommendations`.
-- [x] **Zero-Allocation Enums**
-  ([#63](https://github.com/rshade/finfocus-spec/issues/63),
-  [#33](https://github.com/rshade/finfocus-spec/issues/33)) -
-  High-performance validation for domain enums.
+- [x] #176 GreenOps standardization
+- [x] #173, #171, #166 Recommendation enhancements
+- [x] #100, #99 FOCUS 1.2 integration
+- [x] #125, #123, #90 RPC expansion: EstimateCost, GetBudgets, GetRecommendations
+- [x] #63, #33 Zero-allocation enums
 
 #### SDK & Tooling
 
-- [x] **Plugin Conformance Suite** ([#109](https://github.com/rshade/finfocus-spec/issues/109)) -
-  Automated testing for plugin implementers to ensure spec compliance.
-- [x] **SDK Foundation**
-  ([#151](https://github.com/rshade/finfocus-spec/issues/151),
-  [#148](https://github.com/rshade/finfocus-spec/issues/148),
-  [#145](https://github.com/rshade/finfocus-spec/issues/145),
-  [#139](https://github.com/rshade/finfocus-spec/issues/139)) -
-  Centralized environment handling, Prometheus metrics, and unified file-based logging.
-- [x] **Orchestration Support**
-  ([#181](https://github.com/rshade/finfocus-spec/issues/181),
-  [#143](https://github.com/rshade/finfocus-spec/issues/143),
-  [#126](https://github.com/rshade/finfocus-spec/issues/126)) -
-  Added reflection, `--port` flags, and `fallback-hints`.
-- [x] **Multi-Protocol Support (gRPC-Web/Connect)**
-  ([#189](https://github.com/rshade/finfocus-spec/issues/189),
-  [#223](https://github.com/rshade/finfocus-spec/pull/223)) -
-  Added connect-go integration enabling gRPC, gRPC-Web, and Connect protocols for browser compatibility.
+- [x] #109 Plugin conformance suite
+- [x] #151, #148, #145, #139 SDK foundation
+- [x] #181, #143, #126 Orchestration support
+- [x] #189, #223 Multi-protocol support (gRPC-Web/Connect)
 
 ---
 
