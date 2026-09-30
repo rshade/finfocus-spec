@@ -377,3 +377,18 @@ func TestValidateScoreRecommendationsResponse(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateScoreRecommendationsResponseReportsFirstSingletonGroup(t *testing.T) {
+	req := scoreRequest("a", "b", "c")
+	resp := scoreResponse(
+		scoredResult("a", &pbc.RecommendationScores{DuplicateGroupId: "g"}),
+		scoredResult("b", &pbc.RecommendationScores{DuplicateGroupId: "h"}),
+		scoredResult("c", &pbc.RecommendationScores{DuplicateGroupId: "i"}),
+	)
+	const want = `duplicate_group_id "g" is used by only one recommendation`
+	for range 200 {
+		err := plugintesting.ValidateScoreRecommendationsResponse(req, resp)
+		require.Error(t, err)
+		require.ErrorContains(t, err, want)
+	}
+}
