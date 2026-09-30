@@ -35,6 +35,12 @@
       "matchPackageNames": ["/^google\\.golang\\.org//"]
     },
     {
+      "matchManagers": ["gomod"],
+      "matchPackageNames": ["google.golang.org/grpc"],
+      "allowedVersions": "!/^v?1\\.84\\.0$/",
+      "description": "Skip grpc v1.84.0, affected by GO-2026-6443; remove once a stable release contains the fix"
+    },
+    {
       "groupName": "GitHub dependencies",
       "groupSlug": "github-deps",
       "matchManagers": ["gomod"],
