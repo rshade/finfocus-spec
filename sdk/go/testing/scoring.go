@@ -126,8 +126,9 @@ func ValidateScoreRecommendationsResponse(
 			return err
 		}
 	}
-	for group, count := range groups {
-		if count < minDuplicateGroupSize {
+	for _, result := range resp.GetResults() {
+		group := result.GetScores().GetDuplicateGroupId()
+		if group != "" && groups[group] < minDuplicateGroupSize {
 			return fmt.Errorf("%w: duplicate_group_id %q is used by only one recommendation",
 				ErrInvalidScoreResponse, group)
 		}
