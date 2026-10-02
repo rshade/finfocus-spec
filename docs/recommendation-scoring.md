@@ -17,7 +17,7 @@ API key, and network access, so the host stays free of external API clients.
 
 ```text
 host ──GetRecommendations──▶ cost-source plugins   full Recommendation messages
-host                          apply identifier_mode to resource ids and names
+host                          apply identifier_mode to resource.id and resource.name
 host ──ScoreRecommendations─▶ scorer               index-aligned scores or per-item errors
 host                          ValidateScoreRecommendationsResponse, then sort and route to review
 ```
@@ -42,9 +42,9 @@ These rules are normative.
 
 | Field | Meaning |
 | ----- | ------- |
-| `recommendations` | Complete `Recommendation` messages as `GetRecommendations` returned them, so the scorer sees tags, metadata, impact, and utilization. Between 1 and `max_batch_size` entries, each with a distinct non-empty `id`. |
+| `recommendations` | Complete `Recommendation` messages as `GetRecommendations` returned them, so the scorer sees `action_detail`, `primary_reason`, `secondary_reasons`, tags, metadata, impact, and utilization. "Complete" means the host does not drop those fields on its own. An operator allowlist may remove fields, and the scorer cannot tell a removed field from an empty one. Between 1 and `max_batch_size` entries, each with a distinct non-empty `id`. |
 | `signals` | Limits the response to these signals. Empty means every signal the scorer supports. `SCORE_SIGNAL_UNSPECIFIED` is invalid. |
-| `identifier_mode` | How the host already treated `resource.id` and `resource.name`. |
+| `identifier_mode` | How the host already treated `resource.id` and `resource.name`. It says nothing about any other field. |
 
 An empty request is invalid, unlike `BatchCost`, because there is nothing to score.
 
@@ -108,6 +108,21 @@ transformation, so identifiers never reach the scorer's backend in the default m
 | `IDENTIFIER_MODE_RAW` | Cloud identifiers (resource id, name, ARN) as they are. Hosts should require an explicit operator opt-in. |
 | `IDENTIFIER_MODE_PSEUDONYMIZED` | `resource.id` and `resource.name` replaced by opaque tokens, identical for the same value within one request. Duplicate grouping keeps working. |
 | `IDENTIFIER_MODE_OMITTED` | `resource.id` and `resource.name` removed. Duplicate grouping becomes unreliable. |
+
+### Identifier Scope
+
+`identifier_mode` is defined for `resource.id` and `resource.name` only. The contract does not
+require the host to transform any other field, so a scorer MUST NOT assume it did.
+
+| Field | Under `PSEUDONYMIZED` and `OMITTED` |
+| ----- | ----------------------------------- |
+| `resource.id`, `resource.name` | Transformed by the host, as the table above says. |
+| `action_detail` members, such as `cluster_id`, `namespace`, `controller_name`, `container_name`, and `current_config` / `recommended_config` values | Not covered. The host MAY replace identifiers it recognizes, but the contract does not require it. |
+| `primary_reason`, `secondary_reasons`, `description`, tags, and metadata | Not covered. Free text can embed ids and names, and a host that replaces only exact id or name substrings leaves other forms in place. |
+
+A scorer that sends data off-host MUST treat every field outside `resource.id` and `resource.name`
+as possibly holding identifiers, and MUST document which of them leave the host. An operator who
+needs those fields kept off-host removes them from the request before it is sent.
 
 Tags, metadata, and free text can still hold sensitive values, so identifier handling does not make
 a request safe to send on its own.

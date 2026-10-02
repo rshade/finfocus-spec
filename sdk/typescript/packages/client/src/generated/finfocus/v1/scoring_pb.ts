@@ -35,8 +35,10 @@ export const file_finfocus_v1_scoring: GenFile = /*@__PURE__*/
 export type ScoreRecommendationsRequest = Message<"finfocus.v1.ScoreRecommendationsRequest"> & {
   /**
    * recommendations are complete Recommendation messages as returned by
-   * GetRecommendations, so the scorer sees tags, metadata, impact and
-   * utilization. Between 1 and max_batch_size entries, each with a distinct id.
+   * GetRecommendations, so the scorer sees action_detail, primary_reason,
+   * secondary_reasons, tags, metadata, impact and utilization. The host does
+   * not drop those fields on its own; an operator allowlist may remove them.
+   * Between 1 and max_batch_size entries, each with a distinct id.
    *
    * @generated from field: repeated finfocus.v1.Recommendation recommendations = 1;
    */
@@ -53,7 +55,9 @@ export type ScoreRecommendationsRequest = Message<"finfocus.v1.ScoreRecommendati
   /**
    * identifier_mode is how the host has already treated resource identifiers
    * in recommendations. It informs the scorer; the host performs the
-   * transformation.
+   * transformation. It covers resource.id and resource.name only: action_detail
+   * members and free text (reasons, description, tags, metadata) can still hold
+   * identifiers, and a scorer must not assume they were transformed.
    *
    * @generated from field: finfocus.v1.IdentifierMode identifier_mode = 3;
    */

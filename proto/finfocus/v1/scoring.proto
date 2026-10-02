@@ -105,8 +105,10 @@ enum IdentifierMode {
 // ScoreRecommendationsRequest carries recommendations to score.
 message ScoreRecommendationsRequest {
   // recommendations are complete Recommendation messages as returned by
-  // GetRecommendations, so the scorer sees tags, metadata, impact and
-  // utilization. Between 1 and max_batch_size entries, each with a distinct id.
+  // GetRecommendations, so the scorer sees action_detail, primary_reason,
+  // secondary_reasons, tags, metadata, impact and utilization. The host does
+  // not drop those fields on its own; an operator allowlist may remove them.
+  // Between 1 and max_batch_size entries, each with a distinct id.
   repeated Recommendation recommendations = 1;
 
   // signals limits the response to these signals. Empty means every signal the
@@ -115,7 +117,9 @@ message ScoreRecommendationsRequest {
 
   // identifier_mode is how the host has already treated resource identifiers
   // in recommendations. It informs the scorer; the host performs the
-  // transformation.
+  // transformation. It covers resource.id and resource.name only: action_detail
+  // members and free text (reasons, description, tags, metadata) can still hold
+  // identifiers, and a scorer must not assume they were transformed.
   IdentifierMode identifier_mode = 3;
 }
 
