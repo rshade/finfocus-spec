@@ -182,16 +182,10 @@ if err != nil {
 
 ### Test Harness
 
-The `TestHarness` provides an in-memory gRPC testing environment:
-
-```go
-type TestHarness struct {
-    server   *grpc.Server
-    listener *bufconn.Listener
-    client   pbc.CostSourceServiceClient
-    conn     *grpc.ClientConn
-}
-```
+The `TestHarness` provides an in-memory gRPC testing environment. It and the other
+harnesses (`AllocatorHarness`, `ScorerHarness`, `UsageSourceHarness`,
+`ContractCommitmentHarness`, `InvoiceDatasetHarness`) share one bufconn lifecycle,
+so `Start`, `Stop`, and `Client` behave the same on every harness.
 
 **Key Methods:**
 

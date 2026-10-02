@@ -17,15 +17,12 @@ package testing
 import (
 	"context"
 	"fmt"
-	"net"
 	"testing"
 	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/test/bufconn"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
@@ -60,48 +57,15 @@ func (a *invoiceDatasetAdapter) GetInvoiceDetails(
 // InvoiceDatasetHarness serves an InvoiceDatasetServer as
 // SupplementalDatasetService over an in-memory bufconn.
 type InvoiceDatasetHarness struct {
-	server   *grpc.Server
-	listener *bufconn.Listener
-	client   pbc.SupplementalDatasetServiceClient
-	conn     *grpc.ClientConn
+	bufconnHarness[pbc.SupplementalDatasetServiceClient]
 }
 
 // NewInvoiceDatasetHarness creates a harness serving impl as
 // SupplementalDatasetService. GetContractCommitments stays unimplemented.
 func NewInvoiceDatasetHarness(impl InvoiceDatasetServer) *InvoiceDatasetHarness {
-	listener := bufconn.Listen(bufSize)
-	server := grpc.NewServer()
-	pbc.RegisterSupplementalDatasetServiceServer(server, &invoiceDatasetAdapter{impl: impl})
-	go func() {
-		_ = server.Serve(listener)
-	}()
-	return &InvoiceDatasetHarness{server: server, listener: listener}
-}
-
-// Start initializes the client connection to the in-memory server.
-func (h *InvoiceDatasetHarness) Start(t testing.TB) {
-	//nolint:staticcheck // grpc.NewClient doesn't work with bufconn
-	conn, err := grpc.DialContext(context.Background(), "bufnet",
-		grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) {
-			return h.listener.Dial()
-		}),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	if err != nil {
-		t.Fatalf("Failed to dial bufnet: %v", err)
-	}
-	h.conn = conn
-	h.client = pbc.NewSupplementalDatasetServiceClient(conn)
-}
-
-// Stop closes the client connection and stops the server.
-func (h *InvoiceDatasetHarness) Stop() {
-	if h.conn != nil {
-		_ = h.conn.Close()
-	}
-	if h.server != nil {
-		h.server.Stop()
-	}
+	return &InvoiceDatasetHarness{newBufconnHarness(func(s *grpc.Server) {
+		pbc.RegisterSupplementalDatasetServiceServer(s, &invoiceDatasetAdapter{impl: impl})
+	}, pbc.NewSupplementalDatasetServiceClient)}
 }
 
 // Client returns the SupplementalDatasetService client; call Start first.

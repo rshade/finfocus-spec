@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"net"
 	"regexp"
 	"strings"
 	"testing"
@@ -29,9 +28,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/test/bufconn"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -82,54 +79,14 @@ func (a *allocateAdapter) Allocate(ctx context.Context, req *pbc.AllocateRequest
 // AllocatorHarness serves an AllocateServer over an in-memory bufconn, so
 // calls exercise proto serialization and the status codes clients really see.
 type AllocatorHarness struct {
-	server   *grpc.Server
-	listener *bufconn.Listener
-	client   pbc.AllocatorServiceClient
-	conn     *grpc.ClientConn
+	bufconnHarness[pbc.AllocatorServiceClient]
 }
 
 // NewAllocatorHarness creates a harness serving impl as AllocatorService.
 func NewAllocatorHarness(impl AllocateServer) *AllocatorHarness {
-	listener := bufconn.Listen(bufSize)
-	server := grpc.NewServer()
-	pbc.RegisterAllocatorServiceServer(server, &allocateAdapter{impl: impl})
-
-	go func() {
-		_ = server.Serve(listener)
-	}()
-
-	return &AllocatorHarness{
-		server:   server,
-		listener: listener,
-	}
-}
-
-// Start initializes the client connection to the in-memory server.
-func (h *AllocatorHarness) Start(t testing.TB) {
-	//nolint:staticcheck // grpc.NewClient doesn't work with bufconn
-	conn, err := grpc.DialContext(context.Background(), "bufnet",
-		grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) {
-			return h.listener.Dial()
-		}),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	if err != nil {
-		t.Fatalf("Failed to dial bufnet: %v", err)
-	}
-
-	h.conn = conn
-	h.client = pbc.NewAllocatorServiceClient(conn)
-}
-
-// Stop closes the client connection and stops the server. It is safe to call
-// more than once.
-func (h *AllocatorHarness) Stop() {
-	if h.conn != nil {
-		_ = h.conn.Close()
-	}
-	if h.server != nil {
-		h.server.Stop()
-	}
+	return &AllocatorHarness{newBufconnHarness(func(s *grpc.Server) {
+		pbc.RegisterAllocatorServiceServer(s, &allocateAdapter{impl: impl})
+	}, pbc.NewAllocatorServiceClient)}
 }
 
 // Client returns the AllocatorService client; call Start first.

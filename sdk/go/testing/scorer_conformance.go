@@ -17,14 +17,11 @@ package testing
 import (
 	"context"
 	"fmt"
-	"net"
 	"slices"
 	"testing"
 	"time"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/test/bufconn"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
@@ -66,48 +63,14 @@ func (a *scoreAdapter) ScoreRecommendations(
 // ScorerHarness serves a ScoreServer over an in-memory bufconn, so calls
 // exercise proto serialization and the status codes clients really see.
 type ScorerHarness struct {
-	server   *grpc.Server
-	listener *bufconn.Listener
-	client   pbc.RecommendationScorerServiceClient
-	conn     *grpc.ClientConn
+	bufconnHarness[pbc.RecommendationScorerServiceClient]
 }
 
 // NewScorerHarness creates a harness serving impl as RecommendationScorerService.
 func NewScorerHarness(impl ScoreServer) *ScorerHarness {
-	listener := bufconn.Listen(bufSize)
-	server := grpc.NewServer()
-	pbc.RegisterRecommendationScorerServiceServer(server, &scoreAdapter{impl: impl})
-	go func() {
-		_ = server.Serve(listener)
-	}()
-	return &ScorerHarness{server: server, listener: listener}
-}
-
-// Start initializes the client connection to the in-memory server.
-func (h *ScorerHarness) Start(t testing.TB) {
-	//nolint:staticcheck // grpc.NewClient doesn't work with bufconn
-	conn, err := grpc.DialContext(context.Background(), "bufnet",
-		grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) {
-			return h.listener.Dial()
-		}),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	if err != nil {
-		t.Fatalf("Failed to dial bufnet: %v", err)
-	}
-	h.conn = conn
-	h.client = pbc.NewRecommendationScorerServiceClient(conn)
-}
-
-// Stop closes the client connection and stops the server. It is safe to call
-// more than once.
-func (h *ScorerHarness) Stop() {
-	if h.conn != nil {
-		_ = h.conn.Close()
-	}
-	if h.server != nil {
-		h.server.Stop()
-	}
+	return &ScorerHarness{newBufconnHarness(func(s *grpc.Server) {
+		pbc.RegisterRecommendationScorerServiceServer(s, &scoreAdapter{impl: impl})
+	}, pbc.NewRecommendationScorerServiceClient)}
 }
 
 // Client returns the RecommendationScorerService client; call Start first.

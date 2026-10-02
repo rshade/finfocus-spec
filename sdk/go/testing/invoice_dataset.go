@@ -164,23 +164,8 @@ func validateResponseBillingPeriod(i int, p *pbc.BillingPeriod, start, end *time
 }
 
 func checkDuplicateBillingPeriods(list []*pbc.BillingPeriod) error {
-	if len(list) <= pairwiseDuplicateLimit {
-		for i := 1; i < len(list); i++ {
-			for j := range i {
-				if sameBillingPeriodIdentity(list[i], list[j]) {
-					return duplicateBillingPeriod(i, j, list[i])
-				}
-			}
-		}
-		return nil
-	}
-	seen := make(map[billingPeriodKey]int, len(list))
-	for i, p := range list {
-		key := billingPeriodIdentity(p)
-		if first, dup := seen[key]; dup {
-			return duplicateBillingPeriod(i, first, p)
-		}
-		seen[key] = i
+	if i, first, dup := findDuplicate(list, billingPeriodIdentity); dup {
+		return duplicateBillingPeriod(i, first, list[i])
 	}
 	return nil
 }
@@ -194,10 +179,6 @@ type billingPeriodKey struct {
 func billingPeriodIdentity(p *pbc.BillingPeriod) billingPeriodKey {
 	start := p.GetBillingPeriodStart()
 	return billingPeriodKey{issuer: p.GetInvoiceIssuerName(), seconds: start.GetSeconds(), nanos: start.GetNanos()}
-}
-
-func sameBillingPeriodIdentity(a, b *pbc.BillingPeriod) bool {
-	return billingPeriodIdentity(a) == billingPeriodIdentity(b)
 }
 
 func duplicateBillingPeriod(i, first int, p *pbc.BillingPeriod) error {
@@ -244,24 +225,8 @@ func validateResponseInvoiceDetail(i int, d *pbc.InvoiceDetail, start, end *time
 }
 
 func checkDuplicateInvoiceDetails(list []*pbc.InvoiceDetail) error {
-	if len(list) <= pairwiseDuplicateLimit {
-		for i := 1; i < len(list); i++ {
-			id := list[i].GetInvoiceDetailId()
-			for j := range i {
-				if list[j].GetInvoiceDetailId() == id {
-					return duplicateInvoiceDetail(i, j, id)
-				}
-			}
-		}
-		return nil
-	}
-	seen := make(map[string]int, len(list))
-	for i, d := range list {
-		id := d.GetInvoiceDetailId()
-		if first, dup := seen[id]; dup {
-			return duplicateInvoiceDetail(i, first, id)
-		}
-		seen[id] = i
+	if i, first, dup := findDuplicate(list, (*pbc.InvoiceDetail).GetInvoiceDetailId); dup {
+		return duplicateInvoiceDetail(i, first, list[i].GetInvoiceDetailId())
 	}
 	return nil
 }

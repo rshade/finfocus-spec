@@ -5,11 +5,9 @@ package testing
 import (
 	"context"
 	"fmt"
-	"net"
 	"time"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
@@ -227,16 +225,8 @@ func createTestConnection(harness *TestHarness) (*grpcConn, error) {
 type grpcConn = grpc.ClientConn
 
 // createClientConnection creates and returns a client connection.
-//
-//nolint:staticcheck // grpc.DialContext is deprecated but NewClient doesn't support bufconn dialers
 func (h *TestHarness) createClientConnection() (*grpc.ClientConn, error) {
-	conn, err := grpc.DialContext(context.Background(), "bufnet",
-		grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) {
-			return h.listener.Dial()
-		}),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	return conn, err
+	return h.dial()
 }
 
 // SpecValidationTests returns the spec validation conformance tests.
