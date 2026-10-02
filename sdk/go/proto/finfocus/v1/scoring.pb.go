@@ -232,15 +232,19 @@ func (IdentifierMode) EnumDescriptor() ([]byte, []int) {
 type ScoreRecommendationsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// recommendations are complete Recommendation messages as returned by
-	// GetRecommendations, so the scorer sees tags, metadata, impact and
-	// utilization. Between 1 and max_batch_size entries, each with a distinct id.
+	// GetRecommendations, so the scorer sees action_detail, primary_reason,
+	// secondary_reasons, tags, metadata, impact and utilization. The host does
+	// not drop those fields on its own; an operator allowlist may remove them.
+	// Between 1 and max_batch_size entries, each with a distinct id.
 	Recommendations []*Recommendation `protobuf:"bytes,1,rep,name=recommendations,proto3" json:"recommendations,omitempty"`
 	// signals limits the response to these signals. Empty means every signal the
 	// scorer supports.
 	Signals []ScoreSignal `protobuf:"varint,2,rep,packed,name=signals,proto3,enum=finfocus.v1.ScoreSignal" json:"signals,omitempty"`
 	// identifier_mode is how the host has already treated resource identifiers
 	// in recommendations. It informs the scorer; the host performs the
-	// transformation.
+	// transformation. It covers resource.id and resource.name only: action_detail
+	// members and free text (reasons, description, tags, metadata) can still hold
+	// identifiers, and a scorer must not assume they were transformed.
 	IdentifierMode IdentifierMode `protobuf:"varint,3,opt,name=identifier_mode,json=identifierMode,proto3,enum=finfocus.v1.IdentifierMode" json:"identifier_mode,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
