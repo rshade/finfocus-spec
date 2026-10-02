@@ -27,15 +27,16 @@ import (
 // function of the same name. Scorers call it first: every failure wraps
 // plugintesting.ErrInvalidScoreRequest and carries codes.InvalidArgument, so it
 // may be returned directly. Pass the scorer's own batch limit as maxBatchSize,
-// or zero for no limit.
+// or zero for no limit. A non-empty session_id must be at most 128 printable
+// ASCII characters.
 func ValidateScoreRecommendationsRequest(req *pbc.ScoreRecommendationsRequest, maxBatchSize int32) error {
 	return plugintesting.ValidateScoreRecommendationsRequest(req, maxBatchSize)
 }
 
 // ValidateScoreRecommendationsResponse is identical to the sdk/go/testing
 // function of the same name. Hosts call it on every response before using a
-// score: it checks index alignment, ranges, signal support and duplicate
-// groups. Every failure wraps plugintesting.ErrInvalidScoreResponse.
+// score: it checks index alignment, ranges, signal support, the echoed
+// session_id and duplicate groups (a lone group member is valid in a session). Every failure wraps plugintesting.ErrInvalidScoreResponse.
 func ValidateScoreRecommendationsResponse(
 	req *pbc.ScoreRecommendationsRequest, resp *pbc.ScoreRecommendationsResponse,
 ) error {

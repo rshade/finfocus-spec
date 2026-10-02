@@ -190,6 +190,9 @@ func scorerScenarios() []scorerScenario {
 		{"empty_request", scorerCheckEmptyRequest},
 		{"duplicate_ids", scorerCheckDuplicateIDs},
 		{"oversize_batch", scorerCheckOversizeBatch},
+		{"session_echo", scorerCheckSessionEcho},
+		{"session_across_batches", scorerCheckSessionAcrossBatches},
+		{"session_isolation", scorerCheckSessionIsolation},
 	}
 }
 
@@ -351,6 +354,13 @@ func runScorerScenarios(ctx context.Context, client pbc.RecommendationScorerServ
 //   - duplicate_ids: two recommendations with one id are rejected with InvalidArgument
 //   - oversize_batch: max_batch_size + 1 recommendations are rejected with
 //     InvalidArgument (not probed when max_batch_size is 1000 or more)
+//   - session_echo: a request with a session_id is answered with the same
+//     session_id or none
+//   - session_across_batches: a pair grouped in one call of a session gets the
+//     same group id when its members are scored in separate calls (passes when
+//     the scorer does not echo sessions or does not group the pair)
+//   - session_isolation: the same pair gets different group ids in different
+//     sessions (same pass condition)
 func RunScorerConformance(t *testing.T, impl ScoreServer) {
 	t.Helper()
 	harness := NewScorerHarness(impl)

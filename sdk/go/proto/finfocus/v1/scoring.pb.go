@@ -178,7 +178,9 @@ const (
 	IdentifierMode_IDENTIFIER_MODE_RAW IdentifierMode = 1
 	// resource.id and resource.name are replaced by opaque tokens that are
 	// identical for the same value within one request and carry no meaning
-	// outside it. Duplicate grouping keeps working.
+	// outside it. Duplicate grouping keeps working. When the request carries a
+	// session_id, the host uses one pseudonymization key for every batch of that
+	// session, so a value has one token across those batches.
 	IdentifierMode_IDENTIFIER_MODE_PSEUDONYMIZED IdentifierMode = 2
 	// resource.id and resource.name are removed. Duplicate grouping becomes
 	// unreliable; a scorer that cannot group returns no duplicate_group_id.
@@ -246,8 +248,18 @@ type ScoreRecommendationsRequest struct {
 	// members and free text (reasons, description, tags, metadata) can still hold
 	// identifiers, and a scorer must not assume they were transformed.
 	IdentifierMode IdentifierMode `protobuf:"varint,3,opt,name=identifier_mode,json=identifierMode,proto3,enum=finfocus.v1.IdentifierMode" json:"identifier_mode,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// session_id names one host operation that spans several calls, for example
+	// the batches of a set larger than max_batch_size. Empty means no session and
+	// every rule is scoped to this request. When set it is 1 to 128 printable
+	// ASCII characters (0x21 to 0x7E). The host sends the same value with every
+	// batch of the operation, uses one pseudonymization key for all of them, and
+	// never reuses the value for another operation or key. A scorer that honors
+	// sessions derives duplicate_group_id from session_id and the duplicate key,
+	// keeps no state between calls, and echoes the value in the response.
+	// Recommendations the host leaves out of every batch are never grouped.
+	SessionId     string `protobuf:"bytes,4,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ScoreRecommendationsRequest) Reset() {
@@ -301,6 +313,13 @@ func (x *ScoreRecommendationsRequest) GetIdentifierMode() IdentifierMode {
 	return IdentifierMode_IDENTIFIER_MODE_UNSPECIFIED
 }
 
+func (x *ScoreRecommendationsRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
 // ScoreRecommendationsResponse carries the scores.
 type ScoreRecommendationsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -313,8 +332,12 @@ type ScoreRecommendationsResponse struct {
 	Scorer *ScorerInfo `protobuf:"bytes,3,opt,name=scorer,proto3" json:"scorer,omitempty"`
 	// supported_signals lists every signal the scorer can return.
 	SupportedSignals []ScoreSignal `protobuf:"varint,4,rep,packed,name=supported_signals,json=supportedSignals,proto3,enum=finfocus.v1.ScoreSignal" json:"supported_signals,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// session_id echoes the request session_id when the scorer honors sessions.
+	// Empty means the scorer declined, and duplicate_group_id is scoped to this
+	// response only. A non-empty value that differs from the request is invalid.
+	SessionId     string `protobuf:"bytes,5,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ScoreRecommendationsResponse) Reset() {
@@ -373,6 +396,13 @@ func (x *ScoreRecommendationsResponse) GetSupportedSignals() []ScoreSignal {
 		return x.SupportedSignals
 	}
 	return nil
+}
+
+func (x *ScoreRecommendationsResponse) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
 }
 
 // RecommendationScoreResult is the outcome for one recommendation.
@@ -486,7 +516,12 @@ type RecommendationScores struct {
 	InsufficientEvidence *float64 `protobuf:"fixed64,5,opt,name=insufficient_evidence,json=insufficientEvidence,proto3,oneof" json:"insufficient_evidence,omitempty"`
 	// duplicate_group_id is the same non-empty string for every recommendation in
 	// the request that duplicates each other. Empty means no duplicate found or
-	// grouping not performed. The value is meaningful only within one response.
+	// grouping not performed. Without a session the value is meaningful only
+	// within one response and is shared by at least two recommendations. With a
+	// session (the response echoes session_id) it is a deterministic function of
+	// session_id and the duplicate key, so equal values across the responses of
+	// one session name one group, and one response may hold a single member.
+	// Hosts never cache it per recommendation.
 	DuplicateGroupId string `protobuf:"bytes,6,opt,name=duplicate_group_id,json=duplicateGroupId,proto3" json:"duplicate_group_id,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
@@ -643,16 +678,20 @@ var File_finfocus_v1_scoring_proto protoreflect.FileDescriptor
 
 const file_finfocus_v1_scoring_proto_rawDesc = "" +
 	"\n" +
-	"\x19finfocus/v1/scoring.proto\x12\vfinfocus.v1\x1a\x1cfinfocus/v1/costsource.proto\"\xde\x01\n" +
+	"\x19finfocus/v1/scoring.proto\x12\vfinfocus.v1\x1a\x1cfinfocus/v1/costsource.proto\"\xfd\x01\n" +
 	"\x1bScoreRecommendationsRequest\x12E\n" +
 	"\x0frecommendations\x18\x01 \x03(\v2\x1b.finfocus.v1.RecommendationR\x0frecommendations\x122\n" +
 	"\asignals\x18\x02 \x03(\x0e2\x18.finfocus.v1.ScoreSignalR\asignals\x12D\n" +
-	"\x0fidentifier_mode\x18\x03 \x01(\x0e2\x1b.finfocus.v1.IdentifierModeR\x0eidentifierMode\"\xfe\x01\n" +
+	"\x0fidentifier_mode\x18\x03 \x01(\x0e2\x1b.finfocus.v1.IdentifierModeR\x0eidentifierMode\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x04 \x01(\tR\tsessionId\"\x9d\x02\n" +
 	"\x1cScoreRecommendationsResponse\x12@\n" +
 	"\aresults\x18\x01 \x03(\v2&.finfocus.v1.RecommendationScoreResultR\aresults\x12$\n" +
 	"\x0emax_batch_size\x18\x02 \x01(\x05R\fmaxBatchSize\x12/\n" +
 	"\x06scorer\x18\x03 \x01(\v2\x17.finfocus.v1.ScorerInfoR\x06scorer\x12E\n" +
-	"\x11supported_signals\x18\x04 \x03(\x0e2\x18.finfocus.v1.ScoreSignalR\x10supportedSignals\"\xc3\x01\n" +
+	"\x11supported_signals\x18\x04 \x03(\x0e2\x18.finfocus.v1.ScoreSignalR\x10supportedSignals\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x05 \x01(\tR\tsessionId\"\xc3\x01\n" +
 	"\x19RecommendationScoreResult\x12+\n" +
 	"\x11recommendation_id\x18\x01 \x01(\tR\x10recommendationId\x12;\n" +
 	"\x06scores\x18\x02 \x01(\v2!.finfocus.v1.RecommendationScoresH\x00R\x06scores\x122\n" +

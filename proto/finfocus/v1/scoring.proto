@@ -95,7 +95,9 @@ enum IdentifierMode {
   IDENTIFIER_MODE_RAW = 1;
   // resource.id and resource.name are replaced by opaque tokens that are
   // identical for the same value within one request and carry no meaning
-  // outside it. Duplicate grouping keeps working.
+  // outside it. Duplicate grouping keeps working. When the request carries a
+  // session_id, the host uses one pseudonymization key for every batch of that
+  // session, so a value has one token across those batches.
   IDENTIFIER_MODE_PSEUDONYMIZED = 2;
   // resource.id and resource.name are removed. Duplicate grouping becomes
   // unreliable; a scorer that cannot group returns no duplicate_group_id.
@@ -121,6 +123,17 @@ message ScoreRecommendationsRequest {
   // members and free text (reasons, description, tags, metadata) can still hold
   // identifiers, and a scorer must not assume they were transformed.
   IdentifierMode identifier_mode = 3;
+
+  // session_id names one host operation that spans several calls, for example
+  // the batches of a set larger than max_batch_size. Empty means no session and
+  // every rule is scoped to this request. When set it is 1 to 128 printable
+  // ASCII characters (0x21 to 0x7E). The host sends the same value with every
+  // batch of the operation, uses one pseudonymization key for all of them, and
+  // never reuses the value for another operation or key. A scorer that honors
+  // sessions derives duplicate_group_id from session_id and the duplicate key,
+  // keeps no state between calls, and echoes the value in the response.
+  // Recommendations the host leaves out of every batch are never grouped.
+  string session_id = 4;
 }
 
 // ScoreRecommendationsResponse carries the scores.
@@ -137,6 +150,11 @@ message ScoreRecommendationsResponse {
 
   // supported_signals lists every signal the scorer can return.
   repeated ScoreSignal supported_signals = 4;
+
+  // session_id echoes the request session_id when the scorer honors sessions.
+  // Empty means the scorer declined, and duplicate_group_id is scoped to this
+  // response only. A non-empty value that differs from the request is invalid.
+  string session_id = 5;
 }
 
 // RecommendationScoreResult is the outcome for one recommendation.
@@ -168,7 +186,12 @@ message RecommendationScores {
   optional double insufficient_evidence = 5;
   // duplicate_group_id is the same non-empty string for every recommendation in
   // the request that duplicates each other. Empty means no duplicate found or
-  // grouping not performed. The value is meaningful only within one response.
+  // grouping not performed. Without a session the value is meaningful only
+  // within one response and is shared by at least two recommendations. With a
+  // session (the response echoes session_id) it is a deterministic function of
+  // session_id and the duplicate key, so equal values across the responses of
+  // one session name one group, and one response may hold a single member.
+  // Hosts never cache it per recommendation.
   string duplicate_group_id = 6;
 }
 

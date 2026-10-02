@@ -31,6 +31,8 @@ const (
 	maxPriorityScore = 3.0
 	// minDuplicateGroupSize is the fewest recommendations a duplicate group may hold.
 	minDuplicateGroupSize = 2
+	// maxSessionIDLength is the longest session_id a request may carry.
+	maxSessionIDLength = 128
 )
 
 var (
@@ -46,7 +48,8 @@ var (
 // (SCORE_SIGNAL_UNSPECIFIED is invalid), and a defined identifier_mode. Every
 // failure wraps ErrInvalidScoreRequest and carries codes.InvalidArgument, so a
 // scorer may return it directly. A scorer that also rejects signals it does
-// not support does so against its own supported list.
+// not support does so against its own supported list. A non-empty session_id
+// must be at most 128 printable ASCII characters.
 func ValidateScoreRecommendationsRequest(req *pbc.ScoreRecommendationsRequest, maxBatchSize int32) error {
 	if req == nil {
 		return newInvalidArgument(ErrInvalidScoreRequest, "request is nil")
@@ -81,7 +84,25 @@ func ValidateScoreRecommendationsRequest(req *pbc.ScoreRecommendationsRequest, m
 	if _, ok := pbc.IdentifierMode_name[int32(req.GetIdentifierMode())]; !ok {
 		return newInvalidArgument(ErrInvalidScoreRequest, "identifier_mode %d is not defined", req.GetIdentifierMode())
 	}
+	if !isValidSessionID(req.GetSessionId()) {
+		return newInvalidArgument(ErrInvalidScoreRequest,
+			"session_id must be at most %d printable ASCII characters", maxSessionIDLength)
+	}
 	return nil
+}
+
+// isValidSessionID reports whether id is empty or 1 to maxSessionIDLength
+// printable ASCII characters (0x21 to 0x7E).
+func isValidSessionID(id string) bool {
+	if len(id) > maxSessionIDLength {
+		return false
+	}
+	for i := range len(id) {
+		if id[i] < '!' || id[i] > '~' {
+			return false
+		}
+	}
+	return true
 }
 
 // ValidateScoreRecommendationsResponse checks a scorer's output against the
@@ -93,7 +114,10 @@ func ValidateScoreRecommendationsRequest(req *pbc.ScoreRecommendationsRequest, m
 // signal set is supported and, when the request named signals, requested; that
 // requested signals are supported; that numeric signals are finite and within
 // [0, 1] (priority within [0, 3]); and that each non-empty duplicate_group_id
-// is shared by at least two recommendations. Every failure wraps
+// is shared by at least two recommendations, unless the request carries a
+// session_id the response echoes, when a response may hold one member of a
+// group because the rest are in other batches. A non-empty response
+// session_id must equal the request's. Every failure wraps
 // ErrInvalidScoreResponse.
 func ValidateScoreRecommendationsResponse(
 	req *pbc.ScoreRecommendationsRequest, resp *pbc.ScoreRecommendationsResponse,
@@ -126,6 +150,9 @@ func ValidateScoreRecommendationsResponse(
 			return err
 		}
 	}
+	if req.GetSessionId() != "" && resp.GetSessionId() == req.GetSessionId() {
+		return nil
+	}
 	for _, result := range resp.GetResults() {
 		group := result.GetScores().GetDuplicateGroupId()
 		if group != "" && groups[group] < minDuplicateGroupSize {
@@ -147,6 +174,10 @@ func validateScoreEnvelope(req *pbc.ScoreRecommendationsRequest, resp *pbc.Score
 	if n > int(resp.GetMaxBatchSize()) {
 		return fmt.Errorf("%w: %d recommendations exceed the response's max_batch_size %d",
 			ErrInvalidScoreResponse, n, resp.GetMaxBatchSize())
+	}
+	if resp.GetSessionId() != "" && resp.GetSessionId() != req.GetSessionId() {
+		return fmt.Errorf("%w: session_id %q does not match the request session_id %q",
+			ErrInvalidScoreResponse, resp.GetSessionId(), req.GetSessionId())
 	}
 	seen := make(map[pbc.ScoreSignal]struct{}, len(resp.GetSupportedSignals()))
 	for i, signal := range resp.GetSupportedSignals() {
