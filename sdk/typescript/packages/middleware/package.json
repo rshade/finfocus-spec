@@ -17,7 +17,7 @@
     "@rshade/finfocus-client": "*"
   },
   "devDependencies": {
-    "@types/node": "^24.19.0",
+    "@types/node": "^24.19.1",
     "tsup": "^8.5.1"
   },
   "files": [
