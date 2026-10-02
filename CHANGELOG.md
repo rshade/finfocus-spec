@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1](https://github.com/rshade/finfocus-spec/compare/v0.7.0...v0.7.1) (2026-10-02)
+
+
+### Added
+
+* **pluginsdk:** advertise scorer limits and mark oversize batches ([#602](https://github.com/rshade/finfocus-spec/issues/602)) ([db5da5b](https://github.com/rshade/finfocus-spec/commit/db5da5b5e258bbf1e0a804d50b5f8ab2248d9af0))
+* **proto:** add billing_account_id to GetActualCostRequest ([#592](https://github.com/rshade/finfocus-spec/issues/592)) ([0458180](https://github.com/rshade/finfocus-spec/commit/04581801101312240f5d3974fe30cd35353c39f4)), closes [#590](https://github.com/rshade/finfocus-spec/issues/590)
+* **proto:** add FOCUS 1.3 provenance fields to AllocationRow ([#605](https://github.com/rshade/finfocus-spec/issues/605)) ([c1a07b0](https://github.com/rshade/finfocus-spec/commit/c1a07b02a33ce0d2b1c55969b276846762b56abd)), closes [#578](https://github.com/rshade/finfocus-spec/issues/578)
+* **proto:** add omitted_fields to ScoreRecommendationsRequest ([#604](https://github.com/rshade/finfocus-spec/issues/604)) ([9eccf57](https://github.com/rshade/finfocus-spec/commit/9eccf57a87b5c3f63dc84d19566af39fef56c366)), closes [#576](https://github.com/rshade/finfocus-spec/issues/576)
+* **proto:** add period and selector to AllocateRequest ([#606](https://github.com/rshade/finfocus-spec/issues/606)) ([0427ae2](https://github.com/rshade/finfocus-spec/commit/0427ae2ba67a96c7dd29de55f9d03bce1a5941f3)), closes [#579](https://github.com/rshade/finfocus-spec/issues/579)
+* **proto:** add RegionPrice for per-region retail prices ([#600](https://github.com/rshade/finfocus-spec/issues/600)) ([50d7d95](https://github.com/rshade/finfocus-spec/commit/50d7d95781c5f359c27dbdc1c8316b5ebd9b0c65)), closes [#589](https://github.com/rshade/finfocus-spec/issues/589)
+* **proto:** add repeated PriceOption for alternative retail prices ([#599](https://github.com/rshade/finfocus-spec/issues/599)) ([402f84d](https://github.com/rshade/finfocus-spec/commit/402f84de5269052792d695df5591b6924dc39897)), closes [#588](https://github.com/rshade/finfocus-spec/issues/588)
+* **proto:** add scorer session_id so duplicate groups span batches ([#603](https://github.com/rshade/finfocus-spec/issues/603)) ([6c078c4](https://github.com/rshade/finfocus-spec/commit/6c078c46da73d34498248b335e18d3ca8c53b8b3)), closes [#574](https://github.com/rshade/finfocus-spec/issues/574)
+* **proto:** list every request id and model on ScorerInfo ([#608](https://github.com/rshade/finfocus-spec/issues/608)) ([7a15bd6](https://github.com/rshade/finfocus-spec/commit/7a15bd6fa9858089a6c8ee9c35aabab6ee7dad0a))
+
+
+### Fixed
+
+* **deps:** require grpc v1.83.2 to avoid GO-2026-6443 ([#583](https://github.com/rshade/finfocus-spec/issues/583)) ([7ecaa46](https://github.com/rshade/finfocus-spec/commit/7ecaa46d31d8b2e8113df022a05b6aaf7b0ab960)), closes [#582](https://github.com/rshade/finfocus-spec/issues/582)
+* **pluginsdk:** stamp trace id on a copy of the handler ValidationError ([#595](https://github.com/rshade/finfocus-spec/issues/595)) ([5b0edd8](https://github.com/rshade/finfocus-spec/commit/5b0edd84b10d324694b39df288b9ffde300794f6)), closes [#563](https://github.com/rshade/finfocus-spec/issues/563)
+* **sdk:** harden REST gateway error text and body limits ([#598](https://github.com/rshade/finfocus-spec/issues/598)) ([84e00a6](https://github.com/rshade/finfocus-spec/commit/84e00a63a2f6bb8d5472512ca983c5a14dbcb82e)), closes [#565](https://github.com/rshade/finfocus-spec/issues/565)
+* **testing:** report first singleton duplicate group in result order ([#585](https://github.com/rshade/finfocus-spec/issues/585)) ([b8f6d53](https://github.com/rshade/finfocus-spec/commit/b8f6d53d68555b7565c7d24e0223e34bffe32808)), closes [#584](https://github.com/rshade/finfocus-spec/issues/584)
+* **testing:** validate contract commitment applicability as real JSON ([#597](https://github.com/rshade/finfocus-spec/issues/597)) ([fbc1488](https://github.com/rshade/finfocus-spec/commit/fbc148868770c51e1c089c39f17af02dfc91d3e9)), closes [#562](https://github.com/rshade/finfocus-spec/issues/562)
+
+
+### Changed
+
+* **testing:** share bufconn harness and duplicate-key scan ([#607](https://github.com/rshade/finfocus-spec/issues/607)) ([0094cac](https://github.com/rshade/finfocus-spec/commit/0094cace40e920e2e766047cfc7e63af29b4dc0a)), closes [#561](https://github.com/rshade/finfocus-spec/issues/561)
+
+
+### Documentation
+
+* define identifier_mode scope and complete recommendation wording ([#594](https://github.com/rshade/finfocus-spec/issues/594)) ([f8111b9](https://github.com/rshade/finfocus-spec/commit/f8111b95e7e23c1aa6f071c81906e6b8e077a563)), closes [#577](https://github.com/rshade/finfocus-spec/issues/577)
+* define recommendation score cache key and validity rules ([#591](https://github.com/rshade/finfocus-spec/issues/591)) ([93eab79](https://github.com/rshade/finfocus-spec/commit/93eab79ed57cf4319889f0d4db8cede1171582b6))
+* **pluginsdk:** document failing closed and filtering credential keys ([#593](https://github.com/rshade/finfocus-spec/issues/593)) ([aeeeea4](https://github.com/rshade/finfocus-spec/commit/aeeeea47bf4b24666caf2d482ca571423d995a0d)), closes [#566](https://github.com/rshade/finfocus-spec/issues/566)
+* **pluginsdk:** document per-request credentials for optional services ([#596](https://github.com/rshade/finfocus-spec/issues/596)) ([a189386](https://github.com/rshade/finfocus-spec/commit/a18938601158aac69c900663784aa4b9190c7c54)), closes [#575](https://github.com/rshade/finfocus-spec/issues/575)
+* sync ROADMAP.md with GitHub after v0.7.0 ([a3ace6b](https://github.com/rshade/finfocus-spec/commit/a3ace6b4258983dd1caec8c0f8364a2a22fa8ee9))
+* sync ROADMAP.md with GitHub after v0.7.0 ([949c6ca](https://github.com/rshade/finfocus-spec/commit/949c6ca753523cd59eea1d2ec5ebf46cdc531345))
+
 ## [0.7.0](https://github.com/rshade/finfocus-spec/compare/v0.6.2...v0.7.0) (2026-09-29)
 
 
