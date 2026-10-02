@@ -690,6 +690,51 @@ func (p *MyPlugin) GetActualCost(
 }
 ```
 
+### Optional Services
+
+Per-request credentials apply to every service the plugin serves, not only the cost RPCs.
+That includes `UsageSourceService` (`GetStats`), `AllocatorService` (`Allocate`),
+`RecommendationScorerService` (`ScoreRecommendations`), and `SupplementalDatasetService`
+(`GetContractCommitments`, `GetBillingPeriods`, `GetInvoiceDetails`). In gRPC mode one
+interceptor chain covers all of them. In Connect mode one HTTP middleware wraps the whole mux.
+`ExtractCredentials` works the same way inside each handler on both transports.
+`TestPerRequestCredentialsOptionalServices` proves it for each RPC.
+
+Opting in is still one marker method on the plugin, regardless of which services it serves:
+
+```go
+func (p *MyScorer) ConsumesPerRequestCredentials() {}
+
+func (p *MyScorer) ScoreRecommendations(
+    ctx context.Context,
+    req *pbc.ScoreRecommendationsRequest,
+) (*pbc.ScoreRecommendationsResponse, error) {
+    creds, err := pluginsdk.ExtractCredentials(ctx)
+    if err != nil {
+        return nil, err // fixed text, no secret
+    }
+    if apiKey, ok := creds.Get("api_key"); ok {
+        // Call the scoring backend as the identity the host asked for.
+        _ = apiKey
+    }
+    return &pbc.ScoreRecommendationsResponse{}, nil
+}
+```
+
+### Conventional Credential Names
+
+The names are free-form. These are suggestions so hosts and plugins can agree without a
+convention per pair. The SDK does not enforce them, and a plugin may read other names.
+
+| Name      | Typical use                                                |
+| --------- | ---------------------------------------------------------- |
+| `token`   | Bearer token, such as a Kubernetes service account token   |
+| `api_key` | API key for a scoring or other third-party backend         |
+
+Names are lowercased on the wire, start with a letter, and are at most `MaxCredentialNameLen`
+characters. Values are printable ASCII on one line and at most `MaxCredentialValueLen`
+characters, so a multi-line kubeconfig cannot travel as a value. Send a token instead.
+
 ### Handling Credentials Safely
 
 The SDK cannot enforce either of these rules. The plugin must follow both.
