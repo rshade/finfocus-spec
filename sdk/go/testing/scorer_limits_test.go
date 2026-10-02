@@ -121,6 +121,36 @@ func TestScorerConformance_AdvertisedLimits(t *testing.T) {
 	require.Error(t, run(t, mock, map[string]string{}), "nothing advertised")
 }
 
+type servedInfoScorer struct {
+	*plugintesting.MockRecommendationScorer
+
+	metadata map[string]string
+}
+
+func (s servedInfoScorer) GetPluginInfo(
+	context.Context, *pbc.GetPluginInfoRequest,
+) (*pbc.GetPluginInfoResponse, error) {
+	return &pbc.GetPluginInfoResponse{Metadata: s.metadata}, nil
+}
+
+func TestScorerConformance_ServedLimits(t *testing.T) {
+	mock := plugintesting.NewMockRecommendationScorer(plugintesting.WithScorerMaxBatchSize(7))
+	run := func(md map[string]string) error {
+		impl := servedInfoScorer{MockRecommendationScorer: mock, metadata: md}
+		harness := plugintesting.NewScorerHarness(impl)
+		harness.Start(t)
+		defer harness.Stop()
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		return plugintesting.RunScorerServedLimitsForTest(ctx, harness.Client(), impl)
+	}
+	require.NoError(t, run(mock.AdvertisedScorerMetadata()), "served metadata matches the response")
+	require.NoError(t, run(nil), "advertising is optional")
+	mismatch := plugintesting.FormatScorerLimits(8, []pbc.ScoreSignal{pbc.ScoreSignal_SCORE_SIGNAL_RISK})
+	require.Error(t, run(mismatch), "served metadata differs from the response")
+	require.Error(t, run(map[string]string{plugintesting.ScorerMaxBatchSizeKey: "7"}), "half-set pair")
+}
+
 func TestScorerConformance_OversizeNeedsDetail(t *testing.T) {
 	ref := plugintesting.NewMockRecommendationScorer()
 	plain := scoreFunc(func(

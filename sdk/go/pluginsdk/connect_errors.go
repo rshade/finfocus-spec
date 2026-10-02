@@ -44,10 +44,8 @@ func toConnectError(err error) error {
 	}
 	out := connect.NewError(connect.Code(st.Code()), errors.New(st.Message()))
 	for _, detail := range st.Proto().GetDetails() {
-		if msg, unmarshalErr := detail.UnmarshalNew(); unmarshalErr == nil {
-			if d, detailErr := connect.NewErrorDetail(msg); detailErr == nil {
-				out.AddDetail(d)
-			}
+		if d, detailErr := connect.NewErrorDetail(detail); detailErr == nil {
+			out.AddDetail(d)
 		}
 	}
 	return out

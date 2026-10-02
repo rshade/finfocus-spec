@@ -50,9 +50,9 @@ additive: no proto field, message, enum value, or RPC is added or renumbered.
 
 ## Requirements
 
-- **FR-001**: Two reserved metadata keys, `scorer_max_batch_size` (decimal integer, at least 1) and
-  `scorer_supported_signals` (comma-separated lowercase signal names with no spaces, for example
-  `risk,priority`).
+- **FR-001**: Two reserved metadata keys, `scorer_max_batch_size` (decimal integer, 1 through 2147483647; the
+  TypeScript parser also accepts a leading plus sign) and `scorer_supported_signals` (comma-separated lowercase signal names
+  with no spaces, for example `risk,priority`).
 - **FR-002**: `pluginsdk.WithScorerLimits(maxBatchSize, signals...)` sets both keys. Invalid input
   (limit below 1, no signal, unspecified or repeated signal) is rejected by `PluginInfo.Validate`, not
   silently dropped.
@@ -64,10 +64,12 @@ additive: no proto field, message, enum value, or RPC is added or renumbered.
   `INVALID_ARGUMENT`, wraps `ErrInvalidScoreRequest`, and carries an `ErrorInfo` detail (reason
   `BATCH_TOO_LARGE`, domain `finfocus.v1.RecommendationScorerService`). A helper `IsBatchTooLarge(err)`
   reports it. Other failures carry no such detail.
-- **FR-005**: The Connect adapter preserves the detail.
+- **FR-005**: The Connect adapter preserves every status detail, including types not registered in the
+  process, by passing the `*anypb.Any` through unchanged.
 - **FR-006**: `MockRecommendationScorer` exposes its advertised metadata. `RunScorerConformance` adds an
-  `advertised_limits` scenario that runs when the implementation exposes advertised metadata and a
-  tightened `oversize_batch` scenario that requires the detail.
+  `advertised_limits` scenario that runs when the implementation serves `GetPluginInfo` (the served metadata is
+  compared; a scorer that advertises neither key passes) or exposes advertised metadata, and a tightened
+  `oversize_batch` scenario that requires the detail.
 - **FR-007**: The proto comments, `docs/recommendation-scoring.md`, and the TypeScript client document
   and parse the keys and the detail.
 - **FR-008**: Additive only; `buf breaking` passes.

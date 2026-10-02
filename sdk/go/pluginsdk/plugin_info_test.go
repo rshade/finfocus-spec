@@ -362,6 +362,31 @@ func BenchmarkPluginInfoValidate(b *testing.B) {
 	}
 }
 
+func BenchmarkPluginInfoValidateScorerLimits(b *testing.B) {
+	info := pluginsdk.NewPluginInfo("bench-scorer", "v1.0.0",
+		pluginsdk.WithScorerLimits(40, pbc.ScoreSignal_SCORE_SIGNAL_RISK, pbc.ScoreSignal_SCORE_SIGNAL_DUPLICATE_GROUP),
+	)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		_ = info.Validate()
+	}
+}
+
+func BenchmarkWithScorerLimits(b *testing.B) {
+	signals := []pbc.ScoreSignal{
+		pbc.ScoreSignal_SCORE_SIGNAL_RISK, pbc.ScoreSignal_SCORE_SIGNAL_PRIORITY,
+		pbc.ScoreSignal_SCORE_SIGNAL_DUPLICATE_GROUP,
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		_ = pluginsdk.NewPluginInfo("bench-scorer", "v1.0.0", pluginsdk.WithScorerLimits(40, signals...))
+	}
+}
+
 // Edge Case Tests
 
 func TestPluginInfoWithEmptyProviders(t *testing.T) {

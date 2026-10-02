@@ -34,7 +34,8 @@ Go 1.27.1 (per go.mod), Protocol Buffers v3, TypeScript SDK. `google.golang.org/
   `InvalidArgument` plus an `ErrorInfo` detail. It still unwraps to `ErrInvalidScoreRequest`.
 - `pluginsdk/scorer.go`: `WithScorerLimits`, `ParseScorerLimits`, `IsBatchTooLarge` delegating.
   `plugin_info.go`: `PluginInfo.Validate` rejects malformed scorer metadata.
-- `connect_errors.go`: copy status details onto the `connect.Error`.
+- `connect_errors.go`: copy status details onto the `connect.Error` as `*anypb.Any`, without
+  unmarshalling, so unregistered types survive.
 - `scorer_mock.go`: `AdvertisedScorerMetadata()`. `scorer_conformance.go`: `advertised_limits`
   scenario (optional interface) and tightened `oversize_batch`.
 - TypeScript: `parseScorerLimits`, `isBatchTooLarge` in the scorer client module, exported from index.

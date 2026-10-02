@@ -14,6 +14,12 @@
 
 package testing
 
+import (
+	"context"
+
+	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
+)
+
 // RunAllocatorScenariosForTest exposes the allocator conformance scenario
 // runner to external tests, so broken allocators can be asserted to fail
 // specific scenarios without a fake *testing.T.
@@ -49,3 +55,14 @@ var RunScorerScenariosForTest = runScorerScenarios
 //
 //nolint:gochecknoglobals // Test-only export of an unexported function.
 var RunScorerAdvertisedLimitsForTest = scorerCheckAdvertisedLimits
+
+// RunScorerServedLimitsForTest exposes the advertised_limits scenario for a
+// scorer that serves GetPluginInfo.
+func RunScorerServedLimitsForTest(
+	ctx context.Context, client pbc.RecommendationScorerServiceClient,
+	server interface {
+		GetPluginInfo(context.Context, *pbc.GetPluginInfoRequest) (*pbc.GetPluginInfoResponse, error)
+	},
+) error {
+	return scorerCheckServedLimits(ctx, client, server)
+}

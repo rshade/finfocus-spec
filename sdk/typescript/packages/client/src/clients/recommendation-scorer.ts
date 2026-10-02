@@ -76,8 +76,8 @@ export function parseScorerLimits(metadata: Record<string, string>): ScorerLimit
     throw new Error(`${SCORER_MAX_BATCH_SIZE_KEY} and ${SCORER_SUPPORTED_SIGNALS_KEY} must be set together`);
   }
   const maxBatchSize = Number(rawLimit);
-  if (!/^[0-9]+$/.test(rawLimit) || !Number.isSafeInteger(maxBatchSize) || maxBatchSize < 1 || maxBatchSize > 2147483647) {
-    throw new Error(`${SCORER_MAX_BATCH_SIZE_KEY} is "${rawLimit}", want an integer of at least 1`);
+  if (!/^\+?[0-9]+$/.test(rawLimit) || !Number.isSafeInteger(maxBatchSize) || maxBatchSize < 1 || maxBatchSize > 2147483647) {
+    throw new Error(`${SCORER_MAX_BATCH_SIZE_KEY} is "${rawLimit}", want an integer from 1 to 2147483647`);
   }
   const supportedSignals: ScoreSignal[] = [];
   for (const name of rawSignals.split(",")) {
@@ -93,23 +93,68 @@ export function parseScorerLimits(metadata: Record<string, string>): ScorerLimit
   return { maxBatchSize, supportedSignals };
 }
 
-function readString(bytes: Uint8Array, field: number): string | undefined {
-  let i = 0;
-  while (i < bytes.length) {
-    const tag = bytes[i++];
-    if ((tag & 7) !== 2 || i >= bytes.length || bytes[i] > 127) {
-      return undefined;
+function readVarint(bytes: Uint8Array, start: number): { value: number; next: number } | undefined {
+  let value = 0;
+  let scale = 1;
+  for (let i = start; i < bytes.length && i < start + 10; i++) {
+    value += (bytes[i] & 0x7f) * scale;
+    if ((bytes[i] & 0x80) === 0) {
+      return { value, next: i + 1 };
     }
-    const len = bytes[i++];
-    if (i + len > bytes.length) {
-      return undefined;
-    }
-    if (tag >> 3 === field) {
-      return new TextDecoder().decode(bytes.subarray(i, i + len));
-    }
-    i += len;
+    scale *= 128;
   }
   return undefined;
+}
+
+/**
+ * Reads the string fields of a protobuf message, skipping every field it does
+ * not want across all wire types. The last occurrence of a field wins, as in
+ * protobuf. Returns undefined when the bytes are malformed.
+ */
+function readStrings(bytes: Uint8Array, fields: number[]): Map<number, string> | undefined {
+  const found = new Map<number, string>();
+  let i = 0;
+  while (i < bytes.length) {
+    const tag = readVarint(bytes, i);
+    if (tag === undefined) {
+      return undefined;
+    }
+    i = tag.next;
+    const field = Math.floor(tag.value / 8);
+    switch (tag.value % 8) {
+      case 0: {
+        const v = readVarint(bytes, i);
+        if (v === undefined) {
+          return undefined;
+        }
+        i = v.next;
+        break;
+      }
+      case 1:
+        i += 8;
+        break;
+      case 5:
+        i += 4;
+        break;
+      case 2: {
+        const len = readVarint(bytes, i);
+        if (len === undefined || len.next + len.value > bytes.length) {
+          return undefined;
+        }
+        if (fields.includes(field)) {
+          found.set(field, new TextDecoder().decode(bytes.subarray(len.next, len.next + len.value)));
+        }
+        i = len.next + len.value;
+        break;
+      }
+      default:
+        return undefined;
+    }
+    if (i > bytes.length) {
+      return undefined;
+    }
+  }
+  return found;
 }
 
 /**
@@ -127,8 +172,7 @@ export function isBatchTooLarge(err: unknown): boolean {
     if (!("type" in detail) || detail.type !== "google.rpc.ErrorInfo") {
       return false;
     }
-    return (
-      readString(detail.value, 1) === BATCH_TOO_LARGE_REASON && readString(detail.value, 2) === SCORER_ERROR_DOMAIN
-    );
+    const info = readStrings(detail.value, [1, 2]);
+    return info?.get(1) === BATCH_TOO_LARGE_REASON && info.get(2) === SCORER_ERROR_DOMAIN;
   });
 }
