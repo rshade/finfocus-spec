@@ -231,19 +231,22 @@ func validDurationType(value string) bool {
 	}
 }
 
-// isJSONObject reports whether value is one JSON object, ignoring surrounding whitespace.
-// It does not allocate. It accepts any object, including an empty one, and rejects
-// arrays, scalars, and truncated input.
+// maxJSONDepth matches encoding/json's nesting limit.
+const maxJSONDepth = 10000
+
+// jsonUnicodeEscapeDigits is the number of hex digits after \u.
+const jsonUnicodeEscapeDigits = 4
+
+// isJSONObject reports whether value is exactly one well-formed JSON object per RFC 8259,
+// ignoring surrounding whitespace. It is a grammar check, not a bracket count, so trailing
+// commas, missing colons, bare words, and bad escapes are rejected. It does not allocate.
 func isJSONObject(value string) bool {
 	start := skipJSONSpace(value, 0)
 	if start >= len(value) || value[start] != '{' {
 		return false
 	}
-	end, ok := scanJSONValue(value, start)
-	if !ok || value[end-1] != '}' {
-		return false
-	}
-	return skipJSONSpace(value, end) == len(value)
+	end, ok := scanJSONValue(value, start, 0)
+	return ok && skipJSONSpace(value, end) == len(value)
 }
 
 func skipJSONSpace(value string, index int) int {
@@ -254,45 +257,166 @@ func skipJSONSpace(value string, index int) int {
 }
 
 // scanJSONValue returns the index just past the value that starts at index.
-func scanJSONValue(value string, index int) (int, bool) {
-	depth := 0
-	inString := false
-	escaped := false
-	for i := index; i < len(value); i++ {
-		if inString {
-			inString, escaped = consumeStringByte(value[i], escaped)
-			continue
+func scanJSONValue(value string, index, depth int) (int, bool) {
+	if index >= len(value) || depth > maxJSONDepth {
+		return 0, false
+	}
+	switch char := value[index]; {
+	case char == '{':
+		return scanJSONContainer(value, index, depth, '}', true)
+	case char == '[':
+		return scanJSONContainer(value, index, depth, ']', false)
+	case char == '"':
+		return scanJSONString(value, index)
+	case char == '-' || (char >= '0' && char <= '9'):
+		return scanJSONNumber(value, index)
+	default:
+		return scanJSONLiteral(value, index)
+	}
+}
+
+func scanJSONContainer(value string, index, depth int, closer byte, keyed bool) (int, bool) {
+	i := skipJSONSpace(value, index+1)
+	if i < len(value) && value[i] == closer {
+		return i + 1, true
+	}
+	for {
+		var ok bool
+		if i, ok = scanJSONMember(value, i, depth, keyed); !ok {
+			return 0, false
+		}
+		i = skipJSONSpace(value, i)
+		if i >= len(value) {
+			return 0, false
 		}
 		switch value[i] {
-		case '"':
-			inString = true
-		case '{', '[':
-			depth++
-		case '}', ']':
-			depth--
-			if depth == 0 {
-				return i + 1, value[i] == '}'
-			}
-			if depth < 0 {
+		case closer:
+			return i + 1, true
+		case ',':
+			i = skipJSONSpace(value, i+1)
+		default:
+			return 0, false
+		}
+	}
+}
+
+// scanJSONMember scans one array element, or one object key, colon, and value when keyed.
+func scanJSONMember(value string, index, depth int, keyed bool) (int, bool) {
+	i := index
+	if keyed {
+		if i >= len(value) || value[i] != '"' {
+			return 0, false
+		}
+		var ok bool
+		if i, ok = scanJSONString(value, i); !ok {
+			return 0, false
+		}
+		i = skipJSONSpace(value, i)
+		if i >= len(value) || value[i] != ':' {
+			return 0, false
+		}
+		i = skipJSONSpace(value, i+1)
+	}
+	return scanJSONValue(value, i, depth+1)
+}
+
+func scanJSONString(value string, index int) (int, bool) {
+	for i := index + 1; i < len(value); i++ {
+		switch char := value[i]; {
+		case char == '"':
+			return i + 1, true
+		case char < ' ':
+			return 0, false
+		case char == '\\':
+			next, ok := scanJSONEscape(value, i+1)
+			if !ok {
 				return 0, false
 			}
+			i = next
 		}
 	}
 	return 0, false
 }
 
-func consumeStringByte(char byte, escaped bool) (bool, bool) {
-	if escaped {
-		return true, false
+// scanJSONEscape validates the escape body that starts at index and returns the index of its last byte.
+func scanJSONEscape(value string, index int) (int, bool) {
+	if index >= len(value) {
+		return 0, false
 	}
-	switch char {
-	case '\\':
-		return true, true
-	case '"':
-		return false, false
+	switch value[index] {
+	case '"', '\\', '/', 'b', 'f', 'n', 'r', 't':
+		return index, true
+	case 'u':
+		last := index + jsonUnicodeEscapeDigits
+		if last >= len(value) {
+			return 0, false
+		}
+		for i := index + 1; i <= last; i++ {
+			if !isJSONHexDigit(value[i]) {
+				return 0, false
+			}
+		}
+		return last, true
 	default:
-		return true, false
+		return 0, false
 	}
+}
+
+func scanJSONNumber(value string, index int) (int, bool) {
+	i := index
+	if value[i] == '-' {
+		i++
+	}
+	if i >= len(value) {
+		return 0, false
+	}
+	switch {
+	case value[i] == '0':
+		i++
+	case value[i] >= '1' && value[i] <= '9':
+		i = skipJSONDigits(value, i)
+	default:
+		return 0, false
+	}
+	if i < len(value) && value[i] == '.' {
+		next := skipJSONDigits(value, i+1)
+		if next == i+1 {
+			return 0, false
+		}
+		i = next
+	}
+	if i < len(value) && (value[i] == 'e' || value[i] == 'E') {
+		i++
+		if i < len(value) && (value[i] == '+' || value[i] == '-') {
+			i++
+		}
+		next := skipJSONDigits(value, i)
+		if next == i {
+			return 0, false
+		}
+		i = next
+	}
+	return i, true
+}
+
+func scanJSONLiteral(value string, index int) (int, bool) {
+	for _, literal := range [...]string{"true", "false", "null"} {
+		if strings.HasPrefix(value[index:], literal) {
+			return index + len(literal), true
+		}
+	}
+	return 0, false
+}
+
+func skipJSONDigits(value string, index int) int {
+	for index < len(value) && value[index] >= '0' && value[index] <= '9' {
+		index++
+	}
+	return index
+}
+
+func isJSONHexDigit(char byte) bool {
+	return (char >= '0' && char <= '9') || (char >= 'a' && char <= 'f') || (char >= 'A' && char <= 'F')
 }
 
 func isJSONSpace(char byte) bool {

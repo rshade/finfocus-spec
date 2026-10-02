@@ -163,6 +163,60 @@ func TestValidateContractCommitment(t *testing.T) {
 		{name: "applicability must be an object", mutate: func(c *pbc.ContractCommitment) {
 			c.ContractCommitmentApplicability = `["global"]`
 		}, wantMsg: "contract_commitment_applicability must be a JSON object"},
+		{name: "applicability rejects empty", mutate: func(c *pbc.ContractCommitment) {
+			c.ContractCommitmentApplicability = ``
+		}, wantMsg: "contract_commitment_applicability must be a JSON object"},
+		{name: "applicability rejects bare string", mutate: func(c *pbc.ContractCommitment) {
+			c.ContractCommitmentApplicability = `"x"`
+		}, wantMsg: "contract_commitment_applicability must be a JSON object"},
+		{name: "applicability rejects number", mutate: func(c *pbc.ContractCommitment) {
+			c.ContractCommitmentApplicability = `1`
+		}, wantMsg: "contract_commitment_applicability must be a JSON object"},
+		{name: "applicability rejects bare words", mutate: func(c *pbc.ContractCommitment) {
+			c.ContractCommitmentApplicability = `{not json}`
+		}, wantMsg: "contract_commitment_applicability must be a JSON object"},
+		{name: "applicability rejects trailing comma", mutate: func(c *pbc.ContractCommitment) {
+			c.ContractCommitmentApplicability = `{"a":1,}`
+		}, wantMsg: "contract_commitment_applicability must be a JSON object"},
+		{name: "applicability rejects missing colon", mutate: func(c *pbc.ContractCommitment) {
+			c.ContractCommitmentApplicability = `{"a" 1}`
+		}, wantMsg: "contract_commitment_applicability must be a JSON object"},
+		{name: "applicability rejects trailing garbage", mutate: func(c *pbc.ContractCommitment) {
+			c.ContractCommitmentApplicability = `{"a":1} x`
+		}, wantMsg: "contract_commitment_applicability must be a JSON object"},
+		{name: "applicability rejects second object", mutate: func(c *pbc.ContractCommitment) {
+			c.ContractCommitmentApplicability = `{"a":1}{"b":2}`
+		}, wantMsg: "contract_commitment_applicability must be a JSON object"},
+		{name: "applicability rejects bad literal", mutate: func(c *pbc.ContractCommitment) {
+			c.ContractCommitmentApplicability = `{"a":tru}`
+		}, wantMsg: "contract_commitment_applicability must be a JSON object"},
+		{name: "applicability rejects bad number", mutate: func(c *pbc.ContractCommitment) {
+			c.ContractCommitmentApplicability = `{"a":01}`
+		}, wantMsg: "contract_commitment_applicability must be a JSON object"},
+		{name: "applicability rejects unquoted key", mutate: func(c *pbc.ContractCommitment) {
+			c.ContractCommitmentApplicability = `{a:1}`
+		}, wantMsg: "contract_commitment_applicability must be a JSON object"},
+		{name: "applicability rejects bad escape", mutate: func(c *pbc.ContractCommitment) {
+			c.ContractCommitmentApplicability = `{"a":"\q"}`
+		}, wantMsg: "contract_commitment_applicability must be a JSON object"},
+		{name: "applicability rejects unterminated", mutate: func(c *pbc.ContractCommitment) {
+			c.ContractCommitmentApplicability = `{"a":1`
+		}, wantMsg: "contract_commitment_applicability must be a JSON object"},
+		{name: "applicability rejects raw newline in string", mutate: func(c *pbc.ContractCommitment) {
+			c.ContractCommitmentApplicability = "{\"a\":\"x\ny\"}"
+		}, wantMsg: "contract_commitment_applicability must be a JSON object"},
+		{name: "applicability accepts empty object", mutate: func(c *pbc.ContractCommitment) {
+			c.ContractCommitmentApplicability = `{}`
+		}},
+		{name: "applicability accepts nested objects and arrays", mutate: func(c *pbc.ContractCommitment) {
+			c.ContractCommitmentApplicability = `{"A":{"B":[1,2.5e3,-0,true,false,null,{"C":"d"}]}}`
+		}},
+		{name: "applicability accepts escaped quotes", mutate: func(c *pbc.ContractCommitment) {
+			c.ContractCommitmentApplicability = `{"a":"x\"}y\\","b":"\u00e9"}`
+		}},
+		{name: "applicability accepts surrounding whitespace", mutate: func(c *pbc.ContractCommitment) {
+			c.ContractCommitmentApplicability = " \n{\"a\":1}\t\r\n"
+		}},
 		{name: "full period requires discontinuous", mutate: func(c *pbc.ContractCommitment) {
 			c.ContractCommitmentFulfillmentInterval = pbc.
 				FocusContractCommitmentFulfillmentInterval_FOCUS_CONTRACT_COMMITMENT_FULFILLMENT_INTERVAL_FULL_PERIOD
