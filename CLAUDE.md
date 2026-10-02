@@ -1059,6 +1059,19 @@ parallel subtests complete.
 - Score caching (issue 581) is docs-only: the key hashes the pre-`identifier_mode` record without `id`, plus
   `signals`, `ScorerInfo` name/model/calibration, and plugin version. No `valid_for` proto hint yet.
 
+### Scorer Advertised Limits Pattern (591-scorer-advertised-limits)
+
+- A scorer publishes its limit and signals through `GetPluginInfo` metadata keys `scorer_max_batch_size`
+  and `scorer_supported_signals` (lowercase names, no `SCORE_SIGNAL_` prefix), set with
+  `pluginsdk.WithScorerLimits`. No proto field was added; response fields stay authoritative.
+  `PluginInfo.Validate` rejects a malformed pair via `ParseScorerLimits`.
+- The oversize-batch error keeps `InvalidArgument` (existing hosts keep working) and gains a
+  `google.rpc.ErrorInfo` detail, reason `BATCH_TOO_LARGE`; test it with `IsBatchTooLarge`. `toConnectError`
+  now copies status details onto the `connect.Error`.
+- Helpers live in `sdk/go/testing/scorer_limits.go` (import cycle); `pluginsdk/scorer.go` delegates.
+  `RunScorerConformance` adds `advertised_limits` only for impls with `AdvertisedScorerMetadata()`.
+- `sdk/typescript` needs `npm ci` in a fresh worktree before the client tests run.
+
 ### Scorer Session Pattern (592-cross-batch-scoring-groups)
 
 - `ScoreRecommendationsRequest.session_id` (4) and the response echo (5) let the batches of one host

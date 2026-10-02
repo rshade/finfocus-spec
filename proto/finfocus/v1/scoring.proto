@@ -34,7 +34,10 @@ import "finfocus/v1/costsource.proto";
 // Error semantics:
 //   - INVALID_ARGUMENT: recommendations is empty, holds more entries than
 //     max_batch_size, holds two entries with the same id, or names a signal the
-//     scorer does not support in signals.
+//     scorer does not support in signals. A batch above max_batch_size also
+//     carries a google.rpc.ErrorInfo detail with reason BATCH_TOO_LARGE and
+//     domain finfocus.v1.RecommendationScorerService, so a host can tell it
+//     from the other causes and split the batch instead of retrying blindly.
 //   - UNIMPLEMENTED: the plugin does not implement scoring. Hosts check
 //     PLUGIN_CAPABILITY_RECOMMENDATION_SCORING first and do not call it.
 //   - UNAUTHENTICATED, PERMISSION_DENIED, RESOURCE_EXHAUSTED, UNAVAILABLE:
@@ -142,13 +145,18 @@ message ScoreRecommendationsResponse {
   repeated RecommendationScoreResult results = 1;
 
   // max_batch_size is the largest number of recommendations the scorer accepts
-  // in one call. Hosts split larger sets.
+  // in one call. Hosts split larger sets. A scorer may also advertise it
+  // before the first call in GetPluginInfo metadata key scorer_max_batch_size;
+  // this field stays authoritative for each call.
   int32 max_batch_size = 2;
 
   // scorer identifies who produced the scores.
   ScorerInfo scorer = 3;
 
-  // supported_signals lists every signal the scorer can return.
+  // supported_signals lists every signal the scorer can return. A scorer may
+  // also advertise them before the first call in GetPluginInfo metadata key
+  // scorer_supported_signals (comma-separated lowercase names without the
+  // SCORE_SIGNAL_ prefix); this field stays authoritative for each call.
   repeated ScoreSignal supported_signals = 4;
 
   // session_id echoes the request session_id when the scorer honors sessions.

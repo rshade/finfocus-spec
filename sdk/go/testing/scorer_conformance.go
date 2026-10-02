@@ -321,7 +321,90 @@ func scorerCheckOversizeBatch(ctx context.Context, client pbc.RecommendationScor
 	}
 	recs := scorerFixture(int(probe.GetMaxBatchSize()) + 1)
 	_, err = client.ScoreRecommendations(ctx, &pbc.ScoreRecommendationsRequest{Recommendations: recs})
-	return wantInvalidArgument(err, "a batch above max_batch_size")
+	if checkErr := wantInvalidArgument(err, "a batch above max_batch_size"); checkErr != nil {
+		return checkErr
+	}
+	if !IsBatchTooLarge(err) {
+		return fmt.Errorf("a batch above max_batch_size was rejected without a %s ErrorInfo detail: %w",
+			BatchTooLargeReason, err)
+	}
+	return nil
+}
+
+// AdvertisedScorerMetadataSource is implemented by scorers that advertise their
+// limits through GetPluginInfo metadata. MockRecommendationScorer implements
+// it; for a real plugin, return the metadata the plugin's PluginInfo carries.
+// RunScorerConformance checks the advertised values against the response.
+type AdvertisedScorerMetadataSource interface {
+	AdvertisedScorerMetadata() map[string]string
+}
+
+// scorerPluginInfoServer is implemented by a scorer that also serves the
+// CostSourceService GetPluginInfo RPC, for example by embedding
+// pluginsdk.BasePlugin. sdk/go/testing cannot import pluginsdk (import cycle),
+// so RunScorerConformance reads the served metadata through this method set.
+type scorerPluginInfoServer interface {
+	GetPluginInfo(context.Context, *pbc.GetPluginInfoRequest) (*pbc.GetPluginInfoResponse, error)
+}
+
+// servedScorerMetadata reads the metadata server serves through GetPluginInfo,
+// so the check sees what hosts see.
+func servedScorerMetadata(ctx context.Context, server scorerPluginInfoServer) (map[string]string, error) {
+	resp, err := server.GetPluginInfo(ctx, &pbc.GetPluginInfoRequest{})
+	if err != nil {
+		return nil, fmt.Errorf("reading GetPluginInfo metadata: %w", err)
+	}
+	return resp.GetMetadata(), nil
+}
+
+// scorerCheckServedLimits runs scorerCheckAdvertisedLimits on the metadata
+// server serves. A GetPluginInfo that advertises neither key passes, because
+// advertising is optional.
+func scorerCheckServedLimits(
+	ctx context.Context, client pbc.RecommendationScorerServiceClient, server scorerPluginInfoServer,
+) error {
+	metadata, err := servedScorerMetadata(ctx, server)
+	if err != nil {
+		return err
+	}
+	_, hasLimit := metadata[ScorerMaxBatchSizeKey]
+	_, hasSignals := metadata[ScorerSupportedSignalsKey]
+	if !hasLimit && !hasSignals {
+		return nil
+	}
+	return scorerCheckAdvertisedLimits(ctx, client, metadata)
+}
+
+// scorerCheckAdvertisedLimits compares the metadata a scorer advertises with
+// the max_batch_size and supported_signals of its response.
+func scorerCheckAdvertisedLimits(
+	ctx context.Context, client pbc.RecommendationScorerServiceClient, metadata map[string]string,
+) error {
+	advertised, err := ParseScorerLimits(metadata)
+	if err != nil {
+		return err
+	}
+	if advertised == nil {
+		return fmt.Errorf("%w: neither %s nor %s is advertised",
+			ErrInvalidScorerLimits, ScorerMaxBatchSizeKey, ScorerSupportedSignalsKey)
+	}
+	probe, err := probeScorer(ctx, client)
+	if err != nil {
+		return err
+	}
+	if advertised.MaxBatchSize != probe.GetMaxBatchSize() {
+		return fmt.Errorf("advertised %s is %d but the response max_batch_size is %d",
+			ScorerMaxBatchSizeKey, advertised.MaxBatchSize, probe.GetMaxBatchSize())
+	}
+	got := slices.Clone(probe.GetSupportedSignals())
+	want := slices.Clone(advertised.SupportedSignals)
+	slices.Sort(got)
+	slices.Sort(want)
+	if !slices.Equal(got, want) {
+		return fmt.Errorf("advertised %s is %v but the response supported_signals is %v",
+			ScorerSupportedSignalsKey, want, got)
+	}
+	return nil
 }
 
 // runScorerScenarios runs every scenario against client and returns each
@@ -353,7 +436,13 @@ func runScorerScenarios(ctx context.Context, client pbc.RecommendationScorerServ
 //   - empty_request: no recommendations is rejected with InvalidArgument
 //   - duplicate_ids: two recommendations with one id are rejected with InvalidArgument
 //   - oversize_batch: max_batch_size + 1 recommendations are rejected with
-//     InvalidArgument (not probed when max_batch_size is 1000 or more)
+//     InvalidArgument and a BATCH_TOO_LARGE ErrorInfo detail (not probed when
+//     max_batch_size is 1000 or more)
+//   - advertised_limits: only when impl serves GetPluginInfo or implements
+//     AdvertisedScorerMetadataSource; the advertised limit and signals equal the
+//     response's. The metadata served by GetPluginInfo wins. A GetPluginInfo
+//     that advertises neither key passes, because advertising is optional;
+//     AdvertisedScorerMetadataSource opts in and must advertise both
 //   - session_echo: a request with a session_id is answered with the same
 //     session_id or none
 //   - session_across_batches: a pair grouped in one call of a session gets the
@@ -367,7 +456,19 @@ func RunScorerConformance(t *testing.T, impl ScoreServer) {
 	harness.Start(t)
 	defer harness.Stop()
 
-	for _, s := range scorerScenarios() {
+	scenarios := scorerScenarios()
+	if server, ok := impl.(scorerPluginInfoServer); ok {
+		scenarios = append(scenarios, scorerScenario{"advertised_limits",
+			func(ctx context.Context, client pbc.RecommendationScorerServiceClient) error {
+				return scorerCheckServedLimits(ctx, client, server)
+			}})
+	} else if source, isSource := impl.(AdvertisedScorerMetadataSource); isSource {
+		scenarios = append(scenarios, scorerScenario{"advertised_limits",
+			func(ctx context.Context, client pbc.RecommendationScorerServiceClient) error {
+				return scorerCheckAdvertisedLimits(ctx, client, source.AdvertisedScorerMetadata())
+			}})
+	}
+	for _, s := range scenarios {
 		t.Run(s.name, func(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), scorerScenarioTimeout)
 			defer cancel()

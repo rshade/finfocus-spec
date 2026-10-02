@@ -54,7 +54,10 @@ const (
 // Error semantics:
 //   - INVALID_ARGUMENT: recommendations is empty, holds more entries than
 //     max_batch_size, holds two entries with the same id, or names a signal the
-//     scorer does not support in signals.
+//     scorer does not support in signals. A batch above max_batch_size also
+//     carries a google.rpc.ErrorInfo detail with reason BATCH_TOO_LARGE and
+//     domain finfocus.v1.RecommendationScorerService, so a host can tell it
+//     from the other causes and split the batch instead of retrying blindly.
 //   - UNIMPLEMENTED: the plugin does not implement scoring. Hosts check
 //     PLUGIN_CAPABILITY_RECOMMENDATION_SCORING first and do not call it.
 //   - UNAUTHENTICATED, PERMISSION_DENIED, RESOURCE_EXHAUSTED, UNAVAILABLE:
@@ -104,7 +107,10 @@ func (c *recommendationScorerServiceClient) ScoreRecommendations(ctx context.Con
 // Error semantics:
 //   - INVALID_ARGUMENT: recommendations is empty, holds more entries than
 //     max_batch_size, holds two entries with the same id, or names a signal the
-//     scorer does not support in signals.
+//     scorer does not support in signals. A batch above max_batch_size also
+//     carries a google.rpc.ErrorInfo detail with reason BATCH_TOO_LARGE and
+//     domain finfocus.v1.RecommendationScorerService, so a host can tell it
+//     from the other causes and split the batch instead of retrying blindly.
 //   - UNIMPLEMENTED: the plugin does not implement scoring. Hosts check
 //     PLUGIN_CAPABILITY_RECOMMENDATION_SCORING first and do not call it.
 //   - UNAUTHENTICATED, PERMISSION_DENIED, RESOURCE_EXHAUSTED, UNAVAILABLE:
