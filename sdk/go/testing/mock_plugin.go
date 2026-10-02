@@ -110,7 +110,7 @@ const (
 //
 // Fields that must be set before Start() include: ShouldError* flags, *Delay durations,
 // FallbackHint, ExpiresAtDuration, ProjectedCostExpiresAtDuration, ProjectedCostBreakdown,
-// ProjectedCostPriceOptions, EstimateCostExpiresAtDuration, EstimateCostPriceOptions, MockBudgets,
+// ProjectedCostPriceOptions, RegionPrices, EstimateCostExpiresAtDuration, EstimateCostPriceOptions, MockBudgets,
 // DryRun* fields, PricingCategory/SpotRiskScore fields, and RecommendationsConfig.
 //
 // The recommended pattern is:
@@ -198,6 +198,12 @@ type MockPlugin struct {
 	// configured: the mock does not validate or compute them. Dry-run
 	// responses never carry options. Nil means no options.
 	ProjectedCostPriceOptions []*pbc.PriceOption
+
+	// RegionPrices configures region_prices on GetProjectedCost and EstimateCost
+	// responses. The rows are cloned onto each response and never change
+	// cost_per_month or cost_monthly. Nil means no rows. Dry-run responses never
+	// carry rows.
+	RegionPrices []*pbc.RegionPrice
 
 	// EstimateCostExpiresAtDuration configures the expires_at hint for estimate
 	// cost responses. Same semantics as ExpiresAtDuration: zero means unset,
@@ -1343,6 +1349,7 @@ func (m *MockPlugin) GetProjectedCost(
 	}
 
 	resp.PriceOptions = clonePriceOptions(m.ProjectedCostPriceOptions)
+	resp.RegionPrices = cloneRegionPrices(m.RegionPrices)
 
 	return resp, nil
 }
@@ -1358,6 +1365,21 @@ func clonePriceOptions(options []*pbc.PriceOption) []*pbc.PriceOption {
 	for i, o := range options {
 		if o != nil {
 			out[i] = proto.CloneOf(o)
+		}
+	}
+	return out
+}
+
+// cloneRegionPrices deep-copies rows, keeping nil entries. It returns nil for an
+// empty input.
+func cloneRegionPrices(rows []*pbc.RegionPrice) []*pbc.RegionPrice {
+	if len(rows) == 0 {
+		return nil
+	}
+	out := make([]*pbc.RegionPrice, len(rows))
+	for i, row := range rows {
+		if row != nil {
+			out[i] = proto.CloneOf(row)
 		}
 	}
 	return out
@@ -2359,6 +2381,7 @@ func (m *MockPlugin) EstimateCost(
 	}
 
 	resp.PriceOptions = clonePriceOptions(m.EstimateCostPriceOptions)
+	resp.RegionPrices = cloneRegionPrices(m.RegionPrices)
 
 	return resp, nil
 }

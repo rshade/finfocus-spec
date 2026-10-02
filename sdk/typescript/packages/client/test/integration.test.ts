@@ -110,6 +110,16 @@ describe('CostSourceClient Integration', () => {
     const componentSum = Object.values(response.costBreakdown).reduce((sum, v) => sum + v, 0);
     expect(componentSum).toBeCloseTo(response.costPerMonth, 9);
     expectPriceOptions(response.priceOptions);
+
+    // region_prices is advisory: rows are read as sent and never change costPerMonth.
+    expect(response.regionPrices).toHaveLength(2);
+    expect(response.regionPrices[0]).toMatchObject({
+      region: "us-west-2", unitPrice: 0.11, monthlyCost: 165.0, currency: "USD",
+    });
+    expect(response.regionPrices[1]).toMatchObject({
+      region: "eu-west-1", unitPrice: 0.12, monthlyCost: 180.0, currency: "EUR",
+    });
+    expect(response.costPerMonth).toBe(150.0);
   });
 
   it('fetches pricing specification', async () => {

@@ -25,7 +25,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file finfocus/v1/scoring.proto.
  */
 export const file_finfocus_v1_scoring: GenFile = /*@__PURE__*/
-  fileDesc("ChlmaW5mb2N1cy92MS9zY29yaW5nLnByb3RvEgtmaW5mb2N1cy52MSK0AQobU2NvcmVSZWNvbW1lbmRhdGlvbnNSZXF1ZXN0EjQKD3JlY29tbWVuZGF0aW9ucxgBIAMoCzIbLmZpbmZvY3VzLnYxLlJlY29tbWVuZGF0aW9uEikKB3NpZ25hbHMYAiADKA4yGC5maW5mb2N1cy52MS5TY29yZVNpZ25hbBI0Cg9pZGVudGlmaWVyX21vZGUYAyABKA4yGy5maW5mb2N1cy52MS5JZGVudGlmaWVyTW9kZSLNAQocU2NvcmVSZWNvbW1lbmRhdGlvbnNSZXNwb25zZRI3CgdyZXN1bHRzGAEgAygLMiYuZmluZm9jdXMudjEuUmVjb21tZW5kYXRpb25TY29yZVJlc3VsdBIWCg5tYXhfYmF0Y2hfc2l6ZRgCIAEoBRInCgZzY29yZXIYAyABKAsyFy5maW5mb2N1cy52MS5TY29yZXJJbmZvEjMKEXN1cHBvcnRlZF9zaWduYWxzGAQgAygOMhguZmluZm9jdXMudjEuU2NvcmVTaWduYWwiogEKGVJlY29tbWVuZGF0aW9uU2NvcmVSZXN1bHQSGQoRcmVjb21tZW5kYXRpb25faWQYASABKAkSMwoGc2NvcmVzGAIgASgLMiEuZmluZm9jdXMudjEuUmVjb21tZW5kYXRpb25TY29yZXNIABIrCgVlcnJvchgDIAEoCzIaLmZpbmZvY3VzLnYxLlJlc291cmNlRXJyb3JIAEIICgZyZXN1bHQijAIKFFJlY29tbWVuZGF0aW9uU2NvcmVzEhEKBHJpc2sYASABKAFIAIgBARIbCg5mYWxzZV9wb3NpdGl2ZRgCIAEoAUgBiAEBEhkKDHdvcnRoX2FjdGluZxgDIAEoAUgCiAEBEhUKCHByaW9yaXR5GAQgASgBSAOIAQESIgoVaW5zdWZmaWNpZW50X2V2aWRlbmNlGAUgASgBSASIAQESGgoSZHVwbGljYXRlX2dyb3VwX2lkGAYgASgJQgcKBV9yaXNrQhEKD19mYWxzZV9wb3NpdGl2ZUIPCg1fd29ydGhfYWN0aW5nQgsKCV9wcmlvcml0eUIYChZfaW5zdWZmaWNpZW50X2V2aWRlbmNlInoKClNjb3JlckluZm8SDAoEbmFtZRgBIAEoCRINCgVtb2RlbBgCIAEoCRIyCgtjYWxpYnJhdGlvbhgDIAEoDjIdLmZpbmZvY3VzLnYxLlNjb3JlQ2FsaWJyYXRpb24SGwoTcHJvdmlkZXJfcmVxdWVzdF9pZBgEIAEoCSrnAQoLU2NvcmVTaWduYWwSHAoYU0NPUkVfU0lHTkFMX1VOU1BFQ0lGSUVEEAASFQoRU0NPUkVfU0lHTkFMX1JJU0sQARIfChtTQ09SRV9TSUdOQUxfRkFMU0VfUE9TSVRJVkUQAhIdChlTQ09SRV9TSUdOQUxfV09SVEhfQUNUSU5HEAMSGQoVU0NPUkVfU0lHTkFMX1BSSU9SSVRZEAQSJgoiU0NPUkVfU0lHTkFMX0lOU1VGRklDSUVOVF9FVklERU5DRRAFEiAKHFNDT1JFX1NJR05BTF9EVVBMSUNBVEVfR1JPVVAQBip8ChBTY29yZUNhbGlicmF0aW9uEiEKHVNDT1JFX0NBTElCUkFUSU9OX1VOU1BFQ0lGSUVEEAASIgoeU0NPUkVfQ0FMSUJSQVRJT05fUkFOS0lOR19PTkxZEAESIQodU0NPUkVfQ0FMSUJSQVRJT05fUFJPQkFCSUxJVFkQAiqKAQoOSWRlbnRpZmllck1vZGUSHwobSURFTlRJRklFUl9NT0RFX1VOU1BFQ0lGSUVEEAASFwoTSURFTlRJRklFUl9NT0RFX1JBVxABEiEKHUlERU5USUZJRVJfTU9ERV9QU0VVRE9OWU1JWkVEEAISGwoXSURFTlRJRklFUl9NT0RFX09NSVRURUQQAzKKAQobUmVjb21tZW5kYXRpb25TY29yZXJTZXJ2aWNlEmsKFFNjb3JlUmVjb21tZW5kYXRpb25zEiguZmluZm9jdXMudjEuU2NvcmVSZWNvbW1lbmRhdGlvbnNSZXF1ZXN0GikuZmluZm9jdXMudjEuU2NvcmVSZWNvbW1lbmRhdGlvbnNSZXNwb25zZUKqAQoPY29tLmZpbmZvY3VzLnYxQgxTY29yaW5nUHJvdG9QAVo8Z2l0aHViLmNvbS9yc2hhZGUvZmluZm9jdXMtc3BlYy9zZGsvZ28vcHJvdG8vZmluZm9jdXMvdjE7cGJjogIDRlhYqgILRmluZm9jdXMuVjHKAgtGaW5mb2N1c1xWMeICF0ZpbmZvY3VzXFYxXEdQQk1ldGFkYXRh6gIMRmluZm9jdXM6OlYxYgZwcm90bzM", [file_finfocus_v1_costsource]);
+  fileDesc("ChlmaW5mb2N1cy92MS9zY29yaW5nLnByb3RvEgtmaW5mb2N1cy52MSLIAQobU2NvcmVSZWNvbW1lbmRhdGlvbnNSZXF1ZXN0EjQKD3JlY29tbWVuZGF0aW9ucxgBIAMoCzIbLmZpbmZvY3VzLnYxLlJlY29tbWVuZGF0aW9uEikKB3NpZ25hbHMYAiADKA4yGC5maW5mb2N1cy52MS5TY29yZVNpZ25hbBI0Cg9pZGVudGlmaWVyX21vZGUYAyABKA4yGy5maW5mb2N1cy52MS5JZGVudGlmaWVyTW9kZRISCgpzZXNzaW9uX2lkGAQgASgJIuEBChxTY29yZVJlY29tbWVuZGF0aW9uc1Jlc3BvbnNlEjcKB3Jlc3VsdHMYASADKAsyJi5maW5mb2N1cy52MS5SZWNvbW1lbmRhdGlvblNjb3JlUmVzdWx0EhYKDm1heF9iYXRjaF9zaXplGAIgASgFEicKBnNjb3JlchgDIAEoCzIXLmZpbmZvY3VzLnYxLlNjb3JlckluZm8SMwoRc3VwcG9ydGVkX3NpZ25hbHMYBCADKA4yGC5maW5mb2N1cy52MS5TY29yZVNpZ25hbBISCgpzZXNzaW9uX2lkGAUgASgJIqIBChlSZWNvbW1lbmRhdGlvblNjb3JlUmVzdWx0EhkKEXJlY29tbWVuZGF0aW9uX2lkGAEgASgJEjMKBnNjb3JlcxgCIAEoCzIhLmZpbmZvY3VzLnYxLlJlY29tbWVuZGF0aW9uU2NvcmVzSAASKwoFZXJyb3IYAyABKAsyGi5maW5mb2N1cy52MS5SZXNvdXJjZUVycm9ySABCCAoGcmVzdWx0IowCChRSZWNvbW1lbmRhdGlvblNjb3JlcxIRCgRyaXNrGAEgASgBSACIAQESGwoOZmFsc2VfcG9zaXRpdmUYAiABKAFIAYgBARIZCgx3b3J0aF9hY3RpbmcYAyABKAFIAogBARIVCghwcmlvcml0eRgEIAEoAUgDiAEBEiIKFWluc3VmZmljaWVudF9ldmlkZW5jZRgFIAEoAUgEiAEBEhoKEmR1cGxpY2F0ZV9ncm91cF9pZBgGIAEoCUIHCgVfcmlza0IRCg9fZmFsc2VfcG9zaXRpdmVCDwoNX3dvcnRoX2FjdGluZ0ILCglfcHJpb3JpdHlCGAoWX2luc3VmZmljaWVudF9ldmlkZW5jZSJ6CgpTY29yZXJJbmZvEgwKBG5hbWUYASABKAkSDQoFbW9kZWwYAiABKAkSMgoLY2FsaWJyYXRpb24YAyABKA4yHS5maW5mb2N1cy52MS5TY29yZUNhbGlicmF0aW9uEhsKE3Byb3ZpZGVyX3JlcXVlc3RfaWQYBCABKAkq5wEKC1Njb3JlU2lnbmFsEhwKGFNDT1JFX1NJR05BTF9VTlNQRUNJRklFRBAAEhUKEVNDT1JFX1NJR05BTF9SSVNLEAESHwobU0NPUkVfU0lHTkFMX0ZBTFNFX1BPU0lUSVZFEAISHQoZU0NPUkVfU0lHTkFMX1dPUlRIX0FDVElORxADEhkKFVNDT1JFX1NJR05BTF9QUklPUklUWRAEEiYKIlNDT1JFX1NJR05BTF9JTlNVRkZJQ0lFTlRfRVZJREVOQ0UQBRIgChxTQ09SRV9TSUdOQUxfRFVQTElDQVRFX0dST1VQEAYqfAoQU2NvcmVDYWxpYnJhdGlvbhIhCh1TQ09SRV9DQUxJQlJBVElPTl9VTlNQRUNJRklFRBAAEiIKHlNDT1JFX0NBTElCUkFUSU9OX1JBTktJTkdfT05MWRABEiEKHVNDT1JFX0NBTElCUkFUSU9OX1BST0JBQklMSVRZEAIqigEKDklkZW50aWZpZXJNb2RlEh8KG0lERU5USUZJRVJfTU9ERV9VTlNQRUNJRklFRBAAEhcKE0lERU5USUZJRVJfTU9ERV9SQVcQARIhCh1JREVOVElGSUVSX01PREVfUFNFVURPTllNSVpFRBACEhsKF0lERU5USUZJRVJfTU9ERV9PTUlUVEVEEAMyigEKG1JlY29tbWVuZGF0aW9uU2NvcmVyU2VydmljZRJrChRTY29yZVJlY29tbWVuZGF0aW9ucxIoLmZpbmZvY3VzLnYxLlNjb3JlUmVjb21tZW5kYXRpb25zUmVxdWVzdBopLmZpbmZvY3VzLnYxLlNjb3JlUmVjb21tZW5kYXRpb25zUmVzcG9uc2VCqgEKD2NvbS5maW5mb2N1cy52MUIMU2NvcmluZ1Byb3RvUAFaPGdpdGh1Yi5jb20vcnNoYWRlL2ZpbmZvY3VzLXNwZWMvc2RrL2dvL3Byb3RvL2ZpbmZvY3VzL3YxO3BiY6ICA0ZYWKoCC0ZpbmZvY3VzLlYxygILRmluZm9jdXNcVjHiAhdGaW5mb2N1c1xWMVxHUEJNZXRhZGF0YeoCDEZpbmZvY3VzOjpWMWIGcHJvdG8z", [file_finfocus_v1_costsource]);
 
 /**
  * ScoreRecommendationsRequest carries recommendations to score.
@@ -62,6 +62,21 @@ export type ScoreRecommendationsRequest = Message<"finfocus.v1.ScoreRecommendati
    * @generated from field: finfocus.v1.IdentifierMode identifier_mode = 3;
    */
   identifierMode: IdentifierMode;
+
+  /**
+   * session_id names one host operation that spans several calls, for example
+   * the batches of a set larger than max_batch_size. Empty means no session and
+   * every rule is scoped to this request. When set it is 1 to 128 printable
+   * ASCII characters (0x21 to 0x7E). The host sends the same value with every
+   * batch of the operation, uses one pseudonymization key for all of them, and
+   * never reuses the value for another operation or key. A scorer that honors
+   * sessions derives duplicate_group_id from session_id and the duplicate key,
+   * keeps no state between calls, and echoes the value in the response.
+   * Recommendations the host leaves out of every batch are never grouped.
+   *
+   * @generated from field: string session_id = 4;
+   */
+  sessionId: string;
 };
 
 /**
@@ -105,6 +120,15 @@ export type ScoreRecommendationsResponse = Message<"finfocus.v1.ScoreRecommendat
    * @generated from field: repeated finfocus.v1.ScoreSignal supported_signals = 4;
    */
   supportedSignals: ScoreSignal[];
+
+  /**
+   * session_id echoes the request session_id when the scorer honors sessions.
+   * Empty means the scorer declined, and duplicate_group_id is scoped to this
+   * response only. A non-empty value that differs from the request is invalid.
+   *
+   * @generated from field: string session_id = 5;
+   */
+  sessionId: string;
 };
 
 /**
@@ -202,7 +226,12 @@ export type RecommendationScores = Message<"finfocus.v1.RecommendationScores"> &
   /**
    * duplicate_group_id is the same non-empty string for every recommendation in
    * the request that duplicates each other. Empty means no duplicate found or
-   * grouping not performed. The value is meaningful only within one response.
+   * grouping not performed. Without a session the value is meaningful only
+   * within one response and is shared by at least two recommendations. With a
+   * session (the response echoes session_id) it is a deterministic function of
+   * session_id and the duplicate key, so equal values across the responses of
+   * one session name one group, and one response may hold a single member.
+   * Hosts never cache it per recommendation.
    *
    * @generated from field: string duplicate_group_id = 6;
    */
@@ -391,7 +420,9 @@ export enum IdentifierMode {
   /**
    * resource.id and resource.name are replaced by opaque tokens that are
    * identical for the same value within one request and carry no meaning
-   * outside it. Duplicate grouping keeps working.
+   * outside it. Duplicate grouping keeps working. When the request carries a
+   * session_id, the host uses one pseudonymization key for every batch of that
+   * session, so a value has one token across those batches.
    *
    * @generated from enum value: IDENTIFIER_MODE_PSEUDONYMIZED = 2;
    */

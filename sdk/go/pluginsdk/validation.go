@@ -35,6 +35,7 @@ import (
 	"unicode/utf8"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
+	plugintesting "github.com/rshade/finfocus-spec/sdk/go/testing"
 )
 
 // Validation error messages for GetProjectedCostRequest.
@@ -116,6 +117,15 @@ var (
 	ErrPriceOptionInvalidValue = errors.New("price_options value is invalid")
 	// ErrPriceOptionsWithDryRun is returned when price_options is set alongside dry_run_result.
 	ErrPriceOptionsWithDryRun = errors.New("price_options must be empty for dry-run responses")
+)
+
+// Region price errors are shared with the conformance suite, so plugin self-validation and
+// conformance report the same sentinels.
+var (
+	// ErrInvalidRegionPrice is returned when a region_prices row breaks a RegionPrice rule.
+	ErrInvalidRegionPrice = plugintesting.ErrInvalidRegionPrice
+	// ErrRegionPricesWithDryRun is returned when region_prices is set alongside dry_run_result.
+	ErrRegionPricesWithDryRun = plugintesting.ErrRegionPricesWithDryRun
 )
 
 // spotRiskEpsilon is used for float comparison to handle floating-point representation errors.
@@ -545,6 +555,8 @@ func validatePredictionInterval(
 //  2. Spot risk score validation (structural + semantic)
 //  3. price_options validation (if set): no nil entries, finite non-negative
 //     prices, finite savings_fraction. Never compared to cost_monthly.
+//  4. region_prices rows (if set): region present, finite non-negative prices, ISO 4217 currency.
+//     The rows are advisory and never summed into cost_monthly.
 //
 // Semantic rule enforced: spot_interruption_risk_score must only be non-zero
 // when pricing_category is FOCUS_PRICING_CATEGORY_DYNAMIC.
@@ -569,6 +581,10 @@ func ValidateEstimateCostResponse(resp *pbc.EstimateCostResponse) error {
 		}
 	}
 
+	if len(resp.GetRegionPrices()) > 0 {
+		return validateEstimateRegionPrices(resp)
+	}
+
 	return nil
 }
 
@@ -587,6 +603,8 @@ func ValidateEstimateCostResponse(resp *pbc.EstimateCostResponse) error {
 //     non-negative values, sum matches cost_per_month within tolerance, empty for dry-run responses
 //  9. price_options validation (if set): empty for dry-run responses, no nil entries,
 //     finite non-negative prices, finite savings_fraction. Never compared to cost_per_month.
+//  10. region_prices rows (if set): empty for dry-run responses, region present, finite
+//     non-negative prices, ISO 4217 currency. The rows are advisory and never summed.
 //
 // Semantic rules enforced:
 //   - spot_interruption_risk_score must only be non-zero when pricing_category is FOCUS_PRICING_CATEGORY_DYNAMIC
@@ -655,6 +673,10 @@ func ValidateGetProjectedCostResponse(resp *pbc.GetProjectedCostResponse) error 
 		if err := validateProjectedPriceOptions(resp); err != nil {
 			return err
 		}
+	}
+
+	if len(resp.GetRegionPrices()) > 0 {
+		return validateProjectedRegionPrices(resp)
 	}
 
 	return nil
@@ -787,6 +809,25 @@ func validateCostBreakdown(breakdown map[string]float64, costPerMonth float64, i
 	if math.Abs(sum-costPerMonth) > tol {
 		return fmt.Errorf("%w: sum %g, cost_per_month %g, tolerance %g",
 			ErrCostBreakdownSumMismatch, sum, costPerMonth, tol)
+	}
+	return nil
+}
+
+// validateProjectedRegionPrices and validateEstimateRegionPrices hold the region_prices
+// rules out of line for the same reason as the price_options helpers below.
+func validateProjectedRegionPrices(resp *pbc.GetProjectedCostResponse) error {
+	if resp.GetDryRunResult() != nil {
+		return ErrRegionPricesWithDryRun
+	}
+	if err := plugintesting.ValidateRegionPrices(resp.GetRegionPrices()); err != nil {
+		return fmt.Errorf("GetProjectedCostResponse: %w", err)
+	}
+	return nil
+}
+
+func validateEstimateRegionPrices(resp *pbc.EstimateCostResponse) error {
+	if err := plugintesting.ValidateRegionPrices(resp.GetRegionPrices()); err != nil {
+		return fmt.Errorf("EstimateCostResponse: %w", err)
 	}
 	return nil
 }

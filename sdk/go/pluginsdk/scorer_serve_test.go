@@ -132,6 +132,21 @@ func TestScorer_TransportParity(t *testing.T) {
 	assert.Equal(t, results[0].GetScores().GetDuplicateGroupId(), results[1].GetScores().GetDuplicateGroupId())
 }
 
+func TestScorer_SessionParity(t *testing.T) {
+	req := scorerFixtureRequest()
+	req.SessionId = "host-operation-1"
+	responses := make(map[string]*pbc.ScoreRecommendationsResponse, len(allocTransports))
+	for _, tr := range allocTransports {
+		_, call := startScorerServer(t, newScorerTestPlugin(plugintesting.NewMockRecommendationScorer()), tr.web)
+		resp, err := callScore(t, call, req)
+		require.NoError(t, err, tr.name)
+		require.NoError(t, plugintesting.ValidateScoreRecommendationsResponse(req, resp), tr.name)
+		assert.Equal(t, req.GetSessionId(), resp.GetSessionId(), tr.name)
+		responses[tr.name] = resp
+	}
+	assert.True(t, proto.Equal(responses["grpc"], responses["connect"]), "gRPC and Connect responses differ")
+}
+
 func TestScorer_ErrorParity(t *testing.T) {
 	failing := scorerFunc(func(
 		context.Context, *pbc.ScoreRecommendationsRequest,
@@ -149,6 +164,13 @@ func TestScorer_ErrorParity(t *testing.T) {
 			&pbc.ScoreRecommendationsRequest{}, codes.InvalidArgument,
 		},
 		{"backend unavailable", failing, scorerFixtureRequest(), codes.Unavailable},
+		{
+			"invalid session id", plugintesting.NewMockRecommendationScorer(),
+			&pbc.ScoreRecommendationsRequest{
+				SessionId:       "has space",
+				Recommendations: scorerFixtureRequest().GetRecommendations(),
+			}, codes.InvalidArgument,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

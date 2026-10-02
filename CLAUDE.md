@@ -1059,6 +1059,17 @@ parallel subtests complete.
 - Score caching (issue 581) is docs-only: the key hashes the pre-`identifier_mode` record without `id`, plus
   `signals`, `ScorerInfo` name/model/calibration, and plugin version. No `valid_for` proto hint yet.
 
+### Scorer Session Pattern (592-cross-batch-scoring-groups)
+
+- `ScoreRecommendationsRequest.session_id` (4) and the response echo (5) let the batches of one host
+  operation share duplicate group ids and pseudonym tokens. Empty means no session and unchanged rules.
+  The scorer derives `duplicate_group_id` from `session_id` and its duplicate key and stores nothing.
+- With a session the echo must match, and a response may hold a lone group member; a declined session
+  (empty echo) keeps the two-member rule. `isValidSessionID` is 1 to 128 printable ASCII.
+- Session conformance scenarios (`session_echo`, `session_across_batches`, `session_isolation`) live in
+  `sdk/go/testing/scorer_session.go` and pass for a scorer that declines sessions or does not group the pair.
+- Cached items left out of every batch are never grouped; this is documented, not a field.
+
 ### Actual Cost Billing Account Pattern (585-actual-cost-billing-account-id)
 
 - `GetActualCostRequest.billing_account_id` (field 9) is caller-supplied. Empty means not supplied:
@@ -1070,7 +1081,24 @@ parallel subtests complete.
   (Standard level) check only the echo rule; "do not invent" cannot be tested mechanically.
 - In a worktree, `make generate` uses mise's buf, so there is no `bin/buf`; run `buf breaking` directly.
 
+### Region Prices Pattern (586-region-prices)
+
+- `RegionPrice` rows on `GetProjectedCostResponse.region_prices` (17) and
+  `EstimateCostResponse.region_prices` (7) are advisory: never summed into or compared with the
+  primary cost. Fields 16 and 6 are left free by comment for `price_options` (issue 588).
+- Row rules live in `sdk/go/testing/region_price.go` (`ValidateRegionPrices`); `pluginsdk` aliases
+  the sentinels and calls it, and so do the harness validators, so conformance checks the rows too
+  (unlike 053's `cost_breakdown`, which only `pluginsdk` checks).
+- The projected validator keeps only `len(rows) > 0` inline; the rest is in
+  `validateProjectedRegionPrices`. A/B on the about-6 ns `_Valid` benchmark: the guard costs about
+  0.2 ns, and the change to the binary layout (proto field plus new code) shifts it about 0.45 ns even
+  with the check compiled out. Build an `if false` variant to separate layout from code cost.
+
 ## Active Technologies
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf, buf v1.32.1;
+  no new dependencies (592-cross-batch-scoring-groups)
+- N/A (stateless; group ids derived per call) (592-cross-batch-scoring-groups)
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
   google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1; no new dependencies (594-allocation-row-provenance)
@@ -1080,6 +1108,11 @@ parallel subtests complete.
   google.golang.org/protobuf (`proto.CloneOf`), buf v1.32.1; no new dependencies (557-price-options)
 - N/A (advisory repeated PriceOption on GetProjectedCostResponse and EstimateCostResponse)
   (557-price-options)
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
+  google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1; no new dependencies
+  (586-region-prices)
+- N/A (advisory repeated RegionPrice on projected cost and estimate responses) (586-region-prices)
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
   google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1; no new dependencies
@@ -1239,11 +1272,17 @@ See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable doc
 - 594-allocation-row-provenance: Added AllocationRow allocated_method_id (7), allocated_method_details (8),
   allocated_resource_id (9); a method id requires a resource id; field 10 held by comment for a later LineageNode
 
+- 592-cross-batch-scoring-groups: Added scorer `session_id` (request 4, response 5), session-aware
+  validators, mock group ids, three session conformance scenarios, and docs for cached items (issue 574)
+
 - 557-price-options: Added PriceOption, GetProjectedCostResponse.price_options (16) and
   EstimateCostResponse.price_options (6), three ErrPriceOption* sentinels,
   pluginsdk.WithProjectedCostPriceOptions and WithEstimatePriceOptions, and MockPlugin
   ProjectedCostPriceOptions / EstimateCostPriceOptions; advisory and never summed into the
   selected price; fields 17 and 7 held by comment for a per-region price list (issue 588)
+- 586-region-prices: Added RegionPrice and region_prices on GetProjectedCostResponse (17) and
+  EstimateCostResponse (7), plugintesting.ValidateRegionPrices with ErrInvalidRegionPrice and
+  ErrRegionPricesWithDryRun, pluginsdk region price options, and MockPlugin.RegionPrices.
 
 - 585-actual-cost-billing-account-id: Added GetActualCostRequest.billing_account_id (field 9),
   MockPlugin FOCUS records keyed on it, ValidateActualCostBillingAccount with

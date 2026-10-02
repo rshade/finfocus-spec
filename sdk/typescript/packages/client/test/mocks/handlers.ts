@@ -65,7 +65,11 @@ export const handlers = [
       costPerMonth: 150.0,
       billingDetail: "On-demand pricing",
       costBreakdown: { compute: 120.0, root_volume: 30.0 },
-      priceOptions
+      priceOptions,
+      regionPrices: [
+        { region: "us-west-2", unitPrice: 0.11, monthlyCost: 165.0, currency: "USD" },
+        { region: "eu-west-1", unitPrice: 0.12, monthlyCost: 180.0, currency: "EUR" }
+      ]
     });
   }),
 

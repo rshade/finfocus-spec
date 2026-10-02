@@ -312,6 +312,12 @@ message GetProjectedCostResponse {
   set `price_options` (field 16; field 6 on `EstimateCostResponse`). The list is advisory and is
   never summed into `cost_per_month`. See
   [Price Option Helpers](sdk/go/pluginsdk/README.md#price-option-helpers-price_options)
+- To show the same SKU's price in other regions, set `region_prices` (field 17; field 7 on
+  `EstimateCostResponse`). It is advisory: `cost_per_month`, `unit_price`, and `currency` stay the
+  requested region's price, and the rows are never summed into them. Each row needs a region,
+  finite non-negative prices on the same basis as the parent, and an ISO 4217 currency that may
+  differ from the parent's. Omit a region you could not price instead of sending a zero row; zero
+  is a real price. See [Region Prices](sdk/go/pluginsdk/README.md#region-prices-region_prices)
 
 #### GetPricingSpec RPC
 

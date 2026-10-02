@@ -77,11 +77,47 @@ not computed.
 `duplicate_group_id` rules:
 
 - Empty means no duplicate was found, or grouping was not performed.
-- The value is meaningful only within one response.
-- A non-empty value is shared by at least two recommendations. If a per-item failure leaves a group
-  with one scored member, the scorer clears its id.
+- Without a `session_id`, the value is meaningful only within one response. See
+  [Sessions and Batches](#sessions-and-batches) for how grouping works across batches.
+- Without a session, a non-empty value is shared by at least two recommendations. If a per-item
+  failure leaves a group with one scored member, the scorer clears its id. With a session, one
+  response may hold a single member, because the other members are in other batches.
 - With `IDENTIFIER_MODE_OMITTED`, grouping is unreliable, and a scorer that cannot group returns no
   id.
+
+## Sessions and Batches
+
+A set larger than `max_batch_size` is split into several calls. Without help, a duplicate whose
+members land in different batches is never grouped, and nothing reports the loss. A **session**
+makes the batches of one host operation behave as one set for grouping and pseudonym tokens.
+
+| Rule | Who | Statement |
+| ---- | --- | --------- |
+| Name the operation | Host | Sends the same `session_id` with every batch of one operation. The value is 1 to 128 printable ASCII characters. Empty means no session. |
+| One key | Host | Uses one pseudonymization key for every batch of a session, so a value has one token across them. It never reuses a `session_id` for another operation or key. |
+| Derive, do not store | Scorer | Derives each `duplicate_group_id` from `session_id` and the duplicate key it groups on, and keeps no state between calls. The same group then has the same id in every batch. |
+| Echo | Scorer | Returns the request `session_id` in the response. An empty echo means the scorer declined, and ids are scoped to that response only. |
+| Merge by equality | Host | Treats equal non-empty ids across the responses of one session as one group. Ids from different sessions mean nothing together. |
+
+The scorer chooses its duplicate key, for example resource and action type. The contract fixes the
+properties of the id, not the hash. Hosts validate every response with
+`ValidateScoreRecommendationsResponse`, which rejects an echo that differs from the request.
+
+A request without a `session_id` behaves as before.
+
+### Cached Recommendations
+
+A host that serves some recommendations from its score cache usually leaves them out of later
+batches. The scorer cannot group what it is not sent, so a recommendation absent from every batch of
+a session is never grouped with the others.
+
+| Host choice | Effect |
+| ----------- | ------ |
+| Leave cached items out | No extra cost. Their duplicates among the scored items are not grouped with them. |
+| Send cached items in a batch of the session and discard their other scores | Their duplicates are grouped, at the cost of scoring them again. |
+
+Group ids are never cached per recommendation (see [Caching Scores](#caching-scores)), so a cached
+item gets a fresh id only when it is sent again.
 
 ## Calibration
 
@@ -106,7 +142,7 @@ transformation, so identifiers never reach the scorer's backend in the default m
 | ----------------- | -------------------- |
 | `IDENTIFIER_MODE_UNSPECIFIED` | Treated as `IDENTIFIER_MODE_PSEUDONYMIZED`. |
 | `IDENTIFIER_MODE_RAW` | Cloud identifiers (resource id, name, ARN) as they are. Hosts should require an explicit operator opt-in. |
-| `IDENTIFIER_MODE_PSEUDONYMIZED` | `resource.id` and `resource.name` replaced by opaque tokens, identical for the same value within one request. Duplicate grouping keeps working. |
+| `IDENTIFIER_MODE_PSEUDONYMIZED` | `resource.id` and `resource.name` replaced by opaque tokens, identical for the same value within one request, or across the batches of one session when the host uses one key for it. Duplicate grouping keeps working. |
 | `IDENTIFIER_MODE_OMITTED` | `resource.id` and `resource.name` removed. Duplicate grouping becomes unreliable. |
 
 ### Identifier Scope
@@ -135,7 +171,7 @@ that can change the result:
 
 | Key part | Source | Why |
 | -------- | ------ | --- |
-| Content hash | A deterministic hash of the `Recommendation`, excluding `id`, before the host applies `identifier_mode` | Any change to the record, including utilization or impact, is a new key. Hosts can assign ids per run. Pseudonymous tokens hold only within one request, so a hash of the transformed record does not reliably match across requests. |
+| Content hash | A deterministic hash of the `Recommendation`, excluding `id`, before the host applies `identifier_mode` | Any change to the record, including utilization or impact, is a new key. Hosts can assign ids per run. Pseudonymous tokens hold only within one request or session, so a hash of the transformed record does not reliably match across requests. |
 | `identifier_mode` | The request | The scorer saw different input in each mode. |
 | `signals` | The request, or the scorer's `supported_signals` when the request lists none | A narrower request is not a full answer. |
 | `scorer.name`, `scorer.model`, `scorer.calibration` | `ScorerInfo` in the response | A different scorer, model, or calibration produces different numbers. |
@@ -154,7 +190,7 @@ backend can change in ways no field reports.
 Some response fields MUST NOT be cached per recommendation:
 
 - `duplicate_group_id`, because a cached id would join recommendations from different calls into
-  one group.
+  one group. A session id does not change this: it joins only the batches of one live operation.
 - `provider_request_id`, because it identifies one call. It is a log field, not a key part.
 - A `ResourceError` result, because it is not a score. Hosts can retry it.
 

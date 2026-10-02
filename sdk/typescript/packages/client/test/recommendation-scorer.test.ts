@@ -32,6 +32,7 @@ const endpoint = `${baseUrl}/finfocus.v1.RecommendationScorerService/ScoreRecomm
 
 let lastRequest: Record<string, unknown> | undefined;
 let failWith: { code: string; message: string } | undefined;
+let echoSession = "";
 
 const server = setupServer(
   http.post(endpoint, async ({ request }) => {
@@ -47,6 +48,7 @@ const server = setupServer(
       maxBatchSize: 25,
       scorer: { name: "mock-rules", calibration: "SCORE_CALIBRATION_RANKING_ONLY" },
       supportedSignals: ["SCORE_SIGNAL_RISK", "SCORE_SIGNAL_PRIORITY", "SCORE_SIGNAL_DUPLICATE_GROUP"],
+      sessionId: echoSession,
     });
   }),
 );
@@ -56,6 +58,7 @@ afterEach(() => {
   server.resetHandlers();
   lastRequest = undefined;
   failWith = undefined;
+  echoSession = "";
 });
 afterAll(() => server.close());
 
@@ -83,6 +86,28 @@ describe("RecommendationScorerClient", () => {
     expect(resp.maxBatchSize).toBe(25);
     expect(resp.scorer?.calibration).toBe(ScoreCalibration.RANKING_ONLY);
     expect(resp.supportedSignals).toContain(ScoreSignal.DUPLICATE_GROUP);
+  });
+
+  it("sends a session id and reads the echo", async () => {
+    echoSession = "host-operation-1";
+    const resp = await client.scoreRecommendations(
+      create(ScoreRecommendationsRequestSchema, {
+        recommendations: [{ id: "r1" }, { id: "r2" }],
+        sessionId: "host-operation-1",
+      }),
+    );
+
+    expect(lastRequest).toMatchObject({ sessionId: "host-operation-1" });
+    expect(resp.sessionId).toBe("host-operation-1");
+  });
+
+  it("leaves the session id empty when none is sent", async () => {
+    const resp = await client.scoreRecommendations(
+      create(ScoreRecommendationsRequestSchema, { recommendations: [{ id: "r1" }] }),
+    );
+
+    expect(lastRequest).not.toHaveProperty("sessionId");
+    expect(resp.sessionId).toBe("");
   });
 
   it("exposes the capability enum", () => {

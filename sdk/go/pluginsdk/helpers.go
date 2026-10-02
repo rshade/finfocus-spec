@@ -1368,6 +1368,17 @@ func WithEstimatePriceOptions(options ...*pbc.PriceOption) EstimateCostResponseO
 	}
 }
 
+// WithEstimateCostRegionPrices returns an EstimateCostResponseOption that sets
+// region_prices to copies of rows. Calling it with no rows leaves the field empty.
+//
+// The rows are advisory: they are never summed into cost_monthly. The option does
+// not validate; call ValidateEstimateCostResponse on the result.
+func WithEstimateCostRegionPrices(rows ...*pbc.RegionPrice) EstimateCostResponseOption {
+	return func(resp *pbc.EstimateCostResponse) {
+		resp.RegionPrices = cloneRegionPrices(rows)
+	}
+}
+
 // NewEstimateCostResponse creates an EstimateCostResponse with functional options.
 //
 // Example:
@@ -1598,6 +1609,43 @@ func clonePriceOptions(options []*pbc.PriceOption) []*pbc.PriceOption {
 	for i, o := range options {
 		if o != nil {
 			out[i] = proto.CloneOf(o)
+		}
+	}
+	return out
+}
+
+// WithProjectedCostRegionPrices returns a GetProjectedCostResponseOption that sets
+// region_prices to copies of rows. Calling it with no rows leaves the field empty.
+//
+// The rows are advisory: cost_per_month, unit_price, and currency stay the requested
+// region's price, and the rows are never summed into them. The option does not
+// validate; call ValidateGetProjectedCostResponse on the result.
+//
+// Usage:
+//
+//	resp := pluginsdk.NewGetProjectedCostResponse(
+//	    pluginsdk.WithProjectedCostDetails(0.096, "USD", 70.08, "Standard_B2s in eastus2"),
+//	    pluginsdk.WithProjectedCostRegionPrices(
+//	        &pbc.RegionPrice{Region: "eastus", UnitPrice: 0.09, MonthlyCost: 65.70, Currency: "USD"},
+//	        &pbc.RegionPrice{Region: "westeurope", UnitPrice: 0.11, MonthlyCost: 80.30, Currency: "EUR"},
+//	    ),
+//	)
+func WithProjectedCostRegionPrices(rows ...*pbc.RegionPrice) GetProjectedCostResponseOption {
+	return func(resp *pbc.GetProjectedCostResponse) {
+		resp.RegionPrices = cloneRegionPrices(rows)
+	}
+}
+
+// cloneRegionPrices deep-copies rows, keeping nil entries so validation can report
+// them. It returns nil for an empty input.
+func cloneRegionPrices(rows []*pbc.RegionPrice) []*pbc.RegionPrice {
+	if len(rows) == 0 {
+		return nil
+	}
+	out := make([]*pbc.RegionPrice, len(rows))
+	for i, row := range rows {
+		if row != nil {
+			out[i] = proto.CloneOf(row)
 		}
 	}
 	return out
