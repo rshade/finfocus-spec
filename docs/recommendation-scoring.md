@@ -128,9 +128,10 @@ that can change the result:
 
 When the request or `ScorerInfo` gains a field that changes scores, that field joins the key.
 
-A cached score is valid only while every part of its key is unchanged. Scores already vary slightly
-between identical calls, so within that rule a cached score is as good as a fresh one, and the dead
-band from [Calibration](#calibration) covers both. Scorers SHOULD report a pinned version in
+A cached score is valid only while every part of its key is unchanged. Even then it is a prior
+observation, not the same thing as a fresh result. Scores vary slightly between identical calls, and
+the dead band from [Calibration](#calibration) makes a threshold less sensitive to that variation. It
+does not make cached and fresh scores equivalent. Scorers SHOULD report a pinned version in
 `scorer.model`, for example `jev-1.13.0`. A moving alias such as `latest` lets the backend change
 behind a key that still matches. Hosts SHOULD also set their own maximum age, because a hosted
 backend can change in ways no field reports.
