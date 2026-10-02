@@ -74,3 +74,37 @@ func (h *recommendationScorerConnectHandler) ScoreRecommendations(
 	}
 	return connect.NewResponse(resp), nil
 }
+
+// WithScorerLimits advertises a scorer's max_batch_size and supported signals
+// through GetPluginInfo metadata, so a host can plan batches before its first
+// scoring call. The response fields of ScoreRecommendations stay authoritative
+// for each call. Invalid input (a limit below 1, no signal, an unspecified or
+// repeated signal) is reported by PluginInfo.Validate.
+func WithScorerLimits(maxBatchSize int32, signals ...pbc.ScoreSignal) PluginInfoOption {
+	return func(info *PluginInfo) {
+		if info.Metadata == nil {
+			info.Metadata = make(map[string]string)
+		}
+		for k, v := range plugintesting.FormatScorerLimits(maxBatchSize, signals) {
+			info.Metadata[k] = v
+		}
+	}
+}
+
+// ScorerLimits are the batch limit and signals a scorer advertised.
+type ScorerLimits = plugintesting.ScorerLimits
+
+// ParseScorerLimits reads the limits a scorer advertised in GetPluginInfo
+// metadata. It returns nil with a nil error when the plugin advertised nothing;
+// hosts then fall back to the response fields.
+func ParseScorerLimits(metadata map[string]string) (*ScorerLimits, error) {
+	return plugintesting.ParseScorerLimits(metadata)
+}
+
+// IsBatchTooLarge reports whether err is the error a scorer returns for a batch
+// above its max_batch_size, as opposed to an empty request, duplicate ids or an
+// unsupported signal. It works on a gRPC error and on the status-carrying error
+// ValidateScoreRecommendationsRequest returns.
+func IsBatchTooLarge(err error) bool {
+	return plugintesting.IsBatchTooLarge(err)
+}

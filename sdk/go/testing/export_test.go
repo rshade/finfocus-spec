@@ -44,3 +44,8 @@ func CopiedVocabularyForTest() []string {
 //
 //nolint:gochecknoglobals // Test-only export of an unexported function.
 var RunScorerScenariosForTest = runScorerScenarios
+
+// RunScorerAdvertisedLimitsForTest exposes the advertised_limits scenario.
+//
+//nolint:gochecknoglobals // Test-only export of an unexported function.
+var RunScorerAdvertisedLimitsForTest = scorerCheckAdvertisedLimits

@@ -326,11 +326,16 @@ type ScoreRecommendationsResponse struct {
 	// results has one entry per request entry, in request order.
 	Results []*RecommendationScoreResult `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
 	// max_batch_size is the largest number of recommendations the scorer accepts
-	// in one call. Hosts split larger sets.
+	// in one call. Hosts split larger sets. A scorer may also advertise it
+	// before the first call in GetPluginInfo metadata key scorer_max_batch_size;
+	// this field stays authoritative for each call.
 	MaxBatchSize int32 `protobuf:"varint,2,opt,name=max_batch_size,json=maxBatchSize,proto3" json:"max_batch_size,omitempty"`
 	// scorer identifies who produced the scores.
 	Scorer *ScorerInfo `protobuf:"bytes,3,opt,name=scorer,proto3" json:"scorer,omitempty"`
-	// supported_signals lists every signal the scorer can return.
+	// supported_signals lists every signal the scorer can return. A scorer may
+	// also advertise them before the first call in GetPluginInfo metadata key
+	// scorer_supported_signals (comma-separated lowercase names without the
+	// SCORE_SIGNAL_ prefix); this field stays authoritative for each call.
 	SupportedSignals []ScoreSignal `protobuf:"varint,4,rep,packed,name=supported_signals,json=supportedSignals,proto3,enum=finfocus.v1.ScoreSignal" json:"supported_signals,omitempty"`
 	// session_id echoes the request session_id when the scorer honors sessions.
 	// Empty means the scorer declined, and duplicate_group_id is scoped to this

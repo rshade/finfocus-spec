@@ -408,20 +408,24 @@ Helpers for plugins that implement `RecommendationScorerService.ScoreRecommendat
 [docs/recommendation-scoring.md](../../../docs/recommendation-scoring.md)).
 
 - `ValidateScoreRecommendationsRequest(req, maxBatchSize)` rejects an empty request, nil or repeated
-  ids, a batch above `maxBatchSize`, undefined signals, an undefined `identifier_mode`, and a `session_id` over 128
-  characters or with non-printable
-  characters, with `codes.InvalidArgument`.
+  ids, a batch above `maxBatchSize`, undefined signals, an undefined `identifier_mode`, and a
+  `session_id` over 128 characters or with non-printable characters, with `codes.InvalidArgument`. A
+  batch above `maxBatchSize` also carries a `BATCH_TOO_LARGE` `ErrorInfo` detail (`IsBatchTooLarge`).
 - `ValidateScoreRecommendationsResponse(req, resp)` checks index alignment, echoed ids, `[0, 1]` and
   `[0, 3]` ranges, `ResourceError` codes other than OK, `max_batch_size`, signal support, the echoed
   `session_id`, and duplicate groups (one-member groups are valid in a session).
 - `MockRecommendationScorer` is the reference scorer (fixed rules, no model). With a `session_id` it
-  derives group ids from the session and the resource and action type, so they match across batches. It is not a
-  `MockPlugin` method, so `MockPlugin` capabilities do not change.
+  derives group ids from the session and the resource and action type, so they match across batches. It
+  is not a `MockPlugin` method, so `MockPlugin` capabilities do not change.
 - `RunScorerConformance(t, impl)` serves `impl` over a `ScorerHarness` and runs thirteen structural
   scenarios: `single_recommendation`, `mixed_batch`, `reversed_order`, `signal_subset`,
   `unsupported_signal`, `unspecified_signal`, `identifier_modes`, `empty_request`, `duplicate_ids`,
-  `oversize_batch`, `session_echo`, `session_across_batches`, and `session_isolation`. It checks no score
-  values.
+  `oversize_batch`, `session_echo`, `session_across_batches`, and `session_isolation`. It checks no
+  score values. `oversize_batch` requires the `BATCH_TOO_LARGE` `ErrorInfo` detail (`IsBatchTooLarge`).
+  A fourteenth scenario, `advertised_limits`, runs when `impl` serves `GetPluginInfo` (its served
+  metadata is read; a scorer advertising neither key passes) or implements
+  `AdvertisedScorerMetadataSource`. It compares the `scorer_max_batch_size` and
+  `scorer_supported_signals` metadata with the response.
 
 ```go
 func TestMyScorer(t *testing.T) {
@@ -488,7 +492,7 @@ if errors.As(plugintesting.CheckConservation(req, resp, plugintesting.DefaultCon
 
 #### Allocator Conformance
 
-`RunAllocatorConformance(t, impl)` serves `impl` over an `AllocatorHarness` and runs thirteen
+`RunAllocatorConformance(t, impl)` serves `impl` over an `AllocatorHarness` and runs twelve
 subtests. `impl` is any `AllocateServer`: a type with an `Allocate` method, such as a
 `pluginsdk.AllocatorProvider` or a `pbc.AllocatorServiceServer`.
 
@@ -516,7 +520,6 @@ and that `CheckConservation` holds. Fixture usage is valid usage-source output (
 | `empty_request` | No usage, no priced | No rows; 64-character hex digest; integer `version` |
 | `fingerprint_stable` | The same request twice | Equal digests and effective policies |
 | `fingerprint_empty_equals_braces` | `policy_json` empty and `{}` | Equal digests |
-| `row_provenance` | Single-node cluster | Any row with `allocated_method_id` also has `allocated_resource_id`; provenance itself is optional |
 
 The assertions are policy-agnostic: bad policies are derived from the allocator's own effective
 policy. Only the top level is probed for unknown keys, because a nested object may be a map field

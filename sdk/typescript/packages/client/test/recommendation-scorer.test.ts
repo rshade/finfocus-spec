@@ -18,7 +18,11 @@ import { http, HttpResponse } from "msw";
 import { create } from "@bufbuild/protobuf";
 import { Code, ConnectError } from "@connectrpc/connect";
 
-import { RecommendationScorerClient } from "../src/clients/recommendation-scorer.js";
+import {
+  RecommendationScorerClient,
+  isBatchTooLarge,
+  parseScorerLimits,
+} from "../src/clients/recommendation-scorer.js";
 import {
   IdentifierMode,
   ScoreCalibration,
@@ -119,5 +123,43 @@ describe("RecommendationScorerClient", () => {
     await expect(
       client.scoreRecommendations(create(ScoreRecommendationsRequestSchema, {})),
     ).rejects.toSatisfy((e) => e instanceof ConnectError && e.code === Code.InvalidArgument);
+  });
+});
+
+describe("scorer advertised limits", () => {
+  it("parses advertised metadata", () => {
+    expect(
+      parseScorerLimits({ scorer_max_batch_size: "40", scorer_supported_signals: "risk,duplicate_group" }),
+    ).toEqual({ maxBatchSize: 40, supportedSignals: [ScoreSignal.RISK, ScoreSignal.DUPLICATE_GROUP] });
+  });
+
+  it("returns undefined when nothing is advertised", () => {
+    expect(parseScorerLimits({ other: "x" })).toBeUndefined();
+  });
+
+  it.each([
+    [{ scorer_max_batch_size: "5" }],
+    [{ scorer_max_batch_size: "0", scorer_supported_signals: "risk" }],
+    [{ scorer_max_batch_size: "5", scorer_supported_signals: "risk,vibes" }],
+    [{ scorer_max_batch_size: "5", scorer_supported_signals: "risk,risk" }],
+    [{ scorer_max_batch_size: "5", scorer_supported_signals: "RISK" }],
+    [{ scorer_max_batch_size: "5", scorer_supported_signals: "unspecified" }],
+  ])("rejects malformed metadata %j", (md) => {
+    expect(() => parseScorerLimits(md)).toThrow();
+  });
+
+  it("tells the oversize error from other InvalidArgument errors", () => {
+    const enc = new TextEncoder();
+    const field = (n: number, s: string) => [(n << 3) | 2, s.length, ...enc.encode(s)];
+    const info = Uint8Array.from([
+      ...field(1, "BATCH_TOO_LARGE"),
+      ...field(2, "finfocus.v1.RecommendationScorerService"),
+    ]);
+    const oversize = new ConnectError("too many", Code.InvalidArgument, undefined, [
+      { type: "google.rpc.ErrorInfo", value: info },
+    ]);
+    expect(isBatchTooLarge(oversize)).toBe(true);
+    expect(isBatchTooLarge(new ConnectError("dup", Code.InvalidArgument))).toBe(false);
+    expect(isBatchTooLarge(new ConnectError("down", Code.Unavailable))).toBe(false);
   });
 });

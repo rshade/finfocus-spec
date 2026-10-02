@@ -47,9 +47,11 @@ var (
 // maxBatchSize entries when maxBatchSize is positive, only defined signals
 // (SCORE_SIGNAL_UNSPECIFIED is invalid), and a defined identifier_mode. Every
 // failure wraps ErrInvalidScoreRequest and carries codes.InvalidArgument, so a
-// scorer may return it directly. A scorer that also rejects signals it does
-// not support does so against its own supported list. A non-empty session_id
-// must be at most 128 printable ASCII characters.
+// scorer may return it directly. A batch above maxBatchSize also carries an
+// ErrorInfo detail with reason BatchTooLargeReason, which IsBatchTooLarge
+// reports. A scorer that also rejects signals it does not support does so
+// against its own supported list. A non-empty session_id must be at most 128
+// printable ASCII characters.
 func ValidateScoreRecommendationsRequest(req *pbc.ScoreRecommendationsRequest, maxBatchSize int32) error {
 	if req == nil {
 		return newInvalidArgument(ErrInvalidScoreRequest, "request is nil")
@@ -59,8 +61,7 @@ func ValidateScoreRecommendationsRequest(req *pbc.ScoreRecommendationsRequest, m
 		return newInvalidArgument(ErrInvalidScoreRequest, "no recommendations to score")
 	}
 	if maxBatchSize > 0 && len(recs) > int(maxBatchSize) {
-		return newInvalidArgument(ErrInvalidScoreRequest,
-			"%d recommendations exceed max_batch_size %d", len(recs), maxBatchSize)
+		return newBatchTooLarge(len(recs), maxBatchSize)
 	}
 	seen := make(map[string]int, len(recs))
 	for i, rec := range recs {

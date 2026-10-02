@@ -179,6 +179,10 @@ func (info *PluginInfo) Validate() error {
 			info.Name, len(info.Capabilities), MaxConfiguredCapabilities)
 	}
 
+	if _, err := ParseScorerLimits(info.Metadata); err != nil {
+		return fmt.Errorf("plugin info validation failed for plugin %q: %w", info.Name, err)
+	}
+
 	return nil
 }
 

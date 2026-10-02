@@ -19,7 +19,16 @@ export { RegistryClient, ObservabilityClient, ClientConfig } from "./clients/aux
 export { UsageSourceClient } from "./clients/usage-source.js";
 export { AllocatorClient } from "./clients/allocator.js";
 export { SupplementalDatasetClient } from "./clients/supplemental-dataset.js";
-export { RecommendationScorerClient } from "./clients/recommendation-scorer.js";
+export {
+  RecommendationScorerClient,
+  parseScorerLimits,
+  isBatchTooLarge,
+  SCORER_MAX_BATCH_SIZE_KEY,
+  SCORER_SUPPORTED_SIGNALS_KEY,
+  BATCH_TOO_LARGE_REASON,
+  SCORER_ERROR_DOMAIN,
+} from "./clients/recommendation-scorer.js";
+export type { ScorerLimits } from "./clients/recommendation-scorer.js";
 
 // Builder patterns
 export { ResourceDescriptorBuilder } from "./builders/resource-descriptor.js";

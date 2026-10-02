@@ -112,6 +112,13 @@ func NewMockRecommendationScorer(opts ...MockScorerOption) *MockRecommendationSc
 	return m
 }
 
+// AdvertisedScorerMetadata returns the GetPluginInfo metadata entries that
+// advertise this scorer's batch limit and signals. RunScorerConformance checks
+// them against the response.
+func (m *MockRecommendationScorer) AdvertisedScorerMetadata() map[string]string {
+	return FormatScorerLimits(m.maxBatchSize, m.signals)
+}
+
 // ScoreRecommendations validates req with ValidateScoreRecommendationsRequest
 // against the scorer's batch limit, rejects requested signals the scorer does
 // not support, and scores each recommendation for the requested (or every

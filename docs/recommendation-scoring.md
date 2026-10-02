@@ -209,11 +209,31 @@ Whole-call failures use gRPC codes:
 
 | Code | Meaning |
 | ---- | ------- |
-| `INVALID_ARGUMENT` | Empty request, more than `max_batch_size` entries, duplicate ids, or a signal the scorer does not support. |
+| `INVALID_ARGUMENT` | Empty request, more than `max_batch_size` entries, duplicate ids, or a signal the scorer does not support. A batch above `max_batch_size` also carries a `google.rpc.ErrorInfo` detail with reason `BATCH_TOO_LARGE` and domain `finfocus.v1.RecommendationScorerService`. |
 | `UNIMPLEMENTED` | The plugin does not implement scoring. |
 | `UNAUTHENTICATED`, `PERMISSION_DENIED`, `RESOURCE_EXHAUSTED`, `UNAVAILABLE` | The backend refused or could not serve the whole call. |
 
 Per-recommendation failures use `ResourceError` in the result instead.
+
+A host splits the batch only when `pluginsdk.IsBatchTooLarge(err)` is true. Retrying or halving on every
+`INVALID_ARGUMENT` can hide a genuine duplicate id or unsupported signal.
+
+## Advertising Limits Before the First Call
+
+A scorer can publish its limit and signals through `GetPluginInfo` metadata, so a host plans batches
+before it scores anything:
+
+| Metadata key | Value |
+| ------------ | ----- |
+| `scorer_max_batch_size` | Decimal integer of at least 1. |
+| `scorer_supported_signals` | Comma-separated lowercase signal names without the `SCORE_SIGNAL_` prefix and without spaces, for example `risk,priority`. |
+
+Set both with `pluginsdk.WithScorerLimits(maxBatchSize, signals...)` and read them with
+`pluginsdk.ParseScorerLimits(metadata)`, which returns a nil result with a nil error when the plugin set
+neither key. Advertising is optional. The response fields stay authoritative for each call, and a mismatch is a
+scorer defect: `RunScorerConformance` runs an `advertised_limits` scenario when the scorer implements
+`plugintesting.AdvertisedScorerMetadataSource`. In TypeScript, use `parseScorerLimits` and
+`isBatchTooLarge` from the client package.
 
 ## Go SDK
 
@@ -236,7 +256,7 @@ lists it in the Connect health checker, and infers the capability. A scorer-only
 | `pluginsdk.ValidateScoreRecommendationsRequest(req, maxBatchSize)` | Scorers call it first. Failures carry `codes.InvalidArgument`. |
 | `pluginsdk.ValidateScoreRecommendationsResponse(req, resp)` | Hosts call it on every response. It checks alignment, ids, ranges, `ResourceError` codes, signal support, and duplicate groups. |
 | `plugintesting.MockRecommendationScorer` | Reference scorer with fixed rules. No model or network. |
-| `plugintesting.RunScorerConformance(t, impl)` | Serves `impl` over bufconn and runs ten structural scenarios. |
+| `plugintesting.RunScorerConformance(t, impl)` | Serves `impl` over bufconn and runs ten structural scenarios, plus `advertised_limits` when the scorer advertises. |
 
 ## Threshold Guidance (Non-Normative)
 

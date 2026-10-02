@@ -23,7 +23,7 @@ import (
 )
 
 // toConnectError converts an error carrying a gRPC status into a *connect.Error
-// with the same code and message. nil, *connect.Error values, and errors
+// with the same code, message and details. nil, *connect.Error values, and errors
 // without a gRPC status are returned unchanged.
 //
 // connect-go reports any error that is not a *connect.Error as CodeUnknown, so
@@ -42,5 +42,13 @@ func toConnectError(err error) error {
 	if !ok || st.Code() == codes.OK {
 		return err
 	}
-	return connect.NewError(connect.Code(st.Code()), errors.New(st.Message()))
+	out := connect.NewError(connect.Code(st.Code()), errors.New(st.Message()))
+	for _, detail := range st.Proto().GetDetails() {
+		if msg, unmarshalErr := detail.UnmarshalNew(); unmarshalErr == nil {
+			if d, detailErr := connect.NewErrorDetail(msg); detailErr == nil {
+				out.AddDetail(d)
+			}
+		}
+	}
+	return out
 }

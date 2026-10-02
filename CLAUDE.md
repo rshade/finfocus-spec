@@ -1059,6 +1059,19 @@ parallel subtests complete.
 - Score caching (issue 581) is docs-only: the key hashes the pre-`identifier_mode` record without `id`, plus
   `signals`, `ScorerInfo` name/model/calibration, and plugin version. No `valid_for` proto hint yet.
 
+### Scorer Advertised Limits Pattern (591-scorer-advertised-limits)
+
+- A scorer publishes its limit and signals through `GetPluginInfo` metadata keys `scorer_max_batch_size`
+  and `scorer_supported_signals` (lowercase names, no `SCORE_SIGNAL_` prefix), set with
+  `pluginsdk.WithScorerLimits`. No proto field was added; response fields stay authoritative.
+  `PluginInfo.Validate` rejects a malformed pair via `ParseScorerLimits`.
+- The oversize-batch error keeps `InvalidArgument` (existing hosts keep working) and gains a
+  `google.rpc.ErrorInfo` detail, reason `BATCH_TOO_LARGE`; test it with `IsBatchTooLarge`. `toConnectError`
+  now copies status details onto the `connect.Error`.
+- Helpers live in `sdk/go/testing/scorer_limits.go` (import cycle); `pluginsdk/scorer.go` delegates.
+  `RunScorerConformance` adds `advertised_limits` only for impls with `AdvertisedScorerMetadata()`.
+- `sdk/typescript` needs `npm ci` in a fresh worktree before the client tests run.
+
 ### Scorer Session Pattern (592-cross-batch-scoring-groups)
 
 - `ScoreRecommendationsRequest.session_id` (4) and the response echo (5) let the batches of one host
@@ -1099,10 +1112,6 @@ parallel subtests complete.
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf, buf v1.32.1;
   no new dependencies (592-cross-batch-scoring-groups)
 - N/A (stateless; group ids derived per call) (592-cross-batch-scoring-groups)
-
-- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
-  google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1; no new dependencies (594-allocation-row-provenance)
-- N/A (three optional strings on AllocationRow, one validator rule) (594-allocation-row-provenance)
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
   google.golang.org/protobuf (`proto.CloneOf`), buf v1.32.1; no new dependencies (557-price-options)
@@ -1268,9 +1277,6 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
-
-- 594-allocation-row-provenance: Added AllocationRow allocated_method_id (7), allocated_method_details (8),
-  allocated_resource_id (9); a method id requires a resource id; field 10 held by comment for a later LineageNode
 
 - 592-cross-batch-scoring-groups: Added scorer `session_id` (request 4, response 5), session-aware
   validators, mock group ids, three session conformance scenarios, and docs for cached items (issue 574)
