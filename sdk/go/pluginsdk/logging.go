@@ -321,16 +321,41 @@ func TracingUnaryServerInterceptorWithLogger(logger zerolog.Logger) grpc.UnarySe
 }
 
 // stampValidationTrace records traceID on the first *ValidationError in err.
-// An id already set by the handler is left as-is.
+// An id already set by the handler is left as-is. The error the handler
+// returned is never modified: handlers may return a shared value, so the id
+// goes on a copy, reached through a [traceStampedError].
 func stampValidationTrace(err error, traceID string) error {
 	if err == nil || traceID == "" {
 		return err
 	}
 	var ve *ValidationError
-	if errors.As(err, &ve) && ve != nil && ve.TraceID == "" {
-		ve.TraceID = traceID
+	if !errors.As(err, &ve) || ve == nil || ve.TraceID != "" {
+		return err
 	}
-	return err
+	stamped := *ve
+	stamped.TraceID = traceID
+	return &traceStampedError{err: err, stamped: &stamped}
+}
+
+// traceStampedError wraps an error chain that contains a *ValidationError so
+// errors.As returns a trace-stamped copy while the original stays untouched.
+type traceStampedError struct {
+	err     error
+	stamped *ValidationError
+}
+
+func (e *traceStampedError) Error() string {
+	return e.err.Error() + " trace_id=" + e.stamped.TraceID
+}
+
+func (e *traceStampedError) Unwrap() error { return e.err }
+
+func (e *traceStampedError) As(target any) bool {
+	if t, ok := target.(**ValidationError); ok {
+		*t = e.stamped
+		return true
+	}
+	return false
 }
 
 // WithTrace returns a child of logger that includes the trace id from ctx.
