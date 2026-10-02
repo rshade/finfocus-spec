@@ -20,6 +20,7 @@ import (
 	"encoding/hex"
 	"slices"
 	"strconv"
+	"strings"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/proto"
@@ -59,6 +60,8 @@ const (
 type MockRecommendationScorer struct {
 	maxBatchSize int32
 	signals      []pbc.ScoreSignal
+	models       []string
+	requestIDs   []string
 }
 
 // MockScorerOption configures a MockRecommendationScorer.
@@ -90,6 +93,34 @@ func WithScorerSignals(signals ...pbc.ScoreSignal) MockScorerOption {
 			m.signals = kept
 		}
 	}
+}
+
+// WithScorerModels reports models as scorer.models and its first entry as
+// scorer.model, the way a multi-model scorer should. Blank values are dropped;
+// with none left the scorer reports no model.
+func WithScorerModels(models ...string) MockScorerOption {
+	return func(m *MockRecommendationScorer) {
+		m.models = nonBlank(models)
+	}
+}
+
+// WithScorerProviderRequestIDs reports ids as scorer.provider_request_ids and
+// sets the deprecated scorer.provider_request_id to the first one, for hosts
+// that read only that field. Blank values are dropped.
+func WithScorerProviderRequestIDs(ids ...string) MockScorerOption {
+	return func(m *MockRecommendationScorer) {
+		m.requestIDs = nonBlank(ids)
+	}
+}
+
+func nonBlank(values []string) []string {
+	var kept []string
+	for _, v := range values {
+		if strings.TrimSpace(v) != "" {
+			kept = append(kept, v)
+		}
+	}
+	return kept
 }
 
 // NewMockRecommendationScorer returns a scorer that supports every signal with
@@ -150,10 +181,7 @@ func (m *MockRecommendationScorer) ScoreRecommendations(
 		MaxBatchSize:     m.maxBatchSize,
 		SupportedSignals: slices.Clone(m.signals),
 		SessionId:        req.GetSessionId(),
-		Scorer: &pbc.ScorerInfo{
-			Name:        mockScorerName,
-			Calibration: pbc.ScoreCalibration_SCORE_CALIBRATION_RANKING_ONLY,
-		},
+		Scorer:           m.scorerInfo(),
 	}
 	for i, rec := range req.GetRecommendations() {
 		resp.Results[i] = mockScoreResult(rec, active, req.GetOmittedFields())
@@ -302,4 +330,21 @@ func assignDuplicateGroups(
 			results[i].GetScores().DuplicateGroupId = id
 		}
 	}
+}
+
+func (m *MockRecommendationScorer) scorerInfo() *pbc.ScorerInfo {
+	info := &pbc.ScorerInfo{
+		Name:               mockScorerName,
+		Calibration:        pbc.ScoreCalibration_SCORE_CALIBRATION_RANKING_ONLY,
+		Models:             slices.Clone(m.models),
+		ProviderRequestIds: slices.Clone(m.requestIDs),
+	}
+	if len(m.models) > 0 {
+		info.Model = m.models[0]
+	}
+	if len(m.requestIDs) > 0 {
+		//nolint:staticcheck // SA1019: set the deprecated field too, as the field docs ask, for older hosts.
+		info.ProviderRequestId = m.requestIDs[0]
+	}
+	return info
 }

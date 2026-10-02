@@ -25,7 +25,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file finfocus/v1/scoring.proto.
  */
 export const file_finfocus_v1_scoring: GenFile = /*@__PURE__*/
-  fileDesc("ChlmaW5mb2N1cy92MS9zY29yaW5nLnByb3RvEgtmaW5mb2N1cy52MSLgAQobU2NvcmVSZWNvbW1lbmRhdGlvbnNSZXF1ZXN0EjQKD3JlY29tbWVuZGF0aW9ucxgBIAMoCzIbLmZpbmZvY3VzLnYxLlJlY29tbWVuZGF0aW9uEikKB3NpZ25hbHMYAiADKA4yGC5maW5mb2N1cy52MS5TY29yZVNpZ25hbBI0Cg9pZGVudGlmaWVyX21vZGUYAyABKA4yGy5maW5mb2N1cy52MS5JZGVudGlmaWVyTW9kZRISCgpzZXNzaW9uX2lkGAQgASgJEhYKDm9taXR0ZWRfZmllbGRzGAUgAygJIuEBChxTY29yZVJlY29tbWVuZGF0aW9uc1Jlc3BvbnNlEjcKB3Jlc3VsdHMYASADKAsyJi5maW5mb2N1cy52MS5SZWNvbW1lbmRhdGlvblNjb3JlUmVzdWx0EhYKDm1heF9iYXRjaF9zaXplGAIgASgFEicKBnNjb3JlchgDIAEoCzIXLmZpbmZvY3VzLnYxLlNjb3JlckluZm8SMwoRc3VwcG9ydGVkX3NpZ25hbHMYBCADKA4yGC5maW5mb2N1cy52MS5TY29yZVNpZ25hbBISCgpzZXNzaW9uX2lkGAUgASgJIqIBChlSZWNvbW1lbmRhdGlvblNjb3JlUmVzdWx0EhkKEXJlY29tbWVuZGF0aW9uX2lkGAEgASgJEjMKBnNjb3JlcxgCIAEoCzIhLmZpbmZvY3VzLnYxLlJlY29tbWVuZGF0aW9uU2NvcmVzSAASKwoFZXJyb3IYAyABKAsyGi5maW5mb2N1cy52MS5SZXNvdXJjZUVycm9ySABCCAoGcmVzdWx0IowCChRSZWNvbW1lbmRhdGlvblNjb3JlcxIRCgRyaXNrGAEgASgBSACIAQESGwoOZmFsc2VfcG9zaXRpdmUYAiABKAFIAYgBARIZCgx3b3J0aF9hY3RpbmcYAyABKAFIAogBARIVCghwcmlvcml0eRgEIAEoAUgDiAEBEiIKFWluc3VmZmljaWVudF9ldmlkZW5jZRgFIAEoAUgEiAEBEhoKEmR1cGxpY2F0ZV9ncm91cF9pZBgGIAEoCUIHCgVfcmlza0IRCg9fZmFsc2VfcG9zaXRpdmVCDwoNX3dvcnRoX2FjdGluZ0ILCglfcHJpb3JpdHlCGAoWX2luc3VmZmljaWVudF9ldmlkZW5jZSJ6CgpTY29yZXJJbmZvEgwKBG5hbWUYASABKAkSDQoFbW9kZWwYAiABKAkSMgoLY2FsaWJyYXRpb24YAyABKA4yHS5maW5mb2N1cy52MS5TY29yZUNhbGlicmF0aW9uEhsKE3Byb3ZpZGVyX3JlcXVlc3RfaWQYBCABKAkq5wEKC1Njb3JlU2lnbmFsEhwKGFNDT1JFX1NJR05BTF9VTlNQRUNJRklFRBAAEhUKEVNDT1JFX1NJR05BTF9SSVNLEAESHwobU0NPUkVfU0lHTkFMX0ZBTFNFX1BPU0lUSVZFEAISHQoZU0NPUkVfU0lHTkFMX1dPUlRIX0FDVElORxADEhkKFVNDT1JFX1NJR05BTF9QUklPUklUWRAEEiYKIlNDT1JFX1NJR05BTF9JTlNVRkZJQ0lFTlRfRVZJREVOQ0UQBRIgChxTQ09SRV9TSUdOQUxfRFVQTElDQVRFX0dST1VQEAYqfAoQU2NvcmVDYWxpYnJhdGlvbhIhCh1TQ09SRV9DQUxJQlJBVElPTl9VTlNQRUNJRklFRBAAEiIKHlNDT1JFX0NBTElCUkFUSU9OX1JBTktJTkdfT05MWRABEiEKHVNDT1JFX0NBTElCUkFUSU9OX1BST0JBQklMSVRZEAIqigEKDklkZW50aWZpZXJNb2RlEh8KG0lERU5USUZJRVJfTU9ERV9VTlNQRUNJRklFRBAAEhcKE0lERU5USUZJRVJfTU9ERV9SQVcQARIhCh1JREVOVElGSUVSX01PREVfUFNFVURPTllNSVpFRBACEhsKF0lERU5USUZJRVJfTU9ERV9PTUlUVEVEEAMyigEKG1JlY29tbWVuZGF0aW9uU2NvcmVyU2VydmljZRJrChRTY29yZVJlY29tbWVuZGF0aW9ucxIoLmZpbmZvY3VzLnYxLlNjb3JlUmVjb21tZW5kYXRpb25zUmVxdWVzdBopLmZpbmZvY3VzLnYxLlNjb3JlUmVjb21tZW5kYXRpb25zUmVzcG9uc2VCqgEKD2NvbS5maW5mb2N1cy52MUIMU2NvcmluZ1Byb3RvUAFaPGdpdGh1Yi5jb20vcnNoYWRlL2ZpbmZvY3VzLXNwZWMvc2RrL2dvL3Byb3RvL2ZpbmZvY3VzL3YxO3BiY6ICA0ZYWKoCC0ZpbmZvY3VzLlYxygILRmluZm9jdXNcVjHiAhdGaW5mb2N1c1xWMVxHUEJNZXRhZGF0YeoCDEZpbmZvY3VzOjpWMWIGcHJvdG8z", [file_finfocus_v1_costsource]);
+  fileDesc("ChlmaW5mb2N1cy92MS9zY29yaW5nLnByb3RvEgtmaW5mb2N1cy52MSLgAQobU2NvcmVSZWNvbW1lbmRhdGlvbnNSZXF1ZXN0EjQKD3JlY29tbWVuZGF0aW9ucxgBIAMoCzIbLmZpbmZvY3VzLnYxLlJlY29tbWVuZGF0aW9uEikKB3NpZ25hbHMYAiADKA4yGC5maW5mb2N1cy52MS5TY29yZVNpZ25hbBI0Cg9pZGVudGlmaWVyX21vZGUYAyABKA4yGy5maW5mb2N1cy52MS5JZGVudGlmaWVyTW9kZRISCgpzZXNzaW9uX2lkGAQgASgJEhYKDm9taXR0ZWRfZmllbGRzGAUgAygJIuEBChxTY29yZVJlY29tbWVuZGF0aW9uc1Jlc3BvbnNlEjcKB3Jlc3VsdHMYASADKAsyJi5maW5mb2N1cy52MS5SZWNvbW1lbmRhdGlvblNjb3JlUmVzdWx0EhYKDm1heF9iYXRjaF9zaXplGAIgASgFEicKBnNjb3JlchgDIAEoCzIXLmZpbmZvY3VzLnYxLlNjb3JlckluZm8SMwoRc3VwcG9ydGVkX3NpZ25hbHMYBCADKA4yGC5maW5mb2N1cy52MS5TY29yZVNpZ25hbBISCgpzZXNzaW9uX2lkGAUgASgJIqIBChlSZWNvbW1lbmRhdGlvblNjb3JlUmVzdWx0EhkKEXJlY29tbWVuZGF0aW9uX2lkGAEgASgJEjMKBnNjb3JlcxgCIAEoCzIhLmZpbmZvY3VzLnYxLlJlY29tbWVuZGF0aW9uU2NvcmVzSAASKwoFZXJyb3IYAyABKAsyGi5maW5mb2N1cy52MS5SZXNvdXJjZUVycm9ySABCCAoGcmVzdWx0IowCChRSZWNvbW1lbmRhdGlvblNjb3JlcxIRCgRyaXNrGAEgASgBSACIAQESGwoOZmFsc2VfcG9zaXRpdmUYAiABKAFIAYgBARIZCgx3b3J0aF9hY3RpbmcYAyABKAFIAogBARIVCghwcmlvcml0eRgEIAEoAUgDiAEBEiIKFWluc3VmZmljaWVudF9ldmlkZW5jZRgFIAEoAUgEiAEBEhoKEmR1cGxpY2F0ZV9ncm91cF9pZBgGIAEoCUIHCgVfcmlza0IRCg9fZmFsc2VfcG9zaXRpdmVCDwoNX3dvcnRoX2FjdGluZ0ILCglfcHJpb3JpdHlCGAoWX2luc3VmZmljaWVudF9ldmlkZW5jZSKsAQoKU2NvcmVySW5mbxIMCgRuYW1lGAEgASgJEg0KBW1vZGVsGAIgASgJEjIKC2NhbGlicmF0aW9uGAMgASgOMh0uZmluZm9jdXMudjEuU2NvcmVDYWxpYnJhdGlvbhIfChNwcm92aWRlcl9yZXF1ZXN0X2lkGAQgASgJQgIYARIcChRwcm92aWRlcl9yZXF1ZXN0X2lkcxgFIAMoCRIOCgZtb2RlbHMYBiADKAkq5wEKC1Njb3JlU2lnbmFsEhwKGFNDT1JFX1NJR05BTF9VTlNQRUNJRklFRBAAEhUKEVNDT1JFX1NJR05BTF9SSVNLEAESHwobU0NPUkVfU0lHTkFMX0ZBTFNFX1BPU0lUSVZFEAISHQoZU0NPUkVfU0lHTkFMX1dPUlRIX0FDVElORxADEhkKFVNDT1JFX1NJR05BTF9QUklPUklUWRAEEiYKIlNDT1JFX1NJR05BTF9JTlNVRkZJQ0lFTlRfRVZJREVOQ0UQBRIgChxTQ09SRV9TSUdOQUxfRFVQTElDQVRFX0dST1VQEAYqfAoQU2NvcmVDYWxpYnJhdGlvbhIhCh1TQ09SRV9DQUxJQlJBVElPTl9VTlNQRUNJRklFRBAAEiIKHlNDT1JFX0NBTElCUkFUSU9OX1JBTktJTkdfT05MWRABEiEKHVNDT1JFX0NBTElCUkFUSU9OX1BST0JBQklMSVRZEAIqigEKDklkZW50aWZpZXJNb2RlEh8KG0lERU5USUZJRVJfTU9ERV9VTlNQRUNJRklFRBAAEhcKE0lERU5USUZJRVJfTU9ERV9SQVcQARIhCh1JREVOVElGSUVSX01PREVfUFNFVURPTllNSVpFRBACEhsKF0lERU5USUZJRVJfTU9ERV9PTUlUVEVEEAMyigEKG1JlY29tbWVuZGF0aW9uU2NvcmVyU2VydmljZRJrChRTY29yZVJlY29tbWVuZGF0aW9ucxIoLmZpbmZvY3VzLnYxLlNjb3JlUmVjb21tZW5kYXRpb25zUmVxdWVzdBopLmZpbmZvY3VzLnYxLlNjb3JlUmVjb21tZW5kYXRpb25zUmVzcG9uc2VCqgEKD2NvbS5maW5mb2N1cy52MUIMU2NvcmluZ1Byb3RvUAFaPGdpdGh1Yi5jb20vcnNoYWRlL2ZpbmZvY3VzLXNwZWMvc2RrL2dvL3Byb3RvL2ZpbmZvY3VzL3YxO3BiY6ICA0ZYWKoCC0ZpbmZvY3VzLlYxygILRmluZm9jdXNcVjHiAhdGaW5mb2N1c1xWMVxHUEJNZXRhZGF0YeoCDEZpbmZvY3VzOjpWMWIGcHJvdG8z", [file_finfocus_v1_costsource]);
 
 /**
  * ScoreRecommendationsRequest carries recommendations to score.
@@ -191,7 +191,9 @@ export type RecommendationScoreResult = Message<"finfocus.v1.RecommendationScore
   } | {
     /**
      * error reports why this recommendation could not be scored. The code is a
-     * google.rpc.Code and is never OK.
+     * google.rpc.Code and is never OK. For scoring, only code and message carry
+     * meaning: hosts SHOULD surface the message as well as the code, and scorers
+     * MUST NOT set resource_type_unsupported.
      *
      * @generated from field: finfocus.v1.ResourceError error = 3;
      */
@@ -285,8 +287,9 @@ export type ScorerInfo = Message<"finfocus.v1.ScorerInfo"> & {
   name: string;
 
   /**
-   * model is the model or engine behind it, for example "jev-1.13.0". Empty
-   * for scorers that use no model.
+   * model is the primary model or engine behind it, for example
+   * "jev-1.13.0". Empty for scorers that use no model. When models is
+   * non-empty, model MUST equal models[0].
    *
    * @generated from field: string model = 2;
    */
@@ -300,12 +303,34 @@ export type ScorerInfo = Message<"finfocus.v1.ScorerInfo"> & {
   calibration: ScoreCalibration;
 
   /**
-   * provider_request_id is the backend's request identifier, for support
-   * tickets. Empty when there is none.
+   * Deprecated: use provider_request_ids. This is the backend's request
+   * identifier, for support tickets. Scorers that set provider_request_ids
+   * SHOULD also set this to its first entry, for hosts that read only this
+   * field. It stays valid until at least the next MAJOR version.
    *
-   * @generated from field: string provider_request_id = 4;
+   * @generated from field: string provider_request_id = 4 [deprecated = true];
+   * @deprecated
    */
   providerRequestId: string;
+
+  /**
+   * provider_request_ids lists every backend request identifier for this call,
+   * for support tickets, in the order the scorer made the calls. It is a log
+   * field, not a score cache key part. Hosts read this list first and fall back
+   * to provider_request_id when it is empty. Entries are non-empty.
+   *
+   * @generated from field: repeated string provider_request_ids = 5;
+   */
+  providerRequestIds: string[];
+
+  /**
+   * models lists every model or engine the call used, primary first, then the
+   * others in the order the scorer used them. Entries are non-empty. The list
+   * joins the score cache key, because a change to any model can change scores.
+   *
+   * @generated from field: repeated string models = 6;
+   */
+  models: string[];
 };
 
 /**

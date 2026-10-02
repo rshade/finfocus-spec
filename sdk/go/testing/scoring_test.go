@@ -474,3 +474,81 @@ func BenchmarkValidateScoreRecommendationsRequestOmittedFields(b *testing.B) {
 		_ = plugintesting.ValidateScoreRecommendationsRequest(req, 0)
 	}
 }
+
+func TestValidateScoreRecommendationsResponseScorerInfo(t *testing.T) {
+	req := scoreRequest("a")
+	withScorer := func(scorer *pbc.ScorerInfo) *pbc.ScoreRecommendationsResponse {
+		resp := scoreResponse(scoredResult("a", &pbc.RecommendationScores{Risk: proto.Float64(0.2)}))
+		resp.Scorer = scorer
+		return resp
+	}
+
+	valid := []struct {
+		name   string
+		scorer *pbc.ScorerInfo
+	}{
+		{
+			name: "three request ids and two models, primary first",
+			scorer: &pbc.ScorerInfo{
+				Name: "jev", Model: "jev-1.13.0", Models: []string{"jev-1.13.0", "embed-2"},
+				ProviderRequestIds: []string{"req-1", "req-2", "req-3"},
+			},
+		},
+		{
+			name: "only the deprecated single request id",
+			//nolint:staticcheck // SA1019: older scorers set only the deprecated field and must stay valid.
+			scorer: &pbc.ScorerInfo{Name: "jev", Model: "jev-1.13.0", ProviderRequestId: "req-1"},
+		},
+		{name: "primary model without a list", scorer: &pbc.ScorerInfo{Name: "jev", Model: "jev-1.13.0"}},
+	}
+	for _, tt := range valid {
+		t.Run(tt.name, func(t *testing.T) {
+			require.NoError(t, plugintesting.ValidateScoreRecommendationsResponse(req, withScorer(tt.scorer)))
+		})
+	}
+
+	invalid := []struct {
+		name    string
+		scorer  *pbc.ScorerInfo
+		wantErr string
+	}{
+		{
+			name:    "empty request id",
+			scorer:  &pbc.ScorerInfo{ProviderRequestIds: []string{"req-1", ""}},
+			wantErr: "scorer.provider_request_ids[1]",
+		},
+		{
+			name:    "empty model",
+			scorer:  &pbc.ScorerInfo{Model: "jev-1.13.0", Models: []string{"jev-1.13.0", ""}},
+			wantErr: "scorer.models[1]",
+		},
+		{
+			name:    "list without a primary model",
+			scorer:  &pbc.ScorerInfo{Models: []string{"jev-1.13.0"}},
+			wantErr: "scorer.model",
+		},
+		{
+			name:    "primary model is not the first listed",
+			scorer:  &pbc.ScorerInfo{Model: "embed-2", Models: []string{"jev-1.13.0", "embed-2"}},
+			wantErr: "scorer.model",
+		},
+	}
+	for _, tt := range invalid {
+		t.Run(tt.name, func(t *testing.T) {
+			err := plugintesting.ValidateScoreRecommendationsResponse(req, withScorer(tt.scorer))
+			require.ErrorIs(t, err, plugintesting.ErrInvalidScoreResponse)
+			assert.Contains(t, err.Error(), tt.wantErr)
+		})
+	}
+}
+
+func TestValidateScoreRecommendationsResponseRejectsUnsupportedTypeFlag(t *testing.T) {
+	req := scoreRequest("a", "b")
+	flagged := failedResult("b", int32(codes.InvalidArgument))
+	flagged.GetError().ResourceTypeUnsupported = true
+	resp := scoreResponse(scoredResult("a", &pbc.RecommendationScores{Risk: proto.Float64(0.1)}), flagged)
+
+	err := plugintesting.ValidateScoreRecommendationsResponse(req, resp)
+	require.ErrorIs(t, err, plugintesting.ErrInvalidScoreResponse)
+	assert.Contains(t, err.Error(), "results[1].error.resource_type_unsupported")
+}

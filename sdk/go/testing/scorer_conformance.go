@@ -22,6 +22,8 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
@@ -158,7 +160,22 @@ func scorerScenarios() []scorerScenario {
 		{"session_isolation", scorerCheckSessionIsolation},
 		{"omitted_fields_accepted", scorerCheckOmittedFieldsAccepted},
 		{"omitted_fields_rejected", scorerCheckOmittedFieldsRejected},
+		{"unscorable_item", scorerCheckUnscorableItem},
 	}
+}
+
+// scorerCheckUnscorableItem sends a normal recommendation next to one with no
+// resource. A scorer may score both, return a per-item error for the second, or
+// reject the request with InvalidArgument. Any per-item error goes through
+// ValidateScoreRecommendationsResponse, so a scorer that sets
+// resource_type_unsupported fails here.
+func scorerCheckUnscorableItem(ctx context.Context, client pbc.RecommendationScorerServiceClient) error {
+	recs := append(scorerFixture(1), &pbc.Recommendation{Id: "conformance-no-resource"})
+	_, err := scoreValid(ctx, client, &pbc.ScoreRecommendationsRequest{Recommendations: recs})
+	if status.Code(err) == codes.InvalidArgument {
+		return nil
+	}
+	return err
 }
 
 func scorerCheckSingleRecommendation(ctx context.Context, client pbc.RecommendationScorerServiceClient) error {
@@ -453,6 +470,9 @@ func runScorerScenarios(ctx context.Context, client pbc.RecommendationScorerServ
 //     response validates; no score value is compared
 //   - omitted_fields_rejected: an empty entry, an unknown path, and a duplicate
 //     path are each rejected with InvalidArgument
+//   - unscorable_item: a recommendation with no resource next to a normal one;
+//     scores, a per-item error, or InvalidArgument all pass, but a per-item
+//     error must follow the rules (no resource_type_unsupported)
 func RunScorerConformance(t *testing.T, impl ScoreServer) {
 	t.Helper()
 	harness := NewScorerHarness(impl)

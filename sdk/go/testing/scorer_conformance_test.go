@@ -50,6 +50,7 @@ var scorerScenarioNames = []string{
 	"session_isolation",
 	"omitted_fields_accepted",
 	"omitted_fields_rejected",
+	"unscorable_item",
 }
 
 // scoreFunc adapts a function to plugintesting.ScoreServer.
@@ -130,6 +131,32 @@ func brokenScorers() []brokenScorer {
 		return &pbc.RecommendationScores{}
 	}
 	return []brokenScorer{
+		{
+			name: "empty provider request id",
+			impl: scorePostProcess(func(resp *pbc.ScoreRecommendationsResponse) {
+				resp.Scorer.ProviderRequestIds = []string{"req-1", ""}
+			}),
+			fails: []string{"single_recommendation"},
+		},
+		{
+			name: "primary model not first in models",
+			impl: scorePostProcess(func(resp *pbc.ScoreRecommendationsResponse) {
+				resp.Scorer.Model = "embed-2"
+				resp.Scorer.Models = []string{"jev-1.13.0", "embed-2"}
+			}),
+			fails: []string{"single_recommendation"},
+		},
+		{
+			name: "per-item error sets resource_type_unsupported",
+			impl: scorePostProcess(func(resp *pbc.ScoreRecommendationsResponse) {
+				for _, result := range resp.GetResults() {
+					if result.GetError() != nil {
+						result.GetError().ResourceTypeUnsupported = true
+					}
+				}
+			}),
+			fails: []string{"unscorable_item"},
+		},
 		{
 			name:  "session ids change per call",
 			impl:  &driftingSessionScorer{},

@@ -73,7 +73,7 @@ looks the same as a field the resource never had, so the host lists the cleared 
 | ----- | ------- |
 | `results` | One entry per request entry, in request order: `results[i]` answers `recommendations[i]` and echoes its `id` in `recommendation_id`. |
 | `max_batch_size` | The largest number of recommendations the scorer accepts in one call. Hosts split larger sets. The SDK does not cap it. |
-| `scorer` | `ScorerInfo`: `name`, `model`, `calibration`, and the backend's `provider_request_id`. |
+| `scorer` | `ScorerInfo`: `name`, `model` (the primary model), `models` (every model used, primary first), `calibration`, and `provider_request_ids` (every backend request id). The single `provider_request_id` is deprecated; hosts read the list first and fall back to it. |
 | `supported_signals` | Every signal the scorer can return. |
 
 Each result holds either `scores` or a `ResourceError`. A failure on one recommendation never fails
@@ -194,7 +194,7 @@ that can change the result:
 | `identifier_mode` | The request | The scorer saw different input in each mode. |
 | `omitted_fields` | The request | The scorer saw less input, and a field it must not read as thin evidence. |
 | `signals` | The request, or the scorer's `supported_signals` when the request lists none | A narrower request is not a full answer. |
-| `scorer.name`, `scorer.model`, `scorer.calibration` | `ScorerInfo` in the response | A different scorer, model, or calibration produces different numbers. |
+| `scorer.name`, `scorer.model`, `scorer.models`, `scorer.calibration` | `ScorerInfo` in the response | A different scorer, model, or calibration produces different numbers. A multi-model scorer changes scores when any of its models changes, so every entry of `models` is part of the key. |
 | `version` | `GetPluginInfoResponse` | Rules can change while `model` stays the same, and rule-based scorers leave `model` empty. |
 
 When the request or `ScorerInfo` gains a field that changes scores, that field joins the key.
@@ -203,15 +203,18 @@ A cached score is valid only while every part of its key is unchanged. Even then
 observation, not the same thing as a fresh result. Scores vary slightly between identical calls, and
 the dead band from [Calibration](#calibration) makes a threshold less sensitive to that variation. It
 does not make cached and fresh scores equivalent. Scorers SHOULD report a pinned version in
-`scorer.model`, for example `jev-1.13.0`. A moving alias such as `latest` lets the backend change
-behind a key that still matches. Hosts SHOULD also set their own maximum age, because a hosted
+`scorer.model` and in every `scorer.models` entry, for example `jev-1.13.0`. A moving alias such as
+`latest` lets the backend change behind a key that still matches. Batches of one session each carry
+their own `ScorerInfo`, so a host that caches by key sees a different key when a later batch used a
+different set of models. Hosts SHOULD also set their own maximum age, because a hosted
 backend can change in ways no field reports.
 
 Some response fields MUST NOT be cached per recommendation:
 
 - `duplicate_group_id`, because a cached id would join recommendations from different calls into
   one group. A session id does not change this: it joins only the batches of one live operation.
-- `provider_request_id`, because it identifies one call. It is a log field, not a key part.
+- `provider_request_ids` and the deprecated `provider_request_id`, because they identify calls. They are log
+  fields, not key parts.
 - A `ResourceError` result, because it is not a score. Hosts can retry it.
 
 Hosts MUST NOT persist raw scorer payloads in a score cache. The cache holds the key and the numeric
@@ -233,7 +236,10 @@ Whole-call failures use gRPC codes:
 | `UNIMPLEMENTED` | The plugin does not implement scoring. |
 | `UNAUTHENTICATED`, `PERMISSION_DENIED`, `RESOURCE_EXHAUSTED`, `UNAVAILABLE` | The backend refused or could not serve the whole call. |
 
-Per-recommendation failures use `ResourceError` in the result instead.
+Per-recommendation failures use `ResourceError` in the result instead. For scoring, only its `code`
+and `message` carry meaning. Hosts SHOULD show the message as well as the code. Scorers MUST NOT set
+`resource_type_unsupported`, which has no meaning for scoring, and
+`ValidateScoreRecommendationsResponse` rejects a response that does.
 
 A host that retries by splitting the batch after a failed call does so only when `pluginsdk.IsBatchTooLarge(err)`
 is true. Splitting before the first call from advertised limits needs no such check. Retrying or halving on every
@@ -276,9 +282,9 @@ lists it in the Connect health checker, and infers the capability. A scorer-only
 | Helper | Use |
 | ------ | --- |
 | `pluginsdk.ValidateScoreRecommendationsRequest(req, maxBatchSize)` | Scorers call it first. Failures carry `codes.InvalidArgument`. |
-| `pluginsdk.ValidateScoreRecommendationsResponse(req, resp)` | Hosts call it on every response. It checks alignment, ids, ranges, `ResourceError` codes, signal support, and duplicate groups. |
+| `pluginsdk.ValidateScoreRecommendationsResponse(req, resp)` | Hosts call it on every response. It checks alignment, ids, ranges, `ResourceError` codes and the unsupported-type flag, signal support, duplicate groups, and the `ScorerInfo` lists (no empty entries; `model` equals `models[0]`). |
 | `plugintesting.MockRecommendationScorer` | Reference scorer with fixed rules. No model or network. |
-| `plugintesting.RunScorerConformance(t, impl)` | Serves `impl` over bufconn and runs fifteen structural scenarios, plus `advertised_limits` when the scorer advertises. |
+| `plugintesting.RunScorerConformance(t, impl)` | Serves `impl` over bufconn and runs sixteen structural scenarios, plus `advertised_limits` when the scorer advertises. |
 
 ## Threshold Guidance (Non-Normative)
 

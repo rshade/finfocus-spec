@@ -408,19 +408,25 @@ Helpers for plugins that implement `RecommendationScorerService.ScoreRecommendat
   `Recommendation`), with `codes.InvalidArgument`. A batch above `maxBatchSize` also carries a
   `BATCH_TOO_LARGE` `ErrorInfo` detail (`IsBatchTooLarge`).
 - `ValidateScoreRecommendationsResponse(req, resp)` checks index alignment, echoed ids, `[0, 1]` and
-  `[0, 3]` ranges, `ResourceError` codes other than OK, `max_batch_size`, signal support, the echoed
-  `session_id`, and duplicate groups (one-member groups are valid in a session).
-- `MockRecommendationScorer` is the reference scorer (fixed rules, no model). With a `session_id` it
+  `[0, 3]` ranges, `ResourceError` codes other than OK and no `resource_type_unsupported`,
+  `max_batch_size`, signal support, the echoed `session_id`, duplicate groups (one-member groups are valid in a
+  session), and the `ScorerInfo` lists (no empty `provider_request_ids` or `models` entry, and `model` equal to
+  `models[0]` when `models` is set).
+- `MockRecommendationScorer` is the reference scorer (fixed rules, no model by default). With a `session_id` it
   derives group ids from the session and the resource and action type, so they match across batches. It
   does not read a field listed in `omitted_fields` as thin evidence. It is not a `MockPlugin` method, so
-  `MockPlugin` capabilities do not change.
-- `RunScorerConformance(t, impl)` serves `impl` over a `ScorerHarness` and runs fifteen structural
+  `MockPlugin` capabilities do not change. `WithScorerModels(...)` reports `models` and its first entry as
+  `model`; `WithScorerProviderRequestIDs(...)` reports `provider_request_ids` and sets the deprecated
+  `provider_request_id` to the first id.
+- `RunScorerConformance(t, impl)` serves `impl` over a `ScorerHarness` and runs sixteen structural
   scenarios: `single_recommendation`, `mixed_batch`, `reversed_order`, `signal_subset`,
   `unsupported_signal`, `unspecified_signal`, `identifier_modes`, `empty_request`, `duplicate_ids`,
   `oversize_batch`, `session_echo`, `session_across_batches`, `session_isolation`,
-  `omitted_fields_accepted`, and `omitted_fields_rejected`. It checks no score values. `oversize_batch`
+  `omitted_fields_accepted`, `omitted_fields_rejected`, and `unscorable_item` (a recommendation with no
+  resource; scores, a per-item error, or a whole-call `InvalidArgument` all pass, but any per-item error must
+  follow the rules). It checks no score values. `oversize_batch`
   requires the `BATCH_TOO_LARGE` `ErrorInfo` detail (`IsBatchTooLarge`).
-  A sixteenth scenario, `advertised_limits`, runs when `impl` serves `GetPluginInfo` (its served
+  A seventeenth scenario, `advertised_limits`, runs when `impl` serves `GetPluginInfo` (its served
   metadata is read; a scorer advertising neither key passes) or implements
   `AdvertisedScorerMetadataSource`. It compares the `scorer_max_batch_size` and
   `scorer_supported_signals` metadata with the response.

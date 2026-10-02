@@ -191,7 +191,9 @@ message RecommendationScoreResult {
     // scores holds the requested signals.
     RecommendationScores scores = 2;
     // error reports why this recommendation could not be scored. The code is a
-    // google.rpc.Code and is never OK.
+    // google.rpc.Code and is never OK. For scoring, only code and message carry
+    // meaning: hosts SHOULD surface the message as well as the code, and scorers
+    // MUST NOT set resource_type_unsupported.
     ResourceError error = 3;
   }
 }
@@ -224,12 +226,24 @@ message RecommendationScores {
 message ScorerInfo {
   // name is the scorer implementation, for example "jev".
   string name = 1;
-  // model is the model or engine behind it, for example "jev-1.13.0". Empty
-  // for scorers that use no model.
+  // model is the primary model or engine behind it, for example
+  // "jev-1.13.0". Empty for scorers that use no model. When models is
+  // non-empty, model MUST equal models[0].
   string model = 2;
   // calibration says whether numeric signals are probabilities.
   ScoreCalibration calibration = 3;
-  // provider_request_id is the backend's request identifier, for support
-  // tickets. Empty when there is none.
-  string provider_request_id = 4;
+  // Deprecated: use provider_request_ids. This is the backend's request
+  // identifier, for support tickets. Scorers that set provider_request_ids
+  // SHOULD also set this to its first entry, for hosts that read only this
+  // field. It stays valid until at least the next MAJOR version.
+  string provider_request_id = 4 [deprecated = true];
+  // provider_request_ids lists every backend request identifier for this call,
+  // for support tickets, in the order the scorer made the calls. It is a log
+  // field, not a score cache key part. Hosts read this list first and fall back
+  // to provider_request_id when it is empty. Entries are non-empty.
+  repeated string provider_request_ids = 5;
+  // models lists every model or engine the call used, primary first, then the
+  // others in the order the scorer used them. Entries are non-empty. The list
+  // joins the score cache key, because a change to any model can change scores.
+  repeated string models = 6;
 }

@@ -520,7 +520,9 @@ type RecommendationScoreResult_Scores struct {
 
 type RecommendationScoreResult_Error struct {
 	// error reports why this recommendation could not be scored. The code is a
-	// google.rpc.Code and is never OK.
+	// google.rpc.Code and is never OK. For scoring, only code and message carry
+	// meaning: hosts SHOULD surface the message as well as the code, and scorers
+	// MUST NOT set resource_type_unsupported.
 	Error *ResourceError `protobuf:"bytes,3,opt,name=error,proto3,oneof"`
 }
 
@@ -632,16 +634,30 @@ type ScorerInfo struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// name is the scorer implementation, for example "jev".
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	// model is the model or engine behind it, for example "jev-1.13.0". Empty
-	// for scorers that use no model.
+	// model is the primary model or engine behind it, for example
+	// "jev-1.13.0". Empty for scorers that use no model. When models is
+	// non-empty, model MUST equal models[0].
 	Model string `protobuf:"bytes,2,opt,name=model,proto3" json:"model,omitempty"`
 	// calibration says whether numeric signals are probabilities.
 	Calibration ScoreCalibration `protobuf:"varint,3,opt,name=calibration,proto3,enum=finfocus.v1.ScoreCalibration" json:"calibration,omitempty"`
-	// provider_request_id is the backend's request identifier, for support
-	// tickets. Empty when there is none.
+	// Deprecated: use provider_request_ids. This is the backend's request
+	// identifier, for support tickets. Scorers that set provider_request_ids
+	// SHOULD also set this to its first entry, for hosts that read only this
+	// field. It stays valid until at least the next MAJOR version.
+	//
+	// Deprecated: Marked as deprecated in finfocus/v1/scoring.proto.
 	ProviderRequestId string `protobuf:"bytes,4,opt,name=provider_request_id,json=providerRequestId,proto3" json:"provider_request_id,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	// provider_request_ids lists every backend request identifier for this call,
+	// for support tickets, in the order the scorer made the calls. It is a log
+	// field, not a score cache key part. Hosts read this list first and fall back
+	// to provider_request_id when it is empty. Entries are non-empty.
+	ProviderRequestIds []string `protobuf:"bytes,5,rep,name=provider_request_ids,json=providerRequestIds,proto3" json:"provider_request_ids,omitempty"`
+	// models lists every model or engine the call used, primary first, then the
+	// others in the order the scorer used them. Entries are non-empty. The list
+	// joins the score cache key, because a change to any model can change scores.
+	Models        []string `protobuf:"bytes,6,rep,name=models,proto3" json:"models,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ScorerInfo) Reset() {
@@ -695,11 +711,26 @@ func (x *ScorerInfo) GetCalibration() ScoreCalibration {
 	return ScoreCalibration_SCORE_CALIBRATION_UNSPECIFIED
 }
 
+// Deprecated: Marked as deprecated in finfocus/v1/scoring.proto.
 func (x *ScorerInfo) GetProviderRequestId() string {
 	if x != nil {
 		return x.ProviderRequestId
 	}
 	return ""
+}
+
+func (x *ScorerInfo) GetProviderRequestIds() []string {
+	if x != nil {
+		return x.ProviderRequestIds
+	}
+	return nil
+}
+
+func (x *ScorerInfo) GetModels() []string {
+	if x != nil {
+		return x.Models
+	}
+	return nil
 }
 
 var File_finfocus_v1_scoring_proto protoreflect.FileDescriptor
@@ -737,13 +768,15 @@ const file_finfocus_v1_scoring_proto_rawDesc = "" +
 	"\x0f_false_positiveB\x0f\n" +
 	"\r_worth_actingB\v\n" +
 	"\t_priorityB\x18\n" +
-	"\x16_insufficient_evidence\"\xa7\x01\n" +
+	"\x16_insufficient_evidence\"\xf5\x01\n" +
 	"\n" +
 	"ScorerInfo\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05model\x18\x02 \x01(\tR\x05model\x12?\n" +
-	"\vcalibration\x18\x03 \x01(\x0e2\x1d.finfocus.v1.ScoreCalibrationR\vcalibration\x12.\n" +
-	"\x13provider_request_id\x18\x04 \x01(\tR\x11providerRequestId*\xe7\x01\n" +
+	"\vcalibration\x18\x03 \x01(\x0e2\x1d.finfocus.v1.ScoreCalibrationR\vcalibration\x122\n" +
+	"\x13provider_request_id\x18\x04 \x01(\tB\x02\x18\x01R\x11providerRequestId\x120\n" +
+	"\x14provider_request_ids\x18\x05 \x03(\tR\x12providerRequestIds\x12\x16\n" +
+	"\x06models\x18\x06 \x03(\tR\x06models*\xe7\x01\n" +
 	"\vScoreSignal\x12\x1c\n" +
 	"\x18SCORE_SIGNAL_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11SCORE_SIGNAL_RISK\x10\x01\x12\x1f\n" +

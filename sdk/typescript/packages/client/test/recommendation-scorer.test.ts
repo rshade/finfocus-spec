@@ -50,7 +50,14 @@ const server = setupServer(
         { recommendationId: "r2", error: { code: 3, message: "no resource" } },
       ],
       maxBatchSize: 25,
-      scorer: { name: "mock-rules", calibration: "SCORE_CALIBRATION_RANKING_ONLY" },
+      scorer: {
+        name: "mock-rules",
+        calibration: "SCORE_CALIBRATION_RANKING_ONLY",
+        model: "jev-1.13.0",
+        models: ["jev-1.13.0", "embed-2"],
+        providerRequestId: "req-1",
+        providerRequestIds: ["req-1", "req-2"],
+      },
       supportedSignals: ["SCORE_SIGNAL_RISK", "SCORE_SIGNAL_PRIORITY", "SCORE_SIGNAL_DUPLICATE_GROUP"],
       sessionId: echoSession,
     });
@@ -91,6 +98,10 @@ describe("RecommendationScorerClient", () => {
     expect(resp.results[1].result.case).toBe("error");
     expect(resp.maxBatchSize).toBe(25);
     expect(resp.scorer?.calibration).toBe(ScoreCalibration.RANKING_ONLY);
+    expect(resp.scorer?.models).toEqual(["jev-1.13.0", "embed-2"]);
+    expect(resp.scorer?.model).toBe("jev-1.13.0");
+    expect(resp.scorer?.providerRequestIds).toEqual(["req-1", "req-2"]);
+    expect(resp.results[1].result.case === "error" && resp.results[1].result.value.message).toBe("no resource");
     expect(resp.supportedSignals).toContain(ScoreSignal.DUPLICATE_GROUP);
   });
 
