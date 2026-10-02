@@ -193,6 +193,8 @@ func scorerScenarios() []scorerScenario {
 		{"session_echo", scorerCheckSessionEcho},
 		{"session_across_batches", scorerCheckSessionAcrossBatches},
 		{"session_isolation", scorerCheckSessionIsolation},
+		{"omitted_fields_accepted", scorerCheckOmittedFieldsAccepted},
+		{"omitted_fields_rejected", scorerCheckOmittedFieldsRejected},
 	}
 }
 
@@ -407,6 +409,40 @@ func scorerCheckAdvertisedLimits(
 	return nil
 }
 
+// scorerOmittedMetadata is a valid omitted_fields path used by the omitted-field scenarios.
+const scorerOmittedMetadata = "metadata"
+
+func scorerCheckOmittedFieldsAccepted(ctx context.Context, client pbc.RecommendationScorerServiceClient) error {
+	recs, err := fixtureForLimit(ctx, client)
+	if err != nil {
+		return err
+	}
+	req := &pbc.ScoreRecommendationsRequest{
+		Recommendations: recs,
+		OmittedFields:   []string{"resource.tags", scorerOmittedMetadata, "reasoning", "action_detail"},
+	}
+	if _, err = scoreValid(ctx, client, req); err != nil {
+		return fmt.Errorf("a valid omitted_fields list: %w", err)
+	}
+	return nil
+}
+
+func scorerCheckOmittedFieldsRejected(ctx context.Context, client pbc.RecommendationScorerServiceClient) error {
+	malformed := map[string][]string{
+		"an empty entry":   {scorerOmittedMetadata, ""},
+		"an unknown path":  {"not_a_field"},
+		"a duplicate path": {scorerOmittedMetadata, scorerOmittedMetadata},
+	}
+	for _, name := range []string{"an empty entry", "an unknown path", "a duplicate path"} {
+		req := &pbc.ScoreRecommendationsRequest{Recommendations: scorerFixture(1), OmittedFields: malformed[name]}
+		_, err := client.ScoreRecommendations(ctx, req)
+		if err = wantInvalidArgument(err, "omitted_fields with "+name); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // runScorerScenarios runs every scenario against client and returns each
 // scenario's error (nil on success) keyed by subtest name.
 func runScorerScenarios(ctx context.Context, client pbc.RecommendationScorerServiceClient) map[string]error {
@@ -450,6 +486,10 @@ func runScorerScenarios(ctx context.Context, client pbc.RecommendationScorerServ
 //     the scorer does not echo sessions or does not group the pair)
 //   - session_isolation: the same pair gets different group ids in different
 //     sessions (same pass condition)
+//   - omitted_fields_accepted: a valid omitted_fields list is accepted and the
+//     response validates; no score value is compared
+//   - omitted_fields_rejected: an empty entry, an unknown path, and a duplicate
+//     path are each rejected with InvalidArgument
 func RunScorerConformance(t *testing.T, impl ScoreServer) {
 	t.Helper()
 	harness := NewScorerHarness(impl)

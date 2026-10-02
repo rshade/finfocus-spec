@@ -236,7 +236,8 @@ type ScoreRecommendationsRequest struct {
 	// recommendations are complete Recommendation messages as returned by
 	// GetRecommendations, so the scorer sees action_detail, primary_reason,
 	// secondary_reasons, tags, metadata, impact and utilization. The host does
-	// not drop those fields on its own; an operator allowlist may remove them.
+	// not drop those fields on its own; an operator allowlist may remove them,
+	// and the host then names the removed paths in omitted_fields.
 	// Between 1 and max_batch_size entries, each with a distinct id.
 	Recommendations []*Recommendation `protobuf:"bytes,1,rep,name=recommendations,proto3" json:"recommendations,omitempty"`
 	// signals limits the response to these signals. Empty means every signal the
@@ -257,7 +258,22 @@ type ScoreRecommendationsRequest struct {
 	// sessions derives duplicate_group_id from session_id and the duplicate key,
 	// keeps no state between calls, and echoes the value in the response.
 	// Recommendations the host leaves out of every batch are never grouped.
-	SessionId     string `protobuf:"bytes,4,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	SessionId string `protobuf:"bytes,4,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	// omitted_fields lists Recommendation field paths the host removed by policy
+	// (for example an operator allowlist) from every recommendation in this
+	// request. A path is dot-separated proto field names starting at
+	// Recommendation, such as "resource.tags", "metadata" or
+	// "kubernetes.cluster_id"; the oneof name "action_detail" covers all of its
+	// members, and naming a message field covers everything beneath it. Paths
+	// are 1 to 128 bytes, unique, and at most 64 are sent. Empty means the host
+	// removed nothing it can name.
+	//
+	// An omitted field is empty because the host cleared it, not because the
+	// resource lacks it. A scorer must not lower confidence, raise
+	// insufficient_evidence, or raise false_positive because an omitted field is
+	// empty. A field that is empty and not listed keeps its ordinary meaning.
+	// The list is advisory: the host performs the clearing.
+	OmittedFields []string `protobuf:"bytes,5,rep,name=omitted_fields,json=omittedFields,proto3" json:"omitted_fields,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -318,6 +334,13 @@ func (x *ScoreRecommendationsRequest) GetSessionId() string {
 		return x.SessionId
 	}
 	return ""
+}
+
+func (x *ScoreRecommendationsRequest) GetOmittedFields() []string {
+	if x != nil {
+		return x.OmittedFields
+	}
+	return nil
 }
 
 // ScoreRecommendationsResponse carries the scores.
@@ -683,13 +706,14 @@ var File_finfocus_v1_scoring_proto protoreflect.FileDescriptor
 
 const file_finfocus_v1_scoring_proto_rawDesc = "" +
 	"\n" +
-	"\x19finfocus/v1/scoring.proto\x12\vfinfocus.v1\x1a\x1cfinfocus/v1/costsource.proto\"\xfd\x01\n" +
+	"\x19finfocus/v1/scoring.proto\x12\vfinfocus.v1\x1a\x1cfinfocus/v1/costsource.proto\"\xa4\x02\n" +
 	"\x1bScoreRecommendationsRequest\x12E\n" +
 	"\x0frecommendations\x18\x01 \x03(\v2\x1b.finfocus.v1.RecommendationR\x0frecommendations\x122\n" +
 	"\asignals\x18\x02 \x03(\x0e2\x18.finfocus.v1.ScoreSignalR\asignals\x12D\n" +
 	"\x0fidentifier_mode\x18\x03 \x01(\x0e2\x1b.finfocus.v1.IdentifierModeR\x0eidentifierMode\x12\x1d\n" +
 	"\n" +
-	"session_id\x18\x04 \x01(\tR\tsessionId\"\x9d\x02\n" +
+	"session_id\x18\x04 \x01(\tR\tsessionId\x12%\n" +
+	"\x0eomitted_fields\x18\x05 \x03(\tR\romittedFields\"\x9d\x02\n" +
 	"\x1cScoreRecommendationsResponse\x12@\n" +
 	"\aresults\x18\x01 \x03(\v2&.finfocus.v1.RecommendationScoreResultR\aresults\x12$\n" +
 	"\x0emax_batch_size\x18\x02 \x01(\x05R\fmaxBatchSize\x12/\n" +

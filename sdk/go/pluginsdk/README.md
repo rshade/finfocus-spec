@@ -858,6 +858,11 @@ Simply implement the standard interfaces:
 | `ContractCommitmentProvider`     | `GetContractCommitments` | `PLUGIN_CAPABILITY_CONTRACT_COMMITMENTS`       |
 | `InvoiceDatasetProvider`         | `GetBillingPeriods`, `GetInvoiceDetails` | `PLUGIN_CAPABILITY_INVOICE_DATA` |
 
+A scorer reads `ScoreRecommendationsRequest.omitted_fields` to learn which `Recommendation` fields the
+host cleared by policy. An omitted field is empty by choice, so it must not lower confidence or raise
+`insufficient_evidence`; see [Omitted fields](../../../docs/recommendation-scoring.md#omitted-fields).
+`ValidateScoreRecommendationsRequest` validates the list, so a scorer that calls it needs no extra code.
+
 ```go
 // Example: Implementing DryRunHandler
 func (p *MyPlugin) HandleDryRun(ctx context.Context, req *pbc.DryRunRequest) (*pbc.DryRunResponse, error) {

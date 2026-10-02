@@ -17,8 +17,10 @@ package testing
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"google.golang.org/grpc/codes"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
@@ -33,6 +35,10 @@ const (
 	minDuplicateGroupSize = 2
 	// maxSessionIDLength is the longest session_id a request may carry.
 	maxSessionIDLength = 128
+	// maxOmittedFields is the most omitted_fields entries a request may carry.
+	maxOmittedFields = 64
+	// maxOmittedFieldBytes is the longest omitted_fields entry.
+	maxOmittedFieldBytes = 128
 )
 
 var (
@@ -45,7 +51,8 @@ var (
 // ValidateScoreRecommendationsRequest checks a scorer's input: at least one
 // recommendation, none nil, each with a distinct non-empty id, no more than
 // maxBatchSize entries when maxBatchSize is positive, only defined signals
-// (SCORE_SIGNAL_UNSPECIFIED is invalid), and a defined identifier_mode. Every
+// (SCORE_SIGNAL_UNSPECIFIED is invalid), a defined identifier_mode, and a
+// well-formed omitted_fields list (see validateOmittedFields). Every
 // failure wraps ErrInvalidScoreRequest and carries codes.InvalidArgument, so a
 // scorer may return it directly. A batch above maxBatchSize also carries an
 // ErrorInfo detail with reason BatchTooLargeReason, which IsBatchTooLarge
@@ -89,6 +96,9 @@ func ValidateScoreRecommendationsRequest(req *pbc.ScoreRecommendationsRequest, m
 		return newInvalidArgument(ErrInvalidScoreRequest,
 			"session_id must be at most %d printable ASCII characters", maxSessionIDLength)
 	}
+	if len(req.GetOmittedFields()) > 0 {
+		return validateOmittedFields(req.GetOmittedFields())
+	}
 	return nil
 }
 
@@ -104,6 +114,58 @@ func isValidSessionID(id string) bool {
 		}
 	}
 	return true
+}
+
+// validateOmittedFields checks omitted_fields: at most maxOmittedFields unique
+// entries of 1 to maxOmittedFieldBytes bytes, each a dot-separated chain of
+// Recommendation field names (or the action_detail oneof name). Map and scalar
+// fields end a path.
+func validateOmittedFields(paths []string) error {
+	if len(paths) > maxOmittedFields {
+		return newInvalidArgument(ErrInvalidScoreRequest,
+			"omitted_fields has %d entries, limit is %d", len(paths), maxOmittedFields)
+	}
+	seen := make(map[string]struct{}, len(paths))
+	desc := (&pbc.Recommendation{}).ProtoReflect().Descriptor()
+	for i, path := range paths {
+		if path == "" {
+			return newInvalidArgument(ErrInvalidScoreRequest, "omitted_fields[%d] is empty", i)
+		}
+		if len(path) > maxOmittedFieldBytes {
+			return newInvalidArgument(ErrInvalidScoreRequest,
+				"omitted_fields[%d] is %d bytes, limit is %d", i, len(path), maxOmittedFieldBytes)
+		}
+		if _, dup := seen[path]; dup {
+			return newInvalidArgument(ErrInvalidScoreRequest, "omitted_fields[%d] duplicates %q", i, path)
+		}
+		seen[path] = struct{}{}
+		if !resolvesOnRecommendation(desc, path) {
+			return newInvalidArgument(ErrInvalidScoreRequest,
+				"omitted_fields[%d] %q is not a Recommendation field path", i, path)
+		}
+	}
+	return nil
+}
+
+func resolvesOnRecommendation(desc protoreflect.MessageDescriptor, path string) bool {
+	for first := true; ; first = false {
+		segment, rest, more := strings.Cut(path, ".")
+		if segment == "" {
+			return false
+		}
+		field := desc.Fields().ByName(protoreflect.Name(segment))
+		if field == nil {
+			return first && !more && desc.Oneofs().ByName(protoreflect.Name(segment)) != nil
+		}
+		if !more {
+			return true
+		}
+		if field.Message() == nil || field.IsMap() {
+			return false
+		}
+		desc = field.Message()
+		path = rest
+	}
 }
 
 // ValidateScoreRecommendationsResponse checks a scorer's output against the

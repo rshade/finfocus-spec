@@ -1107,6 +1107,18 @@ parallel subtests complete.
   0.2 ns, and the change to the binary layout (proto field plus new code) shifts it about 0.45 ns even
   with the check compiled out. Build an `if false` variant to separate layout from code cost.
 
+### Scorer Omitted Fields Pattern (593-omitted-fields)
+
+- `ScoreRecommendationsRequest.omitted_fields` (field 5) names `Recommendation` paths the host cleared by
+  policy. Field 4 is `session_id`; `omitted_fields` is field 5 on the request only (the response's field 5 is
+  the `session_id` echo). Paths are dot-separated
+  proto field names (`resource.tags`, `kubernetes.cluster_id`); the `action_detail` oneof name is accepted;
+  map and scalar fields end a path. At most 64 unique entries of 1-128 bytes.
+- The rule lives in `validateOmittedFields` (`sdk/go/testing/scoring.go`), guarded by `len() > 0` at the
+  call site; it resolves paths with `protoreflect`, so a new `Recommendation` field needs no list update.
+- Conformance stays model-agnostic: `omitted_fields_accepted` / `omitted_fields_rejected` check structure
+  and `InvalidArgument`, never score values. The mock proves the rule in its own tests.
+
 ## Active Technologies
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf, buf v1.32.1;

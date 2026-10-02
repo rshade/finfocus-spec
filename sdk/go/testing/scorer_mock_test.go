@@ -140,6 +140,39 @@ func TestMockRecommendationScorer_SignalFilter(t *testing.T) {
 	assert.ErrorIs(t, err, plugintesting.ErrInvalidScoreRequest)
 }
 
+func TestMockRecommendationScorer_OmittedFieldsAreNotThinEvidence(t *testing.T) {
+	scorer := plugintesting.NewMockRecommendationScorer()
+	bare := func() *pbc.Recommendation {
+		rec := mockRec("a", "i-1", pbc.RecommendationActionType_RECOMMENDATION_ACTION_TYPE_RIGHTSIZE, nil)
+		rec.Reasoning = nil
+		return rec
+	}
+	evidence := func(omitted ...string) float64 {
+		req := &pbc.ScoreRecommendationsRequest{
+			Recommendations: []*pbc.Recommendation{bare()},
+			OmittedFields:   omitted,
+		}
+		resp, err := scorer.ScoreRecommendations(context.Background(), req)
+		require.NoError(t, err)
+		require.NoError(t, plugintesting.ValidateScoreRecommendationsResponse(req, resp))
+		return resp.GetResults()[0].GetScores().GetInsufficientEvidence()
+	}
+
+	thin := evidence()
+	assert.Greater(t, thin, evidence("reasoning", "resource.utilization"))
+	assert.InDelta(t, thin, evidence("metadata", "resource.tags"), 0, "unrelated omissions change nothing")
+	assert.Greater(t, thin, evidence("resource"), "omitting resource covers utilization")
+}
+
+func TestMockRecommendationScorer_RejectsMalformedOmittedFields(t *testing.T) {
+	scorer := plugintesting.NewMockRecommendationScorer()
+	req := scoreRequest("a")
+	req.OmittedFields = []string{"not_a_field"}
+	_, err := scorer.ScoreRecommendations(context.Background(), req)
+	require.Error(t, err)
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+}
+
 func TestMockRecommendationScorer_RejectsInvalidRequests(t *testing.T) {
 	scorer := plugintesting.NewMockRecommendationScorer(plugintesting.WithScorerMaxBatchSize(1))
 

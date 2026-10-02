@@ -156,7 +156,7 @@ func (m *MockRecommendationScorer) ScoreRecommendations(
 		},
 	}
 	for i, rec := range req.GetRecommendations() {
-		resp.Results[i] = mockScoreResult(rec, active)
+		resp.Results[i] = mockScoreResult(rec, active, req.GetOmittedFields())
 	}
 	if slices.Contains(active, pbc.ScoreSignal_SCORE_SIGNAL_DUPLICATE_GROUP) &&
 		req.GetIdentifierMode() != pbc.IdentifierMode_IDENTIFIER_MODE_OMITTED {
@@ -165,7 +165,9 @@ func (m *MockRecommendationScorer) ScoreRecommendations(
 	return resp, nil
 }
 
-func mockScoreResult(rec *pbc.Recommendation, active []pbc.ScoreSignal) *pbc.RecommendationScoreResult {
+func mockScoreResult(
+	rec *pbc.Recommendation, active []pbc.ScoreSignal, omitted []string,
+) *pbc.RecommendationScoreResult {
 	result := &pbc.RecommendationScoreResult{RecommendationId: rec.GetId()}
 	if rec.GetResource() == nil {
 		result.Result = &pbc.RecommendationScoreResult_Error{Error: &pbc.ResourceError{
@@ -186,7 +188,7 @@ func mockScoreResult(rec *pbc.Recommendation, active []pbc.ScoreSignal) *pbc.Rec
 		case pbc.ScoreSignal_SCORE_SIGNAL_PRIORITY:
 			scores.Priority = proto.Float64(min(float64(rec.GetPriority()), maxPriorityScore))
 		case pbc.ScoreSignal_SCORE_SIGNAL_INSUFFICIENT_EVIDENCE:
-			scores.InsufficientEvidence = proto.Float64(mockInsufficientEvidence(rec))
+			scores.InsufficientEvidence = proto.Float64(mockInsufficientEvidence(rec, omitted))
 		case pbc.ScoreSignal_SCORE_SIGNAL_DUPLICATE_GROUP, pbc.ScoreSignal_SCORE_SIGNAL_UNSPECIFIED:
 		}
 	}
@@ -230,8 +232,13 @@ func mockWorthActing(rec *pbc.Recommendation) float64 {
 	}
 }
 
-func mockInsufficientEvidence(rec *pbc.Recommendation) float64 {
-	if rec.GetResource().GetUtilization() == nil && len(rec.GetReasoning()) == 0 {
+// mockInsufficientEvidence reports thin evidence only for inputs the host did
+// not remove: an omitted field is empty by policy, not by absence.
+func mockInsufficientEvidence(rec *pbc.Recommendation, omitted []string) float64 {
+	utilizationMissing := rec.GetResource().GetUtilization() == nil &&
+		!mockOmits(omitted, "resource", "resource.utilization")
+	reasoningMissing := len(rec.GetReasoning()) == 0 && !mockOmits(omitted, "reasoning")
+	if utilizationMissing && reasoningMissing {
 		return mockEvidenceThin
 	}
 	return mockEvidenceEnough
@@ -243,6 +250,16 @@ func mockInsufficientEvidence(rec *pbc.Recommendation) float64 {
 func sessionGroupID(session, resourceID string, action pbc.RecommendationActionType) string {
 	sum := sha256.Sum256([]byte(session + "\x00" + resourceID + "\x00" + action.String()))
 	return "s-" + hex.EncodeToString(sum[:8])
+}
+
+// mockOmits reports whether omitted lists any of paths.
+func mockOmits(omitted []string, paths ...string) bool {
+	for _, path := range paths {
+		if slices.Contains(omitted, path) {
+			return true
+		}
+	}
+	return false
 }
 
 // assignDuplicateGroups gives recommendations that share resource.id and

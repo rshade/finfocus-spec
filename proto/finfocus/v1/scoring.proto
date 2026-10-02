@@ -112,7 +112,8 @@ message ScoreRecommendationsRequest {
   // recommendations are complete Recommendation messages as returned by
   // GetRecommendations, so the scorer sees action_detail, primary_reason,
   // secondary_reasons, tags, metadata, impact and utilization. The host does
-  // not drop those fields on its own; an operator allowlist may remove them.
+  // not drop those fields on its own; an operator allowlist may remove them,
+  // and the host then names the removed paths in omitted_fields.
   // Between 1 and max_batch_size entries, each with a distinct id.
   repeated Recommendation recommendations = 1;
 
@@ -137,6 +138,22 @@ message ScoreRecommendationsRequest {
   // keeps no state between calls, and echoes the value in the response.
   // Recommendations the host leaves out of every batch are never grouped.
   string session_id = 4;
+
+  // omitted_fields lists Recommendation field paths the host removed by policy
+  // (for example an operator allowlist) from every recommendation in this
+  // request. A path is dot-separated proto field names starting at
+  // Recommendation, such as "resource.tags", "metadata" or
+  // "kubernetes.cluster_id"; the oneof name "action_detail" covers all of its
+  // members, and naming a message field covers everything beneath it. Paths
+  // are 1 to 128 bytes, unique, and at most 64 are sent. Empty means the host
+  // removed nothing it can name.
+  //
+  // An omitted field is empty because the host cleared it, not because the
+  // resource lacks it. A scorer must not lower confidence, raise
+  // insufficient_evidence, or raise false_positive because an omitted field is
+  // empty. A field that is empty and not listed keeps its ordinary meaning.
+  // The list is advisory: the host performs the clearing.
+  repeated string omitted_fields = 5;
 }
 
 // ScoreRecommendationsResponse carries the scores.
