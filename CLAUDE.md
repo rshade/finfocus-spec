@@ -1059,6 +1059,17 @@ parallel subtests complete.
 - Score caching (issue 581) is docs-only: the key hashes the pre-`identifier_mode` record without `id`, plus
   `signals`, `ScorerInfo` name/model/calibration, and plugin version. No `valid_for` proto hint yet.
 
+### Scorer Session Pattern (592-cross-batch-scoring-groups)
+
+- `ScoreRecommendationsRequest.session_id` (4) and the response echo (5) let the batches of one host
+  operation share duplicate group ids and pseudonym tokens. Empty means no session and unchanged rules.
+  The scorer derives `duplicate_group_id` from `session_id` and its duplicate key and stores nothing.
+- With a session the echo must match, and a response may hold a lone group member; a declined session
+  (empty echo) keeps the two-member rule. `isValidSessionID` is 1 to 128 printable ASCII.
+- Session conformance scenarios (`session_echo`, `session_across_batches`, `session_isolation`) live in
+  `sdk/go/testing/scorer_session.go` and pass for a scorer that declines sessions or does not group the pair.
+- Cached items left out of every batch are never grouped; this is documented, not a field.
+
 ### Actual Cost Billing Account Pattern (585-actual-cost-billing-account-id)
 
 - `GetActualCostRequest.billing_account_id` (field 9) is caller-supplied. Empty means not supplied:
@@ -1071,6 +1082,10 @@ parallel subtests complete.
 - In a worktree, `make generate` uses mise's buf, so there is no `bin/buf`; run `buf breaking` directly.
 
 ## Active Technologies
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf, buf v1.32.1;
+  no new dependencies (592-cross-batch-scoring-groups)
+- N/A (stateless; group ids derived per call) (592-cross-batch-scoring-groups)
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
   google.golang.org/protobuf (`proto.CloneOf`), buf v1.32.1; no new dependencies (557-price-options)
@@ -1231,6 +1246,9 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+
+- 592-cross-batch-scoring-groups: Added scorer `session_id` (request 4, response 5), session-aware
+  validators, mock group ids, three session conformance scenarios, and docs for cached items (issue 574)
 
 - 557-price-options: Added PriceOption, GetProjectedCostResponse.price_options (16) and
   EstimateCostResponse.price_options (6), three ErrPriceOption* sentinels,

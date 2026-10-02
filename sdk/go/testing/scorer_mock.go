@@ -16,6 +16,8 @@ package testing
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"slices"
 	"strconv"
 
@@ -115,7 +117,8 @@ func NewMockRecommendationScorer(opts ...MockScorerOption) *MockRecommendationSc
 // not support, and scores each recommendation for the requested (or every
 // supported) signal. A recommendation without a resource fails on its own with
 // a ResourceError of code InvalidArgument. Recommendations that share
-// resource.id and action_type receive one duplicate_group_id, unless
+// resource.id and action_type receive one duplicate_group_id (derived from
+// session_id when the request has one, so it matches across batches), unless
 // identifier_mode is IDENTIFIER_MODE_OMITTED, when identifiers cannot be
 // trusted and no grouping is attempted. Invalid requests fail with
 // codes.InvalidArgument.
@@ -139,6 +142,7 @@ func (m *MockRecommendationScorer) ScoreRecommendations(
 		Results:          make([]*pbc.RecommendationScoreResult, len(req.GetRecommendations())),
 		MaxBatchSize:     m.maxBatchSize,
 		SupportedSignals: slices.Clone(m.signals),
+		SessionId:        req.GetSessionId(),
 		Scorer: &pbc.ScorerInfo{
 			Name:        mockScorerName,
 			Calibration: pbc.ScoreCalibration_SCORE_CALIBRATION_RANKING_ONLY,
@@ -149,7 +153,7 @@ func (m *MockRecommendationScorer) ScoreRecommendations(
 	}
 	if slices.Contains(active, pbc.ScoreSignal_SCORE_SIGNAL_DUPLICATE_GROUP) &&
 		req.GetIdentifierMode() != pbc.IdentifierMode_IDENTIFIER_MODE_OMITTED {
-		assignDuplicateGroups(req.GetRecommendations(), resp.GetResults())
+		assignDuplicateGroups(req.GetSessionId(), req.GetRecommendations(), resp.GetResults())
 	}
 	return resp, nil
 }
@@ -226,10 +230,22 @@ func mockInsufficientEvidence(rec *pbc.Recommendation) float64 {
 	return mockEvidenceEnough
 }
 
+// sessionGroupID derives a duplicate_group_id from the session and the
+// duplicate key (resource.id and action_type), so every batch of the session
+// gets the same id for the same group.
+func sessionGroupID(session, resourceID string, action pbc.RecommendationActionType) string {
+	sum := sha256.Sum256([]byte(session + "\x00" + resourceID + "\x00" + action.String()))
+	return "s-" + hex.EncodeToString(sum[:8])
+}
+
 // assignDuplicateGroups gives recommendations that share resource.id and
-// action_type one "dup-N" id, numbered by first appearance. A key held by a
-// single scored recommendation gets no group.
-func assignDuplicateGroups(recs []*pbc.Recommendation, results []*pbc.RecommendationScoreResult) {
+// action_type one id. Without a session the id is "dup-N", numbered by first
+// appearance, and a key held by a single scored recommendation gets no group.
+// With a session the id comes from sessionGroupID and a single member keeps
+// it, because the other members may be in other batches.
+func assignDuplicateGroups(
+	session string, recs []*pbc.Recommendation, results []*pbc.RecommendationScoreResult,
+) {
 	type key struct {
 		resource string
 		action   pbc.RecommendationActionType
@@ -248,11 +264,16 @@ func assignDuplicateGroups(recs []*pbc.Recommendation, results []*pbc.Recommenda
 	}
 	group := 0
 	for _, k := range order {
-		if len(members[k]) < minDuplicateGroupSize {
+		var id string
+		switch {
+		case session != "":
+			id = sessionGroupID(session, k.resource, k.action)
+		case len(members[k]) < minDuplicateGroupSize:
 			continue
+		default:
+			group++
+			id = "dup-" + strconv.Itoa(group)
 		}
-		group++
-		id := "dup-" + strconv.Itoa(group)
 		for _, i := range members[k] {
 			results[i].GetScores().DuplicateGroupId = id
 		}

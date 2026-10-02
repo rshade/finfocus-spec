@@ -27,7 +27,9 @@ import { ClientConfig } from "./auxiliary.js";
  *
  * Errors propagate as ConnectError with the code the scorer returned (for
  * example Code.InvalidArgument for an empty request). Requests and responses
- * are not validated client-side. A score is a ranking signal, never approval
+ * are not validated client-side. Set `sessionId` on every batch of one host
+ * operation so duplicate group ids match across batches; the response echoes
+ * it when the scorer honors sessions. A score is a ranking signal, never approval
  * to act.
  */
 export class RecommendationScorerClient {

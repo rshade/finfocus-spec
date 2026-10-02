@@ -389,17 +389,20 @@ Helpers for plugins that implement `RecommendationScorerService.ScoreRecommendat
 [docs/recommendation-scoring.md](../../../docs/recommendation-scoring.md)).
 
 - `ValidateScoreRecommendationsRequest(req, maxBatchSize)` rejects an empty request, nil or repeated
-  ids, a batch above `maxBatchSize`, undefined signals, and an undefined `identifier_mode`, with
-  `codes.InvalidArgument`.
+  ids, a batch above `maxBatchSize`, undefined signals, an undefined `identifier_mode`, and a `session_id` over 128
+  characters or with non-printable
+  characters, with `codes.InvalidArgument`.
 - `ValidateScoreRecommendationsResponse(req, resp)` checks index alignment, echoed ids, `[0, 1]` and
-  `[0, 3]` ranges, `ResourceError` codes other than OK, `max_batch_size`, signal support, and
-  duplicate groups.
-- `MockRecommendationScorer` is the reference scorer (fixed rules, no model). It is not a
+  `[0, 3]` ranges, `ResourceError` codes other than OK, `max_batch_size`, signal support, the echoed
+  `session_id`, and duplicate groups (one-member groups are valid in a session).
+- `MockRecommendationScorer` is the reference scorer (fixed rules, no model). With a `session_id` it
+  derives group ids from the session and the resource and action type, so they match across batches. It is not a
   `MockPlugin` method, so `MockPlugin` capabilities do not change.
-- `RunScorerConformance(t, impl)` serves `impl` over a `ScorerHarness` and runs ten structural
+- `RunScorerConformance(t, impl)` serves `impl` over a `ScorerHarness` and runs thirteen structural
   scenarios: `single_recommendation`, `mixed_batch`, `reversed_order`, `signal_subset`,
   `unsupported_signal`, `unspecified_signal`, `identifier_modes`, `empty_request`, `duplicate_ids`,
-  and `oversize_batch`. It checks no score values.
+  `oversize_batch`, `session_echo`, `session_across_batches`, and `session_isolation`. It checks no score
+  values.
 
 ```go
 func TestMyScorer(t *testing.T) {

@@ -16,8 +16,10 @@ package testing_test
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"sort"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -42,6 +44,9 @@ var scorerScenarioNames = []string{
 	"empty_request",
 	"duplicate_ids",
 	"oversize_batch",
+	"session_echo",
+	"session_across_batches",
+	"session_isolation",
 }
 
 // scoreFunc adapts a function to plugintesting.ScoreServer.
@@ -123,6 +128,29 @@ func brokenScorers() []brokenScorer {
 	}
 	return []brokenScorer{
 		{
+			name:  "session ids change per call",
+			impl:  &driftingSessionScorer{},
+			fails: []string{"session_across_batches"},
+		},
+		{
+			name: "session echo differs",
+			impl: scorePostProcess(func(resp *pbc.ScoreRecommendationsResponse) {
+				resp.SessionId = "other"
+			}),
+			fails: []string{"session_echo"},
+		},
+		{
+			name: "session ignored in group ids",
+			impl: scorePostProcess(func(resp *pbc.ScoreRecommendationsResponse) {
+				for _, result := range resp.GetResults() {
+					if scores := result.GetScores(); scores.GetDuplicateGroupId() != "" {
+						scores.DuplicateGroupId = "same-in-every-session"
+					}
+				}
+			}),
+			fails: []string{"session_isolation"},
+		},
+		{
 			name: "misaligned results",
 			impl: scorePostProcess(func(resp *pbc.ScoreRecommendationsResponse) {
 				slices.Reverse(resp.GetResults())
@@ -182,6 +210,28 @@ func brokenScorers() []brokenScorer {
 			fails: []string{"signal_subset", "empty_request", "duplicate_ids", "oversize_batch", "unspecified_signal"},
 		},
 	}
+}
+
+// driftingSessionScorer honors sessions but numbers its group ids per call, so
+// the same group has a different id in every batch.
+type driftingSessionScorer struct {
+	calls atomic.Int32
+}
+
+func (d *driftingSessionScorer) ScoreRecommendations(
+	ctx context.Context, req *pbc.ScoreRecommendationsRequest,
+) (*pbc.ScoreRecommendationsResponse, error) {
+	resp, err := plugintesting.NewMockRecommendationScorer().ScoreRecommendations(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	call := d.calls.Add(1)
+	for _, result := range resp.GetResults() {
+		if scores := result.GetScores(); scores.GetDuplicateGroupId() != "" {
+			scores.DuplicateGroupId = fmt.Sprintf("%s-call-%d", scores.GetDuplicateGroupId(), call)
+		}
+	}
+	return resp, nil
 }
 
 // laxScorer validates nothing: it answers every recommendation with a risk
