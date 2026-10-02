@@ -15,12 +15,12 @@
     "finfocus-middleware": "*"
   },
   "devDependencies": {
-    "@bufbuild/protobuf": "^2.15.0",
-    "@nestjs/common": "^12.1.1",
-    "@nestjs/core": "^12.1.1",
-    "@nestjs/platform-express": "^12.1.1",
+    "@bufbuild/protobuf": "^2.16.0",
+    "@nestjs/common": "^12.1.2",
+    "@nestjs/core": "^12.1.2",
+    "@nestjs/platform-express": "^12.1.2",
     "@types/express": "^5.0.6",
-    "@types/node": "^24.19.0",
+    "@types/node": "^24.19.1",
     "express": "^5.2.1",
     "fastify": "^5.12.5",
     "reflect-metadata": "^0.2.2",
