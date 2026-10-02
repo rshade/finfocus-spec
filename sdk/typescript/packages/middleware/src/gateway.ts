@@ -41,6 +41,23 @@ export interface GatewayResult {
 /** Maximum request body size in bytes (1MB) */
 const MAX_BODY_SIZE = 1024 * 1024;
 
+/** Deadline in milliseconds for receiving the whole request body. */
+const BODY_READ_TIMEOUT_MS = 30_000;
+
+/** Codes whose upstream message may carry internal detail, so callers get a generic one. */
+const SERVER_SIDE_CODES: ReadonlySet<Code> = new Set([
+  Code.Internal,
+  Code.Unknown,
+  Code.Unavailable,
+  Code.DataLoss,
+]);
+
+class BodyReadError extends Error {
+  constructor(readonly status: number, message: string) {
+    super(message);
+  }
+}
+
 const RPC_PATH = /^\/finfocus\.v1\.([A-Za-z]+)\/([A-Za-z]+)$/;
 
 /**
@@ -103,18 +120,17 @@ export class RESTGateway {
       send(res, { status: 400, body: { error: "Request body was already consumed" } });
       return;
     } else {
-      let text: string | undefined;
       try {
-        text = await readBody(req);
+        body = await readBody(req);
       } catch (error) {
-        send(res, { status: 500, body: { error: errorMessage(error) } });
+        if (error instanceof BodyReadError) {
+          send(res, { status: error.status, body: { error: error.message } }, () => req.destroy());
+        } else {
+          console.error(`finfocus gateway: reading request body failed: ${errorMessage(error)}`);
+          send(res, { status: 500, body: { error: "Internal error" } });
+        }
         return;
       }
-      if (text === undefined) {
-        send(res, { status: 413, body: { error: "Request body too large" } });
-        return;
-      }
-      body = text;
     }
 
     send(res, await this.dispatch(req.url ?? "", body));
@@ -166,24 +182,39 @@ function parseBody(body: unknown): JsonValue {
   return (body ?? {}) as JsonValue;
 }
 
-/** Reads the request body, or resolves undefined once it exceeds MAX_BODY_SIZE. */
-function readBody(req: http.IncomingMessage): Promise<string | undefined> {
+/** Reads the request body; rejects with a BodyReadError past MAX_BODY_SIZE or BODY_READ_TIMEOUT_MS. */
+function readBody(req: http.IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     let size = 0;
+    const cleanup = () => {
+      clearTimeout(timer);
+      req.off("data", onData);
+      req.off("end", onEnd);
+      req.off("error", onError);
+    };
+    const fail = (error: Error) => {
+      cleanup();
+      req.pause();
+      reject(error);
+    };
     const onData = (chunk: Buffer) => {
       size += chunk.length;
       if (size > MAX_BODY_SIZE) {
-        req.off("data", onData);
-        req.resume();
-        resolve(undefined);
+        fail(new BodyReadError(413, "Request body too large"));
         return;
       }
       chunks.push(chunk);
     };
+    const onEnd = () => {
+      cleanup();
+      resolve(Buffer.concat(chunks).toString());
+    };
+    const onError = (error: Error) => fail(error);
+    const timer = setTimeout(() => fail(new BodyReadError(408, "Request body timed out")), BODY_READ_TIMEOUT_MS);
     req.on("data", onData);
-    req.on("end", () => resolve(Buffer.concat(chunks).toString()));
-    req.on("error", reject);
+    req.on("end", onEnd);
+    req.on("error", onError);
   });
 }
 
@@ -192,9 +223,14 @@ function errorResult(error: unknown): GatewayResult {
     return { status: 400, body: { error: error.message, code: codeToString(Code.InvalidArgument) } };
   }
   const err = ConnectError.from(error);
+  let message = err.rawMessage;
+  if (SERVER_SIDE_CODES.has(err.code)) {
+    console.error(`finfocus gateway: upstream ${codeToString(err.code)} error: ${err.rawMessage}`);
+    message = "Upstream service error";
+  }
   return {
     status: codeToHttpStatus(err.code),
-    body: { error: err.rawMessage, code: codeToString(err.code) },
+    body: { error: message, code: codeToString(err.code) },
   };
 }
 
@@ -202,9 +238,11 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-function send(res: http.ServerResponse, result: GatewayResult): void {
-  res.writeHead(result.status, { "Content-Type": "application/json" });
-  res.end(JSON.stringify(result.body));
+function send(res: http.ServerResponse, result: GatewayResult, onFlushed?: () => void): void {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (onFlushed) headers.Connection = "close";
+  res.writeHead(result.status, headers);
+  res.end(JSON.stringify(result.body), onFlushed);
 }
 
 /**

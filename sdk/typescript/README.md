@@ -860,7 +860,12 @@ The framework adapters mount a REST gateway that proxies JSON requests to a FinF
 supply. Each RPC is served at `POST /finfocus.v1.<Service>/<Method>`, for example
 `POST /finfocus.v1.CostSourceService/GetActualCost`. Bodies use the proto3 JSON mapping: `Timestamp` fields are
 RFC 3339 strings and 64-bit integers are strings. Plugin errors map to the matching HTTP status with a body of
-`{ "error": "...", "code": "not_found" }`.
+`{ "error": "...", "code": "not_found" }`. Messages for `internal`, `unknown`, `unavailable`, and `data_loss`
+errors are replaced with a generic one (the original is logged with `console.error`). Request bodies over 1 MiB get
+`413`, and a body not fully received within 30 seconds gets `408`; both close the connection.
+
+> **Security:** The gateway has no authentication of its own. Mount it behind your own authentication and
+> authorization.
 
 ### Express
 
