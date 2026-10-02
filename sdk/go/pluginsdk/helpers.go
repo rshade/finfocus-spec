@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/rshade/finfocus-spec/sdk/go/currency"
@@ -1342,6 +1343,31 @@ func WithEstimateCost(currency string, costMonthly float64) EstimateCostResponse
 	}
 }
 
+// WithEstimatePriceOptions is the EstimateCostResponse counterpart of
+// WithProjectedCostPriceOptions: it sets price_options to deep copies of
+// options and does not validate. savings_fraction compares monthly costs,
+// because EstimateCostResponse has no unit price.
+//
+// Usage:
+//
+//	resp := pluginsdk.NewEstimateCostResponse(
+//	    pluginsdk.WithEstimateCost("USD", 70.08),
+//	    pluginsdk.WithEstimatePriceOptions(&pbc.PriceOption{
+//	        Category:        pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_COMMITTED,
+//	        Model:           "Reservation",
+//	        Term:            "1 Year",
+//	        UnitPrice:       0.0573,
+//	        MonthlyCost:     41.83,
+//	        UpfrontCost:     502.00,
+//	        SavingsFraction: (70.08 - 41.83) / 70.08,
+//	    }),
+//	)
+func WithEstimatePriceOptions(options ...*pbc.PriceOption) EstimateCostResponseOption {
+	return func(resp *pbc.EstimateCostResponse) {
+		resp.PriceOptions = clonePriceOptions(options)
+	}
+}
+
 // NewEstimateCostResponse creates an EstimateCostResponse with functional options.
 //
 // Example:
@@ -1531,6 +1557,50 @@ func WithProjectedCostBreakdown(breakdown map[string]float64) GetProjectedCostRe
 		}
 		resp.CostBreakdown = maps.Clone(breakdown)
 	}
+}
+
+// WithProjectedCostPriceOptions returns a GetProjectedCostResponseOption that
+// sets price_options to deep copies of options. No arguments leave the field
+// empty. The list is advisory and does not change cost_per_month. Nil entries
+// are kept as nil, so ValidateGetProjectedCostResponse reports them.
+//
+// The option does not validate. Call ValidateGetProjectedCostResponse on the result.
+//
+// Usage:
+//
+//	resp := pluginsdk.NewGetProjectedCostResponse(
+//	    pluginsdk.WithProjectedCostDetails(0.096, "USD", 70.08, "Consumption"),
+//	    pluginsdk.WithProjectedCostPriceOptions(
+//	        &pbc.PriceOption{
+//	            Category:        pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_COMMITTED,
+//	            Model:           "Reservation",
+//	            Term:            "1 Year",
+//	            UnitPrice:       0.0573,
+//	            MonthlyCost:     41.83,
+//	            UpfrontCost:     502.00,
+//	            SavingsFraction: (0.096 - 0.0573) / 0.096,
+//	        },
+//	    ),
+//	)
+func WithProjectedCostPriceOptions(options ...*pbc.PriceOption) GetProjectedCostResponseOption {
+	return func(resp *pbc.GetProjectedCostResponse) {
+		resp.PriceOptions = clonePriceOptions(options)
+	}
+}
+
+// clonePriceOptions deep-copies options, keeping nil entries. It returns nil
+// for an empty input.
+func clonePriceOptions(options []*pbc.PriceOption) []*pbc.PriceOption {
+	if len(options) == 0 {
+		return nil
+	}
+	out := make([]*pbc.PriceOption, len(options))
+	for i, o := range options {
+		if o != nil {
+			out[i] = proto.CloneOf(o)
+		}
+	}
+	return out
 }
 
 // NewGetProjectedCostResponse creates a GetProjectedCostResponse with functional options.

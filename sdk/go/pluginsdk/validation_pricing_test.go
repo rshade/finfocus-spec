@@ -1227,3 +1227,262 @@ func BenchmarkValidateGetProjectedCostResponse_Invalid_CostBreakdownSum(b *testi
 		_ = pluginsdk.ValidateGetProjectedCostResponse(resp)
 	}
 }
+
+// samplePriceOptions returns a 1-year reservation and a 3-year savings plan
+// priced against a 0.096/hour Consumption rate (70.08 per month).
+func samplePriceOptions() []*pbc.PriceOption {
+	return []*pbc.PriceOption{reservationOption(), savingsPlanOption()}
+}
+
+// priceOptionsProjected builds a projected cost response for the 0.096/hour
+// Consumption price with the given options.
+func priceOptionsProjected(options []*pbc.PriceOption) *pbc.GetProjectedCostResponse {
+	return &pbc.GetProjectedCostResponse{
+		UnitPrice:    0.096,
+		Currency:     "USD",
+		CostPerMonth: 70.08,
+		PriceOptions: options,
+	}
+}
+
+// priceOptionsEstimate builds an estimate response for the same Consumption
+// price with the given options.
+func priceOptionsEstimate(options []*pbc.PriceOption) *pbc.EstimateCostResponse {
+	return &pbc.EstimateCostResponse{
+		Currency:     "USD",
+		CostMonthly:  70.08,
+		PriceOptions: options,
+	}
+}
+
+// TestValidateGetProjectedCostResponse_PriceOptions verifies that alternative
+// prices are accepted without being summed into cost_per_month, and that they
+// are rejected on dry-run responses.
+func TestValidateGetProjectedCostResponse_PriceOptions(t *testing.T) {
+	t.Run("two_options", func(t *testing.T) {
+		resp := priceOptionsProjected(samplePriceOptions())
+		require.NoError(t, pluginsdk.ValidateGetProjectedCostResponse(resp))
+		assert.InDelta(t, 70.08, resp.GetCostPerMonth(), 0)
+	})
+
+	t.Run("with_cost_breakdown", func(t *testing.T) {
+		resp := priceOptionsProjected(samplePriceOptions())
+		resp.CostBreakdown = map[string]float64{"compute": 60.08, "os_disk": 10.00}
+		require.NoError(t, pluginsdk.ValidateGetProjectedCostResponse(resp))
+	})
+
+	t.Run("dry_run", func(t *testing.T) {
+		resp := &pbc.GetProjectedCostResponse{
+			DryRunResult: &pbc.DryRunResponse{},
+			PriceOptions: samplePriceOptions(),
+		}
+		err := pluginsdk.ValidateGetProjectedCostResponse(resp)
+		require.ErrorIs(t, err, pluginsdk.ErrPriceOptionsWithDryRun)
+		assert.Contains(t, err.Error(), "GetProjectedCostResponse")
+	})
+}
+
+// TestValidateEstimateCostResponse_PriceOptions verifies that alternative
+// prices are accepted without being summed into cost_monthly.
+func TestValidateEstimateCostResponse_PriceOptions(t *testing.T) {
+	options := samplePriceOptions()
+	options[0].SavingsFraction = (70.08 - 41.83) / 70.08
+	options[1].SavingsFraction = (70.08 - 44.68) / 70.08
+
+	resp := priceOptionsEstimate(options)
+	require.NoError(t, pluginsdk.ValidateEstimateCostResponse(resp))
+	assert.InDelta(t, 70.08, resp.GetCostMonthly(), 0)
+}
+
+// TestValidatePriceOptions_Omitted verifies that a nil or empty list leaves
+// both validators' results unchanged, for valid and invalid base responses.
+func TestValidatePriceOptions_Omitted(t *testing.T) {
+	errString := func(err error) string {
+		if err == nil {
+			return ""
+		}
+		return err.Error()
+	}
+
+	for _, options := range [][]*pbc.PriceOption{nil, {}} {
+		valid := priceOptionsProjected(options)
+		require.NoError(t, pluginsdk.ValidateGetProjectedCostResponse(valid))
+		require.NoError(t, pluginsdk.ValidateEstimateCostResponse(priceOptionsEstimate(options)))
+
+		negative := priceOptionsProjected(options)
+		negative.CostPerMonth = -1
+		baseline := priceOptionsProjected(nil)
+		baseline.CostPerMonth = -1
+		assert.Equal(t,
+			errString(pluginsdk.ValidateGetProjectedCostResponse(baseline)),
+			errString(pluginsdk.ValidateGetProjectedCostResponse(negative)))
+
+		badRisk := priceOptionsEstimate(options)
+		badRisk.SpotInterruptionRiskScore = 0.5
+		err := pluginsdk.ValidateEstimateCostResponse(badRisk)
+		require.Error(t, err)
+		assert.NotErrorIs(t, err, pluginsdk.ErrPriceOptionInvalidValue)
+	}
+}
+
+// setPriceOptionField returns a mutation that sets one numeric field of a price option.
+func setPriceOptionField(field string, v float64) func(*pbc.PriceOption) {
+	return func(o *pbc.PriceOption) {
+		switch field {
+		case "unit_price":
+			o.UnitPrice = v
+		case "monthly_cost":
+			o.MonthlyCost = v
+		case "upfront_cost":
+			o.UpfrontCost = v
+		case "savings_fraction":
+			o.SavingsFraction = v
+		default:
+			panic("unknown price option field " + field)
+		}
+	}
+}
+
+type priceOptionRuleCase struct {
+	name        string
+	mutate      func(*pbc.PriceOption)
+	nilEntry    bool
+	zeroPrimary bool
+	wantErr     error
+	wantText    string
+}
+
+// priceOptionRuleCases lists the accepted edge values and every rejected value
+// for the entry at index 1.
+func priceOptionRuleCases() []priceOptionRuleCase {
+	tests := []priceOptionRuleCase{
+		{name: "nil_entry", nilEntry: true, wantErr: pluginsdk.ErrPriceOptionNil, wantText: "price_options[1]"},
+		{name: "negative_savings_fraction", mutate: setPriceOptionField("savings_fraction", -0.25)},
+		{name: "zero_primary", mutate: setPriceOptionField("savings_fraction", 0), zeroPrimary: true},
+		{name: "unknown_category", mutate: func(o *pbc.PriceOption) { o.Category = pbc.FocusPricingCategory(99) }},
+		{name: "empty_model_and_term", mutate: func(o *pbc.PriceOption) { o.Model, o.Term = "", "" }},
+		{name: "zero_upfront_cost", mutate: setPriceOptionField("upfront_cost", 0)},
+	}
+	for _, field := range []string{"unit_price", "monthly_cost", "upfront_cost"} {
+		tests = append(tests, priceOptionRuleCase{
+			name:   field + "_negative_zero",
+			mutate: setPriceOptionField(field, math.Copysign(0, -1)),
+		})
+		for _, v := range []float64{math.NaN(), math.Inf(1), math.Inf(-1), -0.01} {
+			tests = append(tests, priceOptionRuleCase{
+				name:     fmt.Sprintf("%s_%v", field, v),
+				mutate:   setPriceOptionField(field, v),
+				wantErr:  pluginsdk.ErrPriceOptionInvalidValue,
+				wantText: "price_options[1]." + field,
+			})
+		}
+	}
+	for _, v := range []float64{math.NaN(), math.Inf(1), math.Inf(-1)} {
+		tests = append(tests, priceOptionRuleCase{
+			name:     fmt.Sprintf("savings_fraction_%v", v),
+			mutate:   setPriceOptionField("savings_fraction", v),
+			wantErr:  pluginsdk.ErrPriceOptionInvalidValue,
+			wantText: "price_options[1].savings_fraction",
+		})
+	}
+	return tests
+}
+
+// TestValidatePriceOptions_Rules runs each per-entry rule through both
+// validators, with the entry under test at index 1.
+func TestValidatePriceOptions_Rules(t *testing.T) {
+	for _, tt := range priceOptionRuleCases() {
+		t.Run(tt.name, func(t *testing.T) {
+			options := samplePriceOptions()
+			if tt.nilEntry {
+				options[1] = nil
+			} else {
+				tt.mutate(options[1])
+			}
+			projected := priceOptionsProjected(options)
+			estimate := priceOptionsEstimate(options)
+			if tt.zeroPrimary {
+				projected.UnitPrice, projected.CostPerMonth, estimate.CostMonthly = 0, 0, 0
+			}
+
+			for name, err := range map[string]error{
+				"projected": pluginsdk.ValidateGetProjectedCostResponse(projected),
+				"estimate":  pluginsdk.ValidateEstimateCostResponse(estimate),
+			} {
+				if tt.wantErr == nil {
+					require.NoError(t, err, name)
+					continue
+				}
+				require.ErrorIs(t, err, tt.wantErr, name)
+				assert.Contains(t, err.Error(), tt.wantText, name)
+			}
+		})
+	}
+
+	t.Run("first_failure_wins", func(t *testing.T) {
+		options := samplePriceOptions()
+		options[0].UnitPrice = math.NaN()
+		options[1] = nil
+		err := pluginsdk.ValidateGetProjectedCostResponse(priceOptionsProjected(options))
+		require.ErrorIs(t, err, pluginsdk.ErrPriceOptionInvalidValue)
+		assert.Contains(t, err.Error(), "price_options[0].unit_price")
+	})
+}
+
+// fourPriceOptions returns four valid options for allocation tests and benchmarks.
+func fourPriceOptions() []*pbc.PriceOption {
+	options := samplePriceOptions()
+	return append(options,
+		&pbc.PriceOption{
+			Category:    pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_STANDARD,
+			Model:       "Consumption",
+			UnitPrice:   0.096,
+			MonthlyCost: 70.08,
+		},
+		&pbc.PriceOption{
+			Category:        pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_DYNAMIC,
+			Model:           "Spot",
+			UnitPrice:       0.0192,
+			MonthlyCost:     14.016,
+			SavingsFraction: 0.8,
+		},
+	)
+}
+
+// TestValidatePriceOptions_ZeroAlloc guards FR-014: validating four valid
+// options must not allocate in either validator.
+func TestValidatePriceOptions_ZeroAlloc(t *testing.T) {
+	projected := priceOptionsProjected(fourPriceOptions())
+	estimate := priceOptionsEstimate(fourPriceOptions())
+	require.NoError(t, pluginsdk.ValidateGetProjectedCostResponse(projected))
+	require.NoError(t, pluginsdk.ValidateEstimateCostResponse(estimate))
+
+	assert.Zero(t, testing.AllocsPerRun(100, func() {
+		_ = pluginsdk.ValidateGetProjectedCostResponse(projected)
+	}))
+	assert.Zero(t, testing.AllocsPerRun(100, func() {
+		_ = pluginsdk.ValidateEstimateCostResponse(estimate)
+	}))
+}
+
+// BenchmarkValidateGetProjectedCostResponse_WithPriceOptions benchmarks a
+// projected cost response with four valid options.
+func BenchmarkValidateGetProjectedCostResponse_WithPriceOptions(b *testing.B) {
+	resp := priceOptionsProjected(fourPriceOptions())
+	b.ResetTimer()
+	b.ReportAllocs()
+	for range b.N {
+		_ = pluginsdk.ValidateGetProjectedCostResponse(resp)
+	}
+}
+
+// BenchmarkValidateEstimateCostResponse_WithPriceOptions benchmarks an
+// estimate response with four valid options.
+func BenchmarkValidateEstimateCostResponse_WithPriceOptions(b *testing.B) {
+	resp := priceOptionsEstimate(fourPriceOptions())
+	b.ResetTimer()
+	b.ReportAllocs()
+	for range b.N {
+		_ = pluginsdk.ValidateEstimateCostResponse(resp)
+	}
+}

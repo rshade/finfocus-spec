@@ -110,7 +110,8 @@ const (
 //
 // Fields that must be set before Start() include: ShouldError* flags, *Delay durations,
 // FallbackHint, ExpiresAtDuration, ProjectedCostExpiresAtDuration, ProjectedCostBreakdown,
-// EstimateCostExpiresAtDuration, MockBudgets, DryRun* fields, PricingCategory/SpotRiskScore fields, and RecommendationsConfig.
+// ProjectedCostPriceOptions, EstimateCostExpiresAtDuration, EstimateCostPriceOptions, MockBudgets,
+// DryRun* fields, PricingCategory/SpotRiskScore fields, and RecommendationsConfig.
 //
 // The recommended pattern is:
 //
@@ -192,10 +193,20 @@ type MockPlugin struct {
 	// Dry-run responses never carry a breakdown.
 	ProjectedCostBreakdown map[string]float64
 
+	// ProjectedCostPriceOptions configures price_options on GetProjectedCost
+	// responses. Each response gets a deep copy. Entries are returned as
+	// configured: the mock does not validate or compute them. Dry-run
+	// responses never carry options. Nil means no options.
+	ProjectedCostPriceOptions []*pbc.PriceOption
+
 	// EstimateCostExpiresAtDuration configures the expires_at hint for estimate
 	// cost responses. Same semantics as ExpiresAtDuration: zero means unset,
 	// positive means future expiration, negative means immediately stale.
 	EstimateCostExpiresAtDuration time.Duration
+
+	// EstimateCostPriceOptions configures price_options on EstimateCost
+	// responses, with the same semantics as ProjectedCostPriceOptions.
+	EstimateCostPriceOptions []*pbc.PriceOption
 
 	// FallbackHint configuration for GetActualCost responses.
 	// Thread Safety: This field must be set before the plugin begins serving
@@ -1331,7 +1342,25 @@ func (m *MockPlugin) GetProjectedCost(
 		resp.CostBreakdown = breakdown
 	}
 
+	resp.PriceOptions = clonePriceOptions(m.ProjectedCostPriceOptions)
+
 	return resp, nil
+}
+
+// clonePriceOptions deep-copies configured price options so callers cannot
+// change the mock's configuration or an earlier response. It returns nil for
+// an empty input.
+func clonePriceOptions(options []*pbc.PriceOption) []*pbc.PriceOption {
+	if len(options) == 0 {
+		return nil
+	}
+	out := make([]*pbc.PriceOption, len(options))
+	for i, o := range options {
+		if o != nil {
+			out[i] = proto.CloneOf(o)
+		}
+	}
+	return out
 }
 
 // scaleCostBreakdown scales non-empty breakdown weights so they sum to costPerMonth.
@@ -2328,6 +2357,8 @@ func (m *MockPlugin) EstimateCost(
 	if m.EstimateCostExpiresAtDuration != 0 {
 		resp.ExpiresAt = timestamppb.New(time.Now().Add(m.EstimateCostExpiresAtDuration))
 	}
+
+	resp.PriceOptions = clonePriceOptions(m.EstimateCostPriceOptions)
 
 	return resp, nil
 }

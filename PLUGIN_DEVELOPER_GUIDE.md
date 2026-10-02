@@ -308,6 +308,10 @@ message GetProjectedCostResponse {
   (field 15) instead of encoding them in `billing_detail` for machines to parse. `billing_detail`
   can still describe them for human readers. See
   [Cost Breakdown Helpers](sdk/go/pluginsdk/README.md#cost-breakdown-helpers-cost_breakdown)
+- To report other purchase options for the same resource (on-demand, reservation, savings plan),
+  set `price_options` (field 16; field 6 on `EstimateCostResponse`). The list is advisory and is
+  never summed into `cost_per_month`. See
+  [Price Option Helpers](sdk/go/pluginsdk/README.md#price-option-helpers-price_options)
 
 #### GetPricingSpec RPC
 

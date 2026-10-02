@@ -107,6 +107,15 @@ var (
 	ErrCostBreakdownSumMismatch = errors.New("cost_breakdown does not sum to cost_per_month")
 	// ErrCostBreakdownWithDryRun is returned when cost_breakdown is set alongside dry_run_result.
 	ErrCostBreakdownWithDryRun = errors.New("cost_breakdown must be empty for dry-run responses")
+
+	// ErrPriceOptionNil is returned when a price_options entry is nil.
+	ErrPriceOptionNil = errors.New("price_options entry is nil")
+	// ErrPriceOptionInvalidValue is returned when a price option's unit_price,
+	// monthly_cost, or upfront_cost is NaN, infinite, or negative, or its
+	// savings_fraction is NaN or infinite.
+	ErrPriceOptionInvalidValue = errors.New("price_options value is invalid")
+	// ErrPriceOptionsWithDryRun is returned when price_options is set alongside dry_run_result.
+	ErrPriceOptionsWithDryRun = errors.New("price_options must be empty for dry-run responses")
 )
 
 // spotRiskEpsilon is used for float comparison to handle floating-point representation errors.
@@ -534,6 +543,8 @@ func validatePredictionInterval(
 // Validation order (fail-fast):
 //  1. Response nil check
 //  2. Spot risk score validation (structural + semantic)
+//  3. price_options validation (if set): no nil entries, finite non-negative
+//     prices, finite savings_fraction. Never compared to cost_monthly.
 //
 // Semantic rule enforced: spot_interruption_risk_score must only be non-zero
 // when pricing_category is FOCUS_PRICING_CATEGORY_DYNAMIC.
@@ -552,6 +563,12 @@ func ValidateEstimateCostResponse(resp *pbc.EstimateCostResponse) error {
 		return err
 	}
 
+	if len(resp.GetPriceOptions()) > 0 {
+		if err := validateEstimatePriceOptions(resp); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -568,6 +585,8 @@ func ValidateEstimateCostResponse(resp *pbc.EstimateCostResponse) error {
 //  7. Metadata map validation (if set): entry count, key length/encoding, value length/UTF-8
 //  8. cost_breakdown validation (if set): entry count, key format, finite
 //     non-negative values, sum matches cost_per_month within tolerance, empty for dry-run responses
+//  9. price_options validation (if set): empty for dry-run responses, no nil entries,
+//     finite non-negative prices, finite savings_fraction. Never compared to cost_per_month.
 //
 // Semantic rules enforced:
 //   - spot_interruption_risk_score must only be non-zero when pricing_category is FOCUS_PRICING_CATEGORY_DYNAMIC
@@ -629,6 +648,12 @@ func ValidateGetProjectedCostResponse(resp *pbc.GetProjectedCostResponse) error 
 	if breakdown := resp.GetCostBreakdown(); len(breakdown) > 0 {
 		if err := validateCostBreakdown(breakdown, costPerMonth, resp.GetDryRunResult() != nil); err != nil {
 			return fmt.Errorf("GetProjectedCostResponse: %w", err)
+		}
+	}
+
+	if len(resp.GetPriceOptions()) > 0 {
+		if err := validateProjectedPriceOptions(resp); err != nil {
+			return err
 		}
 	}
 
@@ -762,6 +787,60 @@ func validateCostBreakdown(breakdown map[string]float64, costPerMonth float64, i
 	if math.Abs(sum-costPerMonth) > tol {
 		return fmt.Errorf("%w: sum %g, cost_per_month %g, tolerance %g",
 			ErrCostBreakdownSumMismatch, sum, costPerMonth, tol)
+	}
+	return nil
+}
+
+// validateProjectedPriceOptions and validateEstimatePriceOptions hold the
+// fmt.Errorf wrap for price_options. Wrapping inline in the public validators
+// grows their stack frames and slowed the no-options path by about 30%.
+func validateProjectedPriceOptions(resp *pbc.GetProjectedCostResponse) error {
+	if err := validatePriceOptions(resp.GetPriceOptions(), resp.GetDryRunResult() != nil); err != nil {
+		return fmt.Errorf("GetProjectedCostResponse: %w", err)
+	}
+	return nil
+}
+
+func validateEstimatePriceOptions(resp *pbc.EstimateCostResponse) error {
+	if err := validatePriceOptions(resp.GetPriceOptions(), false); err != nil {
+		return fmt.Errorf("EstimateCostResponse: %w", err)
+	}
+	return nil
+}
+
+// validatePriceOptions validates price_options entries in index order and
+// returns the first failure. The list is advisory, so it is never compared to
+// the parent's selected price or to cost_breakdown.
+func validatePriceOptions(options []*pbc.PriceOption, isDryRun bool) error {
+	if isDryRun {
+		return ErrPriceOptionsWithDryRun
+	}
+	for i, o := range options {
+		if o == nil {
+			return fmt.Errorf("%w: price_options[%d]", ErrPriceOptionNil, i)
+		}
+		if err := checkPriceOptionAmount(i, "unit_price", o.GetUnitPrice()); err != nil {
+			return err
+		}
+		if err := checkPriceOptionAmount(i, "monthly_cost", o.GetMonthlyCost()); err != nil {
+			return err
+		}
+		if err := checkPriceOptionAmount(i, "upfront_cost", o.GetUpfrontCost()); err != nil {
+			return err
+		}
+		if v := o.GetSavingsFraction(); math.IsNaN(v) || math.IsInf(v, 0) {
+			return fmt.Errorf("%w: price_options[%d].savings_fraction %v must be finite",
+				ErrPriceOptionInvalidValue, i, v)
+		}
+	}
+	return nil
+}
+
+// checkPriceOptionAmount rejects a NaN, infinite, or negative price option amount.
+func checkPriceOptionAmount(i int, field string, v float64) error {
+	if math.IsNaN(v) || math.IsInf(v, 0) || v < 0 {
+		return fmt.Errorf("%w: price_options[%d].%s %v must be finite and non-negative",
+			ErrPriceOptionInvalidValue, i, field, v)
 	}
 	return nil
 }

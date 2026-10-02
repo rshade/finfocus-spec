@@ -1,5 +1,25 @@
 import { http, HttpResponse } from 'msw';
 
+const priceOptions = [
+  {
+    category: "FOCUS_PRICING_CATEGORY_COMMITTED",
+    model: "Reservation",
+    term: "1 Year",
+    unitPrice: 0.0573,
+    monthlyCost: 41.83,
+    upfrontCost: 502.0,
+    savingsFraction: 0.403125
+  },
+  {
+    category: "FOCUS_PRICING_CATEGORY_COMMITTED",
+    model: "SavingsPlan",
+    term: "3 Years",
+    unitPrice: 0.0612,
+    monthlyCost: 44.68,
+    savingsFraction: 0.3625
+  }
+];
+
 export const handlers = [
   // CostSourceService endpoints
   http.post('https://plugin-aws.example.com/finfocus.v1.CostSourceService/Name', () => {
@@ -44,7 +64,8 @@ export const handlers = [
       currency: "USD",
       costPerMonth: 150.0,
       billingDetail: "On-demand pricing",
-      costBreakdown: { compute: 120.0, root_volume: 30.0 }
+      costBreakdown: { compute: 120.0, root_volume: 30.0 },
+      priceOptions
     });
   }),
 
@@ -63,7 +84,8 @@ export const handlers = [
   http.post('https://plugin-aws.example.com/finfocus.v1.CostSourceService/EstimateCost', () => {
     return HttpResponse.json({
       currency: "USD",
-      costMonthly: 200.0
+      costMonthly: 200.0,
+      priceOptions
     });
   }),
 

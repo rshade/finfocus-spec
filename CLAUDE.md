@@ -858,7 +858,8 @@ parallel subtests complete.
   fastify, and NestJS as optional `peerDependencies`, or tsup tries to bundle them.
 - `RESTGateway` speaks proto3 JSON (`fromJson`/`toJson` via service descriptors). Never
   `JSON.stringify` a protobuf-es v2 message: int64 and `Timestamp.seconds` are `bigint`.
-- CI (`typescript-sdk` job) runs build, test, and `lint` (tsc including `test/`) for every workspace.
+- CI (`typescript-sdk` job) runs build, test, and `lint` (`tsc --noEmit`) for every workspace.
+  middleware and framework-plugins type-check `test/`; the client `tsconfig.json` excludes it.
 - `mise.toml`'s `node` pin must bundle an npm that satisfies root `engines.npm`; nothing upgrades npm
   separately. Check `https://nodejs.org/dist/index.json` for the bundled npm before bumping either.
   Renovate does not manage `mise.toml`, so a Renovate `engines.node` bump needs a manual pin bump;
@@ -903,6 +904,29 @@ parallel subtests complete.
   use `npx vitest run`.
 - `TestUsageSourceNotRegistered/connect` (`usage_source_test.go:79`, "server did not shut down in
   time") flakes under full `make test` load (about 1 in 8 runs); it passes in isolation.
+
+### Price Options Pattern (557-price-options)
+
+- `PriceOption` (fields 1-7) is listed by `GetProjectedCostResponse.price_options` (16) and
+  `EstimateCostResponse.price_options` (6). The list is advisory: never summed into or compared
+  to `cost_per_month`/`cost_monthly` or `cost_breakdown`. Fields 17 and 7 are held for a per-region
+  price list by comment only; a `reserved` statement would need a `buf breaking` exception to undo.
+- Validators reject a nil entry (`ErrPriceOptionNil`), NaN/Inf/negative `unit_price`,
+  `monthly_cost`, `upfront_cost`, and NaN/Inf `savings_fraction` (`ErrPriceOptionInvalidValue`),
+  plus options on a dry-run projected response (`ErrPriceOptionsWithDryRun`). Errors name
+  `price_options[i].<field>`. `savings_fraction` is never recomputed (Principle III).
+- Keep `fmt.Errorf` wraps out of the public validators: an inline wrap behind a never-taken
+  `len() > 0` guard grew `ValidateGetProjectedCostResponse`'s frame from 136 to 152 bytes and
+  slowed `_Valid` by 33%. The wrap lives in `validateProjectedPriceOptions` /
+  `validateEstimatePriceOptions`; check frame sizes with `go build -gcflags=-S` (`TEXT ... $N-8`).
+- `WithProjectedCostPriceOptions` / `WithEstimatePriceOptions` deep-copy with `proto.CloneOf` and
+  keep nil entries. `MockPlugin.ProjectedCostPriceOptions` / `EstimateCostPriceOptions` return
+  deep copies as configured (not validated), never on dry-run. `plugintesting.Validate*` is
+  unchanged (import cycle, as in 053).
+- A test-first gate that writes every story's tests before the proto change makes stories share
+  compiled test packages: no story's tests run until all stories' symbols exist.
+- `sdk/typescript/packages/client` tests need `npm ci` in `sdk/typescript` after a dependency bump
+  (for example msw 3.0.1); a stale `node_modules` fails with `Cannot find package 'msw/node'`.
 
 ### FOCUS 1.4 Cost and Usage Pattern (055-focus-14-cost-usage-columns)
 
@@ -1047,6 +1071,11 @@ parallel subtests complete.
 - In a worktree, `make generate` uses mise's buf, so there is no `bin/buf`; run `buf breaking` directly.
 
 ## Active Technologies
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
+  google.golang.org/protobuf (`proto.CloneOf`), buf v1.32.1; no new dependencies (557-price-options)
+- N/A (advisory repeated PriceOption on GetProjectedCostResponse and EstimateCostResponse)
+  (557-price-options)
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
   google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1; no new dependencies
@@ -1202,6 +1231,12 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+
+- 557-price-options: Added PriceOption, GetProjectedCostResponse.price_options (16) and
+  EstimateCostResponse.price_options (6), three ErrPriceOption* sentinels,
+  pluginsdk.WithProjectedCostPriceOptions and WithEstimatePriceOptions, and MockPlugin
+  ProjectedCostPriceOptions / EstimateCostPriceOptions; advisory and never summed into the
+  selected price; fields 17 and 7 held by comment for a per-region price list (issue 588)
 
 - 585-actual-cost-billing-account-id: Added GetActualCostRequest.billing_account_id (field 9),
   MockPlugin FOCUS records keyed on it, ValidateActualCostBillingAccount with
