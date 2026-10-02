@@ -1046,6 +1046,29 @@ parallel subtests complete.
   (Standard level) check only the echo rule; "do not invent" cannot be tested mechanically.
 - In a worktree, `make generate` uses mise's buf, so there is no `bin/buf`; run `buf breaking` directly.
 
+### Bug Sweep Learnings (issues 562, 563, 565, 575, 577)
+
+- `isJSONObject` (`sdk/go/testing/commitment_focus14.go`) is a full JSON grammar scanner with a 10000
+  nesting limit, not `json.Valid`: `ValidateContractCommitment` must stay 0 allocs/op on valid input.
+  The scanner trips golangci-lint complexity and magic-number rules; keep it split into small helpers.
+- `stampValidationTrace` (`pluginsdk/logging.go`) stamps a copy of the handler's `*ValidationError` and
+  returns a wrapper (`errors.As` finds the copy, `Unwrap` keeps the original). Never write into an error
+  the handler returned: it may be a shared package-level value, so concurrent calls would race.
+- `RESTGateway` (`sdk/typescript/packages/middleware/src/gateway.ts`) has no authentication. It caps
+  bodies at 1 MiB (413) and a 30 s upload (408), both fixed constants, destroying the request after the
+  response flushes. `Internal`, `Unknown`, `Unavailable`, and `DataLoss` return a generic message and log
+  the original server-side.
+- Per-request credentials already flow through the gRPC interceptor and Connect middleware to every
+  optional service (usage, allocator, scorer, supplemental); `credentials_services_test.go` proves it.
+  Values must be single-line printable ASCII of at most 4096 characters, so a multi-line kubeconfig
+  cannot travel as a value.
+- Scorer `identifier_mode` covers `resource.id` and `resource.name` only. `action_detail` members and free
+  text (reasons, description, tags, metadata) are not transformed.
+- `/pick-issue` over several issues: claim each (`processing:roadmap` plus a `claim:` comment), then run
+  one agent per issue in its own worktree. The `/code-review` and `/scout` subagents often end without a
+  report, so a PR can land with no independent review; re-run one on the merged diff when that matters.
+  Labels other than your own claims (here #579, #580, #588, #589) belong to other runs: leave them.
+
 ## Active Technologies
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
