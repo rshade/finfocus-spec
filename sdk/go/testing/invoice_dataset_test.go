@@ -17,6 +17,7 @@ package testing_test
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"testing"
 	"time"
 
@@ -261,6 +262,16 @@ func TestInvoiceDatasetRPCValidatorsAllocationFree(t *testing.T) {
 	detailReq := &pbc.GetInvoiceDetailsRequest{Start: req.GetStart(), End: req.GetEnd(), PageSize: 50}
 	periodResp := &pbc.GetBillingPeriodsResponse{BillingPeriods: []*pbc.BillingPeriod{p}, TotalCount: 1}
 	detailResp := &pbc.GetInvoiceDetailsResponse{InvoiceDetails: []*pbc.InvoiceDetail{line}, TotalCount: 1}
+	periods64 := make([]*pbc.BillingPeriod, 64)
+	lines64 := make([]*pbc.InvoiceDetail, 64)
+	for i := range 64 {
+		periods64[i] = billingPeriod(fmt.Sprintf("Issuer-%d", i), date(2025, 6, 1), date(2025, 7, 1))
+		lines64[i] = invoiceLine(fmt.Sprintf("detail-%d", i), date(2025, 6, 1), date(2025, 7, 1))
+	}
+	req64 := &pbc.GetBillingPeriodsRequest{Start: req.GetStart(), End: req.GetEnd(), PageSize: 64}
+	detailReq64 := &pbc.GetInvoiceDetailsRequest{Start: req.GetStart(), End: req.GetEnd(), PageSize: 64}
+	periodResp64 := &pbc.GetBillingPeriodsResponse{BillingPeriods: periods64, TotalCount: 64}
+	detailResp64 := &pbc.GetInvoiceDetailsResponse{InvoiceDetails: lines64, TotalCount: 64}
 	checks := map[string]func(){
 		"billing request": func() { _ = plugintesting.ValidateGetBillingPeriodsRequest(req) },
 		"invoice request": func() { _ = plugintesting.ValidateGetInvoiceDetailsRequest(detailReq) },
@@ -270,8 +281,12 @@ func TestInvoiceDatasetRPCValidatorsAllocationFree(t *testing.T) {
 		"invoice window": func() {
 			_ = plugintesting.InvoiceDetailMatchesWindow(line, req.GetStart(), req.GetEnd())
 		},
-		"billing response": func() { _ = plugintesting.ValidateGetBillingPeriodsResponse(req, periodResp) },
-		"invoice response": func() { _ = plugintesting.ValidateGetInvoiceDetailsResponse(detailReq, detailResp) },
+		"billing response":    func() { _ = plugintesting.ValidateGetBillingPeriodsResponse(req, periodResp) },
+		"invoice response":    func() { _ = plugintesting.ValidateGetInvoiceDetailsResponse(detailReq, detailResp) },
+		"billing response 64": func() { _ = plugintesting.ValidateGetBillingPeriodsResponse(req64, periodResp64) },
+		"invoice response 64": func() {
+			_ = plugintesting.ValidateGetInvoiceDetailsResponse(detailReq64, detailResp64)
+		},
 	}
 	for name, fn := range checks {
 		t.Run(name, func(t *testing.T) {

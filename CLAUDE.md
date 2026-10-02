@@ -1130,6 +1130,17 @@ parallel subtests complete.
 - Test allocators that rebuild `AllocateRequest` field by field drop new fields. Clone with
   `proto.CloneOf(req)` and override only what changes (see `mapFieldAllocator`).
 
+### Shared Harness and Duplicate Scan Pattern (590-shared-supplemental-harness)
+
+- All six bufconn harnesses embed the unexported `bufconnHarness[C]` (`testing/bufconn_harness.go`)
+  for `Start` and `Stop`. A new harness embeds it and passes a `register` func and the generated
+  `pbc.New*Client`. The one `grpc.DialContext` nolint lives in `dial()`, which spec validation reuses.
+- Each harness declares its own `Client()`: `go doc` prints a promoted generic method unsubstituted
+  (`Client() C`), so a promoted `Client` would hide the concrete client type.
+- Supplemental duplicate checks call `findDuplicate(list, key)` (`supplemental.go`): pairwise up to
+  `pairwiseDuplicateLimit` (64), map above; both report the lowest repeat and its earliest match. Pass a
+  method expression or top-level func as `key`; a closure can allocate and break the 0-alloc tests.
+
 ## Active Technologies
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf, buf v1.32.1;
@@ -1320,6 +1331,10 @@ See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable doc
 - 588-allocate-period-selector: Added AllocateRequest start/end/selector and the echoed
   AllocateResponse start/end, the window rule (Q7) and echo rule (P8), the refalloc echo and
   partial-selection warning, and the period_echoed and selector_keeps_invariants scenarios.
+
+- 590-shared-supplemental-harness: The six bufconn harnesses share an unexported generic
+  `bufconnHarness`, and the three supplemental duplicate-key checks share `findDuplicate`.
+  No exported API, validation rule, or error text changed (issue 561)
 
 - 557-price-options: Added PriceOption, GetProjectedCostResponse.price_options (16) and
   EstimateCostResponse.price_options (6), three ErrPriceOption* sentinels,

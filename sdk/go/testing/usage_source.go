@@ -19,14 +19,10 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"net"
 	"sort"
 	"strings"
-	"testing"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/test/bufconn"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
@@ -200,53 +196,14 @@ func (a *usageStatsAdapter) GetStats(ctx context.Context, req *pbc.GetStatsReque
 
 // UsageSourceHarness serves a UsageStatsServer over an in-memory bufconn.
 type UsageSourceHarness struct {
-	server   *grpc.Server
-	listener *bufconn.Listener
-	client   pbc.UsageSourceServiceClient
-	conn     *grpc.ClientConn
+	bufconnHarness[pbc.UsageSourceServiceClient]
 }
 
 // NewUsageSourceHarness creates a harness serving impl as UsageSourceService.
 func NewUsageSourceHarness(impl UsageStatsServer) *UsageSourceHarness {
-	listener := bufconn.Listen(bufSize)
-	server := grpc.NewServer()
-	pbc.RegisterUsageSourceServiceServer(server, &usageStatsAdapter{impl: impl})
-
-	go func() {
-		_ = server.Serve(listener)
-	}()
-
-	return &UsageSourceHarness{
-		server:   server,
-		listener: listener,
-	}
-}
-
-// Start initializes the client connection to the in-memory server.
-func (h *UsageSourceHarness) Start(t testing.TB) {
-	//nolint:staticcheck // grpc.NewClient doesn't work with bufconn
-	conn, err := grpc.DialContext(context.Background(), "bufnet",
-		grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) {
-			return h.listener.Dial()
-		}),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	if err != nil {
-		t.Fatalf("Failed to dial bufnet: %v", err)
-	}
-
-	h.conn = conn
-	h.client = pbc.NewUsageSourceServiceClient(conn)
-}
-
-// Stop closes the client connection and stops the server.
-func (h *UsageSourceHarness) Stop() {
-	if h.conn != nil {
-		_ = h.conn.Close()
-	}
-	if h.server != nil {
-		h.server.Stop()
-	}
+	return &UsageSourceHarness{newBufconnHarness(func(s *grpc.Server) {
+		pbc.RegisterUsageSourceServiceServer(s, &usageStatsAdapter{impl: impl})
+	}, pbc.NewUsageSourceServiceClient)}
 }
 
 // Client returns the UsageSourceService client; call Start first.

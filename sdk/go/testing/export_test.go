@@ -66,3 +66,16 @@ func RunScorerServedLimitsForTest(
 ) error {
 	return scorerCheckServedLimits(ctx, client, server)
 }
+
+// FindDuplicateForTest exposes the shared duplicate-key scan to external tests.
+func FindDuplicateForTest[T any, K comparable](list []T, key func(T) K) (int, int, bool) {
+	return findDuplicate(list, key)
+}
+
+// PairwiseDuplicateLimitForTest is the largest list findDuplicate scans pairwise.
+const PairwiseDuplicateLimitForTest = pairwiseDuplicateLimit
+
+// BillingPeriodIdentityForTest exposes the billing-period duplicate key.
+//
+//nolint:gochecknoglobals // Test-only export of an unexported function.
+var BillingPeriodIdentityForTest = billingPeriodIdentity

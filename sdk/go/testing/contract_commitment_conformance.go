@@ -18,15 +18,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 	"testing"
 	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/test/bufconn"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
@@ -77,52 +74,15 @@ func (a *contractCommitmentAdapter) GetContractCommitments(
 // SupplementalDatasetService over an in-memory bufconn, so calls exercise
 // proto serialization and the status codes clients really see.
 type ContractCommitmentHarness struct {
-	server   *grpc.Server
-	listener *bufconn.Listener
-	client   pbc.SupplementalDatasetServiceClient
-	conn     *grpc.ClientConn
+	bufconnHarness[pbc.SupplementalDatasetServiceClient]
 }
 
 // NewContractCommitmentHarness creates a harness serving impl as
 // SupplementalDatasetService.
 func NewContractCommitmentHarness(impl ContractCommitmentServer) *ContractCommitmentHarness {
-	listener := bufconn.Listen(bufSize)
-	server := grpc.NewServer()
-	pbc.RegisterSupplementalDatasetServiceServer(server, &contractCommitmentAdapter{impl: impl})
-
-	go func() {
-		_ = server.Serve(listener)
-	}()
-
-	return &ContractCommitmentHarness{server: server, listener: listener}
-}
-
-// Start initializes the client connection to the in-memory server.
-func (h *ContractCommitmentHarness) Start(t testing.TB) {
-	//nolint:staticcheck // grpc.NewClient doesn't work with bufconn
-	conn, err := grpc.DialContext(context.Background(), "bufnet",
-		grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) {
-			return h.listener.Dial()
-		}),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	if err != nil {
-		t.Fatalf("Failed to dial bufnet: %v", err)
-	}
-
-	h.conn = conn
-	h.client = pbc.NewSupplementalDatasetServiceClient(conn)
-}
-
-// Stop closes the client connection and stops the server. It is safe to call
-// more than once.
-func (h *ContractCommitmentHarness) Stop() {
-	if h.conn != nil {
-		_ = h.conn.Close()
-	}
-	if h.server != nil {
-		h.server.Stop()
-	}
+	return &ContractCommitmentHarness{newBufconnHarness(func(s *grpc.Server) {
+		pbc.RegisterSupplementalDatasetServiceServer(s, &contractCommitmentAdapter{impl: impl})
+	}, pbc.NewSupplementalDatasetServiceClient)}
 }
 
 // Client returns the SupplementalDatasetService client; call Start first.

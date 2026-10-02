@@ -31,6 +31,38 @@ import (
 // pages use a map, which is faster there but allocates.
 const pairwiseDuplicateLimit = 64
 
+// findDuplicate reports the first record whose key repeats an earlier one. It
+// returns the lowest such index, the earliest index holding the same key, and true.
+// Lists of up to pairwiseDuplicateLimit records are compared pairwise and do
+// not allocate when key is a method expression or top-level function; longer
+// lists use a map. Both paths report the same pair.
+func findDuplicate[T any, K comparable](list []T, key func(T) K) (int, int, bool) {
+	if len(list) <= pairwiseDuplicateLimit {
+		// key is an indirect call in generic code, so each key is computed once
+		// into a stack array rather than once per comparison.
+		var buf [pairwiseDuplicateLimit]K
+		keys := buf[:len(list)]
+		for n := range keys {
+			keys[n] = key(list[n])
+			for j := range n {
+				if keys[j] == keys[n] {
+					return n, j, true
+				}
+			}
+		}
+		return 0, 0, false
+	}
+	seen := make(map[K]int, len(list))
+	for n := range list {
+		k := key(list[n])
+		if j, dup := seen[k]; dup {
+			return n, j, true
+		}
+		seen[k] = n
+	}
+	return 0, 0, false
+}
+
 var (
 	// ErrInvalidContractCommitment is wrapped by every ValidateContractCommitment failure.
 	ErrInvalidContractCommitment = errors.New("invalid contract commitment")
@@ -361,24 +393,8 @@ func validateResponseCommitment(i int, c *pbc.ContractCommitment, start, end *ti
 }
 
 func checkDuplicateCommitmentIDs(list []*pbc.ContractCommitment) error {
-	if len(list) <= pairwiseDuplicateLimit {
-		for i := 1; i < len(list); i++ {
-			id := list[i].GetContractCommitmentId()
-			for j := range i {
-				if list[j].GetContractCommitmentId() == id {
-					return duplicateError(i, j, id)
-				}
-			}
-		}
-		return nil
-	}
-	seen := make(map[string]int, len(list))
-	for i, c := range list {
-		id := c.GetContractCommitmentId()
-		if first, dup := seen[id]; dup {
-			return duplicateError(i, first, id)
-		}
-		seen[id] = i
+	if i, first, dup := findDuplicate(list, (*pbc.ContractCommitment).GetContractCommitmentId); dup {
+		return duplicateError(i, first, list[i].GetContractCommitmentId())
 	}
 	return nil
 }

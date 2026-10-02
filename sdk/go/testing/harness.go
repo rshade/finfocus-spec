@@ -4,13 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 	"testing"
 	"time"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/test/bufconn"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/rshade/finfocus-spec/sdk/go/internal/semver"
@@ -98,53 +95,14 @@ const (
 
 // TestHarness provides a testing framework for CostSource plugin implementations.
 type TestHarness struct {
-	server   *grpc.Server
-	listener *bufconn.Listener
-	client   pbc.CostSourceServiceClient
-	conn     *grpc.ClientConn
+	bufconnHarness[pbc.CostSourceServiceClient]
 }
 
 // NewTestHarness creates a new test harness for the given CostSource implementation.
 func NewTestHarness(impl pbc.CostSourceServiceServer) *TestHarness {
-	listener := bufconn.Listen(bufSize)
-	server := grpc.NewServer()
-	pbc.RegisterCostSourceServiceServer(server, impl)
-
-	go func() {
-		_ = server.Serve(listener)
-	}()
-
-	return &TestHarness{
-		server:   server,
-		listener: listener,
-	}
-}
-
-// Start initializes the client connection to the test server.
-func (h *TestHarness) Start(t testing.TB) {
-	//nolint:staticcheck // grpc.NewClient doesn't work with bufconn
-	conn, err := grpc.DialContext(context.Background(), "bufnet",
-		grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) {
-			return h.listener.Dial()
-		}),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	if err != nil {
-		t.Fatalf("Failed to dial bufnet: %v", err)
-	}
-
-	h.conn = conn
-	h.client = pbc.NewCostSourceServiceClient(conn)
-}
-
-// Stop cleans up the test harness.
-func (h *TestHarness) Stop() {
-	if h.conn != nil {
-		_ = h.conn.Close()
-	}
-	if h.server != nil {
-		h.server.Stop()
-	}
+	return &TestHarness{newBufconnHarness(func(s *grpc.Server) {
+		pbc.RegisterCostSourceServiceServer(s, impl)
+	}, pbc.NewCostSourceServiceClient)}
 }
 
 // Client returns the gRPC client for making requests.
