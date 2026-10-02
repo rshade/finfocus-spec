@@ -75,6 +75,7 @@ describe("RecommendationScorerClient", () => {
         recommendations: [{ id: "r1" }, { id: "r2" }],
         signals: [ScoreSignal.RISK],
         identifierMode: IdentifierMode.PSEUDONYMIZED,
+        omittedFields: ["resource.tags", "metadata"],
       }),
     );
 
@@ -82,6 +83,7 @@ describe("RecommendationScorerClient", () => {
       recommendations: [{ id: "r1" }, { id: "r2" }],
       signals: ["SCORE_SIGNAL_RISK"],
       identifierMode: "IDENTIFIER_MODE_PSEUDONYMIZED",
+      omittedFields: ["resource.tags", "metadata"],
     });
     expect(resp.results.map((r) => r.recommendationId)).toEqual(["r1", "r2"]);
     expect(resp.results[0].result.case).toBe("scores");

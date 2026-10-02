@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
@@ -47,6 +48,8 @@ var scorerScenarioNames = []string{
 	"session_echo",
 	"session_across_batches",
 	"session_isolation",
+	"omitted_fields_accepted",
+	"omitted_fields_rejected",
 }
 
 // scoreFunc adapts a function to plugintesting.ScoreServer.
@@ -205,9 +208,24 @@ func brokenScorers() []brokenScorer {
 			fails: []string{"single_recommendation"},
 		},
 		{
-			name:  "accepts bad requests and ignores the signal filter",
-			impl:  laxScorer{},
-			fails: []string{"signal_subset", "empty_request", "duplicate_ids", "oversize_batch", "unspecified_signal"},
+			name: "accepts bad requests and ignores the signal filter",
+			impl: laxScorer{},
+			fails: []string{
+				"signal_subset", "empty_request", "duplicate_ids", "oversize_batch", "unspecified_signal",
+				"omitted_fields_rejected",
+			},
+		},
+		{
+			name: "rejects every request with omitted_fields",
+			impl: scoreFunc(func(
+				ctx context.Context, req *pbc.ScoreRecommendationsRequest,
+			) (*pbc.ScoreRecommendationsResponse, error) {
+				if len(req.GetOmittedFields()) > 0 {
+					return nil, status.Error(codes.InvalidArgument, "omitted_fields unsupported")
+				}
+				return plugintesting.NewMockRecommendationScorer().ScoreRecommendations(ctx, req)
+			}),
+			fails: []string{"omitted_fields_accepted"},
 		},
 	}
 }

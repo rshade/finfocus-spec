@@ -188,6 +188,36 @@ func TestScorer_ErrorParity(t *testing.T) {
 	}
 }
 
+func TestScorer_OmittedFieldsParity(t *testing.T) {
+	tests := []struct {
+		name     string
+		omitted  []string
+		wantCode codes.Code
+	}{
+		{"valid list", []string{"resource.tags", "metadata", "action_detail"}, codes.OK},
+		{"unknown path", []string{"not_a_field"}, codes.InvalidArgument},
+		{"duplicate", []string{"metadata", "metadata"}, codes.InvalidArgument},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			for _, tr := range allocTransports {
+				plugin := newScorerTestPlugin(plugintesting.NewMockRecommendationScorer())
+				_, call := startScorerServer(t, plugin, tr.web)
+				req := scorerFixtureRequest()
+				req.OmittedFields = tt.omitted
+				resp, err := callScore(t, call, req)
+				if tt.wantCode == codes.OK {
+					require.NoError(t, err, tr.name)
+					require.NoError(t, plugintesting.ValidateScoreRecommendationsResponse(req, resp), tr.name)
+					continue
+				}
+				code, _ := allocWireCode(t, err, tr.web)
+				assert.Equal(t, tt.wantCode, code, tr.name)
+			}
+		})
+	}
+}
+
 // scorerFunc adapts a function to pluginsdk.RecommendationScorerProvider.
 type scorerFunc func(
 	ctx context.Context, req *pbc.ScoreRecommendationsRequest,

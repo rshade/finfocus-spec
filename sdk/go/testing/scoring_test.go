@@ -16,6 +16,7 @@ package testing_test
 
 import (
 	"math"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -390,5 +391,86 @@ func TestValidateScoreRecommendationsResponseReportsFirstSingletonGroup(t *testi
 		err := plugintesting.ValidateScoreRecommendationsResponse(req, resp)
 		require.Error(t, err)
 		require.ErrorContains(t, err, want)
+	}
+}
+
+func omittedRequest(paths ...string) *pbc.ScoreRecommendationsRequest {
+	req := scoreRequest("a")
+	req.OmittedFields = paths
+	return req
+}
+
+func TestValidateScoreRecommendationsRequestOmittedFields(t *testing.T) {
+	tooMany := make([]string, 65)
+	for i := range tooMany {
+		tooMany[i] = "metadata"
+	}
+	manyUnique := []string{
+		"id", "category", "action_type", "resource", "action_detail", "impact", "priority", "confidence_score",
+		"description", "reasoning", "source", "created_at", "metadata", "primary_reason", "secondary_reasons",
+		"resource.id", "resource.name", "resource.provider", "resource.resource_type", "resource.region",
+		"resource.sku", "resource.tags", "resource.utilization", "resource.utilization.cpu_percent",
+		"resource.utilization.memory_percent", "resource.utilization.storage_percent",
+		"resource.utilization.network_in_mbps", "resource.utilization.network_out_mbps",
+		"resource.utilization.custom_metrics", "kubernetes.cluster_id", "rightsize", "terminate", "commitment",
+		"kubernetes", "modify",
+	}
+	tests := []struct {
+		name    string
+		req     *pbc.ScoreRecommendationsRequest
+		wantErr string
+	}{
+		{name: "empty list", req: omittedRequest()},
+		{name: "top level field", req: omittedRequest("metadata", "reasoning")},
+		{name: "nested field", req: omittedRequest("resource.tags", "resource.utilization.cpu_percent")},
+		{name: "whole message", req: omittedRequest("resource")},
+		{name: "oneof name", req: omittedRequest("action_detail")},
+		{name: "oneof member path", req: omittedRequest("kubernetes.cluster_id")},
+		{name: "every real field", req: omittedRequest(manyUnique...)},
+		{name: "empty entry", req: omittedRequest("metadata", ""), wantErr: "omitted_fields[1]"},
+		{name: "unknown path", req: omittedRequest("not_a_field"), wantErr: "omitted_fields[0]"},
+		{name: "unknown nested path", req: omittedRequest("resource.nope"), wantErr: "omitted_fields[0]"},
+		{name: "descends through map", req: omittedRequest("metadata.key"), wantErr: "omitted_fields[0]"},
+		{name: "descends through scalar", req: omittedRequest("id.x"), wantErr: "omitted_fields[0]"},
+		{name: "uppercase segment", req: omittedRequest("Metadata"), wantErr: "omitted_fields[0]"},
+		{name: "empty segment", req: omittedRequest("resource..tags"), wantErr: "omitted_fields[0]"},
+		{name: "trailing dot", req: omittedRequest("resource."), wantErr: "omitted_fields[0]"},
+		{name: "index syntax", req: omittedRequest("reasoning[0]"), wantErr: "omitted_fields[0]"},
+		{name: "duplicate", req: omittedRequest("metadata", "resource.tags", "metadata"), wantErr: "omitted_fields[2]"},
+		{
+			name:    "too long",
+			req:     omittedRequest(strings.Repeat("a", 129)),
+			wantErr: "omitted_fields[0]",
+		},
+		{name: "too many", req: omittedRequest(tooMany...), wantErr: "omitted_fields"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := plugintesting.ValidateScoreRecommendationsRequest(tt.req, 0)
+			if tt.wantErr == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			require.ErrorIs(t, err, plugintesting.ErrInvalidScoreRequest)
+			require.ErrorContains(t, err, tt.wantErr)
+			assert.Equal(t, codes.InvalidArgument, status.Code(err))
+		})
+	}
+}
+
+func BenchmarkValidateScoreRecommendationsRequest(b *testing.B) {
+	req := scoreRequest("a", "b", "c")
+	b.ReportAllocs()
+	for range b.N {
+		_ = plugintesting.ValidateScoreRecommendationsRequest(req, 0)
+	}
+}
+
+func BenchmarkValidateScoreRecommendationsRequestOmittedFields(b *testing.B) {
+	req := omittedRequest("metadata", "resource.tags", "resource.utilization.cpu_percent", "action_detail")
+	b.ReportAllocs()
+	for range b.N {
+		_ = plugintesting.ValidateScoreRecommendationsRequest(req, 0)
 	}
 }

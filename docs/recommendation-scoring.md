@@ -42,11 +42,30 @@ These rules are normative.
 
 | Field | Meaning |
 | ----- | ------- |
-| `recommendations` | Complete `Recommendation` messages as `GetRecommendations` returned them, so the scorer sees `action_detail`, `primary_reason`, `secondary_reasons`, tags, metadata, impact, and utilization. "Complete" means the host does not drop those fields on its own. An operator allowlist may remove fields, and the scorer cannot tell a removed field from an empty one. Between 1 and `max_batch_size` entries, each with a distinct non-empty `id`. |
+| `recommendations` | Complete `Recommendation` messages as `GetRecommendations` returned them, so the scorer sees `action_detail`, `primary_reason`, `secondary_reasons`, tags, metadata, impact, and utilization. "Complete" means the host does not drop those fields on its own. An operator allowlist may remove fields; the host names them in `omitted_fields`, so the scorer can tell a removed field from an empty one. Between 1 and `max_batch_size` entries, each with a distinct non-empty `id`. |
 | `signals` | Limits the response to these signals. Empty means every signal the scorer supports. `SCORE_SIGNAL_UNSPECIFIED` is invalid. |
 | `identifier_mode` | How the host already treated `resource.id` and `resource.name`. It says nothing about any other field. |
+| `omitted_fields` | Field paths the host removed from every recommendation by policy, such as `resource.tags`, `metadata`, or `kubernetes.cluster_id`. See [Omitted fields](#omitted-fields). |
 
 An empty request is invalid, unlike `BatchCost`, because there is nothing to score.
+
+### Omitted fields
+
+A host that applies an operator allowlist clears fields before it calls the scorer. A cleared field
+looks the same as a field the resource never had, so the host lists the cleared paths in
+`omitted_fields`.
+
+- A path is dot-separated proto field names starting at `Recommendation`: `metadata`,
+  `resource.tags`, `resource.utilization.cpu_percent`. The oneof name `action_detail` covers all its
+  members (`rightsize`, `terminate`, `commitment`, `kubernetes`, `modify`), and a message field covers
+  everything beneath it. No indexes, map keys, or wildcards.
+- Entries are unique, 1 to 128 bytes, and at most 64. `ValidateScoreRecommendationsRequest` rejects an
+  empty entry, an unknown path, a duplicate, and either limit with `InvalidArgument`.
+- The list covers every recommendation in the request. Empty means the host removed nothing it can
+  name.
+- A scorer MUST NOT lower confidence, raise `insufficient_evidence`, or raise `false_positive`
+  because an omitted field is empty. A field that is empty and not listed keeps its ordinary meaning.
+- The list is advisory. The host does the clearing, and the list neither clears nor restores a value.
 
 ## Response
 
@@ -173,6 +192,7 @@ that can change the result:
 | -------- | ------ | --- |
 | Content hash | A deterministic hash of the `Recommendation`, excluding `id`, before the host applies `identifier_mode` | Any change to the record, including utilization or impact, is a new key. Hosts can assign ids per run. Pseudonymous tokens hold only within one request or session, so a hash of the transformed record does not reliably match across requests. |
 | `identifier_mode` | The request | The scorer saw different input in each mode. |
+| `omitted_fields` | The request | The scorer saw less input, and a field it must not read as thin evidence. |
 | `signals` | The request, or the scorer's `supported_signals` when the request lists none | A narrower request is not a full answer. |
 | `scorer.name`, `scorer.model`, `scorer.calibration` | `ScorerInfo` in the response | A different scorer, model, or calibration produces different numbers. |
 | `version` | `GetPluginInfoResponse` | Rules can change while `model` stays the same, and rule-based scorers leave `model` empty. |
@@ -258,7 +278,7 @@ lists it in the Connect health checker, and infers the capability. A scorer-only
 | `pluginsdk.ValidateScoreRecommendationsRequest(req, maxBatchSize)` | Scorers call it first. Failures carry `codes.InvalidArgument`. |
 | `pluginsdk.ValidateScoreRecommendationsResponse(req, resp)` | Hosts call it on every response. It checks alignment, ids, ranges, `ResourceError` codes, signal support, and duplicate groups. |
 | `plugintesting.MockRecommendationScorer` | Reference scorer with fixed rules. No model or network. |
-| `plugintesting.RunScorerConformance(t, impl)` | Serves `impl` over bufconn and runs thirteen structural scenarios, plus `advertised_limits` when the scorer advertises. |
+| `plugintesting.RunScorerConformance(t, impl)` | Serves `impl` over bufconn and runs fifteen structural scenarios, plus `advertised_limits` when the scorer advertises. |
 
 ## Threshold Guidance (Non-Normative)
 
