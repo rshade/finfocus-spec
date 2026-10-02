@@ -149,3 +149,46 @@ func TestAllocateOverRequestedNode(t *testing.T) {
 	}
 	assert.InDelta(t, 10, total, 1e-9)
 }
+
+func TestAllocateRowProvenance(t *testing.T) {
+	req := singleNodeRequest(1, 4)
+	req.Priced = append(req.Priced,
+		&pbc.PricedResource{
+			Resource: &pbc.ResourceDescriptor{
+				Id:   "cp1",
+				Tags: map[string]string{pluginsdk.SubjectKind: "cluster"},
+			},
+			Cost:     3,
+			Currency: "USD",
+			Priced:   true,
+		},
+		&pbc.PricedResource{
+			Resource: &pbc.ResourceDescriptor{
+				Id:   "n2",
+				Tags: map[string]string{pluginsdk.SubjectKind: pluginsdk.KindNode},
+			},
+			Priced: false,
+		},
+	)
+	req.Usage = append(req.Usage, nodeUsage("n2", 4, 16)...)
+	req.Usage = append(req.Usage, workloadUsage("n2", "c", 1, 4)...)
+
+	resp, err := allocate(t, req)
+	require.NoError(t, err)
+	require.NoError(t, pluginsdk.ValidateAllocateResponse(req, resp))
+
+	want := map[string]string{
+		pluginsdk.KindWorkload: "n1",
+		pluginsdk.KindIdle:     "n1",
+		pluginsdk.KindCluster:  "cp1",
+	}
+	for _, row := range resp.GetRows() {
+		assert.Equal(t, refalloc.MethodID, row.GetAllocatedMethodId())
+		assert.NotEmpty(t, row.GetAllocatedResourceId())
+		if row.GetSubject()[pluginsdk.SubjectPod] == "c" {
+			assert.Equal(t, "n2", row.GetAllocatedResourceId())
+			continue
+		}
+		assert.Equal(t, want[row.GetSubject()[pluginsdk.SubjectKind]], row.GetAllocatedResourceId())
+	}
+}

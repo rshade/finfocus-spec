@@ -310,5 +310,9 @@ func validateAllocationRow(i int, row *pbc.AllocationRow, currency string) error
 			currency,
 		)
 	}
+	if row.GetAllocatedMethodId() != "" && row.GetAllocatedResourceId() == "" {
+		return fmt.Errorf("%w: rows[%d]: allocated_method_id %q requires allocated_resource_id",
+			ErrInvalidAllocateResponse, i, row.GetAllocatedMethodId())
+	}
 	return nil
 }

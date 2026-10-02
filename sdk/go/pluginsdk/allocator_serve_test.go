@@ -269,6 +269,10 @@ func TestAllocator_TransportParity(t *testing.T) {
 	assert.Zero(t, n3Rows[0].GetTotalCost())
 	assert.NotEmpty(t, n3Rows[0].GetNote())
 	assert.InDelta(t, 16, allocTotal(fixture), 1e-9)
+	for _, row := range fixture.GetRows() {
+		assert.Equal(t, refalloc.MethodID, row.GetAllocatedMethodId())
+		assert.NotEmpty(t, row.GetAllocatedResourceId())
+	}
 
 	assert.Contains(t, string(results["policy override"].GetEffectivePolicyJson()), `"cpu_weight":0.25`)
 	assert.NotEqual(t, fixture.GetPolicyDigest(), results["policy override"].GetPolicyDigest())

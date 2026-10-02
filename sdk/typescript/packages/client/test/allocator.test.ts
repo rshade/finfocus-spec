@@ -39,6 +39,9 @@ const server = setupServer(
           memCost: 1.25,
           totalCost: 2.5,
           currency: "USD",
+          allocatedMethodId: "proportional",
+          allocatedMethodDetails: "split by request",
+          allocatedResourceId: "n1",
         },
         {
           subject: { kind: "__idle__", node: "n1" },
@@ -80,6 +83,11 @@ describe("AllocatorClient", () => {
     expect(resp.rows).toHaveLength(2);
     expect(resp.rows[0].subject[SUBJECT_KIND]).toBe(KIND_WORKLOAD);
     expect(resp.rows[0].totalCost).toBe(2.5);
+    expect(resp.rows[0].allocatedMethodId).toBe("proportional");
+    expect(resp.rows[0].allocatedMethodDetails).toBe("split by request");
+    expect(resp.rows[0].allocatedResourceId).toBe("n1");
+    expect(resp.rows[1].allocatedMethodId).toBe("");
+    expect(resp.rows[1].allocatedResourceId).toBe("");
     expect(resp.rows[1].subject[SUBJECT_KIND]).toBe(KIND_IDLE);
     expect(resp.rows[1].subject[SUBJECT_NODE]).toBe("n1");
     expect(JSON.parse(new TextDecoder().decode(resp.effectivePolicyJson))).toEqual({ version: 1 });

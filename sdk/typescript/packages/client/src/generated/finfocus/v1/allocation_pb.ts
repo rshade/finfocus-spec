@@ -27,7 +27,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file finfocus/v1/allocation.proto.
  */
 export const file_finfocus_v1_allocation: GenFile = /*@__PURE__*/
-  fileDesc("ChxmaW5mb2N1cy92MS9hbGxvY2F0aW9uLnByb3RvEgtmaW5mb2N1cy52MSKBAQoOUHJpY2VkUmVzb3VyY2USMQoIcmVzb3VyY2UYASABKAsyHy5maW5mb2N1cy52MS5SZXNvdXJjZURlc2NyaXB0b3ISDAoEY29zdBgCIAEoARIQCghjdXJyZW5jeRgDIAEoCRIOCgZwcmljZWQYBCABKAgSDAoEbm90ZRgFIAEoCSKfAQoPQWxsb2NhdGVSZXF1ZXN0EiQKBXVzYWdlGAEgAygLMhUuZmluZm9jdXMudjEuVXNhZ2VSb3cSKwoGcHJpY2VkGAIgAygLMhsuZmluZm9jdXMudjEuUHJpY2VkUmVzb3VyY2USEwoLcG9saWN5X2pzb24YAyABKAwSJAoEbW9kZRgEIAEoDjIWLmZpbmZvY3VzLnYxLlN0YXRzTW9kZSKEAQoQQWxsb2NhdGVSZXNwb25zZRIoCgRyb3dzGAEgAygLMhouZmluZm9jdXMudjEuQWxsb2NhdGlvblJvdxIdChVlZmZlY3RpdmVfcG9saWN5X2pzb24YAiABKAwSFQoNcG9saWN5X2RpZ2VzdBgDIAEoCRIQCgh3YXJuaW5ncxgEIAMoCSLRAQoNQWxsb2NhdGlvblJvdxI4CgdzdWJqZWN0GAEgAygLMicuZmluZm9jdXMudjEuQWxsb2NhdGlvblJvdy5TdWJqZWN0RW50cnkSEAoIY3B1X2Nvc3QYAiABKAESEAoIbWVtX2Nvc3QYAyABKAESEgoKdG90YWxfY29zdBgEIAEoARIQCghjdXJyZW5jeRgFIAEoCRIMCgRub3RlGAYgASgJGi4KDFN1YmplY3RFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBMlsKEEFsbG9jYXRvclNlcnZpY2USRwoIQWxsb2NhdGUSHC5maW5mb2N1cy52MS5BbGxvY2F0ZVJlcXVlc3QaHS5maW5mb2N1cy52MS5BbGxvY2F0ZVJlc3BvbnNlQq0BCg9jb20uZmluZm9jdXMudjFCD0FsbG9jYXRpb25Qcm90b1ABWjxnaXRodWIuY29tL3JzaGFkZS9maW5mb2N1cy1zcGVjL3Nkay9nby9wcm90by9maW5mb2N1cy92MTtwYmOiAgNGWFiqAgtGaW5mb2N1cy5WMcoCC0ZpbmZvY3VzXFYx4gIXRmluZm9jdXNcVjFcR1BCTWV0YWRhdGHqAgxGaW5mb2N1czo6VjFiBnByb3RvMw", [file_finfocus_v1_costsource, file_finfocus_v1_usage]);
+  fileDesc("ChxmaW5mb2N1cy92MS9hbGxvY2F0aW9uLnByb3RvEgtmaW5mb2N1cy52MSKBAQoOUHJpY2VkUmVzb3VyY2USMQoIcmVzb3VyY2UYASABKAsyHy5maW5mb2N1cy52MS5SZXNvdXJjZURlc2NyaXB0b3ISDAoEY29zdBgCIAEoARIQCghjdXJyZW5jeRgDIAEoCRIOCgZwcmljZWQYBCABKAgSDAoEbm90ZRgFIAEoCSKfAQoPQWxsb2NhdGVSZXF1ZXN0EiQKBXVzYWdlGAEgAygLMhUuZmluZm9jdXMudjEuVXNhZ2VSb3cSKwoGcHJpY2VkGAIgAygLMhsuZmluZm9jdXMudjEuUHJpY2VkUmVzb3VyY2USEwoLcG9saWN5X2pzb24YAyABKAwSJAoEbW9kZRgEIAEoDjIWLmZpbmZvY3VzLnYxLlN0YXRzTW9kZSKEAQoQQWxsb2NhdGVSZXNwb25zZRIoCgRyb3dzGAEgAygLMhouZmluZm9jdXMudjEuQWxsb2NhdGlvblJvdxIdChVlZmZlY3RpdmVfcG9saWN5X2pzb24YAiABKAwSFQoNcG9saWN5X2RpZ2VzdBgDIAEoCRIQCgh3YXJuaW5ncxgEIAMoCSKvAgoNQWxsb2NhdGlvblJvdxI4CgdzdWJqZWN0GAEgAygLMicuZmluZm9jdXMudjEuQWxsb2NhdGlvblJvdy5TdWJqZWN0RW50cnkSEAoIY3B1X2Nvc3QYAiABKAESEAoIbWVtX2Nvc3QYAyABKAESEgoKdG90YWxfY29zdBgEIAEoARIQCghjdXJyZW5jeRgFIAEoCRIMCgRub3RlGAYgASgJEhsKE2FsbG9jYXRlZF9tZXRob2RfaWQYByABKAkSIAoYYWxsb2NhdGVkX21ldGhvZF9kZXRhaWxzGAggASgJEh0KFWFsbG9jYXRlZF9yZXNvdXJjZV9pZBgJIAEoCRouCgxTdWJqZWN0RW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ATJbChBBbGxvY2F0b3JTZXJ2aWNlEkcKCEFsbG9jYXRlEhwuZmluZm9jdXMudjEuQWxsb2NhdGVSZXF1ZXN0Gh0uZmluZm9jdXMudjEuQWxsb2NhdGVSZXNwb25zZUKtAQoPY29tLmZpbmZvY3VzLnYxQg9BbGxvY2F0aW9uUHJvdG9QAVo8Z2l0aHViLmNvbS9yc2hhZGUvZmluZm9jdXMtc3BlYy9zZGsvZ28vcHJvdG8vZmluZm9jdXMvdjE7cGJjogIDRlhYqgILRmluZm9jdXMuVjHKAgtGaW5mb2N1c1xWMeICF0ZpbmZvY3VzXFYxXEdQQk1ldGFkYXRh6gIMRmluZm9jdXM6OlYxYgZwcm90bzM", [file_finfocus_v1_costsource, file_finfocus_v1_usage]);
 
 /**
  * PricedResource is one priceable resource from GetStatsResponse.priceable
@@ -232,6 +232,35 @@ export type AllocationRow = Message<"finfocus.v1.AllocationRow"> & {
    * @generated from field: string note = 6;
    */
   note: string;
+
+  /**
+   * Optional FOCUS 1.3 AllocatedMethodId: identifies the method the allocator
+   * used to produce this row. An opaque, allocator-defined string. A non-empty
+   * value requires allocated_resource_id to be non-empty, as in FOCUS 1.3
+   * (hosts and ValidateAllocateResponse reject the row otherwise).
+   *
+   * @generated from field: string allocated_method_id = 7;
+   */
+  allocatedMethodId: string;
+
+  /**
+   * Optional FOCUS 1.3 AllocatedMethodDetails: free-form description of how
+   * the cost was split. Allowed without allocated_method_id. FOCUS 1.4 defines
+   * this column as a JSON object; the contract does not enforce a format.
+   *
+   * @generated from field: string allocated_method_details = 8;
+   */
+  allocatedMethodDetails: string;
+
+  /**
+   * Optional FOCUS 1.3 AllocatedResourceId: the priced resource this row's
+   * cost came from, by convention the resource.id of the PricedResource (a
+   * node id for workload and idle rows). Opaque; not cross-checked against
+   * the request.
+   *
+   * @generated from field: string allocated_resource_id = 9;
+   */
+  allocatedResourceId: string;
 };
 
 /**
@@ -261,6 +290,8 @@ export const AllocationRowSchema: GenMessage<AllocationRow> = /*@__PURE__*/
  *     has exactly one "__idle__" row whose "node" subject equals the node's
  *     resource.id, even when its idle cost is zero.
  *   - Every row carries the resolved currency (see AllocateRequest.priced).
+ *   - A row with a non-empty allocated_method_id has a non-empty
+ *     allocated_resource_id.
  *
  * Error semantics:
  *   - INVALID_ARGUMENT: the request is inconsistent (an entry with priced=false

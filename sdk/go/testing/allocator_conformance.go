@@ -368,6 +368,28 @@ func scenarioFullyPacked(ctx context.Context, client pbc.AllocatorServiceClient)
 	return nil
 }
 
+// scenarioRowProvenance checks the FOCUS 1.3 rule on the allocator's own
+// output: a row that names an allocation method also names its source
+// resource. Allocators are never required to emit provenance.
+func scenarioRowProvenance(ctx context.Context, client pbc.AllocatorServiceClient) error {
+	f := singleNodeFixture()
+	req, err := f.request()
+	if err != nil {
+		return err
+	}
+	resp, err := client.Allocate(ctx, req)
+	if err != nil {
+		return fmt.Errorf("Allocate failed: %w", err)
+	}
+	for i, row := range resp.GetRows() {
+		if row.GetAllocatedMethodId() != "" && row.GetAllocatedResourceId() == "" {
+			return fmt.Errorf("rows[%d]: allocated_method_id %q requires allocated_resource_id (FOCUS 1.3)",
+				i, row.GetAllocatedMethodId())
+		}
+	}
+	return nil
+}
+
 func scenarioControlPlane(ctx context.Context, client pbc.AllocatorServiceClient) error {
 	resp, err := allocateAndVerify(ctx, client, threeNodeFixture(fixtureControlPlaneCost))
 	if err != nil {
@@ -548,6 +570,7 @@ func allocatorScenarios() []allocatorScenario {
 		{name: "empty_request", run: scenarioEmptyRequest},
 		{name: "fingerprint_stable", run: scenarioFingerprintStable},
 		{name: "fingerprint_empty_equals_braces", run: scenarioEmptyEqualsBraces},
+		{name: "row_provenance", run: scenarioRowProvenance},
 	}
 }
 

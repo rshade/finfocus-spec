@@ -39,6 +39,8 @@ import "finfocus/v1/usage.proto";
 //     has exactly one "__idle__" row whose "node" subject equals the node's
 //     resource.id, even when its idle cost is zero.
 //   - Every row carries the resolved currency (see AllocateRequest.priced).
+//   - A row with a non-empty allocated_method_id has a non-empty
+//     allocated_resource_id.
 //
 // Error semantics:
 //   - INVALID_ARGUMENT: the request is inconsistent (an entry with priced=false
@@ -145,4 +147,24 @@ message AllocationRow {
 
   // Human-readable note, such as why a workload's cost is zero.
   string note = 6;
+
+  // Optional FOCUS 1.3 AllocatedMethodId: identifies the method the allocator
+  // used to produce this row. An opaque, allocator-defined string. A non-empty
+  // value requires allocated_resource_id to be non-empty, as in FOCUS 1.3
+  // (hosts and ValidateAllocateResponse reject the row otherwise).
+  string allocated_method_id = 7;
+
+  // Optional FOCUS 1.3 AllocatedMethodDetails: free-form description of how
+  // the cost was split. Allowed without allocated_method_id. FOCUS 1.4 defines
+  // this column as a JSON object; the contract does not enforce a format.
+  string allocated_method_details = 8;
+
+  // Optional FOCUS 1.3 AllocatedResourceId: the priced resource this row's
+  // cost came from, by convention the resource.id of the PricedResource (a
+  // node id for workload and idle rows). Opaque; not cross-checked against
+  // the request.
+  string allocated_resource_id = 9;
+
+  // Field 10 is held for a later optional LineageNode (see costsource.proto);
+  // it is not reserved, so adding it stays a compatible change.
 }

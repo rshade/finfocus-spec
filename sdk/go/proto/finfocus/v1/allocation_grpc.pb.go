@@ -58,6 +58,8 @@ const (
 //     has exactly one "__idle__" row whose "node" subject equals the node's
 //     resource.id, even when its idle cost is zero.
 //   - Every row carries the resolved currency (see AllocateRequest.priced).
+//   - A row with a non-empty allocated_method_id has a non-empty
+//     allocated_resource_id.
 //
 // Error semantics:
 //   - INVALID_ARGUMENT: the request is inconsistent (an entry with priced=false
@@ -115,6 +117,8 @@ func (c *allocatorServiceClient) Allocate(ctx context.Context, in *AllocateReque
 //     has exactly one "__idle__" row whose "node" subject equals the node's
 //     resource.id, even when its idle cost is zero.
 //   - Every row carries the resolved currency (see AllocateRequest.priced).
+//   - A row with a non-empty allocated_method_id has a non-empty
+//     allocated_resource_id.
 //
 // Error semantics:
 //   - INVALID_ARGUMENT: the request is inconsistent (an entry with priced=false
