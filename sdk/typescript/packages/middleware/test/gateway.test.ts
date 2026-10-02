@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import * as http from "http";
 import { PassThrough } from "stream";
+import { Code, ConnectError } from "@connectrpc/connect";
 import { CostSourceClient } from "@rshade/finfocus-client";
 import { createNodeTransport } from "../src/transport.js";
 import { RESTGateway } from "../src/gateway.js";
@@ -126,6 +127,67 @@ describe("RESTGateway", () => {
     expect(reply.status).toBe(413);
   });
 
+  it("destroys the request once a 413 has been sent instead of draining it", async () => {
+    const req = fakeRequest("/finfocus.v1.CostSourceService/Name");
+    const reply = capture();
+    const done = gateway.handleRequest(req, reply.res);
+    req.write(Buffer.alloc(1024 * 1024 + 1, "x"));
+    await done;
+
+    expect(reply.status).toBe(413);
+    expect(reply.headers).toMatchObject({ Connection: "close" });
+    expect(req.destroyed).toBe(true);
+  });
+
+  describe("with fake timers", () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("cuts off a stalled upload with 408 and destroys the request", async () => {
+      vi.useFakeTimers();
+      const req = fakeRequest("/finfocus.v1.CostSourceService/Name");
+      const reply = capture();
+      const done = gateway.handleRequest(req, reply.res);
+      req.write("{");
+      await vi.advanceTimersByTimeAsync(60_000);
+      await done;
+
+      expect(reply.status).toBe(408);
+      expect(req.destroyed).toBe(true);
+    });
+  });
+
+  describe("upstream error text", () => {
+    const failing = (error: ConnectError) =>
+      new RESTGateway({
+        costSourceClient: {
+          name: () => Promise.reject(error),
+        } as unknown as CostSourceClient,
+      });
+    const name = "/finfocus.v1.CostSourceService/Name";
+
+    it.each([Code.Internal, Code.Unknown, Code.Unavailable, Code.DataLoss])(
+      "replaces the message for server-side code %s",
+      async (code) => {
+        const log = vi.spyOn(console, "error").mockImplementation(() => {});
+        const result = await failing(new ConnectError("db.internal:5432 refused", code)).dispatch(name, "{}");
+        const serialized = JSON.stringify(result.body);
+
+        expect(serialized).not.toContain("db.internal");
+        expect(result.body).toMatchObject({ error: expect.any(String), code: expect.any(String) });
+        expect(log).toHaveBeenCalledWith(expect.stringContaining("db.internal:5432 refused"));
+        log.mockRestore();
+      },
+    );
+
+    it("keeps the message for client-caused codes", async () => {
+      const result = await failing(new ConnectError("no such resource", Code.NotFound)).dispatch(name, "{}");
+
+      expect(result.body).toMatchObject({ error: "no such resource", code: "not_found" });
+    });
+  });
+
   it("uses a body a framework has already parsed", async () => {
     const req = Object.assign(fakeRequest("/finfocus.v1.CostSourceService/GetActualCost"), {
       body: { resourceId: "i-9" },
@@ -144,14 +206,20 @@ function fakeRequest(url: string): PassThrough & http.IncomingMessage {
 }
 
 function capture() {
-  const reply = { status: 0, payload: "", res: undefined as unknown as http.ServerResponse };
+  const reply = {
+    status: 0,
+    headers: {} as Record<string, string>,
+    payload: "",
+    res: undefined as unknown as http.ServerResponse };
   reply.res = {
-    writeHead: (code: number) => {
+    writeHead: (code: number, headers?: Record<string, string>) => {
       reply.status = code;
+      reply.headers = headers ?? {};
       return reply.res;
     },
-    end: (data?: string) => {
+    end: (data?: string, callback?: () => void) => {
       reply.payload = data ?? "";
+      callback?.();
       return reply.res;
     },
   } as unknown as http.ServerResponse;
