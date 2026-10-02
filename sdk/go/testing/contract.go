@@ -83,6 +83,9 @@ var (
 	ErrTargetResourcesExceedsLimit = errors.New("target_resources exceeds maximum")
 	// ErrInvertedStatsWindow reports a GetStatsRequest whose start is after its end.
 	ErrInvertedStatsWindow = errors.New("start time must not be after end time")
+	// ErrBillingAccountIDMismatch reports a FOCUS record whose billing_account_id differs
+	// from the non-empty billing_account_id on the GetActualCostRequest.
+	ErrBillingAccountIDMismatch = errors.New("focus record billing_account_id does not match request")
 )
 
 // ValidProviders is the list of valid provider values.
@@ -163,6 +166,33 @@ func ValidateGetActualCostRequest(req *pbc.GetActualCostRequest) error {
 		return err
 	}
 
+	return nil
+}
+
+// ValidateActualCostBillingAccount checks the billing account echo rule for one
+// GetActualCost exchange. When req carries a non-empty billing_account_id, every
+// FOCUS record attached to resp must carry the same id. Results without a FOCUS
+// record pass, and an empty request id places no constraint on the records.
+// A nil response has no records; use ValidateActualCostResponse to reject it.
+func ValidateActualCostBillingAccount(req *pbc.GetActualCostRequest, resp *pbc.GetActualCostResponse) error {
+	if req == nil {
+		return ErrNilRequest
+	}
+	want := req.GetBillingAccountId()
+	if want == "" {
+		return nil
+	}
+	for i, result := range resp.GetResults() {
+		record := result.GetFocusRecord()
+		if record == nil || record.GetBillingAccountId() == want {
+			continue
+		}
+		return NewContractError(
+			fmt.Sprintf("results[%d].focus_record.billing_account_id", i),
+			record.GetBillingAccountId(),
+			ErrBillingAccountIDMismatch,
+		)
+	}
 	return nil
 }
 

@@ -145,6 +145,64 @@ func testGetActualCostRPC(harness *TestHarness) TestResult {
 	}
 }
 
+// testBillingAccountID is the id the billing account conformance test sends on GetActualCost.
+const testBillingAccountID = "conformance-billing-account"
+
+// testGetActualCostBillingAccountRPC checks that FOCUS records echo the request's billing_account_id.
+func testGetActualCostBillingAccountRPC(harness *TestHarness) TestResult {
+	start := time.Now()
+	timeStart, timeEnd := CreateTimeRange(HoursPerDay)
+	req := &pbc.GetActualCostRequest{
+		ResourceId:       testResourceID,
+		Start:            timeStart,
+		End:              timeEnd,
+		BillingAccountId: testBillingAccountID,
+	}
+	resp, err := harness.Client().GetActualCost(context.Background(), req)
+	duration := time.Since(start)
+
+	if err != nil {
+		st, ok := status.FromError(err)
+		if ok && (st.Code() == codes.NotFound || st.Code() == codes.Unavailable) {
+			return TestResult{
+				Method:   MethodGetActualCost,
+				Category: CategoryRPCCorrectness,
+				Success:  true,
+				Duration: duration,
+				Details:  "Correctly indicated no data available",
+			}
+		}
+
+		return TestResult{
+			Method:   MethodGetActualCost,
+			Category: CategoryRPCCorrectness,
+			Success:  false,
+			Error:    err,
+			Duration: duration,
+			Details:  MethodGetActualCost + " RPC failed",
+		}
+	}
+
+	if valErr := ValidateActualCostBillingAccount(req, resp); valErr != nil {
+		return TestResult{
+			Method:   MethodGetActualCost,
+			Category: CategoryRPCCorrectness,
+			Success:  false,
+			Error:    valErr,
+			Duration: duration,
+			Details:  "FOCUS record does not echo the request billing_account_id",
+		}
+	}
+
+	return TestResult{
+		Method:   MethodGetActualCost,
+		Category: CategoryRPCCorrectness,
+		Success:  true,
+		Duration: duration,
+		Details:  fmt.Sprintf("Checked %d cost data points", len(resp.GetResults())),
+	}
+}
+
 // testGetProjectedCostRPC tests the GetProjectedCost RPC method.
 func testGetProjectedCostRPC(harness *TestHarness) TestResult {
 	start := time.Now()
@@ -415,6 +473,13 @@ func RPCCorrectnessTests() []ConformanceSuiteTest {
 			TestFunc:    createGetActualCostRPCTest(),
 		},
 		{
+			Name:        "RPCCorrectness_GetActualCostBillingAccount",
+			Description: "Validates FOCUS records echo the GetActualCost billing_account_id",
+			Category:    CategoryRPCCorrectness,
+			MinLevel:    ConformanceLevelStandard,
+			TestFunc:    createGetActualCostBillingAccountRPCTest(),
+		},
+		{
 			Name:        "RPCCorrectness_GetProjectedCostRPC",
 			Description: "Validates GetProjectedCost RPC returns valid response",
 			Category:    CategoryRPCCorrectness,
@@ -456,6 +521,10 @@ func createInvalidTimeRangeTest() func(*TestHarness) TestResult {
 
 func createGetActualCostRPCTest() func(*TestHarness) TestResult {
 	return testGetActualCostRPC
+}
+
+func createGetActualCostBillingAccountRPCTest() func(*TestHarness) TestResult {
+	return testGetActualCostBillingAccountRPC
 }
 
 func createGetProjectedCostRPCTest() func(*TestHarness) TestResult {

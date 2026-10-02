@@ -109,6 +109,42 @@ describe('actualCostIterator', () => {
     expect(results).toHaveLength(200);
   });
 
+  it('sends billingAccountId on every page request', async () => {
+    const seenBillingAccountIds: unknown[] = [];
+    server.use(
+      http.post(
+        'https://plugin-test.example.com/finfocus.v1.CostSourceService/GetActualCost',
+        async ({ request }) => {
+          const body = await request.json() as Record<string, unknown>;
+          seenBillingAccountIds.push(body.billingAccountId);
+          const offset = body.pageToken
+            ? parseInt(Buffer.from(body.pageToken as string, 'base64').toString(), 10)
+            : 0;
+          const end = Math.min(offset + 50, 120);
+          return HttpResponse.json({
+            results: createMockResults(end - offset, offset),
+            nextPageToken: end < 120 ? Buffer.from(end.toString()).toString('base64') : "",
+            totalCount: 120,
+          });
+        }
+      )
+    );
+
+    const request = create(GetActualCostRequestSchema, {
+      resourceId: 'i-abc123',
+      pageSize: 50,
+      billingAccountId: 'ba-123',
+    });
+
+    let count = 0;
+    for await (const _ of actualCostIterator(client, request)) {
+      count++;
+    }
+
+    expect(count).toBe(120);
+    expect(seenBillingAccountIds).toEqual(['ba-123', 'ba-123', 'ba-123']);
+  });
+
   it('handles single-page results', async () => {
     server.use(paginatedActualCostHandler(10, 50));
 

@@ -221,6 +221,10 @@ message GetActualCostRequest {
   google.protobuf.Timestamp end = 3;
   map<string, string> tags = 4;   // optional filters
   string arn = 5;                 // Canonical Cloud Identifier (AWS ARN, Azure Resource ID, GCP Full Resource Name)
+  bool dry_run = 6;               // return field mappings instead of cost data
+  int32 page_size = 7;            // results per page (see pagination)
+  string page_token = 8;          // opaque continuation token
+  string billing_account_id = 9;  // caller-supplied FOCUS billing account id; empty = not supplied
 }
 ```
 
@@ -249,6 +253,15 @@ message ActualCostResult {
 - Return time-series data points within the requested range
 - Include usage metrics when available for better cost analysis
 - Handle time zone conversion appropriately
+- `billing_account_id` is the FOCUS billing account id the caller knows for this resource
+  - When it is empty, the caller did not supply one. Do not invent a value, a placeholder, or an id
+    derived from other request fields. If you cannot build a valid FOCUS record without it, leave
+    `ActualCostResult.focus_record` unset and still return the cost
+  - When it is set, any `focus_record` you attach must carry this exact value as its
+    `billing_account_id`, even if your own data names a different account
+  - It is not a filter, it never changes `cost`, and it is never carried in `tags`. The SDK does not
+    trim or reformat it
+  - The conformance test `RPCCorrectness_GetActualCostBillingAccount` checks the echo rule
 
 **Using the ARN Field**:
 

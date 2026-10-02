@@ -277,6 +277,20 @@ message GetActualCostRequest {
   // detail subject to change without notice. Always pass tokens back verbatim
   // as received from next_page_token in the response.
   string page_token = 8;
+  // billing_account_id is the caller-supplied FOCUS billing account id for this
+  // request. It is not a filter and it does not change any cost value.
+  //
+  // Empty means the caller did not provide one. Plugins MUST NOT invent a value.
+  // A plugin that cannot validate a FOCUS record without this id leaves
+  // ActualCostResult.focus_record unset and still returns the cost.
+  //
+  // When non-empty, a plugin that attaches ActualCostResult.focus_record MUST set
+  // FocusCostRecord.billing_account_id to this value. Send the same value on every
+  // page of one paginated query. Ignored when dry_run is true.
+  //
+  // Do not carry this id in tags. Field 10 is left free for a later billing
+  // account name.
+  string billing_account_id = 9;
 }
 
 // GetActualCostResponse contains the list of actual cost results.

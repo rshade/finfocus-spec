@@ -1163,9 +1163,23 @@ type GetActualCostRequest struct {
 	// or construct page tokens manually. The token format is an implementation
 	// detail subject to change without notice. Always pass tokens back verbatim
 	// as received from next_page_token in the response.
-	PageToken     string `protobuf:"bytes,8,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	PageToken string `protobuf:"bytes,8,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	// billing_account_id is the caller-supplied FOCUS billing account id for this
+	// request. It is not a filter and it does not change any cost value.
+	//
+	// Empty means the caller did not provide one. Plugins MUST NOT invent a value.
+	// A plugin that cannot validate a FOCUS record without this id leaves
+	// ActualCostResult.focus_record unset and still returns the cost.
+	//
+	// When non-empty, a plugin that attaches ActualCostResult.focus_record MUST set
+	// FocusCostRecord.billing_account_id to this value. Send the same value on every
+	// page of one paginated query. Ignored when dry_run is true.
+	//
+	// Do not carry this id in tags. Field 10 is left free for a later billing
+	// account name.
+	BillingAccountId string `protobuf:"bytes,9,opt,name=billing_account_id,json=billingAccountId,proto3" json:"billing_account_id,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *GetActualCostRequest) Reset() {
@@ -1250,6 +1264,13 @@ func (x *GetActualCostRequest) GetPageSize() int32 {
 func (x *GetActualCostRequest) GetPageToken() string {
 	if x != nil {
 		return x.PageToken
+	}
+	return ""
+}
+
+func (x *GetActualCostRequest) GetBillingAccountId() string {
+	if x != nil {
+		return x.BillingAccountId
 	}
 	return ""
 }
@@ -6813,7 +6834,7 @@ const file_finfocus_v1_costsource_proto_rawDesc = "" +
 	"\x11capabilities_enum\x18\x05 \x03(\x0e2\x1d.finfocus.v1.PluginCapabilityR\x10capabilitiesEnum\x1a?\n" +
 	"\x11CapabilitiesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\bR\x05value:\x028\x01\"\xf8\x02\n" +
+	"\x05value\x18\x02 \x01(\bR\x05value:\x028\x01\"\xa6\x03\n" +
 	"\x14GetActualCostRequest\x12\x1f\n" +
 	"\vresource_id\x18\x01 \x01(\tR\n" +
 	"resourceId\x120\n" +
@@ -6824,7 +6845,8 @@ const file_finfocus_v1_costsource_proto_rawDesc = "" +
 	"\adry_run\x18\x06 \x01(\bR\x06dryRun\x12\x1b\n" +
 	"\tpage_size\x18\a \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\b \x01(\tR\tpageToken\x1a7\n" +
+	"page_token\x18\b \x01(\tR\tpageToken\x12,\n" +
+	"\x12billing_account_id\x18\t \x01(\tR\x10billingAccountId\x1a7\n" +
 	"\tTagsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x9c\x02\n" +
