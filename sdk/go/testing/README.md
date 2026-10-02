@@ -423,7 +423,8 @@ Helpers for plugins that implement `RecommendationScorerService.ScoreRecommendat
   `unsupported_signal`, `unspecified_signal`, `identifier_modes`, `empty_request`, `duplicate_ids`,
   `oversize_batch`, `session_echo`, `session_across_batches`, `session_isolation`,
   `omitted_fields_accepted`, `omitted_fields_rejected`, and `unscorable_item` (a recommendation with no
-  resource; scores, a per-item error, or a whole-call `InvalidArgument` all pass, but any per-item error must
+  resource, sent alone when `max_batch_size` is 1; scores, a per-item error, or a whole-call
+  `InvalidArgument` all pass, but a `BATCH_TOO_LARGE` rejection fails and any per-item error must
   follow the rules). It checks no score values. `oversize_batch`
   requires the `BATCH_TOO_LARGE` `ErrorInfo` detail (`IsBatchTooLarge`).
   A seventeenth scenario, `advertised_limits`, runs when `impl` serves `GetPluginInfo` (its served

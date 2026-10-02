@@ -320,3 +320,30 @@ func TestScorerHarness(t *testing.T) {
 	harness.Stop()
 	harness.Stop()
 }
+
+func TestScorerConformance_UnscorableItemRespectsBatchLimit(t *testing.T) {
+	limitOne := plugintesting.NewMockRecommendationScorer(plugintesting.WithScorerMaxBatchSize(1))
+	var sizes []int
+	recording := scoreFunc(func(
+		ctx context.Context, req *pbc.ScoreRecommendationsRequest,
+	) (*pbc.ScoreRecommendationsResponse, error) {
+		sizes = append(sizes, len(req.GetRecommendations()))
+		return limitOne.ScoreRecommendations(ctx, req)
+	})
+	results := runScorerScenarios(t, recording)
+	require.NoError(t, results["unscorable_item"], "a limit-1 scorer that handles the item passes")
+	assert.Equal(t, 1, sizes[len(sizes)-1], "the unscorable item is sent alone")
+
+	wide := plugintesting.NewMockRecommendationScorer(plugintesting.WithScorerMaxBatchSize(25))
+	tooLarge := scoreFunc(func(
+		ctx context.Context, req *pbc.ScoreRecommendationsRequest,
+	) (*pbc.ScoreRecommendationsResponse, error) {
+		if len(req.GetRecommendations()) > 1 {
+			return limitOne.ScoreRecommendations(ctx, req)
+		}
+		return wide.ScoreRecommendations(ctx, req)
+	})
+	err := runScorerScenarios(t, tooLarge)["unscorable_item"]
+	require.Error(t, err, "BATCH_TOO_LARGE alone must not pass")
+	assert.Contains(t, err.Error(), plugintesting.BatchTooLargeReason)
+}

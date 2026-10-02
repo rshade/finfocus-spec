@@ -165,13 +165,26 @@ func scorerScenarios() []scorerScenario {
 }
 
 // scorerCheckUnscorableItem sends a normal recommendation next to one with no
-// resource. A scorer may score both, return a per-item error for the second, or
-// reject the request with InvalidArgument. Any per-item error goes through
+// resource, or the unscorable one alone when the scorer's max_batch_size is 1.
+// A scorer may score both, return a per-item error for the second, or reject
+// the request with InvalidArgument. Any per-item error goes through
 // ValidateScoreRecommendationsResponse, so a scorer that sets
-// resource_type_unsupported fails here.
+// resource_type_unsupported fails here. A BATCH_TOO_LARGE rejection fails the
+// scenario: it says nothing about the missing resource.
 func scorerCheckUnscorableItem(ctx context.Context, client pbc.RecommendationScorerServiceClient) error {
-	recs := append(scorerFixture(1), &pbc.Recommendation{Id: "conformance-no-resource"})
-	_, err := scoreValid(ctx, client, &pbc.ScoreRecommendationsRequest{Recommendations: recs})
+	probe, err := probeScorer(ctx, client)
+	if err != nil {
+		return err
+	}
+	recs := []*pbc.Recommendation{{Id: "conformance-no-resource"}}
+	if probe.GetMaxBatchSize() != 1 {
+		recs = append(scorerFixture(1), recs...)
+	}
+	_, err = scoreValid(ctx, client, &pbc.ScoreRecommendationsRequest{Recommendations: recs})
+	if IsBatchTooLarge(err) {
+		return fmt.Errorf("sent %d recommendations within max_batch_size %d but got %s: %w",
+			len(recs), probe.GetMaxBatchSize(), BatchTooLargeReason, err)
+	}
 	if status.Code(err) == codes.InvalidArgument {
 		return nil
 	}
