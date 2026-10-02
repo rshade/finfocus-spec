@@ -176,12 +176,14 @@ func resolvesOnRecommendation(desc protoreflect.MessageDescriptor, path string) 
 // supported_signals and scorer.calibration hold defined values; that every
 // signal set is supported and, when the request named signals, requested; that
 // requested signals are supported; that numeric signals are finite and within
-// [0, 1] (priority within [0, 3]); and that each non-empty duplicate_group_id
-// is shared by at least two recommendations, unless the request carries a
+// [0, 1] (priority within [0, 3]); that each non-empty duplicate_group_id is
+// shared by at least two recommendations, unless the request carries a
 // session_id the response echoes, when a response may hold one member of a
-// group because the rest are in other batches. A non-empty response
-// session_id must equal the request's. Every failure wraps
-// ErrInvalidScoreResponse.
+// group because the rest are in other batches; that a non-empty response
+// session_id equals the request's; that scorer.provider_request_ids and
+// scorer.models have no empty entries and scorer.model equals models[0] when
+// models is set; and that no per-item error sets resource_type_unsupported.
+// Every failure wraps ErrInvalidScoreResponse.
 func ValidateScoreRecommendationsResponse(
 	req *pbc.ScoreRecommendationsRequest, resp *pbc.ScoreRecommendationsResponse,
 ) error {
@@ -256,6 +258,28 @@ func validateScoreEnvelope(req *pbc.ScoreRecommendationsRequest, resp *pbc.Score
 		return fmt.Errorf("%w: scorer.calibration %d is not defined",
 			ErrInvalidScoreResponse, resp.GetScorer().GetCalibration())
 	}
+	return validateScorerInfo(resp.GetScorer())
+}
+
+// validateScorerInfo checks the multi-call identity fields: no empty entry in
+// provider_request_ids or models, and model equal to models[0] when models is set.
+// The deprecated provider_request_id is not compared with the list.
+func validateScorerInfo(scorer *pbc.ScorerInfo) error {
+	for i, id := range scorer.GetProviderRequestIds() {
+		if id == "" {
+			return fmt.Errorf("%w: scorer.provider_request_ids[%d] is empty", ErrInvalidScoreResponse, i)
+		}
+	}
+	models := scorer.GetModels()
+	for i, model := range models {
+		if model == "" {
+			return fmt.Errorf("%w: scorer.models[%d] is empty", ErrInvalidScoreResponse, i)
+		}
+	}
+	if len(models) > 0 && scorer.GetModel() != models[0] {
+		return fmt.Errorf("%w: scorer.model %q must equal models[0] %q",
+			ErrInvalidScoreResponse, scorer.GetModel(), models[0])
+	}
 	return nil
 }
 
@@ -269,6 +293,10 @@ func validateScoreResult(
 	case *pbc.RecommendationScoreResult_Error:
 		if outcome.Error == nil || outcome.Error.GetCode() == int32(codes.OK) {
 			return fmt.Errorf("%w: results[%d].error.code must not be OK", ErrInvalidScoreResponse, i)
+		}
+		if outcome.Error.GetResourceTypeUnsupported() {
+			return fmt.Errorf("%w: results[%d].error.resource_type_unsupported must not be set by a scorer",
+				ErrInvalidScoreResponse, i)
 		}
 		return nil
 	case *pbc.RecommendationScoreResult_Scores:

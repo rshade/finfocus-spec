@@ -186,3 +186,36 @@ func TestMockRecommendationScorer_RejectsInvalidRequests(t *testing.T) {
 		assert.Equal(t, codes.InvalidArgument, status.Code(err), name)
 	}
 }
+
+func TestMockRecommendationScorer_IdentityOptions(t *testing.T) {
+	scorer := plugintesting.NewMockRecommendationScorer(
+		plugintesting.WithScorerModels("jev-1.13.0", "", "embed-2"),
+		plugintesting.WithScorerProviderRequestIDs("r1", " ", "r2"),
+	)
+	req := &pbc.ScoreRecommendationsRequest{Recommendations: []*pbc.Recommendation{
+		mockRec("ok", "i-1", pbc.RecommendationActionType_RECOMMENDATION_ACTION_TYPE_RIGHTSIZE, nil),
+	}}
+
+	resp, err := scorer.ScoreRecommendations(context.Background(), req)
+	require.NoError(t, err)
+	require.NoError(t, plugintesting.ValidateScoreRecommendationsResponse(req, resp))
+	info := resp.GetScorer()
+	assert.Equal(t, []string{"jev-1.13.0", "embed-2"}, info.GetModels())
+	assert.Equal(t, "jev-1.13.0", info.GetModel())
+	assert.Equal(t, []string{"r1", "r2"}, info.GetProviderRequestIds())
+	//nolint:staticcheck // SA1019: the mock sets the deprecated field for older hosts.
+	assert.Equal(t, "r1", info.GetProviderRequestId())
+
+	plain, err := plugintesting.NewMockRecommendationScorer(plugintesting.WithScorerModels(), plugintesting.WithScorerProviderRequestIDs("")).
+		ScoreRecommendations(context.Background(), req)
+	require.NoError(t, err)
+	assert.Empty(t, plain.GetScorer().GetModels())
+	assert.Empty(t, plain.GetScorer().GetProviderRequestIds())
+}
+
+func TestMockRecommendationScorer_IdentityOptionsPassConformance(t *testing.T) {
+	plugintesting.RunScorerConformance(t, plugintesting.NewMockRecommendationScorer(
+		plugintesting.WithScorerModels("jev-1.13.0", "embed-2"),
+		plugintesting.WithScorerProviderRequestIDs("r1", "r2", "r3"),
+	))
+}

@@ -1141,6 +1141,15 @@ parallel subtests complete.
   `pairwiseDuplicateLimit` (64), map above; both report the lowest repeat and its earliest match. Pass a
   method expression or top-level func as `key`; a closure can allocate and break the 0-alloc tests.
 
+### Multi-Call Scorer Pattern (589-scorer-multi-call)
+
+- `ScorerInfo.provider_request_ids` (5) and `models` (6) are new; `provider_request_id` (4) is deprecated
+  and still set by the mock (with a targeted `//nolint:staticcheck`). `model` must equal `models[0]`, and
+  `models` joins the score cache key; request ids never do.
+- Scorers must not set `ResourceError.resource_type_unsupported` on per-item errors. The
+  `unscorable_item` conformance scenario is the only one that elicits a per-item error, so it is what
+  catches that flag.
+
 ## Active Technologies
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf, buf v1.32.1;
@@ -1156,6 +1165,11 @@ parallel subtests complete.
   no new dependencies (588-allocate-period-selector)
 - N/A (allocation window and selector on AllocateRequest, echoed window on AllocateResponse)
   (588-allocate-period-selector)
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
+  google.golang.org/protobuf, google.golang.org/grpc, connectrpc.com/connect, buf v1.32.1;
+  no new dependencies (589-scorer-multi-call)
+- N/A (ScorerInfo list fields and per-item error rules) (589-scorer-multi-call)
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
   google.golang.org/protobuf (`proto.CloneOf`), buf v1.32.1; no new dependencies (557-price-options)
@@ -1335,6 +1349,9 @@ See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable doc
 - 590-shared-supplemental-harness: The six bufconn harnesses share an unexported generic
   `bufconnHarness`, and the three supplemental duplicate-key checks share `findDuplicate`.
   No exported API, validation rule, or error text changed (issue 561)
+- 589-scorer-multi-call: Added ScorerInfo.provider_request_ids (5) and models (6), deprecated
+  provider_request_id, validator rules for both lists and resource_type_unsupported, the mock options
+  WithScorerModels and WithScorerProviderRequestIDs, and the unscorable_item conformance scenario.
 
 - 557-price-options: Added PriceOption, GetProjectedCostResponse.price_options (16) and
   EstimateCostResponse.price_options (6), three ErrPriceOption* sentinels,

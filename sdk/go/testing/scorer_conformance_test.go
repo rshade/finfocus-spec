@@ -50,6 +50,7 @@ var scorerScenarioNames = []string{
 	"session_isolation",
 	"omitted_fields_accepted",
 	"omitted_fields_rejected",
+	"unscorable_item",
 }
 
 // scoreFunc adapts a function to plugintesting.ScoreServer.
@@ -130,6 +131,32 @@ func brokenScorers() []brokenScorer {
 		return &pbc.RecommendationScores{}
 	}
 	return []brokenScorer{
+		{
+			name: "empty provider request id",
+			impl: scorePostProcess(func(resp *pbc.ScoreRecommendationsResponse) {
+				resp.Scorer.ProviderRequestIds = []string{"req-1", ""}
+			}),
+			fails: []string{"single_recommendation"},
+		},
+		{
+			name: "primary model not first in models",
+			impl: scorePostProcess(func(resp *pbc.ScoreRecommendationsResponse) {
+				resp.Scorer.Model = "embed-2"
+				resp.Scorer.Models = []string{"jev-1.13.0", "embed-2"}
+			}),
+			fails: []string{"single_recommendation"},
+		},
+		{
+			name: "per-item error sets resource_type_unsupported",
+			impl: scorePostProcess(func(resp *pbc.ScoreRecommendationsResponse) {
+				for _, result := range resp.GetResults() {
+					if result.GetError() != nil {
+						result.GetError().ResourceTypeUnsupported = true
+					}
+				}
+			}),
+			fails: []string{"unscorable_item"},
+		},
 		{
 			name:  "session ids change per call",
 			impl:  &driftingSessionScorer{},
@@ -292,4 +319,31 @@ func TestScorerHarness(t *testing.T) {
 
 	harness.Stop()
 	harness.Stop()
+}
+
+func TestScorerConformance_UnscorableItemRespectsBatchLimit(t *testing.T) {
+	limitOne := plugintesting.NewMockRecommendationScorer(plugintesting.WithScorerMaxBatchSize(1))
+	var sizes []int
+	recording := scoreFunc(func(
+		ctx context.Context, req *pbc.ScoreRecommendationsRequest,
+	) (*pbc.ScoreRecommendationsResponse, error) {
+		sizes = append(sizes, len(req.GetRecommendations()))
+		return limitOne.ScoreRecommendations(ctx, req)
+	})
+	results := runScorerScenarios(t, recording)
+	require.NoError(t, results["unscorable_item"], "a limit-1 scorer that handles the item passes")
+	assert.Equal(t, 1, sizes[len(sizes)-1], "the unscorable item is sent alone")
+
+	wide := plugintesting.NewMockRecommendationScorer(plugintesting.WithScorerMaxBatchSize(25))
+	tooLarge := scoreFunc(func(
+		ctx context.Context, req *pbc.ScoreRecommendationsRequest,
+	) (*pbc.ScoreRecommendationsResponse, error) {
+		if len(req.GetRecommendations()) > 1 {
+			return limitOne.ScoreRecommendations(ctx, req)
+		}
+		return wide.ScoreRecommendations(ctx, req)
+	})
+	err := runScorerScenarios(t, tooLarge)["unscorable_item"]
+	require.Error(t, err, "BATCH_TOO_LARGE alone must not pass")
+	assert.Contains(t, err.Error(), plugintesting.BatchTooLargeReason)
 }
