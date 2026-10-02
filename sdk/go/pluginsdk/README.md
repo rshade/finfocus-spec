@@ -690,6 +690,47 @@ func (p *MyPlugin) GetActualCost(
 }
 ```
 
+### Handling Credentials Safely
+
+The SDK cannot enforce either of these rules. The plugin must follow both.
+
+**Fail closed.** `ExtractCredentials` returns `ErrMalformedCredentials` when credential
+metadata arrived but cannot be used. It never returns part of a set. Return that error. Do
+not fall back to the process environment: the host asked for this call to run as a specific
+identity, and the plugin's own credentials would run it as a different one (a confused
+deputy). Only a nil error with an empty set means the plugin uses its process environment.
+
+```go
+creds, err := pluginsdk.ExtractCredentials(ctx)
+if err != nil {
+    return nil, err // never retry with environment credentials
+}
+```
+
+**Filter your own logging.** `Credentials.String`, `GoString`, and the SDK's interceptors
+and middleware never log credential values. That protection covers only SDK code. In gRPC
+mode the incoming metadata still holds every `x-finfocus-credential-*` key, and interceptors
+in `ServeConfig.UnaryInterceptors` see it. In Connect mode the same names arrive as HTTP
+headers, which only HTTP middleware sees. Skip those keys before logging metadata or headers.
+gRPC metadata keys are lowercase and match `pluginsdk.CredentialMetadataPrefix` directly. Go
+stores HTTP header names in canonical form (`X-Finfocus-Credential-...`), so lowercase a
+header name before comparing it.
+
+```go
+func logMetadata(
+    ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler,
+) (any, error) {
+    md, _ := metadata.FromIncomingContext(ctx)
+    for key, values := range md {
+        if strings.HasPrefix(key, pluginsdk.CredentialMetadataPrefix) {
+            continue
+        }
+        log.Debug().Str("key", key).Int("values", len(values)).Msg("incoming metadata")
+    }
+    return handler(ctx, req)
+}
+```
+
 ## Developer Experience Improvements
 
 The SDK includes several helpers to simplify plugin development.

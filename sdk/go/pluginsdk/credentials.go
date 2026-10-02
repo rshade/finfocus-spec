@@ -174,6 +174,11 @@ func WithCredentials(ctx context.Context, creds Credentials) context.Context {
 // A nil context, or a context with no set, returns the zero value and a nil
 // error. That is not a failure. Unusable wire material returns
 // ErrMalformedCredentials and the zero value.
+//
+// Return that error rather than falling back to the process environment, and
+// skip keys that start with [CredentialMetadataPrefix] in any interceptor or
+// middleware that logs metadata or headers. The SDK enforces neither. See "Handling Credentials
+// Safely" in sdk/go/pluginsdk/README.md.
 func ExtractCredentials(ctx context.Context) (Credentials, error) {
 	if ctx == nil {
 		return Credentials{}, nil

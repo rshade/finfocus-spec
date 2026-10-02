@@ -629,6 +629,27 @@ func validateResourceDescriptor(rd *ResourceDescriptor) error {
   and do not log the values. Hosts attach them with `WithCredentials` for that call
   only. Missing per-request credentials is not an error.
 
+#### Handling Credentials Safely
+
+- **Fail closed.** When `ExtractCredentials` returns `ErrMalformedCredentials`, return that
+  error. Do not fall back to the process environment, which would run the call as the
+  wrong identity. Only a nil error with an empty set means the plugin uses its own
+  credentials.
+- **Filter your own logging.** The SDK redacts credentials only in its own code. Your
+  gRPC interceptors and HTTP middleware see every `x-finfocus-credential-*` metadata key or
+  header. Skip keys that start with `pluginsdk.CredentialMetadataPrefix` before logging.
+  HTTP header names arrive in canonical form, so lowercase them before comparing.
+
+```go
+creds, err := pluginsdk.ExtractCredentials(ctx)
+if err != nil {
+    return nil, err // never fall back to environment credentials here
+}
+```
+
+See "Handling Credentials Safely" in [sdk/go/pluginsdk/README.md](sdk/go/pluginsdk/README.md)
+for a metadata-logging interceptor that skips credential keys.
+
 #### Caching
 
 - Cache pricing data to reduce API calls
