@@ -1750,6 +1750,38 @@ resp := pluginsdk.NewActualCostResponse(
 )
 ```
 
+### Billing Account ID on GetActualCost
+
+`GetActualCostRequest.billing_account_id` (field 9) carries the FOCUS billing account id the caller
+knows for the resource. FOCUS validation rejects a record with an empty `billing_account_id`, so this
+field is where a plugin without its own account data gets that value.
+
+- **Empty**: the caller did not supply one. Do not invent a value. If you cannot build a valid record
+  without it, leave `ActualCostResult.FocusRecord` unset and still return the cost.
+- **Set**: any FOCUS record you attach must carry exactly this value.
+- It is not a filter, it never changes `Cost`, and it is never carried in `Tags`.
+
+```go
+func attachFocusRecord(req *pbc.GetActualCostRequest, result *pbc.ActualCostResult,
+    builder *pluginsdk.FocusRecordBuilder) {
+    if req.GetBillingAccountId() == "" {
+        return // no id supplied: return the cost without a FOCUS record
+    }
+    // builder already holds the billing period, charge, service, and cost fields.
+    record, err := builder.
+        WithIdentity("", req.GetBillingAccountId(), "").
+        WithServiceProvider("Azure").
+        Build()
+    if err != nil {
+        return // record is not valid: still return the cost
+    }
+    result.FocusRecord = record
+}
+```
+
+`plugintesting.ValidateActualCostBillingAccount` checks the echo rule for one response, and the
+conformance test `RPCCorrectness_GetActualCostBillingAccount` runs it against your plugin.
+
 ### FallbackHint Enum
 
 The `FallbackHint` enum signals to the core system whether it should query other plugins:

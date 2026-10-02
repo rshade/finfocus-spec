@@ -1033,7 +1033,23 @@ parallel subtests complete.
   check score values. Scenario funcs are named `scorerCheck*` to avoid clashing with allocator ones.
 - Trust rules and threshold guidance (non-normative, synthetic data) are in `docs/recommendation-scoring.md`.
 
+### Actual Cost Billing Account Pattern (585-actual-cost-billing-account-id)
+
+- `GetActualCostRequest.billing_account_id` (field 9) is caller-supplied. Empty means not supplied:
+  plugins must not invent one and may leave `focus_record` unset. When set, any attached FOCUS record
+  must carry it exactly. Field 10 is held by comment (not `reserved`) for a later billing account name.
+- `MockPlugin.GetActualCost` attaches a FOCUS record per result only when the id is set (built as a
+  struct literal, since `sdk/go/testing` cannot import `pluginsdk`). The batch path never sets it.
+- `plugintesting.ValidateActualCostBillingAccount` and `RPCCorrectness_GetActualCostBillingAccount`
+  (Standard level) check only the echo rule; "do not invent" cannot be tested mechanically.
+- In a worktree, `make generate` uses mise's buf, so there is no `bin/buf`; run `buf breaking` directly.
+
 ## Active Technologies
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
+  google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1; no new dependencies
+  (585-actual-cost-billing-account-id)
+- N/A (one optional string on GetActualCostRequest) (585-actual-cost-billing-account-id)
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
   google.golang.org/protobuf, google.golang.org/grpc, connectrpc.com/connect,
@@ -1184,6 +1200,10 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+
+- 585-actual-cost-billing-account-id: Added GetActualCostRequest.billing_account_id (field 9),
+  MockPlugin FOCUS records keyed on it, ValidateActualCostBillingAccount with
+  ErrBillingAccountIDMismatch, and RPCCorrectness_GetActualCostBillingAccount. Closes #590.
 
 - 547-invoice-dataset-rpcs: Added SupplementalDatasetService.GetBillingPeriods and
   GetInvoiceDetails, PLUGIN_CAPABILITY_INVOICE_DATA = 17, pluginsdk.InvoiceDatasetProvider,

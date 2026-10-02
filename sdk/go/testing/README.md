@@ -284,6 +284,7 @@ The framework provides comprehensive response validation:
 err := plugintesting.ValidateNameResponse(nameResp)
 err := plugintesting.ValidateSupportsResponse(supportsResp)
 err := plugintesting.ValidateActualCostResponse(actualCostResp)
+err := plugintesting.ValidateActualCostBillingAccount(actualCostReq, actualCostResp)
 err := plugintesting.ValidateProjectedCostResponse(projectedResp)
 err := plugintesting.ValidatePricingSpecResponse(specResp)
 
@@ -291,6 +292,13 @@ err := plugintesting.ValidatePricingSpecResponse(specResp)
 err := plugintesting.ValidatePricingSpec(spec)
 err := plugintesting.ValidateActualCostResult(result)
 ```
+
+`ValidateActualCostBillingAccount` enforces the `GetActualCostRequest.billing_account_id` echo rule:
+when the request carries a non-empty id, every attached FOCUS record must carry the same id, or the
+error wraps `ErrBillingAccountIDMismatch` and names the field, for example
+`results[1].focus_record.billing_account_id`. Results without a FOCUS record pass, and an empty request
+id places no constraint on the records. `MockPlugin` attaches a FOCUS record to each actual cost
+result only when the request carries an id.
 
 ### Usage Source Testing
 
@@ -698,6 +706,8 @@ The conformance suite provides multi-level validation across four test categorie
 - `RPCCorrectness_ErrorHandling` - Proper gRPC error codes
 - `RPCCorrectness_TimeRangeValidation` - Time range validation
 - `RPCCorrectness_ConsistentResponses` - Response consistency
+- `RPCCorrectness_GetActualCostBillingAccount` - FOCUS records echo the request `billing_account_id`
+  (Standard level; plugins without FOCUS records or with no data pass)
 - `RPCCorrectness_GetRecommendations_Pagination` - Pagination token handling
 - `RPCCorrectness_GetRecommendations_Filtering` - Filter criteria validation
 - `RPCCorrectness_GetRecommendations_ActionDetails` - Action type details

@@ -53,6 +53,12 @@ const (
 	// Usage unit constants.
 	usageUnitHour = "hour"
 
+	// Fixed values for the FOCUS records attached to mock actual cost results.
+	mockFocusBillingCurrency   = "USD"
+	mockFocusChargeDescription = "Mock compute usage"
+	mockFocusServiceName       = "Mock Compute"
+	mockFocusConsumedUnit      = "Hours"
+
 	// Time and performance constants.
 	defaultDataPoints    = 24   // 24 hours of hourly data
 	defaultBaseRate      = 0.05 // Default hourly rate
@@ -1091,6 +1097,11 @@ func (m *MockPlugin) GetActualCost(
 			result.ExpiresAt = timestamppb.New(time.Now().Add(m.ExpiresAtDuration))
 		}
 
+		// A FOCUS record needs a billing account id; never invent one when the caller sent none.
+		if req.GetBillingAccountId() != "" {
+			result.FocusRecord = m.mockActualCostFocusRecord(req, result, timestamp)
+		}
+
 		results = append(results, result)
 	}
 
@@ -1106,6 +1117,39 @@ func (m *MockPlugin) GetActualCost(
 		NextPageToken: nextToken,
 		TotalCount:    totalCount,
 	}, nil
+}
+
+// mockActualCostFocusRecord builds the FOCUS record for one hourly mock result, using the
+// caller-supplied billing account id. The billing period is the UTC calendar month that
+// contains the result.
+func (m *MockPlugin) mockActualCostFocusRecord(
+	req *pbc.GetActualCostRequest,
+	result *pbc.ActualCostResult,
+	timestamp time.Time,
+) *pbc.FocusCostRecord {
+	utc := timestamp.UTC()
+	monthStart := time.Date(utc.Year(), utc.Month(), 1, 0, 0, 0, 0, time.UTC)
+
+	return &pbc.FocusCostRecord{
+		ServiceProviderName: m.PluginName,
+		BillingAccountId:    req.GetBillingAccountId(),
+		ResourceId:          req.GetResourceId(),
+		BillingPeriodStart:  timestamppb.New(monthStart),
+		BillingPeriodEnd:    timestamppb.New(monthStart.AddDate(0, 1, 0)),
+		BillingCurrency:     mockFocusBillingCurrency,
+		ChargePeriodStart:   timestamppb.New(utc),
+		ChargePeriodEnd:     timestamppb.New(utc.Add(time.Hour)),
+		ChargeCategory:      pbc.FocusChargeCategory_FOCUS_CHARGE_CATEGORY_USAGE,
+		ChargeClass:         pbc.FocusChargeClass_FOCUS_CHARGE_CLASS_REGULAR,
+		ChargeDescription:   mockFocusChargeDescription,
+		ServiceCategory:     pbc.FocusServiceCategory_FOCUS_SERVICE_CATEGORY_COMPUTE,
+		ServiceName:         mockFocusServiceName,
+		ConsumedQuantity:    result.GetUsageAmount(),
+		ConsumedUnit:        mockFocusConsumedUnit,
+		BilledCost:          result.GetCost(),
+		EffectiveCost:       result.GetCost(),
+		ListCost:            result.GetCost(),
+	}
 }
 
 // shouldOmitMetric checks if a metric kind should be omitted from responses.

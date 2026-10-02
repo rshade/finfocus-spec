@@ -1,8 +1,11 @@
 package testing_test
 
 import (
+	"context"
+	"errors"
 	"testing"
 
+	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 	plugintesting "github.com/rshade/finfocus-spec/sdk/go/testing"
 )
 
@@ -134,6 +137,80 @@ func TestRPCCorrectnessPanicRecovery(t *testing.T) {
 			result := test.TestFunc(harness)
 			// We just verify it doesn't panic
 			_ = result
+		})
+	}
+}
+
+// rewritingBillingAccountPlugin attaches FOCUS records carrying an id other than the request's.
+type rewritingBillingAccountPlugin struct {
+	*plugintesting.MockPlugin
+}
+
+func (p *rewritingBillingAccountPlugin) GetActualCost(
+	ctx context.Context,
+	req *pbc.GetActualCostRequest,
+) (*pbc.GetActualCostResponse, error) {
+	resp, err := p.MockPlugin.GetActualCost(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	for _, result := range resp.GetResults() {
+		if result.GetFocusRecord() != nil {
+			result.FocusRecord.BillingAccountId = "invented-account"
+		}
+	}
+	return resp, nil
+}
+
+func billingAccountRPCTest(t *testing.T) plugintesting.ConformanceSuiteTest {
+	t.Helper()
+	for _, test := range plugintesting.RPCCorrectnessTests() {
+		if test.Name == "RPCCorrectness_GetActualCostBillingAccount" {
+			return test
+		}
+	}
+	t.Fatal("RPCCorrectness_GetActualCostBillingAccount is not registered")
+	return plugintesting.ConformanceSuiteTest{}
+}
+
+// TestRPCCorrectnessGetActualCostBillingAccount checks the billing account echo rule.
+func TestRPCCorrectnessGetActualCostBillingAccount(t *testing.T) {
+	test := billingAccountRPCTest(t)
+	if test.MinLevel != plugintesting.ConformanceLevelStandard {
+		t.Errorf("MinLevel = %v, want Standard", test.MinLevel)
+	}
+
+	erroring := plugintesting.NewMockPlugin()
+	erroring.ShouldErrorOnActualCost = true
+
+	cases := []struct {
+		name        string
+		plugin      pbc.CostSourceServiceServer
+		wantSuccess bool
+	}{
+		{name: "echoing plugin passes", plugin: plugintesting.NewMockPlugin(), wantSuccess: true},
+		{
+			name:        "plugin rewriting the id fails",
+			plugin:      &rewritingBillingAccountPlugin{MockPlugin: plugintesting.NewMockPlugin()},
+			wantSuccess: false,
+		},
+		{name: "plugin with no data passes", plugin: erroring, wantSuccess: true},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			harness := plugintesting.NewTestHarness(tc.plugin)
+			harness.Start(t)
+			defer harness.Stop()
+
+			result := test.TestFunc(harness)
+			if result.Success != tc.wantSuccess {
+				t.Fatalf("Success = %v, want %v (error: %v, details: %s)",
+					result.Success, tc.wantSuccess, result.Error, result.Details)
+			}
+			if !tc.wantSuccess && !errors.Is(result.Error, plugintesting.ErrBillingAccountIDMismatch) {
+				t.Errorf("Error = %v, want ErrBillingAccountIDMismatch", result.Error)
+			}
 		})
 	}
 }

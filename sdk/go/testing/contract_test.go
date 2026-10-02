@@ -930,3 +930,70 @@ func TestValidateGetStatsRequest(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateActualCostBillingAccount(t *testing.T) {
+	withID := &pbc.GetActualCostRequest{ResourceId: "i-1", BillingAccountId: "ba-123"}
+	record := func(id string) *pbc.ActualCostResult {
+		return &pbc.ActualCostResult{FocusRecord: &pbc.FocusCostRecord{BillingAccountId: id}}
+	}
+	response := func(results ...*pbc.ActualCostResult) *pbc.GetActualCostResponse {
+		return &pbc.GetActualCostResponse{Results: results}
+	}
+
+	tests := []struct {
+		name      string
+		req       *pbc.GetActualCostRequest
+		resp      *pbc.GetActualCostResponse
+		wantErr   error
+		wantField string
+	}{
+		{name: "nil request", req: nil, resp: response(), wantErr: plugintesting.ErrNilRequest},
+		{name: "nil response has no records", req: withID, resp: nil},
+		{
+			name: "empty request id accepts any record",
+			req:  &pbc.GetActualCostRequest{ResourceId: "i-1"},
+			resp: response(record("plugin-known")),
+		},
+		{name: "matching id", req: withID, resp: response(record("ba-123"), record("ba-123"))},
+		{name: "results without records", req: withID, resp: response(&pbc.ActualCostResult{}, record("ba-123"))},
+		{
+			name:      "mismatched id",
+			req:       withID,
+			resp:      response(record("ba-123"), record("other")),
+			wantErr:   plugintesting.ErrBillingAccountIDMismatch,
+			wantField: "results[1].focus_record.billing_account_id",
+		},
+		{
+			name:      "empty record id",
+			req:       withID,
+			resp:      response(record("")),
+			wantErr:   plugintesting.ErrBillingAccountIDMismatch,
+			wantField: "results[0].focus_record.billing_account_id",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := plugintesting.ValidateActualCostBillingAccount(tt.req, tt.resp)
+			if tt.wantErr == nil {
+				if err != nil {
+					t.Fatalf("ValidateActualCostBillingAccount() error = %v, want nil", err)
+				}
+				return
+			}
+			if !errors.Is(err, tt.wantErr) {
+				t.Fatalf("ValidateActualCostBillingAccount() error = %v, want %v", err, tt.wantErr)
+			}
+			if tt.wantField == "" {
+				return
+			}
+			var contractErr *plugintesting.ContractError
+			if !errors.As(err, &contractErr) {
+				t.Fatalf("error %v is not a ContractError", err)
+			}
+			if contractErr.Field != tt.wantField {
+				t.Errorf("ContractError.Field = %q, want %q", contractErr.Field, tt.wantField)
+			}
+		})
+	}
+}
