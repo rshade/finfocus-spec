@@ -260,6 +260,25 @@ plugin.ProjectedCostPriceOptions = []*pbc.PriceOption{{
 }}
 ```
 
+### Region Prices
+
+`RegionPrices` makes `GetProjectedCost` and `EstimateCost` return `region_prices`. The rows are
+cloned onto each response and never change `cost_per_month` or `cost_monthly`. Dry-run responses
+never carry them.
+
+```go
+plugin := plugintesting.NewMockPlugin()
+plugin.RegionPrices = []*pbc.RegionPrice{
+    {Region: "eastus", UnitPrice: 0.09, MonthlyCost: 65.70, Currency: "USD"},
+}
+```
+
+`ValidateRegionPrices(rows)` holds the row rules: a region, finite non-negative prices, and an ISO
+4217 currency. Errors wrap `ErrInvalidRegionPrice`. `ValidateProjectedCostResponse` and
+`ValidateEstimateCostResponse` apply it, and the projected validator also returns
+`ErrRegionPricesWithDryRun` for rows on a dry-run response. `pluginsdk` uses the same function and
+sentinels, so plugin self-validation and the conformance suite agree.
+
 ### Batch Cost Testing
 
 `MockPlugin` includes batch RPC controls for conformance and integration tests:

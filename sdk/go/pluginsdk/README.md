@@ -2180,6 +2180,40 @@ if errors.Is(err, pluginsdk.ErrPriceOptionInvalidValue) {
 }
 ```
 
+## Region Prices (region_prices)
+
+`GetProjectedCostResponse.region_prices` (field 17) and `EstimateCostResponse.region_prices`
+(field 7) list the same resource's retail price in other regions. The list is advisory. The primary
+cost fields stay the requested region's price, and no rule ties the rows to them, so the rows are
+never summed or compared. An empty list means the plugin supplied no other regions.
+
+```go
+resp := pluginsdk.NewGetProjectedCostResponse(
+    pluginsdk.WithProjectedCostDetails(0.096, "USD", 70.08, "Standard_B2s in eastus2"),
+    pluginsdk.WithProjectedCostRegionPrices(
+        &pbc.RegionPrice{Region: "eastus", UnitPrice: 0.09, MonthlyCost: 65.70, Currency: "USD"},
+        &pbc.RegionPrice{Region: "westeurope", UnitPrice: 0.11, MonthlyCost: 80.30, Currency: "EUR"},
+    ),
+)
+if err := pluginsdk.ValidateGetProjectedCostResponse(resp); err != nil {
+    return nil, err
+}
+```
+
+`WithEstimateCostRegionPrices` does the same for `EstimateCostResponse`. Both options deep-copy the
+rows and do not validate. `ValidateGetProjectedCostResponse` and `ValidateEstimateCostResponse`
+reject a row that:
+
+- is nil
+- has an empty `region`
+- has a `unit_price` or `monthly_cost` that is NaN, infinite, or negative (zero is a real price)
+- has a `currency` that is not an ISO 4217 code (rows are never converted to the parent currency)
+
+Errors wrap `ErrInvalidRegionPrice` and name `region_prices[i]` and the field. A dry-run projected
+response that carries rows fails with `ErrRegionPricesWithDryRun`. Omit a region you could not
+price instead of sending a zero row. Validation does not reject duplicate regions, but list each
+region once. A response without rows validates as before, with 0 allocations.
+
 ## Pagination Helpers
 
 The SDK provides pagination helpers for both `GetRecommendations` and `GetActualCost` RPCs.

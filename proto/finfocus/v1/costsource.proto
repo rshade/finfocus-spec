@@ -584,11 +584,15 @@ message GetProjectedCostResponse {
   //     Consumers must not count that entry as a second charge.
   //   - It must be empty on dry-run responses.
   //
-  // Field 17 is held for a later per-region price list. Do not use it for
-  // anything else.
-  //
   // Backward compatibility: empty when not populated; older consumers skip it.
   repeated PriceOption price_options = 16;
+
+  // region_prices lists retail prices for the same resource in other regions.
+  // Advisory: it is never summed into cost_per_month, and cost_per_month,
+  // unit_price, and currency stay the requested region's price. Empty means the
+  // plugin supplied no other regions. A region with no price is omitted, never
+  // sent as a zero row. Must be empty when dry_run_result is set.
+  repeated RegionPrice region_prices = 17;
 }
 
 // PriceOption is one alternative retail price for the resource on the parent
@@ -643,6 +647,23 @@ message PriceOption {
   // It is negative when this option costs more, and 0 when the primary is 0.
   // The plugin computes it; the SDK does not recompute or check the formula.
   double savings_fraction = 7;
+}
+
+// RegionPrice is one region's retail price for the same resource and basis as the
+// response that carries it. It is advisory: it is never summed into, compared with,
+// or required to match the response's primary cost.
+message RegionPrice {
+  // region is the provider's region name, for example "eastus". Required.
+  string region = 1;
+  // unit_price uses the same basis as the parent response's unit price.
+  // Finite and non-negative. Zero is a real price, for example a free tier.
+  double unit_price = 2;
+  // monthly_cost uses the same basis as the parent response's monthly cost.
+  // Finite and non-negative.
+  double monthly_cost = 3;
+  // currency is the ISO 4217 code for this row. It may differ from the parent
+  // response's currency. Rows are never converted.
+  string currency = 4;
 }
 
 // GetPricingSpecRequest contains the resource descriptor for pricing specification.
@@ -1364,10 +1385,13 @@ message EstimateCostResponse {
   // summed into or replacing cost_monthly, and empty when the plugin did not
   // supply alternatives. savings_fraction compares monthly costs, because this
   // message has no unit price.
-  //
-  // Field 7 is held for a later per-region price list. Do not use it for
-  // anything else.
   repeated PriceOption price_options = 6;
+
+  // region_prices lists retail prices for the same resource in other regions.
+  // Advisory: it is never summed into cost_monthly, which stays the requested
+  // configuration's price. Empty means the plugin supplied no other regions. A
+  // region with no price is omitted, never sent as a zero row.
+  repeated RegionPrice region_prices = 7;
 }
 
 // =============================================================================

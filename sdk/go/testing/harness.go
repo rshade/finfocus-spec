@@ -341,6 +341,15 @@ func ValidateProjectedCostResponse(response *pbc.GetProjectedCostResponse) error
 		return fmt.Errorf("cost per month cannot be negative: %f", response.GetCostPerMonth())
 	}
 
+	if rows := response.GetRegionPrices(); len(rows) > 0 {
+		if response.GetDryRunResult() != nil {
+			return ErrRegionPricesWithDryRun
+		}
+		if err := ValidateRegionPrices(rows); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -409,6 +418,10 @@ func ValidateEstimateCostResponse(response *pbc.EstimateCostResponse) error {
 
 	if response.GetCostMonthly() < 0 {
 		return fmt.Errorf("cost_monthly cannot be negative: %f", response.GetCostMonthly())
+	}
+
+	if rows := response.GetRegionPrices(); len(rows) > 0 {
+		return ValidateRegionPrices(rows)
 	}
 
 	return nil
