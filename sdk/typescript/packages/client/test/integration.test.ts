@@ -27,6 +27,22 @@ import {
   GetBudgetsRequestSchema
 } from '../src/generated/finfocus/v1/budget_pb.js';
 import { RecommendationPriority } from '../src/generated/finfocus/v1/costsource_pb.js';
+import { FocusPricingCategory } from '../src/generated/finfocus/v1/enums_pb.js';
+import type { PriceOption } from '../src/generated/finfocus/v1/costsource_pb.js';
+
+function expectPriceOptions(options: PriceOption[]) {
+  expect(options).toHaveLength(2);
+  expect(options[0].category).toBe(FocusPricingCategory.COMMITTED);
+  expect(options[0].model).toBe("Reservation");
+  expect(options[0].term).toBe("1 Year");
+  expect(options[0].unitPrice).toBe(0.0573);
+  expect(options[0].monthlyCost).toBe(41.83);
+  expect(options[0].upfrontCost).toBe(502.0);
+  expect(options[0].savingsFraction).toBe(0.403125);
+  expect(options[1].model).toBe("SavingsPlan");
+  expect(options[1].term).toBe("3 Years");
+  expect(options[1].upfrontCost).toBe(0);
+}
 
 const server = setupServer(...handlers);
 
@@ -93,6 +109,7 @@ describe('CostSourceClient Integration', () => {
     expect(response.costBreakdown.root_volume).toBe(30.0);
     const componentSum = Object.values(response.costBreakdown).reduce((sum, v) => sum + v, 0);
     expect(componentSum).toBeCloseTo(response.costPerMonth, 9);
+    expectPriceOptions(response.priceOptions);
   });
 
   it('fetches pricing specification', async () => {
@@ -113,6 +130,7 @@ describe('CostSourceClient Integration', () => {
 
     expect(response.costMonthly).toBe(200.0);
     expect(response.currency).toBe("USD");
+    expectPriceOptions(response.priceOptions);
   });
 
   it('fetches recommendations', async () => {

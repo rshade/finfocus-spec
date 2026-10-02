@@ -238,6 +238,28 @@ plugin := plugintesting.NewMockPlugin()
 plugin.ProjectedCostBreakdown = map[string]float64{"compute": 3, "root_volume": 1} // 75% / 25%
 ```
 
+### Price Options
+
+`ProjectedCostPriceOptions` and `EstimateCostPriceOptions` make `GetProjectedCost` and
+`EstimateCost` return `price_options`. Each response gets a deep copy, so changing a response
+never changes the mock or a later response. Entries are returned as configured: the mock does not
+validate them or compute `savings_fraction`, so a test can feed invalid options to a host on
+purpose. `cost_per_month` and `cost_monthly` are unchanged. Nil (the default) means no options,
+dry-run projected responses never carry them, and batch results include them.
+
+```go
+plugin := plugintesting.NewMockPlugin()
+plugin.ProjectedCostPriceOptions = []*pbc.PriceOption{{
+    Category:        pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_COMMITTED,
+    Model:           "Reservation",
+    Term:            "1 Year",
+    UnitPrice:       0.0065,
+    MonthlyCost:     4.745,
+    UpfrontCost:     56.94,
+    SavingsFraction: 0.375,
+}}
+```
+
 ### Batch Cost Testing
 
 `MockPlugin` includes batch RPC controls for conformance and integration tests:

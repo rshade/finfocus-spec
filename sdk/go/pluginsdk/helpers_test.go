@@ -2865,6 +2865,110 @@ func TestWithProjectedCostBreakdown(t *testing.T) {
 	})
 }
 
+// reservationOption returns a 1-year reservation for a 0.096/hour Consumption price.
+func reservationOption() *pbc.PriceOption {
+	return &pbc.PriceOption{
+		Category:        pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_COMMITTED,
+		Model:           "Reservation",
+		Term:            "1 Year",
+		UnitPrice:       0.0573,
+		MonthlyCost:     41.83,
+		UpfrontCost:     502.00,
+		SavingsFraction: 0.403125,
+	}
+}
+
+// savingsPlanOption returns a 3-year savings plan for the same price.
+func savingsPlanOption() *pbc.PriceOption {
+	return &pbc.PriceOption{
+		Category:        pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_COMMITTED,
+		Model:           "SavingsPlan",
+		Term:            "3 Years",
+		UnitPrice:       0.0612,
+		MonthlyCost:     44.68,
+		SavingsFraction: 0.3625,
+	}
+}
+
+func TestWithProjectedCostPriceOptions(t *testing.T) {
+	t.Parallel()
+
+	t.Run("no_arguments_leave_field_empty", func(t *testing.T) {
+		t.Parallel()
+		resp := pluginsdk.NewGetProjectedCostResponse(pluginsdk.WithProjectedCostPriceOptions())
+		assert.Nil(t, resp.GetPriceOptions())
+	})
+
+	t.Run("copies_entries", func(t *testing.T) {
+		t.Parallel()
+		resp := pluginsdk.NewGetProjectedCostResponse(
+			pluginsdk.WithProjectedCostDetails(0.096, "USD", 70.08, "Consumption"),
+			pluginsdk.WithProjectedCostPriceOptions(reservationOption(), savingsPlanOption()),
+		)
+		require.Len(t, resp.GetPriceOptions(), 2)
+		assert.True(t, proto.Equal(reservationOption(), resp.GetPriceOptions()[0]))
+		assert.True(t, proto.Equal(savingsPlanOption(), resp.GetPriceOptions()[1]))
+		assert.InDelta(t, 70.08, resp.GetCostPerMonth(), 0)
+		require.NoError(t, pluginsdk.ValidateGetProjectedCostResponse(resp))
+	})
+
+	t.Run("deep_copies_input", func(t *testing.T) {
+		t.Parallel()
+		input := reservationOption()
+		resp := pluginsdk.NewGetProjectedCostResponse(pluginsdk.WithProjectedCostPriceOptions(input))
+		input.UnitPrice = 99
+		assert.InDelta(t, 0.0573, resp.GetPriceOptions()[0].GetUnitPrice(), 0)
+	})
+
+	t.Run("keeps_nil_entries", func(t *testing.T) {
+		t.Parallel()
+		resp := pluginsdk.NewGetProjectedCostResponse(
+			pluginsdk.WithProjectedCostPriceOptions(reservationOption(), nil),
+		)
+		require.Len(t, resp.GetPriceOptions(), 2)
+		assert.Nil(t, resp.GetPriceOptions()[1])
+		require.ErrorIs(t, pluginsdk.ValidateGetProjectedCostResponse(resp), pluginsdk.ErrPriceOptionNil)
+	})
+}
+
+func TestWithEstimatePriceOptions(t *testing.T) {
+	t.Parallel()
+
+	t.Run("no_arguments_leave_field_empty", func(t *testing.T) {
+		t.Parallel()
+		resp := pluginsdk.NewEstimateCostResponse(pluginsdk.WithEstimatePriceOptions())
+		assert.Nil(t, resp.GetPriceOptions())
+	})
+
+	t.Run("copies_entries", func(t *testing.T) {
+		t.Parallel()
+		resp := pluginsdk.NewEstimateCostResponse(
+			pluginsdk.WithEstimateCost("USD", 70.08),
+			pluginsdk.WithEstimatePriceOptions(reservationOption(), savingsPlanOption()),
+		)
+		require.Len(t, resp.GetPriceOptions(), 2)
+		assert.True(t, proto.Equal(reservationOption(), resp.GetPriceOptions()[0]))
+		assert.True(t, proto.Equal(savingsPlanOption(), resp.GetPriceOptions()[1]))
+		assert.InDelta(t, 70.08, resp.GetCostMonthly(), 0)
+		require.NoError(t, pluginsdk.ValidateEstimateCostResponse(resp))
+	})
+
+	t.Run("deep_copies_input", func(t *testing.T) {
+		t.Parallel()
+		input := reservationOption()
+		resp := pluginsdk.NewEstimateCostResponse(pluginsdk.WithEstimatePriceOptions(input))
+		input.UnitPrice = 99
+		assert.InDelta(t, 0.0573, resp.GetPriceOptions()[0].GetUnitPrice(), 0)
+	})
+
+	t.Run("keeps_nil_entries", func(t *testing.T) {
+		t.Parallel()
+		resp := pluginsdk.NewEstimateCostResponse(pluginsdk.WithEstimatePriceOptions(nil))
+		require.Len(t, resp.GetPriceOptions(), 1)
+		require.ErrorIs(t, pluginsdk.ValidateEstimateCostResponse(resp), pluginsdk.ErrPriceOptionNil)
+	})
+}
+
 // BenchmarkWithProjectedCostBreakdown measures building a response with the
 // copying breakdown option for empty, typical, and maximum-size maps.
 func BenchmarkWithProjectedCostBreakdown(b *testing.B) {
@@ -2886,6 +2990,27 @@ func BenchmarkWithProjectedCostBreakdown(b *testing.B) {
 			b.ReportAllocs()
 			for range b.N {
 				_ = pluginsdk.NewGetProjectedCostResponse(pluginsdk.WithProjectedCostBreakdown(tc.breakdown))
+			}
+		})
+	}
+}
+
+// BenchmarkWithProjectedCostPriceOptions measures building a response with the
+// deep-copying option for zero and two options.
+func BenchmarkWithProjectedCostPriceOptions(b *testing.B) {
+	cases := []struct {
+		name    string
+		options []*pbc.PriceOption
+	}{
+		{"empty", nil},
+		{"2_options", []*pbc.PriceOption{reservationOption(), savingsPlanOption()}},
+	}
+
+	for _, tc := range cases {
+		b.Run(tc.name, func(b *testing.B) {
+			b.ReportAllocs()
+			for range b.N {
+				_ = pluginsdk.NewGetProjectedCostResponse(pluginsdk.WithProjectedCostPriceOptions(tc.options...))
 			}
 		})
 	}

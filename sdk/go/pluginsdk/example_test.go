@@ -642,3 +642,46 @@ func Example_contractCommitmentProvider() {
 	// ri-2025b of 2
 	// InvalidArgument
 }
+
+// ExampleWithProjectedCostPriceOptions reports a 1-year reservation and a
+// 3-year savings plan next to the selected Consumption price. The options do
+// not change cost_per_month.
+func ExampleWithProjectedCostPriceOptions() {
+	const consumption = 0.096
+	resp := pluginsdk.NewGetProjectedCostResponse(
+		pluginsdk.WithProjectedCostDetails(consumption, "USD", 70.08, "Consumption"),
+		pluginsdk.WithProjectedCostPriceOptions(
+			&pbc.PriceOption{
+				Category:        pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_COMMITTED,
+				Model:           "Reservation",
+				Term:            "1 Year",
+				UnitPrice:       0.0573,
+				MonthlyCost:     41.83,
+				UpfrontCost:     502.00,
+				SavingsFraction: (consumption - 0.0573) / consumption,
+			},
+			&pbc.PriceOption{
+				Category:        pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_COMMITTED,
+				Model:           "SavingsPlan",
+				Term:            "3 Years",
+				UnitPrice:       0.0612,
+				MonthlyCost:     44.68,
+				SavingsFraction: (consumption - 0.0612) / consumption,
+			},
+		),
+	)
+
+	for _, o := range resp.GetPriceOptions() {
+		fmt.Printf("%s %s: %.4f/hour, %.2f/month, %.2f upfront, saves %.1f%%\n",
+			o.GetModel(), o.GetTerm(), o.GetUnitPrice(), o.GetMonthlyCost(),
+			o.GetUpfrontCost(), 100*o.GetSavingsFraction())
+	}
+	fmt.Printf("cost_per_month: %.2f\n", resp.GetCostPerMonth())
+	fmt.Println("valid:", pluginsdk.ValidateGetProjectedCostResponse(resp))
+
+	// Output:
+	// Reservation 1 Year: 0.0573/hour, 41.83/month, 502.00 upfront, saves 40.3%
+	// SavingsPlan 3 Years: 0.0612/hour, 44.68/month, 0.00 upfront, saves 36.2%
+	// cost_per_month: 70.08
+	// valid: <nil>
+}

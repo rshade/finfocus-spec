@@ -21,6 +21,7 @@ utilities for plugin development.
 - [Testing Utilities](#testing-utilities)
 - [Error Helpers](#error-helpers)
 - [Cost Breakdown Helpers](#cost-breakdown-helpers-cost_breakdown)
+- [Price Option Helpers](#price-option-helpers-price_options)
 - [Pagination Helpers](#pagination-helpers)
 - [FOCUS 1.2 Cost Records](#focus-12-cost-records)
 - [FOCUS 1.3 Extensions](#focus-13-extensions)
@@ -2052,6 +2053,132 @@ if errors.Is(err, pluginsdk.ErrCostBreakdownSumMismatch) {
 ```
 
 `billing_detail` is unchanged. Plugins may keep describing components there for human readers.
+
+## Price Option Helpers (price_options)
+
+`GetProjectedCostResponse.price_options` (field 16) and `EstimateCostResponse.price_options`
+(field 6) list alternative retail prices for the same resource, such as on-demand, reservation,
+and savings-plan rates. Each entry is a `PriceOption`.
+
+The list is advisory. It is never summed into, and never replaces, `cost_per_month` or
+`cost_monthly`, which stay the one selected price. This is the difference from `cost_breakdown`:
+a breakdown splits the selected price into components that must add up to it, while price options
+are other prices a buyer could choose instead. An empty list means the plugin did not supply
+alternatives, and plugins that never set it stay valid.
+
+### Fields
+
+| Field | Meaning |
+|-------|---------|
+| `category` | `FocusPricingCategory`: STANDARD (on-demand), COMMITTED (reservation, savings plan), DYNAMIC (spot) |
+| `model` | Provider pricing model name, such as `Consumption`, `Reservation`, `SavingsPlan` (free text) |
+| `term` | Empty when the model has no term; otherwise the provider's term string, such as `1 Year` |
+| `unit_price` | Price per unit on the same basis as the parent response |
+| `monthly_cost` | This option's monthly cost; never added to the parent's monthly cost |
+| `upfront_cost` | Amount charged up front for the term; 0 when there is none |
+| `savings_fraction` | `(primary - option) / primary`, unrounded; negative when the option costs more |
+
+`savings_fraction` is computed by the plugin. The primary is the parent's selected price:
+
+- `GetProjectedCostResponse`: the parent `unit_price` compared to the option's `unit_price`
+- `EstimateCostResponse`, which has no unit price: `cost_monthly` compared to the option's `monthly_cost`
+
+When the primary is 0, report `savings_fraction` as 0. A reservation published as a term total
+goes in `upfront_cost`, with `unit_price` set to the hourly equivalent. The list may include an
+entry for the selected price itself (`savings_fraction` 0); consumers must not count it twice.
+
+### Rules
+
+`ValidateGetProjectedCostResponse` and `ValidateEstimateCostResponse` enforce these rules as hard
+errors. They check entries in index order and report the first failure with its index and field,
+for example `price_options[1].upfront_cost`.
+
+| Rule | Constraint | Error |
+|------|------------|-------|
+| Entry | Not nil | `ErrPriceOptionNil` |
+| `unit_price`, `monthly_cost`, `upfront_cost` | Finite and `>= 0` | `ErrPriceOptionInvalidValue` |
+| `savings_fraction` | Finite; may be negative | `ErrPriceOptionInvalidValue` |
+| Dry run (projected cost only) | Empty when `dry_run_result` is set | `ErrPriceOptionsWithDryRun` |
+
+The validators do not check `category`, `model`, or `term`, do not recompute `savings_fraction`,
+and never compare the list to the selected price or to `cost_breakdown`. Validation does not
+allocate, with or without options.
+
+### Setting Price Options (Plugin Side)
+
+`WithProjectedCostPriceOptions` and `WithEstimatePriceOptions` deep-copy their arguments and do
+not validate. Validate the finished response.
+
+Azure D2s v5 in East US, with the Consumption price selected:
+
+```go
+const consumption = 0.096 // per hour
+resp := pluginsdk.NewGetProjectedCostResponse(
+    pluginsdk.WithProjectedCostDetails(consumption, "USD", 70.08, "Consumption"),
+    pluginsdk.WithProjectedCostPriceOptions(
+        &pbc.PriceOption{
+            Category:        pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_COMMITTED,
+            Model:           "Reservation",
+            Term:            "1 Year",
+            UnitPrice:       0.0573, // 502.00 term total / 8760 hours
+            MonthlyCost:     41.83,
+            UpfrontCost:     502.00,
+            SavingsFraction: (consumption - 0.0573) / consumption,
+        },
+        &pbc.PriceOption{
+            Category:        pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_COMMITTED,
+            Model:           "SavingsPlan",
+            Term:            "3 Years",
+            UnitPrice:       0.0612,
+            MonthlyCost:     44.68,
+            SavingsFraction: (consumption - 0.0612) / consumption,
+        },
+    ),
+)
+if err := pluginsdk.ValidateGetProjectedCostResponse(resp); err != nil {
+    return nil, status.Errorf(codes.Internal, "invalid response: %v", err)
+}
+```
+
+AWS t3.micro on `EstimateCost`, with the On-Demand price selected (illustrative rates):
+
+```go
+const onDemandMonthly = 7.592 // 0.0104 per hour
+resp := pluginsdk.NewEstimateCostResponse(
+    pluginsdk.WithEstimateCost("USD", onDemandMonthly),
+    pluginsdk.WithEstimatePriceOptions(
+        &pbc.PriceOption{
+            Category:        pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_COMMITTED,
+            Model:           "Reserved Instance",
+            Term:            "1 Year",
+            UnitPrice:       0.0065,
+            MonthlyCost:     4.745,
+            UpfrontCost:     56.94,
+            SavingsFraction: (onDemandMonthly - 4.745) / onDemandMonthly,
+        },
+        &pbc.PriceOption{
+            Category:        pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_COMMITTED,
+            Model:           "Compute Savings Plan",
+            Term:            "3 Years",
+            UnitPrice:       0.0052,
+            MonthlyCost:     3.796,
+            SavingsFraction: (onDemandMonthly - 3.796) / onDemandMonthly,
+        },
+    ),
+)
+if err := pluginsdk.ValidateEstimateCostResponse(resp); err != nil {
+    return nil, status.Errorf(codes.Internal, "invalid response: %v", err)
+}
+```
+
+Check for a specific rule with `errors.Is`:
+
+```go
+err := pluginsdk.ValidateGetProjectedCostResponse(resp)
+if errors.Is(err, pluginsdk.ErrPriceOptionInvalidValue) {
+    // An option has a NaN, infinite, or negative price
+}
+```
 
 ## Pagination Helpers
 
