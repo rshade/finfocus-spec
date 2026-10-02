@@ -47,6 +47,7 @@ var allocatorScenarioNames = []string{
 	"empty_request",
 	"fingerprint_stable",
 	"fingerprint_empty_equals_braces",
+	"row_provenance",
 }
 
 // allocFunc adapts a function to plugintesting.AllocateServer.
@@ -311,4 +312,33 @@ func TestCopiedVocabularyMatchesPluginsdk(t *testing.T) {
 		pluginsdk.MetricCPURequest, pluginsdk.MetricMemRequest,
 		pluginsdk.MetricCPUAllocatable, pluginsdk.MetricMemAllocatable,
 	}, plugintesting.CopiedVocabularyForTest())
+}
+
+func TestAllocatorConformance_RowProvenance(t *testing.T) {
+	t.Run("reference passes", func(t *testing.T) {
+		require.NoError(t, runScenarios(t, refalloc.New())["row_provenance"])
+	})
+
+	t.Run("allocator without provenance passes", func(t *testing.T) {
+		impl := postProcess(func(resp *pbc.AllocateResponse) {
+			for _, row := range resp.GetRows() {
+				row.AllocatedMethodId = ""
+				row.AllocatedMethodDetails = ""
+				row.AllocatedResourceId = ""
+			}
+		})
+		assert.NoError(t, runScenarios(t, impl)["row_provenance"])
+	})
+
+	t.Run("method id without resource id fails by name", func(t *testing.T) {
+		impl := postProcess(func(resp *pbc.AllocateResponse) {
+			for _, row := range resp.GetRows() {
+				row.AllocatedResourceId = ""
+			}
+		})
+		err := runScenarios(t, impl)["row_provenance"]
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "allocated_method_id")
+		assert.Contains(t, err.Error(), "allocated_resource_id")
+	})
 }

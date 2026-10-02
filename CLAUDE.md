@@ -1073,6 +1073,10 @@ parallel subtests complete.
 ## Active Technologies
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
+  google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1; no new dependencies (594-allocation-row-provenance)
+- N/A (three optional strings on AllocationRow, one validator rule) (594-allocation-row-provenance)
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
   google.golang.org/protobuf (`proto.CloneOf`), buf v1.32.1; no new dependencies (557-price-options)
 - N/A (advisory repeated PriceOption on GetProjectedCostResponse and EstimateCostResponse)
   (557-price-options)
@@ -1231,6 +1235,9 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+
+- 594-allocation-row-provenance: Added AllocationRow allocated_method_id (7), allocated_method_details (8),
+  allocated_resource_id (9); a method id requires a resource id; field 10 held by comment for a later LineageNode
 
 - 557-price-options: Added PriceOption, GetProjectedCostResponse.price_options (16) and
   EstimateCostResponse.price_options (6), three ErrPriceOption* sentinels,

@@ -210,6 +210,8 @@ validation. The `SUBJECT_*`, `KIND_*`, `METRIC_*`, and `UNIT_*` constants mirror
 Calls plugins that serve `AllocatorService`, which divides priced nodes and control planes across
 workloads and returns workload, idle, and cluster rows. See
 [docs/allocator.md](../../docs/allocator.md) for the invariants and policy rules.
+Rows can also carry optional FOCUS 1.3 provenance (`allocatedMethodId`, `allocatedMethodDetails`,
+`allocatedResourceId`); see [Row provenance](../../docs/allocator.md#row-provenance).
 
 ```typescript
 import { create } from "@bufbuild/protobuf";

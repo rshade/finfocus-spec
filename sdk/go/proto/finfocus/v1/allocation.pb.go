@@ -299,9 +299,23 @@ type AllocationRow struct {
 	// The resolved currency; never empty.
 	Currency string `protobuf:"bytes,5,opt,name=currency,proto3" json:"currency,omitempty"`
 	// Human-readable note, such as why a workload's cost is zero.
-	Note          string `protobuf:"bytes,6,opt,name=note,proto3" json:"note,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Note string `protobuf:"bytes,6,opt,name=note,proto3" json:"note,omitempty"`
+	// Optional FOCUS 1.3 AllocatedMethodId: identifies the method the allocator
+	// used to produce this row. An opaque, allocator-defined string. A non-empty
+	// value requires allocated_resource_id to be non-empty, as in FOCUS 1.3
+	// (hosts and ValidateAllocateResponse reject the row otherwise).
+	AllocatedMethodId string `protobuf:"bytes,7,opt,name=allocated_method_id,json=allocatedMethodId,proto3" json:"allocated_method_id,omitempty"`
+	// Optional FOCUS 1.3 AllocatedMethodDetails: free-form description of how
+	// the cost was split. Allowed without allocated_method_id. FOCUS 1.4 defines
+	// this column as a JSON object; the contract does not enforce a format.
+	AllocatedMethodDetails string `protobuf:"bytes,8,opt,name=allocated_method_details,json=allocatedMethodDetails,proto3" json:"allocated_method_details,omitempty"`
+	// Optional FOCUS 1.3 AllocatedResourceId: the priced resource this row's
+	// cost came from, by convention the resource.id of the PricedResource (a
+	// node id for workload and idle rows). Opaque; not cross-checked against
+	// the request.
+	AllocatedResourceId string `protobuf:"bytes,9,opt,name=allocated_resource_id,json=allocatedResourceId,proto3" json:"allocated_resource_id,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *AllocationRow) Reset() {
@@ -376,6 +390,27 @@ func (x *AllocationRow) GetNote() string {
 	return ""
 }
 
+func (x *AllocationRow) GetAllocatedMethodId() string {
+	if x != nil {
+		return x.AllocatedMethodId
+	}
+	return ""
+}
+
+func (x *AllocationRow) GetAllocatedMethodDetails() string {
+	if x != nil {
+		return x.AllocatedMethodDetails
+	}
+	return ""
+}
+
+func (x *AllocationRow) GetAllocatedResourceId() string {
+	if x != nil {
+		return x.AllocatedResourceId
+	}
+	return ""
+}
+
 var File_finfocus_v1_allocation_proto protoreflect.FileDescriptor
 
 const file_finfocus_v1_allocation_proto_rawDesc = "" +
@@ -397,7 +432,7 @@ const file_finfocus_v1_allocation_proto_rawDesc = "" +
 	"\x04rows\x18\x01 \x03(\v2\x1a.finfocus.v1.AllocationRowR\x04rows\x122\n" +
 	"\x15effective_policy_json\x18\x02 \x01(\fR\x13effectivePolicyJson\x12#\n" +
 	"\rpolicy_digest\x18\x03 \x01(\tR\fpolicyDigest\x12\x1a\n" +
-	"\bwarnings\x18\x04 \x03(\tR\bwarnings\"\x93\x02\n" +
+	"\bwarnings\x18\x04 \x03(\tR\bwarnings\"\xb1\x03\n" +
 	"\rAllocationRow\x12A\n" +
 	"\asubject\x18\x01 \x03(\v2'.finfocus.v1.AllocationRow.SubjectEntryR\asubject\x12\x19\n" +
 	"\bcpu_cost\x18\x02 \x01(\x01R\acpuCost\x12\x19\n" +
@@ -405,7 +440,10 @@ const file_finfocus_v1_allocation_proto_rawDesc = "" +
 	"\n" +
 	"total_cost\x18\x04 \x01(\x01R\ttotalCost\x12\x1a\n" +
 	"\bcurrency\x18\x05 \x01(\tR\bcurrency\x12\x12\n" +
-	"\x04note\x18\x06 \x01(\tR\x04note\x1a:\n" +
+	"\x04note\x18\x06 \x01(\tR\x04note\x12.\n" +
+	"\x13allocated_method_id\x18\a \x01(\tR\x11allocatedMethodId\x128\n" +
+	"\x18allocated_method_details\x18\b \x01(\tR\x16allocatedMethodDetails\x122\n" +
+	"\x15allocated_resource_id\x18\t \x01(\tR\x13allocatedResourceId\x1a:\n" +
 	"\fSubjectEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x012[\n" +

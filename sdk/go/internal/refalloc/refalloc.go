@@ -46,6 +46,10 @@ const DefaultCPUWeight = 0.5
 // resourceKindCluster is the PricedResource tags.kind of a control plane.
 const resourceKindCluster = "cluster"
 
+// MethodID is the allocation method id the reference allocator reports on
+// every row (FOCUS 1.3 AllocatedMethodId).
+const MethodID = "refalloc.proportional"
+
 // NodeSplit divides a node's cost between CPU and memory.
 type NodeSplit struct {
 	// CPUWeight is the fraction of node cost attributed to CPU, in [0, 1].
@@ -293,15 +297,15 @@ func (b *rowBuilder) allocateNode(node string, cost float64) {
 	memShares, memIdle := shares(memPool, capa.mem, memReq)
 
 	for i, w := range workloads {
-		b.rows = append(b.rows, b.row(copySubject(w.subject), cpuShares[i], memShares[i], ""))
+		b.rows = append(b.rows, b.row(copySubject(w.subject), node, cpuShares[i], memShares[i], ""))
 	}
 	idle := map[string]string{pluginsdk.SubjectKind: pluginsdk.KindIdle, pluginsdk.SubjectNode: node}
-	b.rows = append(b.rows, b.row(idle, cpuIdle, memIdle, ""))
+	b.rows = append(b.rows, b.row(idle, node, cpuIdle, memIdle, ""))
 }
 
 func (b *rowBuilder) zeroWorkloads(node, note string) {
 	for _, w := range b.usage.workloads[node] {
-		b.rows = append(b.rows, b.row(copySubject(w.subject), 0, 0, note))
+		b.rows = append(b.rows, b.row(copySubject(w.subject), node, 0, 0, note))
 	}
 }
 
@@ -318,10 +322,13 @@ func (b *rowBuilder) clusterRow(id, kind string, cost float64) {
 		TotalCost: cost,
 		Currency:  b.currency,
 		Note:      note,
+
+		AllocatedMethodId:   MethodID,
+		AllocatedResourceId: id,
 	})
 }
 
-func (b *rowBuilder) row(subject map[string]string, cpu, mem float64, note string) *pbc.AllocationRow {
+func (b *rowBuilder) row(subject map[string]string, source string, cpu, mem float64, note string) *pbc.AllocationRow {
 	return &pbc.AllocationRow{
 		Subject:   subject,
 		CpuCost:   cpu,
@@ -329,6 +336,9 @@ func (b *rowBuilder) row(subject map[string]string, cpu, mem float64, note strin
 		TotalCost: cpu + mem,
 		Currency:  b.currency,
 		Note:      note,
+
+		AllocatedMethodId:   MethodID,
+		AllocatedResourceId: source,
 	}
 }
 

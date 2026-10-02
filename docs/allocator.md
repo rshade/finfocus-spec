@@ -160,7 +160,8 @@ effective policy and digest, so hosts can display the policy.
 
 ### Rows
 
-Each `AllocationRow` has `subject`, `cpu_cost`, `mem_cost`, `total_cost`, `currency`, and `note`.
+Each `AllocationRow` has `subject`, `cpu_cost`, `mem_cost`, `total_cost`, `currency`, and `note`, plus
+optional provenance fields (see [Row provenance](#row-provenance)).
 The `subject` uses the [usage-source subject keys](usage-source.md#subject-keys); `kind` is
 required.
 
@@ -170,9 +171,25 @@ required.
 | `__idle__` | `KindIdle` | Unclaimed capacity of exactly one node. Requires the `node` key. |
 | `__cluster__` | `KindCluster` | Shared infrastructure, such as a control plane, or any priced resource that is not a node. |
 
+### Row provenance
+
+Three optional fields let a host fill the FOCUS 1.3 split-cost columns without guessing. They are
+opaque strings the allocator chooses.
+
+| Field | FOCUS 1.3 column | Meaning |
+| ----- | ---------------- | ------- |
+| `allocated_method_id` (7) | `AllocatedMethodId` | Identifies the method that produced the row. |
+| `allocated_method_details` (8) | `AllocatedMethodDetails` | Free-form description of how the cost was split. Allowed without a method id. |
+| `allocated_resource_id` (9) | `AllocatedResourceId` | The priced resource the cost came from. By convention the `resource.id` of the `PricedResource` (a node id for workload and idle rows). Not cross-checked against the request. |
+
+Provenance never affects conservation, portion totals, or currency. Allocators that set none of
+the three stay valid, and the conformance suite never requires them. The reference allocator
+reports method id `refalloc.proportional` and the node (or priced resource) id on every row.
+A lineage chain (`LineageNode`) is a possible later addition; field 10 is held for it.
+
 ## Invariants
 
-Every response satisfies all five. Hosts verify them and reject a response that violates any.
+Every response satisfies all six. Hosts verify them and reject a response that violates any.
 
 1. **Conservation.** `Σ rows.total_cost` equals `Σ priced.cost` over entries with `priced = true`,
    within `max(1e-6 × |expected|, 1e-9)`. The absolute floor lets zero totals compare equal.
@@ -184,6 +201,9 @@ Every response satisfies all five. Hosts verify them and reject a response that 
    exactly one `__idle__` row whose `node` equals its `id`, even when the idle cost is zero.
    Unpriced nodes need none.
 5. **One currency.** Every row carries the resolved currency, never empty.
+6. **Provenance is consistent.** A row with a non-empty `allocated_method_id` also has a non-empty
+   `allocated_resource_id`. Rows with no provenance, or with only a resource id or method details,
+   are valid. See [Row provenance](#row-provenance).
 
 `CheckConservation` checks invariant 1, and `ValidateAllocateResponse` checks the others plus the
 presence of the effective policy and digest. Both fail closed on NaN and infinite values: in IEEE
@@ -283,7 +303,7 @@ A mismatch is a `*ConservationError` from `sdk/go/testing` with `Expected`, `Act
 
 - `pluginsdk.ValidateAllocateRequest`, `pluginsdk.DecodePolicy`, and `pluginsdk.ResolveCurrency`:
   call them in this order at the top of `Allocate`.
-- `plugintesting.RunAllocatorConformance`: twelve policy-agnostic scenarios over an in-memory
+- `plugintesting.RunAllocatorConformance`: thirteen policy-agnostic scenarios over an in-memory
   connection. See [sdk/go/testing/README.md](../sdk/go/testing/README.md#allocator-conformance).
 - The [Plugin Developer Guide](../PLUGIN_DEVELOPER_GUIDE.md#allocator-plugins) walks through a
   complete allocator.

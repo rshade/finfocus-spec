@@ -1182,7 +1182,7 @@ If an allocator starts without explicit `PluginInfo.Capabilities` and does not i
 ### Testing an Allocator
 
 `plugintesting.RunAllocatorConformance(t, impl)` serves your allocator over an in-memory
-`AllocatorHarness` and runs twelve named subtests. Each allocation scenario checks that the call
+`AllocatorHarness` and runs thirteen named subtests. Each allocation scenario checks that the call
 succeeds, that `ValidateAllocateResponse` passes, and that `CheckConservation` holds:
 
 | Subtest | What it checks |

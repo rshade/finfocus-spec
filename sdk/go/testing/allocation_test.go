@@ -443,6 +443,19 @@ func TestValidateAllocateResponse(t *testing.T) {
 			r.Rows = append(r.Rows, idleRow("n1", 0, 0))
 			return r
 		}},
+		{name: "method id without resource id", mutate: func(r *pbc.AllocateResponse) *pbc.AllocateResponse {
+			r.Rows[0].AllocatedMethodId = "proportional"
+			return r
+		}},
+		{name: "whitespace method id without resource id", mutate: func(r *pbc.AllocateResponse) *pbc.AllocateResponse {
+			r.Rows[0].AllocatedMethodId = " "
+			return r
+		}},
+		{name: "method and details no resource", mutate: func(r *pbc.AllocateResponse) *pbc.AllocateResponse {
+			r.Rows[2].AllocatedMethodId = "proportional"
+			r.Rows[2].AllocatedMethodDetails = "split by request"
+			return r
+		}},
 	}
 	for _, tt := range rejects {
 		t.Run("reject/"+tt.name, func(t *testing.T) {
@@ -452,6 +465,34 @@ func TestValidateAllocateResponse(t *testing.T) {
 		})
 	}
 
+	t.Run("reject/method without resource names row and field", func(t *testing.T) {
+		req, resp := validAllocPair()
+		resp.Rows[1].AllocatedMethodId = "proportional"
+		err := plugintesting.ValidateAllocateResponse(req, resp)
+		require.ErrorIs(t, err, plugintesting.ErrInvalidAllocateResponse)
+		assert.Contains(t, err.Error(), "rows[1]")
+		assert.Contains(t, err.Error(), "allocated_method_id")
+	})
+	t.Run("accept/provenance combinations", func(t *testing.T) {
+		combos := []struct{ method, details, resource string }{
+			{"", "", ""},
+			{"", "", "n1"},
+			{"", "split by request", ""},
+			{"", "split by request", "n1"},
+			{"proportional", "", "n1"},
+			{"proportional", "split by request", "n1"},
+			{" ", "", " "},
+		}
+		for _, c := range combos {
+			req, resp := validAllocPair()
+			for _, row := range resp.GetRows() {
+				row.AllocatedMethodId = c.method
+				row.AllocatedMethodDetails = c.details
+				row.AllocatedResourceId = c.resource
+			}
+			require.NoError(t, plugintesting.ValidateAllocateResponse(req, resp), "%+v", c)
+		}
+	})
 	t.Run("accept/total within tolerance", func(t *testing.T) {
 		req, resp := validAllocPair()
 		resp.Rows[0].TotalCost = 6 + 1e-12
@@ -518,4 +559,22 @@ func BenchmarkValidateAllocateResponse(b *testing.B) {
 			}
 		})
 	}
+}
+
+func TestValidateAllocateResponseProvenanceAddsNoAllocations(t *testing.T) {
+	req, plain := largeAllocPair(64)
+	_, tagged := largeAllocPair(64)
+	for _, row := range tagged.GetRows() {
+		row.AllocatedMethodId = "proportional"
+		row.AllocatedMethodDetails = "split by request"
+		row.AllocatedResourceId = "n0"
+	}
+	measure := func(resp *pbc.AllocateResponse) float64 {
+		return testing.AllocsPerRun(50, func() {
+			if err := plugintesting.ValidateAllocateResponse(req, resp); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+	assert.InDelta(t, measure(plain), measure(tagged), 0, "provenance must not add allocations")
 }
