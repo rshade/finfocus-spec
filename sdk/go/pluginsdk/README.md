@@ -970,11 +970,16 @@ The SDK provides the building blocks every allocator and host needs:
 
 | Function | Purpose |
 | -------- | ------- |
-| `ValidateAllocateRequest(req)` | Rejects unpriced entries with nonzero cost, negative or non-finite costs, mixed currencies, duplicate `(tags.kind, id)`, and priced nodes without an id |
+| `ValidateAllocateRequest(req)` | Rejects unpriced entries with nonzero cost, negative or non-finite costs, mixed currencies, duplicate `(tags.kind, id)`, priced nodes without an id, and a `start`/`end` window with one bound or inverted |
 | `DecodePolicy(data, &target)` | Strictly applies a JSON policy onto defaults: unknown fields, malformed JSON, trailing data, and type mismatches fail with the field's path (`node_split.cpu`); nested objects merge, arrays replace |
 | `ResolveCurrency(priced)` | The single non-empty currency across priced entries, or `USD` when all are empty |
 | `CheckConservation(req, resp, eps)` | Host-side check that rows sum to the priced total within `max(eps × abs(expected), 1e-9)`; use `DefaultConservationEpsilon` |
-| `ValidateAllocateResponse(req, resp)` | Host-side check of every other response invariant: row kinds, idle row per priced node, non-negative costs, portion totals, currency, and that a row with `allocated_method_id` also has `allocated_resource_id` (FOCUS 1.3 provenance, see [docs/allocator.md](../../../docs/allocator.md#row-provenance)) |
+| `ValidateAllocateResponse(req, resp)` | Host-side check of every other response invariant: row kinds, idle row per priced node, non-negative costs, portion totals, currency, and an echoed period that matches the request (a missing echo passes), and that a row with `allocated_method_id` also has `allocated_resource_id` (FOCUS 1.3 provenance, see [docs/allocator.md](../../../docs/allocator.md#row-provenance)) |
+
+A non-empty `AllocateRequest.selector` marks a partial selection: node capacity still covers every
+workload, so idle and cluster rows include capacity used by unselected workloads. Every invariant
+still holds. Allocators should add a warning, and hosts should omit or label idle and cluster rows.
+See [Partial Selections](../../../docs/allocator.md#partial-selections).
 
 The validation and decoding errors carry `codes.InvalidArgument` and have no `rpc error:` prefix,
 so `Allocate` can return them unchanged. `ErrInvalidPolicy` is wrapped by every `DecodePolicy`

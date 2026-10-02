@@ -35,6 +35,20 @@ differently; both must conserve cost.
 | `priced` | One `PricedResource` per priceable resource, after the host priced it. |
 | `policy_json` | Allocator-owned JSON policy, opaque to the host. Empty and `{}` both mean the allocator's defaults. |
 | `mode` | The mode the usage was collected in. `STATS_MODE_UNSPECIFIED` is allowed, because allocation uses ratios of usage to capacity. |
+| `start`, `end` | The period the priced costs cover, with the same rules as `GetStatsRequest`: set both or neither (run-rate), and `start` must not be after `end`. Setting only one, or an inverted window, is `INVALID_ARGUMENT`. The period labels the result and never changes an allocated cost. |
+| `selector` | The workload selector the host used for usage, with the same meaning as `GetStatsRequest.selector`. A non-empty selector is a partial selection (see below). Not validated. |
+
+### Partial Selections
+
+When a host narrows workloads (for example `--namespace payments`), node capacity still covers every
+workload on the node. Pass the same selector on the request. Every invariant still holds: rows
+conserve the priced total, and each priced node keeps exactly one `__idle__` row. But idle and cluster
+rows then include capacity used by workloads outside the selection, so they are not comparable to an
+unfiltered view.
+
+- Allocators SHOULD add a warning. The reference allocator adds "selector narrows workloads: idle and
+  cluster rows include capacity used by unselected workloads". The text is not part of the contract.
+- Hosts SHOULD omit or label idle and cluster rows for a partial selection.
 
 ## Priced Resources
 
@@ -154,6 +168,7 @@ An unpriced node, for example one whose SKU no cost source recognizes:
 | `effective_policy_json` | The policy actually applied (defaults with overrides) in the allocator's canonical JSON form. Never empty. |
 | `policy_digest` | Lowercase hex SHA-256 of `effective_policy_json` (64 characters). |
 | `warnings` | Human-readable, non-fatal notes. |
+| `start`, `end` | Echo of the request period. Allocators MUST echo it exactly. Hosts accept a response with no period, from allocators built before these fields, and reject one that differs from the request. |
 
 A request with no usage and no priced resources succeeds with no rows, but it still returns the
 effective policy and digest, so hosts can display the policy.
@@ -296,6 +311,9 @@ if err := pluginsdk.CheckConservation(req, resp, pluginsdk.DefaultConservationEp
 }
 ```
 
+`ValidateAllocateResponse` also checks the period echo. A response without `start` and `end` passes, so
+older allocators keep working. An echoed period must equal the request's in seconds and nanoseconds.
+
 A mismatch is a `*ConservationError` from `sdk/go/testing` with `Expected`, `Actual`,
 `Difference`, and `Currency` fields, for hosts that want to display them separately.
 
@@ -303,7 +321,7 @@ A mismatch is a `*ConservationError` from `sdk/go/testing` with `Expected`, `Act
 
 - `pluginsdk.ValidateAllocateRequest`, `pluginsdk.DecodePolicy`, and `pluginsdk.ResolveCurrency`:
   call them in this order at the top of `Allocate`.
-- `plugintesting.RunAllocatorConformance`: thirteen policy-agnostic scenarios over an in-memory
+- `plugintesting.RunAllocatorConformance`: fifteen policy-agnostic scenarios over an in-memory
   connection. See [sdk/go/testing/README.md](../sdk/go/testing/README.md#allocator-conformance).
 - The [Plugin Developer Guide](../PLUGIN_DEVELOPER_GUIDE.md#allocator-plugins) walks through a
   complete allocator.

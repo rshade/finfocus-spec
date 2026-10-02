@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 	plugintesting "github.com/rshade/finfocus-spec/sdk/go/testing"
@@ -577,4 +578,105 @@ func TestValidateAllocateResponseProvenanceAddsNoAllocations(t *testing.T) {
 		})
 	}
 	assert.InDelta(t, measure(plain), measure(tagged), 0, "provenance must not add allocations")
+}
+
+func allocWindow() (*timestamppb.Timestamp, *timestamppb.Timestamp) {
+	return &timestamppb.Timestamp{Seconds: 1_790_000_000}, &timestamppb.Timestamp{Seconds: 1_790_086_400}
+}
+
+func TestValidateAllocateRequestWindow(t *testing.T) {
+	start, end := allocWindow()
+	base := func() *pbc.AllocateRequest {
+		return &pbc.AllocateRequest{Priced: []*pbc.PricedResource{pricedNode("n1", 10, "USD")}}
+	}
+
+	t.Run("no window is valid", func(t *testing.T) {
+		require.NoError(t, plugintesting.ValidateAllocateRequest(base()))
+	})
+	t.Run("full window is valid", func(t *testing.T) {
+		req := base()
+		req.Start, req.End = start, end
+		require.NoError(t, plugintesting.ValidateAllocateRequest(req))
+	})
+	t.Run("start equal to end is valid", func(t *testing.T) {
+		req := base()
+		req.Start, req.End = start, start
+		require.NoError(t, plugintesting.ValidateAllocateRequest(req))
+	})
+
+	rejects := []struct {
+		name       string
+		start, end *timestamppb.Timestamp
+		wantMsg    string
+	}{
+		{name: "only start", start: start, wantMsg: "start and end must be set together"},
+		{name: "only end", end: end, wantMsg: "start and end must be set together"},
+		{name: "start after end", start: end, end: start, wantMsg: "start is after end"},
+		{
+			name:    "start after end by nanos",
+			start:   &timestamppb.Timestamp{Seconds: 1_790_000_000, Nanos: 2},
+			end:     &timestamppb.Timestamp{Seconds: 1_790_000_000, Nanos: 1},
+			wantMsg: "start is after end",
+		},
+	}
+	for _, tt := range rejects {
+		t.Run(tt.name, func(t *testing.T) {
+			req := base()
+			req.Start, req.End = tt.start, tt.end
+			err := plugintesting.ValidateAllocateRequest(req)
+			requireInvalidArgument(t, err)
+			require.ErrorIs(t, err, plugintesting.ErrInvalidAllocateRequest)
+			assert.Contains(t, err.Error(), tt.wantMsg)
+		})
+	}
+}
+
+func TestValidateAllocateResponseWindowEcho(t *testing.T) {
+	start, end := allocWindow()
+	windowed := func() (*pbc.AllocateRequest, *pbc.AllocateResponse) {
+		req, resp := validAllocPair()
+		req.Start, req.End = start, end
+		return req, resp
+	}
+
+	t.Run("missing echo is accepted for older allocators", func(t *testing.T) {
+		req, resp := windowed()
+		require.NoError(t, plugintesting.ValidateAllocateResponse(req, resp))
+	})
+	t.Run("matching echo is accepted", func(t *testing.T) {
+		req, resp := windowed()
+		resp.Start = &timestamppb.Timestamp{Seconds: start.GetSeconds()}
+		resp.End = &timestamppb.Timestamp{Seconds: end.GetSeconds()}
+		require.NoError(t, plugintesting.ValidateAllocateResponse(req, resp))
+	})
+
+	rejects := []struct {
+		name      string
+		unwindow  bool
+		respStart *timestamppb.Timestamp
+		respEnd   *timestamppb.Timestamp
+		wantField string
+	}{
+		{name: "different start", respStart: end, respEnd: end, wantField: "start"},
+		{
+			name:      "end differs by nanos",
+			respStart: start,
+			respEnd:   &timestamppb.Timestamp{Seconds: end.GetSeconds(), Nanos: 1},
+			wantField: "end",
+		},
+		{name: "only start echoed", respStart: start, wantField: "end"},
+		{name: "window the request did not have", unwindow: true, respStart: start, respEnd: end, wantField: "start"},
+	}
+	for _, tt := range rejects {
+		t.Run(tt.name, func(t *testing.T) {
+			req, resp := windowed()
+			if tt.unwindow {
+				req.Start, req.End = nil, nil
+			}
+			resp.Start, resp.End = tt.respStart, tt.respEnd
+			err := plugintesting.ValidateAllocateResponse(req, resp)
+			require.ErrorIs(t, err, plugintesting.ErrInvalidAllocateResponse)
+			assert.Contains(t, err.Error(), tt.wantField)
+		})
+	}
 }

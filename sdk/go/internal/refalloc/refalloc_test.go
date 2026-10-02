@@ -18,12 +18,15 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/rshade/finfocus-spec/sdk/go/internal/refalloc"
 	"github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
@@ -191,4 +194,51 @@ func TestAllocateRowProvenance(t *testing.T) {
 		}
 		assert.Equal(t, want[row.GetSubject()[pluginsdk.SubjectKind]], row.GetAllocatedResourceId())
 	}
+}
+
+func TestAllocateEchoesWindow(t *testing.T) {
+	plain, err := allocate(t, singleNodeRequest(1, 2))
+	require.NoError(t, err)
+	assert.Nil(t, plain.GetStart())
+	assert.Nil(t, plain.GetEnd())
+
+	req := singleNodeRequest(1, 2)
+	req.Start = &timestamppb.Timestamp{Seconds: 1_790_000_000, Nanos: 5}
+	req.End = &timestamppb.Timestamp{Seconds: 1_790_086_400}
+	windowed, err := allocate(t, req)
+	require.NoError(t, err)
+	assert.True(t, proto.Equal(req.GetStart(), windowed.GetStart()))
+	assert.True(t, proto.Equal(req.GetEnd(), windowed.GetEnd()))
+	require.NoError(t, pluginsdk.ValidateAllocateResponse(req, windowed))
+
+	require.Len(t, windowed.GetRows(), len(plain.GetRows()))
+	for i := range plain.GetRows() {
+		assert.True(t, proto.Equal(plain.GetRows()[i], windowed.GetRows()[i]), "row %d changed with a window", i)
+	}
+}
+
+func TestAllocateSelectorWarns(t *testing.T) {
+	const partial = "selector narrows workloads"
+
+	req := singleNodeRequest(1, 2)
+	req.Selector = map[string]string{"namespace": "payments"}
+	resp, err := allocate(t, req)
+	require.NoError(t, err)
+	require.NoError(t, pluginsdk.ValidateAllocateResponse(req, resp))
+	require.NoError(t, pluginsdk.CheckConservation(req, resp, pluginsdk.DefaultConservationEpsilon))
+	require.Len(t, rowsOfKind(resp, pluginsdk.KindIdle), 1)
+	assert.True(t, containsWarning(resp, partial), "warnings: %v", resp.GetWarnings())
+
+	plain, err := allocate(t, singleNodeRequest(1, 2))
+	require.NoError(t, err)
+	assert.False(t, containsWarning(plain, partial))
+}
+
+func containsWarning(resp *pbc.AllocateResponse, substr string) bool {
+	for _, w := range resp.GetWarnings() {
+		if strings.Contains(w, substr) {
+			return true
+		}
+	}
+	return false
 }

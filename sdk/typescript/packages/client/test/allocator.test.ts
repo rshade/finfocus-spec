@@ -95,6 +95,39 @@ describe("AllocatorClient", () => {
     expect(resp.warnings).toEqual(["node n1 reports no memory capacity"]);
   });
 
+  it("sends the period and selector and reads the echoed period", async () => {
+    server.use(
+      http.post(allocateEndpoint, async ({ request }) => {
+        lastRequest = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({
+          rows: [],
+          effectivePolicyJson: "eyJ2ZXJzaW9uIjoxfQ==",
+          policyDigest: digest,
+          warnings: ["selector narrows workloads: idle and cluster rows include capacity used by unselected workloads"],
+          start: lastRequest.start,
+          end: lastRequest.end,
+        });
+      }),
+    );
+
+    const resp = await client.allocate(
+      create(AllocateRequestSchema, {
+        start: { seconds: 1_790_000_000n, nanos: 0 },
+        end: { seconds: 1_790_086_400n, nanos: 0 },
+        selector: { namespace: "payments" },
+      }),
+    );
+
+    expect(lastRequest).toMatchObject({
+      start: "2026-09-21T14:13:20Z",
+      end: "2026-09-22T14:13:20Z",
+      selector: { namespace: "payments" },
+    });
+    expect(resp.start?.seconds).toBe(1_790_000_000n);
+    expect(resp.end?.seconds).toBe(1_790_086_400n);
+    expect(resp.warnings[0]).toContain("selector narrows workloads");
+  });
+
   it("propagates Connect errors with their code", async () => {
     server.use(
       http.post(allocateEndpoint, () =>

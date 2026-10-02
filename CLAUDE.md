@@ -1098,7 +1098,7 @@ parallel subtests complete.
 
 - `RegionPrice` rows on `GetProjectedCostResponse.region_prices` (17) and
   `EstimateCostResponse.region_prices` (7) are advisory: never summed into or compared with the
-  primary cost. Fields 16 and 6 are left free by comment for `price_options` (issue 588).
+  primary cost. Fields 16 and 6 hold `price_options` (557, PR 599).
 - Row rules live in `sdk/go/testing/region_price.go` (`ValidateRegionPrices`); `pluginsdk` aliases
   the sentinels and calls it, and so do the harness validators, so conformance checks the rows too
   (unlike 053's `cost_breakdown`, which only `pluginsdk` checks).
@@ -1119,6 +1119,17 @@ parallel subtests complete.
 - Conformance stays model-agnostic: `omitted_fields_accepted` / `omitted_fields_rejected` check structure
   and `InvalidArgument`, never score values. The mock proves the rule in its own tests.
 
+### Allocation Period and Selector Pattern (588-allocate-period-selector)
+
+- `AllocateRequest` gains `start`/`end` (5, 6; same rule as `GetStatsRequest`, Q7) and `selector` (7);
+  `AllocateResponse` echoes `start`/`end` (5, 6). `ValidateAllocateResponse` accepts a missing echo, so
+  allocators built before the fields stay valid, but rejects a differing one (P8). Conformance
+  (`period_echoed`) is where the echo is mandatory.
+- A non-empty selector never relaxes an invariant. `refalloc` adds `PartialSelectionWarning`; hosts omit
+  or label idle and cluster rows.
+- Test allocators that rebuild `AllocateRequest` field by field drop new fields. Clone with
+  `proto.CloneOf(req)` and override only what changes (see `mapFieldAllocator`).
+
 ## Active Technologies
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf, buf v1.32.1;
@@ -1128,6 +1139,12 @@ parallel subtests complete.
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
   google.golang.org/protobuf, google.golang.org/grpc, buf v1.32.1; no new dependencies (594-allocation-row-provenance)
 - N/A (three optional strings on AllocationRow, one validator rule) (594-allocation-row-provenance)
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
+  google.golang.org/protobuf, google.golang.org/grpc, connectrpc.com/connect, buf v1.32.1;
+  no new dependencies (588-allocate-period-selector)
+- N/A (allocation window and selector on AllocateRequest, echoed window on AllocateResponse)
+  (588-allocate-period-selector)
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
   google.golang.org/protobuf (`proto.CloneOf`), buf v1.32.1; no new dependencies (557-price-options)
@@ -1299,6 +1316,10 @@ See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable doc
 
 - 592-cross-batch-scoring-groups: Added scorer `session_id` (request 4, response 5), session-aware
   validators, mock group ids, three session conformance scenarios, and docs for cached items (issue 574)
+
+- 588-allocate-period-selector: Added AllocateRequest start/end/selector and the echoed
+  AllocateResponse start/end, the window rule (Q7) and echo rule (P8), the refalloc echo and
+  partial-selection warning, and the period_echoed and selector_keeps_invariants scenarios.
 
 - 557-price-options: Added PriceOption, GetProjectedCostResponse.price_options (16) and
   EstimateCostResponse.price_options (6), three ErrPriceOption* sentinels,

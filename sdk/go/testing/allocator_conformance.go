@@ -33,6 +33,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
 
@@ -339,6 +341,54 @@ func runVerified(f allocFixture) func(ctx context.Context, client pbc.AllocatorS
 	}
 }
 
+// Period sent by the period_echoed scenario: one day, with nanoseconds on the start so a
+// truncated echo fails.
+const (
+	conformancePeriodStartSeconds = 1_790_000_000
+	conformancePeriodStartNanos   = 500
+	conformancePeriodSeconds      = 24 * 60 * 60
+)
+
+// scenarioPeriodEchoed requires the allocator to echo the request period exactly. Hosts
+// accept a missing echo from older allocators, but a conforming allocator must send it.
+func scenarioPeriodEchoed(ctx context.Context, client pbc.AllocatorServiceClient) error {
+	req, err := singleNodeFixture().request()
+	if err != nil {
+		return err
+	}
+	req.Start = &timestamppb.Timestamp{Seconds: conformancePeriodStartSeconds, Nanos: conformancePeriodStartNanos}
+	req.End = &timestamppb.Timestamp{Seconds: conformancePeriodStartSeconds + conformancePeriodSeconds}
+	resp, err := client.Allocate(ctx, req)
+	if err != nil {
+		return fmt.Errorf("Allocate failed: %w", err)
+	}
+	if !sameTimestamp(req.GetStart(), resp.GetStart()) || !sameTimestamp(req.GetEnd(), resp.GetEnd()) {
+		return fmt.Errorf("response period [%v, %v] does not echo the request period [%v, %v]",
+			resp.GetStart(), resp.GetEnd(), req.GetStart(), req.GetEnd())
+	}
+	return errors.Join(
+		ValidateAllocateResponse(req, resp),
+		CheckConservation(req, resp, DefaultConservationEpsilon),
+	)
+}
+
+// scenarioSelectorKeepsInvariants requires every invariant to hold for a partial selection.
+func scenarioSelectorKeepsInvariants(ctx context.Context, client pbc.AllocatorServiceClient) error {
+	req, err := singleNodeFixture().request()
+	if err != nil {
+		return err
+	}
+	req.Selector = map[string]string{"namespace": fixtureNamespacePayments}
+	resp, err := client.Allocate(ctx, req)
+	if err != nil {
+		return fmt.Errorf("Allocate failed: %w", err)
+	}
+	return errors.Join(
+		ValidateAllocateResponse(req, resp),
+		CheckConservation(req, resp, DefaultConservationEpsilon),
+	)
+}
+
 func scenarioEmptyCluster(ctx context.Context, client pbc.AllocatorServiceClient) error {
 	f := emptyClusterFixture()
 	resp, err := allocateAndVerify(ctx, client, f)
@@ -571,6 +621,8 @@ func allocatorScenarios() []allocatorScenario {
 		{name: "fingerprint_stable", run: scenarioFingerprintStable},
 		{name: "fingerprint_empty_equals_braces", run: scenarioEmptyEqualsBraces},
 		{name: "row_provenance", run: scenarioRowProvenance},
+		{name: "period_echoed", run: scenarioPeriodEchoed},
+		{name: "selector_keeps_invariants", run: scenarioSelectorKeepsInvariants},
 	}
 }
 

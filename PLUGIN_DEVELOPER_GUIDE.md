@@ -1188,7 +1188,7 @@ If an allocator starts without explicit `PluginInfo.Capabilities` and does not i
 ### Testing an Allocator
 
 `plugintesting.RunAllocatorConformance(t, impl)` serves your allocator over an in-memory
-`AllocatorHarness` and runs thirteen named subtests. Each allocation scenario checks that the call
+`AllocatorHarness` and runs fifteen named subtests. Each allocation scenario checks that the call
 succeeds, that `ValidateAllocateResponse` passes, and that `CheckConservation` holds:
 
 | Subtest | What it checks |
@@ -1205,6 +1205,9 @@ succeeds, that `ValidateAllocateResponse` passes, and that `CheckConservation` h
 | `empty_request` | No rows, a 64-character hex digest, and an object policy with integer `version` |
 | `fingerprint_stable` | Identical requests yield identical digests and policies |
 | `fingerprint_empty_equals_braces` | Empty `policy_json` and `{}` yield one digest |
+| `row_provenance` | A row with `allocated_method_id` also has `allocated_resource_id` |
+| `period_echoed` | A request `start` and `end` come back exactly in the response |
+| `selector_keeps_invariants` | A non-empty `selector` still satisfies every invariant and conservation |
 
 The assertions are policy-agnostic: the suite derives bad policies from your allocator's own
 effective policy, so it works with any schema.

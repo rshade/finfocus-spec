@@ -22,6 +22,7 @@ package pbc
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -140,7 +141,21 @@ type AllocateRequest struct {
 	// Mode the usage was collected in. STATS_MODE_UNSPECIFIED is allowed:
 	// allocation uses ratios of usage to capacity, so the result does not
 	// depend on the mode.
-	Mode          StatsMode `protobuf:"varint,4,opt,name=mode,proto3,enum=finfocus.v1.StatsMode" json:"mode,omitempty"`
+	Mode StatsMode `protobuf:"varint,4,opt,name=mode,proto3,enum=finfocus.v1.StatsMode" json:"mode,omitempty"`
+	// Start of the period the priced costs cover, with the same rules as
+	// GetStatsRequest.start: set start and end together, or leave both unset for
+	// a run-rate allocation. Setting exactly one is INVALID_ARGUMENT. The period
+	// labels the result and never changes an allocated cost.
+	Start *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=start,proto3" json:"start,omitempty"`
+	// End of the period. Must not be before start.
+	End *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=end,proto3" json:"end,omitempty"`
+	// Workload selector the host used for usage, with the same meaning as
+	// GetStatsRequest.selector. A non-empty selector is a partial selection:
+	// node capacity still covers every workload, so idle and cluster rows
+	// include capacity used by unselected workloads. Every invariant still
+	// holds. Allocators SHOULD add a warning. Hosts SHOULD omit or label idle
+	// and cluster rows for a partial selection.
+	Selector      map[string]string `protobuf:"bytes,7,rep,name=selector,proto3" json:"selector,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -203,6 +218,27 @@ func (x *AllocateRequest) GetMode() StatsMode {
 	return StatsMode_STATS_MODE_UNSPECIFIED
 }
 
+func (x *AllocateRequest) GetStart() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Start
+	}
+	return nil
+}
+
+func (x *AllocateRequest) GetEnd() *timestamppb.Timestamp {
+	if x != nil {
+		return x.End
+	}
+	return nil
+}
+
+func (x *AllocateRequest) GetSelector() map[string]string {
+	if x != nil {
+		return x.Selector
+	}
+	return nil
+}
+
 // AllocateResponse carries allocation rows and the policy actually applied.
 // A request with no usage and no priced resources succeeds with no rows but
 // with effective_policy_json and policy_digest, so hosts can display policy.
@@ -218,7 +254,13 @@ type AllocateResponse struct {
 	// Not comparable across different allocators.
 	PolicyDigest string `protobuf:"bytes,3,opt,name=policy_digest,json=policyDigest,proto3" json:"policy_digest,omitempty"`
 	// Human-readable, non-fatal warnings.
-	Warnings      []string `protobuf:"bytes,4,rep,name=warnings,proto3" json:"warnings,omitempty"`
+	Warnings []string `protobuf:"bytes,4,rep,name=warnings,proto3" json:"warnings,omitempty"`
+	// Echo of AllocateRequest.start. Allocators MUST echo the request's period
+	// exactly. Hosts accept a response without a period (from allocators built
+	// before these fields) and reject one that differs from the request.
+	Start *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=start,proto3" json:"start,omitempty"`
+	// Echo of AllocateRequest.end.
+	End           *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=end,proto3" json:"end,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -277,6 +319,20 @@ func (x *AllocateResponse) GetPolicyDigest() string {
 func (x *AllocateResponse) GetWarnings() []string {
 	if x != nil {
 		return x.Warnings
+	}
+	return nil
+}
+
+func (x *AllocateResponse) GetStart() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Start
+	}
+	return nil
+}
+
+func (x *AllocateResponse) GetEnd() *timestamppb.Timestamp {
+	if x != nil {
+		return x.End
 	}
 	return nil
 }
@@ -415,24 +471,32 @@ var File_finfocus_v1_allocation_proto protoreflect.FileDescriptor
 
 const file_finfocus_v1_allocation_proto_rawDesc = "" +
 	"\n" +
-	"\x1cfinfocus/v1/allocation.proto\x12\vfinfocus.v1\x1a\x1cfinfocus/v1/costsource.proto\x1a\x17finfocus/v1/usage.proto\"\xa9\x01\n" +
+	"\x1cfinfocus/v1/allocation.proto\x12\vfinfocus.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cfinfocus/v1/costsource.proto\x1a\x17finfocus/v1/usage.proto\"\xa9\x01\n" +
 	"\x0ePricedResource\x12;\n" +
 	"\bresource\x18\x01 \x01(\v2\x1f.finfocus.v1.ResourceDescriptorR\bresource\x12\x12\n" +
 	"\x04cost\x18\x02 \x01(\x01R\x04cost\x12\x1a\n" +
 	"\bcurrency\x18\x03 \x01(\tR\bcurrency\x12\x16\n" +
 	"\x06priced\x18\x04 \x01(\bR\x06priced\x12\x12\n" +
-	"\x04note\x18\x05 \x01(\tR\x04note\"\xc0\x01\n" +
+	"\x04note\x18\x05 \x01(\tR\x04note\"\xa5\x03\n" +
 	"\x0fAllocateRequest\x12+\n" +
 	"\x05usage\x18\x01 \x03(\v2\x15.finfocus.v1.UsageRowR\x05usage\x123\n" +
 	"\x06priced\x18\x02 \x03(\v2\x1b.finfocus.v1.PricedResourceR\x06priced\x12\x1f\n" +
 	"\vpolicy_json\x18\x03 \x01(\fR\n" +
 	"policyJson\x12*\n" +
-	"\x04mode\x18\x04 \x01(\x0e2\x16.finfocus.v1.StatsModeR\x04mode\"\xb7\x01\n" +
+	"\x04mode\x18\x04 \x01(\x0e2\x16.finfocus.v1.StatsModeR\x04mode\x120\n" +
+	"\x05start\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x05start\x12,\n" +
+	"\x03end\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x03end\x12F\n" +
+	"\bselector\x18\a \x03(\v2*.finfocus.v1.AllocateRequest.SelectorEntryR\bselector\x1a;\n" +
+	"\rSelectorEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x97\x02\n" +
 	"\x10AllocateResponse\x12.\n" +
 	"\x04rows\x18\x01 \x03(\v2\x1a.finfocus.v1.AllocationRowR\x04rows\x122\n" +
 	"\x15effective_policy_json\x18\x02 \x01(\fR\x13effectivePolicyJson\x12#\n" +
 	"\rpolicy_digest\x18\x03 \x01(\tR\fpolicyDigest\x12\x1a\n" +
-	"\bwarnings\x18\x04 \x03(\tR\bwarnings\"\xb1\x03\n" +
+	"\bwarnings\x18\x04 \x03(\tR\bwarnings\x120\n" +
+	"\x05start\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x05start\x12,\n" +
+	"\x03end\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x03end\"\xb1\x03\n" +
 	"\rAllocationRow\x12A\n" +
 	"\asubject\x18\x01 \x03(\v2'.finfocus.v1.AllocationRow.SubjectEntryR\asubject\x12\x19\n" +
 	"\bcpu_cost\x18\x02 \x01(\x01R\acpuCost\x12\x19\n" +
@@ -463,31 +527,38 @@ func file_finfocus_v1_allocation_proto_rawDescGZIP() []byte {
 	return file_finfocus_v1_allocation_proto_rawDescData
 }
 
-var file_finfocus_v1_allocation_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_finfocus_v1_allocation_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_finfocus_v1_allocation_proto_goTypes = []any{
-	(*PricedResource)(nil),     // 0: finfocus.v1.PricedResource
-	(*AllocateRequest)(nil),    // 1: finfocus.v1.AllocateRequest
-	(*AllocateResponse)(nil),   // 2: finfocus.v1.AllocateResponse
-	(*AllocationRow)(nil),      // 3: finfocus.v1.AllocationRow
-	nil,                        // 4: finfocus.v1.AllocationRow.SubjectEntry
-	(*ResourceDescriptor)(nil), // 5: finfocus.v1.ResourceDescriptor
-	(*UsageRow)(nil),           // 6: finfocus.v1.UsageRow
-	(StatsMode)(0),             // 7: finfocus.v1.StatsMode
+	(*PricedResource)(nil),        // 0: finfocus.v1.PricedResource
+	(*AllocateRequest)(nil),       // 1: finfocus.v1.AllocateRequest
+	(*AllocateResponse)(nil),      // 2: finfocus.v1.AllocateResponse
+	(*AllocationRow)(nil),         // 3: finfocus.v1.AllocationRow
+	nil,                           // 4: finfocus.v1.AllocateRequest.SelectorEntry
+	nil,                           // 5: finfocus.v1.AllocationRow.SubjectEntry
+	(*ResourceDescriptor)(nil),    // 6: finfocus.v1.ResourceDescriptor
+	(*UsageRow)(nil),              // 7: finfocus.v1.UsageRow
+	(StatsMode)(0),                // 8: finfocus.v1.StatsMode
+	(*timestamppb.Timestamp)(nil), // 9: google.protobuf.Timestamp
 }
 var file_finfocus_v1_allocation_proto_depIdxs = []int32{
-	5, // 0: finfocus.v1.PricedResource.resource:type_name -> finfocus.v1.ResourceDescriptor
-	6, // 1: finfocus.v1.AllocateRequest.usage:type_name -> finfocus.v1.UsageRow
-	0, // 2: finfocus.v1.AllocateRequest.priced:type_name -> finfocus.v1.PricedResource
-	7, // 3: finfocus.v1.AllocateRequest.mode:type_name -> finfocus.v1.StatsMode
-	3, // 4: finfocus.v1.AllocateResponse.rows:type_name -> finfocus.v1.AllocationRow
-	4, // 5: finfocus.v1.AllocationRow.subject:type_name -> finfocus.v1.AllocationRow.SubjectEntry
-	1, // 6: finfocus.v1.AllocatorService.Allocate:input_type -> finfocus.v1.AllocateRequest
-	2, // 7: finfocus.v1.AllocatorService.Allocate:output_type -> finfocus.v1.AllocateResponse
-	7, // [7:8] is the sub-list for method output_type
-	6, // [6:7] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	6,  // 0: finfocus.v1.PricedResource.resource:type_name -> finfocus.v1.ResourceDescriptor
+	7,  // 1: finfocus.v1.AllocateRequest.usage:type_name -> finfocus.v1.UsageRow
+	0,  // 2: finfocus.v1.AllocateRequest.priced:type_name -> finfocus.v1.PricedResource
+	8,  // 3: finfocus.v1.AllocateRequest.mode:type_name -> finfocus.v1.StatsMode
+	9,  // 4: finfocus.v1.AllocateRequest.start:type_name -> google.protobuf.Timestamp
+	9,  // 5: finfocus.v1.AllocateRequest.end:type_name -> google.protobuf.Timestamp
+	4,  // 6: finfocus.v1.AllocateRequest.selector:type_name -> finfocus.v1.AllocateRequest.SelectorEntry
+	3,  // 7: finfocus.v1.AllocateResponse.rows:type_name -> finfocus.v1.AllocationRow
+	9,  // 8: finfocus.v1.AllocateResponse.start:type_name -> google.protobuf.Timestamp
+	9,  // 9: finfocus.v1.AllocateResponse.end:type_name -> google.protobuf.Timestamp
+	5,  // 10: finfocus.v1.AllocationRow.subject:type_name -> finfocus.v1.AllocationRow.SubjectEntry
+	1,  // 11: finfocus.v1.AllocatorService.Allocate:input_type -> finfocus.v1.AllocateRequest
+	2,  // 12: finfocus.v1.AllocatorService.Allocate:output_type -> finfocus.v1.AllocateResponse
+	12, // [12:13] is the sub-list for method output_type
+	11, // [11:12] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_finfocus_v1_allocation_proto_init() }
@@ -503,7 +574,7 @@ func file_finfocus_v1_allocation_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_finfocus_v1_allocation_proto_rawDesc), len(file_finfocus_v1_allocation_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
