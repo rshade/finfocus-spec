@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.7.1](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.7.0...finfocus-client-v0.7.1) (2026-10-02)
+
+
+### Features
+
+* **pluginsdk:** advertise scorer limits and mark oversize batches ([#602](https://github.com/rshade/finfocus-spec/issues/602)) ([db5da5b](https://github.com/rshade/finfocus-spec/commit/db5da5b5e258bbf1e0a804d50b5f8ab2248d9af0))
+* **proto:** add billing_account_id to GetActualCostRequest ([#592](https://github.com/rshade/finfocus-spec/issues/592)) ([0458180](https://github.com/rshade/finfocus-spec/commit/04581801101312240f5d3974fe30cd35353c39f4)), closes [#590](https://github.com/rshade/finfocus-spec/issues/590)
+* **proto:** add FOCUS 1.3 provenance fields to AllocationRow ([#605](https://github.com/rshade/finfocus-spec/issues/605)) ([c1a07b0](https://github.com/rshade/finfocus-spec/commit/c1a07b02a33ce0d2b1c55969b276846762b56abd)), closes [#578](https://github.com/rshade/finfocus-spec/issues/578)
+* **proto:** add omitted_fields to ScoreRecommendationsRequest ([#604](https://github.com/rshade/finfocus-spec/issues/604)) ([9eccf57](https://github.com/rshade/finfocus-spec/commit/9eccf57a87b5c3f63dc84d19566af39fef56c366)), closes [#576](https://github.com/rshade/finfocus-spec/issues/576)
+* **proto:** add period and selector to AllocateRequest ([#606](https://github.com/rshade/finfocus-spec/issues/606)) ([0427ae2](https://github.com/rshade/finfocus-spec/commit/0427ae2ba67a96c7dd29de55f9d03bce1a5941f3)), closes [#579](https://github.com/rshade/finfocus-spec/issues/579)
+* **proto:** add RegionPrice for per-region retail prices ([#600](https://github.com/rshade/finfocus-spec/issues/600)) ([50d7d95](https://github.com/rshade/finfocus-spec/commit/50d7d95781c5f359c27dbdc1c8316b5ebd9b0c65)), closes [#589](https://github.com/rshade/finfocus-spec/issues/589)
+* **proto:** add repeated PriceOption for alternative retail prices ([#599](https://github.com/rshade/finfocus-spec/issues/599)) ([402f84d](https://github.com/rshade/finfocus-spec/commit/402f84de5269052792d695df5591b6924dc39897)), closes [#588](https://github.com/rshade/finfocus-spec/issues/588)
+* **proto:** add scorer session_id so duplicate groups span batches ([#603](https://github.com/rshade/finfocus-spec/issues/603)) ([6c078c4](https://github.com/rshade/finfocus-spec/commit/6c078c46da73d34498248b335e18d3ca8c53b8b3)), closes [#574](https://github.com/rshade/finfocus-spec/issues/574)
+* **proto:** list every request id and model on ScorerInfo ([#608](https://github.com/rshade/finfocus-spec/issues/608)) ([7a15bd6](https://github.com/rshade/finfocus-spec/commit/7a15bd6fa9858089a6c8ee9c35aabab6ee7dad0a))
+
 ## [0.7.0](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.6.6...finfocus-client-v0.7.0) (2026-09-29)
 
 
