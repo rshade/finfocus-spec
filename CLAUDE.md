@@ -1032,6 +1032,8 @@ parallel subtests complete.
 - `MockRecommendationScorer` (fixed rules) and `RunScorerConformance` are model-agnostic; they never
   check score values. Scenario funcs are named `scorerCheck*` to avoid clashing with allocator ones.
 - Trust rules and threshold guidance (non-normative, synthetic data) are in `docs/recommendation-scoring.md`.
+- Score caching (issue 581) is docs-only: the key hashes the pre-`identifier_mode` record without `id`, plus
+  `signals`, `ScorerInfo` name/model/calibration, and plugin version. No `valid_for` proto hint yet.
 
 ## Active Technologies
 

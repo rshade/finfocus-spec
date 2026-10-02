@@ -112,6 +112,45 @@ transformation, so identifiers never reach the scorer's backend in the default m
 Tags, metadata, and free text can still hold sensitive values, so identifier handling does not make
 a request safe to send on its own.
 
+## Caching Scores
+
+The contract has no score TTL and no separate score version. A score depends on the recommendation
+and on the scorer that produced it. A host that caches scores SHOULD build the key from every input
+that can change the result:
+
+| Key part | Source | Why |
+| -------- | ------ | --- |
+| Content hash | A deterministic hash of the `Recommendation`, excluding `id`, before the host applies `identifier_mode` | Any change to the record, including utilization or impact, is a new key. Hosts can assign ids per run. Pseudonymous tokens hold only within one request, so a hash of the transformed record does not reliably match across requests. |
+| `identifier_mode` | The request | The scorer saw different input in each mode. |
+| `signals` | The request, or the scorer's `supported_signals` when the request lists none | A narrower request is not a full answer. |
+| `scorer.name`, `scorer.model`, `scorer.calibration` | `ScorerInfo` in the response | A different scorer, model, or calibration produces different numbers. |
+| `version` | `GetPluginInfoResponse` | Rules can change while `model` stays the same, and rule-based scorers leave `model` empty. |
+
+When the request or `ScorerInfo` gains a field that changes scores, that field joins the key.
+
+A cached score is valid only while every part of its key is unchanged. Scores already vary slightly
+between identical calls, so within that rule a cached score is as good as a fresh one, and the dead
+band from [Calibration](#calibration) covers both. Scorers SHOULD report a pinned version in
+`scorer.model`, for example `jev-1.13.0`. A moving alias such as `latest` lets the backend change
+behind a key that still matches. Hosts SHOULD also set their own maximum age, because a hosted
+backend can change in ways no field reports.
+
+Some response fields MUST NOT be cached per recommendation:
+
+- `duplicate_group_id`, because a cached id would join recommendations from different calls into
+  one group.
+- `provider_request_id`, because it identifies one call. It is a log field, not a key part.
+- A `ResourceError` result, because it is not a score. Hosts can retry it.
+
+Hosts MUST NOT persist raw scorer payloads in a score cache. The cache holds the key and the numeric
+signals, never the recommendations as sent, the response bytes, or `ResourceError` messages. Those
+can carry the sensitive values described in [Data Handling](#data-handling).
+
+The contract defines no scorer-supplied validity hint, such as a score version or `valid_for` field
+on `ScorerInfo`. Version changes already change the key. The case the key misses is a backend that
+changes silently, which the host's maximum age covers today. A `valid_for` hint would let the scorer
+suggest that age instead, and is a candidate for a later minor version.
+
 ## Errors
 
 Whole-call failures use gRPC codes:
