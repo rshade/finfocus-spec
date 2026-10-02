@@ -460,8 +460,14 @@ allocator can return it unchanged.
 | Q4 | At most one non-empty currency over priced entries | `ErrInvalidAllocateRequest`, `ErrMixedCurrency` |
 | Q5 | No two entries share `(tags.kind, id)` | `ErrInvalidAllocateRequest` |
 | Q6 | `priced = true` node entries have a non-empty `id` | `ErrInvalidAllocateRequest` |
+| Q7 | `start` and `end` are set together, and `start` is not after `end` | `ErrInvalidAllocateRequest` |
 
-Usage rows are not validated; the allocator interprets them.
+Usage rows and the `selector` are not validated; the allocator interprets them.
+
+A non-empty `AllocateRequest.selector` marks a partial selection: node capacity still covers every
+workload, so idle and cluster rows include capacity used by unselected workloads. Every invariant
+still holds. Allocators should add a warning, and hosts should omit or label idle and cluster rows.
+See [Partial Selections](../../../docs/allocator.md#partial-selections).
 
 #### `ValidateAllocateResponse`
 
@@ -477,6 +483,7 @@ Usage rows are not validated; the allocator interprets them.
 | P5 | Non-cluster rows have `total_cost = cpu_cost + mem_cost` within tolerance |
 | P6 | Every row's currency equals the resolved currency |
 | P7 | Each priced node has exactly one `__idle__` row with its `id` |
+| P8 | An echoed `start` and `end`, when present, equal the request's in seconds and nanoseconds; a response with neither passes, so older allocators stay valid |
 
 #### `CheckConservation`
 
@@ -496,7 +503,7 @@ if errors.As(plugintesting.CheckConservation(req, resp, plugintesting.DefaultCon
 
 #### Allocator Conformance
 
-`RunAllocatorConformance(t, impl)` serves `impl` over an `AllocatorHarness` and runs thirteen
+`RunAllocatorConformance(t, impl)` serves `impl` over an `AllocatorHarness` and runs fifteen
 subtests. `impl` is any `AllocateServer`: a type with an `Allocate` method, such as a
 `pluginsdk.AllocatorProvider` or a `pbc.AllocatorServiceServer`.
 
@@ -525,6 +532,8 @@ and that `CheckConservation` holds. Fixture usage is valid usage-source output (
 | `fingerprint_stable` | The same request twice | Equal digests and effective policies |
 | `fingerprint_empty_equals_braces` | `policy_json` empty and `{}` | Equal digests |
 | `row_provenance` | Single-node cluster | Any row with `allocated_method_id` also has `allocated_resource_id`; provenance itself is optional |
+| `period_echoed` | Single node with a `start` and `end` (nanos set) | Response echoes the period exactly |
+| `selector_keeps_invariants` | Single node with `selector` `{"namespace": "payments"}` | Every invariant and conservation still hold |
 
 The assertions are policy-agnostic: bad policies are derived from the allocator's own effective
 policy. Only the top level is probed for unknown keys, because a nested object may be a map field

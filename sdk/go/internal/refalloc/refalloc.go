@@ -32,6 +32,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
@@ -64,6 +65,11 @@ type Policy struct {
 	// NodeSplit configures the CPU/memory split of node cost.
 	NodeSplit NodeSplit `json:"node_split"`
 }
+
+// PartialSelectionWarning is added to responses for requests with a non-empty selector.
+// Its text is not part of the contract.
+const PartialSelectionWarning = "selector narrows workloads: idle and cluster rows include " +
+	"capacity used by unselected workloads"
 
 // DefaultPolicy returns the policy applied when policy_json is empty or "{}".
 func DefaultPolicy() Policy {
@@ -117,11 +123,19 @@ func (a *Allocator) Allocate(_ context.Context, req *pbc.AllocateRequest) (*pbc.
 	b := &rowBuilder{currency: currency, policy: policy, usage: indexUsage(req.GetUsage())}
 	b.allocate(req.GetPriced())
 
-	return &pbc.AllocateResponse{
+	resp := &pbc.AllocateResponse{
 		Rows:                b.rows,
 		EffectivePolicyJson: canonical,
 		PolicyDigest:        hex.EncodeToString(digest[:]),
-	}, nil
+	}
+	if req.GetStart() != nil {
+		resp.Start = proto.CloneOf(req.GetStart())
+		resp.End = proto.CloneOf(req.GetEnd())
+	}
+	if len(req.GetSelector()) > 0 {
+		resp.Warnings = append(resp.Warnings, PartialSelectionWarning)
+	}
+	return resp, nil
 }
 
 func decodePolicy(doc []byte) (Policy, error) {

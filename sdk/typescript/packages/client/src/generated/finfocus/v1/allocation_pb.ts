@@ -17,6 +17,8 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv1";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv1";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { ResourceDescriptor } from "./costsource_pb";
 import { file_finfocus_v1_costsource } from "./costsource_pb";
 import type { StatsMode, UsageRow } from "./usage_pb";
@@ -27,7 +29,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file finfocus/v1/allocation.proto.
  */
 export const file_finfocus_v1_allocation: GenFile = /*@__PURE__*/
-  fileDesc("ChxmaW5mb2N1cy92MS9hbGxvY2F0aW9uLnByb3RvEgtmaW5mb2N1cy52MSKBAQoOUHJpY2VkUmVzb3VyY2USMQoIcmVzb3VyY2UYASABKAsyHy5maW5mb2N1cy52MS5SZXNvdXJjZURlc2NyaXB0b3ISDAoEY29zdBgCIAEoARIQCghjdXJyZW5jeRgDIAEoCRIOCgZwcmljZWQYBCABKAgSDAoEbm90ZRgFIAEoCSKfAQoPQWxsb2NhdGVSZXF1ZXN0EiQKBXVzYWdlGAEgAygLMhUuZmluZm9jdXMudjEuVXNhZ2VSb3cSKwoGcHJpY2VkGAIgAygLMhsuZmluZm9jdXMudjEuUHJpY2VkUmVzb3VyY2USEwoLcG9saWN5X2pzb24YAyABKAwSJAoEbW9kZRgEIAEoDjIWLmZpbmZvY3VzLnYxLlN0YXRzTW9kZSKEAQoQQWxsb2NhdGVSZXNwb25zZRIoCgRyb3dzGAEgAygLMhouZmluZm9jdXMudjEuQWxsb2NhdGlvblJvdxIdChVlZmZlY3RpdmVfcG9saWN5X2pzb24YAiABKAwSFQoNcG9saWN5X2RpZ2VzdBgDIAEoCRIQCgh3YXJuaW5ncxgEIAMoCSKvAgoNQWxsb2NhdGlvblJvdxI4CgdzdWJqZWN0GAEgAygLMicuZmluZm9jdXMudjEuQWxsb2NhdGlvblJvdy5TdWJqZWN0RW50cnkSEAoIY3B1X2Nvc3QYAiABKAESEAoIbWVtX2Nvc3QYAyABKAESEgoKdG90YWxfY29zdBgEIAEoARIQCghjdXJyZW5jeRgFIAEoCRIMCgRub3RlGAYgASgJEhsKE2FsbG9jYXRlZF9tZXRob2RfaWQYByABKAkSIAoYYWxsb2NhdGVkX21ldGhvZF9kZXRhaWxzGAggASgJEh0KFWFsbG9jYXRlZF9yZXNvdXJjZV9pZBgJIAEoCRouCgxTdWJqZWN0RW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ATJbChBBbGxvY2F0b3JTZXJ2aWNlEkcKCEFsbG9jYXRlEhwuZmluZm9jdXMudjEuQWxsb2NhdGVSZXF1ZXN0Gh0uZmluZm9jdXMudjEuQWxsb2NhdGVSZXNwb25zZUKtAQoPY29tLmZpbmZvY3VzLnYxQg9BbGxvY2F0aW9uUHJvdG9QAVo8Z2l0aHViLmNvbS9yc2hhZGUvZmluZm9jdXMtc3BlYy9zZGsvZ28vcHJvdG8vZmluZm9jdXMvdjE7cGJjogIDRlhYqgILRmluZm9jdXMuVjHKAgtGaW5mb2N1c1xWMeICF0ZpbmZvY3VzXFYxXEdQQk1ldGFkYXRh6gIMRmluZm9jdXM6OlYxYgZwcm90bzM", [file_finfocus_v1_costsource, file_finfocus_v1_usage]);
+  fileDesc("ChxmaW5mb2N1cy92MS9hbGxvY2F0aW9uLnByb3RvEgtmaW5mb2N1cy52MSKBAQoOUHJpY2VkUmVzb3VyY2USMQoIcmVzb3VyY2UYASABKAsyHy5maW5mb2N1cy52MS5SZXNvdXJjZURlc2NyaXB0b3ISDAoEY29zdBgCIAEoARIQCghjdXJyZW5jeRgDIAEoCRIOCgZwcmljZWQYBCABKAgSDAoEbm90ZRgFIAEoCSLiAgoPQWxsb2NhdGVSZXF1ZXN0EiQKBXVzYWdlGAEgAygLMhUuZmluZm9jdXMudjEuVXNhZ2VSb3cSKwoGcHJpY2VkGAIgAygLMhsuZmluZm9jdXMudjEuUHJpY2VkUmVzb3VyY2USEwoLcG9saWN5X2pzb24YAyABKAwSJAoEbW9kZRgEIAEoDjIWLmZpbmZvY3VzLnYxLlN0YXRzTW9kZRIpCgVzdGFydBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASJwoDZW5kGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI8CghzZWxlY3RvchgHIAMoCzIqLmZpbmZvY3VzLnYxLkFsbG9jYXRlUmVxdWVzdC5TZWxlY3RvckVudHJ5Gi8KDVNlbGVjdG9yRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASLYAQoQQWxsb2NhdGVSZXNwb25zZRIoCgRyb3dzGAEgAygLMhouZmluZm9jdXMudjEuQWxsb2NhdGlvblJvdxIdChVlZmZlY3RpdmVfcG9saWN5X2pzb24YAiABKAwSFQoNcG9saWN5X2RpZ2VzdBgDIAEoCRIQCgh3YXJuaW5ncxgEIAMoCRIpCgVzdGFydBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASJwoDZW5kGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCKvAgoNQWxsb2NhdGlvblJvdxI4CgdzdWJqZWN0GAEgAygLMicuZmluZm9jdXMudjEuQWxsb2NhdGlvblJvdy5TdWJqZWN0RW50cnkSEAoIY3B1X2Nvc3QYAiABKAESEAoIbWVtX2Nvc3QYAyABKAESEgoKdG90YWxfY29zdBgEIAEoARIQCghjdXJyZW5jeRgFIAEoCRIMCgRub3RlGAYgASgJEhsKE2FsbG9jYXRlZF9tZXRob2RfaWQYByABKAkSIAoYYWxsb2NhdGVkX21ldGhvZF9kZXRhaWxzGAggASgJEh0KFWFsbG9jYXRlZF9yZXNvdXJjZV9pZBgJIAEoCRouCgxTdWJqZWN0RW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ATJbChBBbGxvY2F0b3JTZXJ2aWNlEkcKCEFsbG9jYXRlEhwuZmluZm9jdXMudjEuQWxsb2NhdGVSZXF1ZXN0Gh0uZmluZm9jdXMudjEuQWxsb2NhdGVSZXNwb25zZUKtAQoPY29tLmZpbmZvY3VzLnYxQg9BbGxvY2F0aW9uUHJvdG9QAVo8Z2l0aHViLmNvbS9yc2hhZGUvZmluZm9jdXMtc3BlYy9zZGsvZ28vcHJvdG8vZmluZm9jdXMvdjE7cGJjogIDRlhYqgILRmluZm9jdXMuVjHKAgtGaW5mb2N1c1xWMeICF0ZpbmZvY3VzXFYxXEdQQk1ldGFkYXRh6gIMRmluZm9jdXM6OlYxYgZwcm90bzM", [file_google_protobuf_timestamp, file_finfocus_v1_costsource, file_finfocus_v1_usage]);
 
 /**
  * PricedResource is one priceable resource from GetStatsResponse.priceable
@@ -125,6 +127,35 @@ export type AllocateRequest = Message<"finfocus.v1.AllocateRequest"> & {
    * @generated from field: finfocus.v1.StatsMode mode = 4;
    */
   mode: StatsMode;
+
+  /**
+   * Start of the period the priced costs cover, with the same rules as
+   * GetStatsRequest.start: set start and end together, or leave both unset for
+   * a run-rate allocation. Setting exactly one is INVALID_ARGUMENT. The period
+   * labels the result and never changes an allocated cost.
+   *
+   * @generated from field: google.protobuf.Timestamp start = 5;
+   */
+  start?: Timestamp;
+
+  /**
+   * End of the period. Must not be before start.
+   *
+   * @generated from field: google.protobuf.Timestamp end = 6;
+   */
+  end?: Timestamp;
+
+  /**
+   * Workload selector the host used for usage, with the same meaning as
+   * GetStatsRequest.selector. A non-empty selector is a partial selection:
+   * node capacity still covers every workload, so idle and cluster rows
+   * include capacity used by unselected workloads. Every invariant still
+   * holds. Allocators SHOULD add a warning. Hosts SHOULD omit or label idle
+   * and cluster rows for a partial selection.
+   *
+   * @generated from field: map<string, string> selector = 7;
+   */
+  selector: { [key: string]: string };
 };
 
 /**
@@ -172,6 +203,22 @@ export type AllocateResponse = Message<"finfocus.v1.AllocateResponse"> & {
    * @generated from field: repeated string warnings = 4;
    */
   warnings: string[];
+
+  /**
+   * Echo of AllocateRequest.start. Allocators MUST echo the request's period
+   * exactly. Hosts accept a response without a period (from allocators built
+   * before these fields) and reject one that differs from the request.
+   *
+   * @generated from field: google.protobuf.Timestamp start = 5;
+   */
+  start?: Timestamp;
+
+  /**
+   * Echo of AllocateRequest.end.
+   *
+   * @generated from field: google.protobuf.Timestamp end = 6;
+   */
+  end?: Timestamp;
 };
 
 /**

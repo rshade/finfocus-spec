@@ -26,6 +26,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/rshade/finfocus-spec/sdk/go/internal/refalloc"
 	"github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
@@ -48,6 +49,8 @@ var allocatorScenarioNames = []string{
 	"fingerprint_stable",
 	"fingerprint_empty_equals_braces",
 	"row_provenance",
+	"period_echoed",
+	"selector_keeps_invariants",
 }
 
 // allocFunc adapts a function to plugintesting.AllocateServer.
@@ -130,9 +133,8 @@ func mapFieldAllocator() allocFunc {
 			delete(obj, "a_labels")
 			doc, _ = json.Marshal(obj)
 		}
-		clone := &pbc.AllocateRequest{
-			Usage: req.GetUsage(), Priced: req.GetPriced(), Mode: req.GetMode(), PolicyJson: doc,
-		}
+		clone := proto.CloneOf(req)
+		clone.PolicyJson = doc
 		resp, err := ref.Allocate(ctx, clone)
 		if err != nil {
 			return nil, err
@@ -217,6 +219,13 @@ func bracesDiffer() allocFunc {
 func brokenAllocators() []brokenAllocator {
 	var digestCounter atomic.Int64
 	return []brokenAllocator{
+		{
+			name: "drops-window",
+			impl: postProcess(func(resp *pbc.AllocateResponse) {
+				resp.Start, resp.End = nil, nil
+			}),
+			fails: []string{"period_echoed"},
+		},
 		{
 			name: "over-allocation",
 			impl: postProcess(func(resp *pbc.AllocateResponse) {

@@ -23,6 +23,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
@@ -108,8 +109,10 @@ func ResolveCurrency(priced []*pbc.PricedResource) (string, error) {
 // (rules Q1–Q6 in data-model.md): the request and every priced entry are
 // non-nil; unpriced entries cost 0; costs are finite and non-negative; priced
 // entries resolve to one currency; no two entries share
-// (resource.tags["kind"], resource.id); and priced nodes have a non-empty
-// resource.id. Usage rows are not validated.
+// (resource.tags["kind"], resource.id); priced nodes have a non-empty
+// resource.id; and start and end are set together, with start not after end
+// (the GetStatsRequest window rule). Usage rows and the selector are not
+// validated.
 //
 // Every failure wraps ErrInvalidAllocateRequest (mixed currencies also wrap
 // ErrMixedCurrency), names the offending priced[i] entry, and carries
@@ -117,6 +120,9 @@ func ResolveCurrency(priced []*pbc.PricedResource) (string, error) {
 func ValidateAllocateRequest(req *pbc.AllocateRequest) error {
 	if req == nil {
 		return newInvalidArgument(ErrInvalidAllocateRequest, "request is nil")
+	}
+	if err := validateAllocateWindow(req.GetStart(), req.GetEnd()); err != nil {
+		return err
 	}
 	priced := req.GetPriced()
 	for i, entry := range priced {
@@ -140,6 +146,17 @@ func ValidateAllocateRequest(req *pbc.AllocateRequest) error {
 				"priced[%d]: duplicates priced[%d] (kind %q, id %q)", i, first, key.kind, key.id)
 		}
 		seen[key] = i
+	}
+	return nil
+}
+
+func validateAllocateWindow(start, end *timestamppb.Timestamp) error {
+	if (start == nil) != (end == nil) {
+		return newInvalidArgument(ErrInvalidAllocateRequest, "start and end must be set together")
+	}
+	if start != nil && timestampAfter(start, end) {
+		return newInvalidArgument(ErrInvalidAllocateRequest,
+			"start is after end (start %s, end %s)", start.AsTime(), end.AsTime())
 	}
 	return nil
 }
@@ -239,7 +256,8 @@ func CheckConservation(req *pbc.AllocateRequest, resp *pbc.AllocateResponse, rel
 // "__idle__", or "__cluster__"; idle rows name their node; costs are finite
 // and non-negative; non-cluster rows have total_cost = cpu_cost + mem_cost
 // within tolerance; every row carries the resolved currency; and every priced
-// node has exactly one idle row. Every error wraps ErrInvalidAllocateResponse
+// node has exactly one idle row; and an echoed start and end, when present, equal the
+// request's (a response without them is accepted). Every error wraps ErrInvalidAllocateResponse
 // and names the offending rows[i] entry. Use CheckConservation for totals.
 func ValidateAllocateResponse(req *pbc.AllocateRequest, resp *pbc.AllocateResponse) error {
 	if resp == nil {
@@ -250,6 +268,9 @@ func ValidateAllocateResponse(req *pbc.AllocateRequest, resp *pbc.AllocateRespon
 	}
 	if len(resp.GetEffectivePolicyJson()) == 0 {
 		return fmt.Errorf("%w: effective_policy_json is empty", ErrInvalidAllocateResponse)
+	}
+	if err := validateWindowEcho(req, resp); err != nil {
+		return err
 	}
 	currency, err := ResolveCurrency(req.GetPriced())
 	if err != nil {
@@ -277,6 +298,31 @@ func ValidateAllocateResponse(req *pbc.AllocateRequest, resp *pbc.AllocateRespon
 		}
 	}
 	return nil
+}
+
+// validateWindowEcho accepts a response without a period, so allocators built before
+// the period fields stay valid. An echoed period must equal the request's in seconds and
+// nanoseconds; an unset request bound must stay unset.
+func validateWindowEcho(req *pbc.AllocateRequest, resp *pbc.AllocateResponse) error {
+	if resp.GetStart() == nil && resp.GetEnd() == nil {
+		return nil
+	}
+	if !sameTimestamp(req.GetStart(), resp.GetStart()) {
+		return fmt.Errorf("%w: start %v does not echo the request start %v",
+			ErrInvalidAllocateResponse, resp.GetStart(), req.GetStart())
+	}
+	if !sameTimestamp(req.GetEnd(), resp.GetEnd()) {
+		return fmt.Errorf("%w: end %v does not echo the request end %v",
+			ErrInvalidAllocateResponse, resp.GetEnd(), req.GetEnd())
+	}
+	return nil
+}
+
+func sameTimestamp(a, b *timestamppb.Timestamp) bool {
+	if a == nil || b == nil {
+		return a == nil && b == nil
+	}
+	return a.GetSeconds() == b.GetSeconds() && a.GetNanos() == b.GetNanos()
 }
 
 func validateAllocationRow(i int, row *pbc.AllocationRow, currency string) error {
