@@ -30,6 +30,11 @@
 
 ## Active Technologies
 
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf
+  (`proto.Size`, `structpb`), buf v1.32.1; no new dependencies (596-resource-descriptor-attributes)
+- N/A (one optional Struct on ResourceDescriptor, two size limits, one read helper)
+  (596-resource-descriptor-attributes)
+
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) +
   google.golang.org/protobuf, google.golang.org/grpc, connectrpc.com/connect,
   buf v1.32.1; no new dependencies (547-invoice-dataset-rpcs)
@@ -63,6 +68,12 @@
 - JSON Schema (Draft 2020-12) for PricingSpec and BudgetSpec validation (001-get-budgets-rpc)
 
 ## Recent Changes
+
+- 596-resource-descriptor-attributes: Added ResourceDescriptor.attributes (field 12, a
+  google.protobuf.Struct) with the host redaction rule and the tags fallback, MaxAttributesBytes
+  (65536) and ErrAttributesTooLarge in both validators, MaxTagValueLength 256 to 2048 in both,
+  pluginsdk.AttributeValue, the TypeScript ResourceDescriptorBuilder.withAttributes, and the Basic
+  conformance test RPCCorrectness_GetProjectedCostWithAttributes (issue 617)
 
 - 547-invoice-dataset-rpcs: Added GetBillingPeriods and GetInvoiceDetails on
   SupplementalDatasetService, capability 17 (`supports_invoice_data`), and the Go and

@@ -1,4 +1,4 @@
-import { create, clone } from "@bufbuild/protobuf";
+import { create, clone, type JsonObject } from "@bufbuild/protobuf";
 import { ResourceDescriptor, ResourceDescriptorSchema } from "../generated/finfocus/v1/costsource_pb.js";
 import { ValidationError } from "../errors/validation-error.js";
 
@@ -43,6 +43,17 @@ export class ResourceDescriptorBuilder {
 
   withTags(tags: { [key: string]: string }): this {
     this.descriptor.tags = tags;
+    return this;
+  }
+
+  /**
+   * Sets the resource's declared properties as a nested object, without
+   * flattening. Hosts must redact secrets and credential-like keys first, and
+   * the encoded size must not exceed 65536 bytes. Plugins fall back to tags
+   * when attributes are absent.
+   */
+  withAttributes(attributes: JsonObject): this {
+    this.descriptor.attributes = structuredClone(attributes);
     return this;
   }
 

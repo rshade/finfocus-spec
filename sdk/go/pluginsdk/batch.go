@@ -53,10 +53,12 @@ const (
 )
 
 // DoS-guard limits for ResourceDescriptor field validation.
-// These are intentionally more generous than the contract validation limits
-// in testing/contract.go (e.g., MaxTagCount=50, MaxResourceIDLength=512),
-// which enforce stricter bounds for well-formed data. These limits only
-// prevent unbounded allocations from malicious or malformed input.
+// Tag key and value lengths and the attributes size match the contract limits
+// in testing/contract.go. The tag count and the other field lengths are more
+// generous than the contract (e.g., MaxTagCount=50, MaxResourceIDLength=512),
+// which enforces stricter bounds for well-formed data. These limits only
+// prevent unbounded allocations from malicious or malformed input. Lengths are
+// in bytes.
 const (
 	// MaxTagsPerResource is the maximum number of tags allowed per ResourceDescriptor.
 	MaxTagsPerResource = 256
@@ -74,8 +76,17 @@ const (
 	MaxRegionLength = 64
 	// MaxTagKeyLength is the maximum length for tag keys.
 	MaxTagKeyLength = 128
-	// MaxTagValueLength is the maximum length for tag values.
-	MaxTagValueLength = 256
+	// MaxTagValueLength is the maximum length for tag values. It matches
+	// MaxARNLength so long scalar inputs (policy documents, user data, ARNs)
+	// fit in a tag.
+	MaxTagValueLength = 2048
+	// MaxAttributesBytes is the maximum encoded (protobuf wire) size of
+	// ResourceDescriptor.attributes. Wire size is what counts against the
+	// transport limits (1 MB on Connect/HTTP, 4 MB by default on gRPC); 64 KiB
+	// fits a full pod spec while leaving room for several resources per request.
+	// A batch must still fit the transport limit as a whole, so hosts split
+	// batches whose resources carry large attributes.
+	MaxAttributesBytes = 64 << 10
 )
 
 const (
@@ -139,7 +150,8 @@ func NormalizeCostQueryType(queryType pbc.CostQueryType) pbc.CostQueryType {
 //   - region must not exceed MaxRegionLength (64 characters)
 //   - tags map must not exceed MaxTagsPerResource (256 entries)
 //   - tag keys must not exceed MaxTagKeyLength (128 characters)
-//   - tag values must not exceed MaxTagValueLength (256 characters)
+//   - tag values must not exceed MaxTagValueLength (2048 bytes)
+//   - attributes must not exceed MaxAttributesBytes (65536 bytes, protobuf wire size)
 //
 // Returns nil if validation passes, or a gRPC InvalidArgument error describing the violation.
 func ValidateResourceDescriptor(resource *pbc.ResourceDescriptor) error {
@@ -207,6 +219,12 @@ func ValidateResourceDescriptor(resource *pbc.ResourceDescriptor) error {
 		)
 	}
 
+	return validateDescriptorInputs(resource)
+}
+
+// validateDescriptorInputs applies the tag and attributes limits of
+// ValidateResourceDescriptor.
+func validateDescriptorInputs(resource *pbc.ResourceDescriptor) error {
 	tags := resource.GetTags()
 	if len(tags) > MaxTagsPerResource {
 		return status.Errorf(
@@ -234,6 +252,17 @@ func ValidateResourceDescriptor(resource *pbc.ResourceDescriptor) error {
 				key,
 				len(value),
 				MaxTagValueLength,
+			)
+		}
+	}
+
+	if attrs := resource.GetAttributes(); attrs != nil {
+		if size := proto.Size(attrs); size > MaxAttributesBytes {
+			return status.Errorf(
+				codes.InvalidArgument,
+				"attributes size %d bytes exceeds maximum %d",
+				size,
+				MaxAttributesBytes,
 			)
 		}
 	}

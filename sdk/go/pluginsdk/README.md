@@ -1005,6 +1005,53 @@ type BatchCostHandler interface {
 - `supports_batch_cost`: `"true"` when `PLUGIN_CAPABILITY_BATCH_COST` is present
 - `max_batch_size`: configured batch limit (default `"100"`)
 
+### Resource Descriptor Limits and Attributes
+
+`ValidateResourceDescriptor` is the SDK's denial-of-service guard for a `ResourceDescriptor`.
+`ValidateBatchCostRequest` applies it to every resource, and plugins can call it directly. Lengths
+are in bytes, and a violation returns `codes.InvalidArgument`:
+
+| Field | Constant | Limit |
+|-------|----------|-------|
+| `provider` | `MaxProviderLength` | 32 |
+| `resource_type` | `MaxResourceTypeLength` | 256 |
+| `id` | `MaxIDLength` | 1024 |
+| `arn` | `MaxARNLength` | 2048 |
+| `sku` | `MaxSKULength` | 128 |
+| `region` | `MaxRegionLength` | 64 |
+| `tags` count | `MaxTagsPerResource` | 256 |
+| tag key | `MaxTagKeyLength` | 128 |
+| tag value | `MaxTagValueLength` | 2048 |
+| `attributes` | `MaxAttributesBytes` | 65536 (protobuf wire size) |
+
+`ResourceDescriptor.attributes` carries the resource's declared properties as a nested
+`google.protobuf.Struct`, without flattening. Prefer it, and fall back to `tags` when it is unset;
+older hosts send only `tags`. Hosts redact secrets and credential-like keys before sending it, and
+plugins must not log it verbatim. A whole request still has to fit the transport limit (1 MB on
+Connect/HTTP, 4 MB by default on gRPC), so hosts split batches by encoded size. See
+[Structured Attributes](../../../docs/PROPERTY_MAPPING.md#structured-attributes) for the full rules.
+
+`AttributeValue` reads a dot-separated path, where a numeric segment indexes a list. Any miss returns
+`(nil, false)`, never an error, and an explicit JSON `null` is found as a `NullValue`. The walk does not
+allocate:
+
+```go
+attrs := req.GetResource().GetAttributes()
+
+if v, ok := pluginsdk.AttributeValue(attrs, "spec.template.spec.containers.0.resources.requests.cpu"); ok {
+    cpu := v.GetStringValue() // "250m"
+    _ = cpu
+}
+
+if v, ok := pluginsdk.AttributeValue(attrs, "spec.replicas"); ok {
+    replicas := int(v.GetNumberValue())
+    _ = replicas
+}
+```
+
+A key that itself contains `.` cannot be addressed by path; read it from `attrs.GetFields()`. The
+accessor also works on `EstimateCostRequest.attributes`.
+
 ### Pagination Continuation for Batch Actual Cost Results
 
 `BatchCostRequest` does not accept page tokens. When `query_type` is `ACTUAL`,

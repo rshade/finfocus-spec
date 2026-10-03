@@ -343,13 +343,14 @@ func (p *MultiProviderPlugin) GetProjectedCost(
 ### Provider-Specific Property Extraction
 
 When dealing with resources from multiple providers, use the mapping package's
-provider-specific extractors:
+provider-specific extractors. They read the flat `tags` map. When the host also sends the nested
+`attributes` Struct, prefer it (read paths with `pluginsdk.AttributeValue`) and fall back to `tags`:
 
 ```go
 func (p *MultiProviderPlugin) extractResourceDetails(
     resource *pbc.ResourceDescriptor,
 ) (sku, region string, err error) {
-    props := resource.GetProperties()
+    props := resource.GetTags()
     provider := resource.GetProvider()
 
     switch provider {
@@ -663,6 +664,10 @@ if baselineResp == nil || modifiedResp == nil {
 // Cost impact
 costDiff := modifiedResp.CostPerMonth - baselineResp.CostPerMonth
 ```
+
+The example carries properties in `tags`. A host may also send them nested in `ResourceDescriptor.attributes`;
+plugins prefer `attributes` when it is set and fall back to `tags` when it is absent, so the patterns below apply
+to either source.
 
 ### Pattern 1: Graceful Degradation with Partial Properties
 

@@ -755,7 +755,9 @@ message LineageNode {
 //   - resource_type: Must match the plugin's supported resource types
 //   - sku: Format varies by provider (e.g., "t3.micro" for AWS, "Standard_B1s" for Azure)
 //   - region: Must match provider's region naming (e.g., "us-east-1", "eastus", "us-central1")
-//   - tags: Keys and values should be non-empty strings when provided
+//   - tags: Keys and values should be non-empty strings when provided; values
+//     are at most 2048 bytes
+//   - attributes: Encoded size at most 65536 bytes; see the attributes field
 message ResourceDescriptor {
   // provider identifies the cloud provider.
   // REQUIRED. Must be one of: "aws", "azure", "gcp", "kubernetes", "custom".
@@ -822,7 +824,9 @@ message ResourceDescriptor {
   //   - See docs/PROPERTY_MAPPING.md section "Sparse Property Scenarios"
   //
   // Examples: {"app": "web", "env": "production", "team": "platform"}
-  // Both keys and values should be non-empty when provided.
+  // Both keys and values should be non-empty when provided. Values are at
+  // most 2048 bytes. Nested inputs belong in attributes, which carries them
+  // without flattening.
   map<string, string> tags = 5;
 
   // utilization_percentage is a per-resource utilization override (0.0 to 1.0).
@@ -925,6 +929,33 @@ message ResourceDescriptor {
   //
   // See LineageNode for the full semantics and depth guidance.
   LineageNode lineage = 11;
+
+  // attributes carries the resource's declared properties as a structure,
+  // without flattening. It mirrors EstimateCostRequest.attributes.
+  // OPTIONAL. Unset or empty means the host sent none; plugins then fall back
+  // to tags. tags keep their meaning, and hosts SHOULD keep sending them so
+  // plugins that predate this field are unaffected. When a property appears
+  // in both with different values, plugins prefer attributes.
+  //
+  // Host redaction (REQUIRED): hosts MUST omit keys that start with "__",
+  // credential-like keys (names containing, case-insensitively, password,
+  // secret, token, credential, privatekey, accesskey, or connectionstring),
+  // and values the IaC tool marks secret (for Pulumi, the secret signature
+  // "4dabf18193072939515e22adb298388d"). Plugins MUST NOT log this field
+  // verbatim.
+  //
+  // Size: the encoded size MUST NOT exceed 65536 bytes
+  // (pluginsdk.MaxAttributesBytes). A whole request must also fit the
+  // transport limit (1 MB on Connect/HTTP, 4 MB by default on gRPC), so hosts
+  // split BatchCost requests whose resources carry large attributes.
+  //
+  // Numbers are doubles on the wire; send integers above 2^53 as strings.
+  // Plugins can read a dotted path with pluginsdk.AttributeValue.
+  //
+  // Example (Kubernetes Deployment, abbreviated):
+  //   {"spec": {"replicas": 3, "template": {"spec": {"containers": [
+  //     {"resources": {"requests": {"cpu": "250m"}}}]}}}}
+  google.protobuf.Struct attributes = 12;
 }
 
 // ActualCostResult represents a single cost data point.

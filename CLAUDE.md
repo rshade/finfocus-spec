@@ -1176,7 +1176,31 @@ parallel subtests complete.
   Per-resource sustainability metrics are a `SupportsResponse.supported_metrics` concern, not a manifest field;
   a manifest declares `carbon`, `energy`, and `water` capabilities instead.
 
+### Resource Attributes Pattern (596-resource-descriptor-attributes)
+
+- `ResourceDescriptor.attributes` (12) carries declared inputs unflattened on every descriptor RPC; plugins
+  prefer it and fall back to `tags`. Host redaction is a contract rule only: the SDK never logs descriptors
+  and cannot detect what a host dropped.
+- `MaxAttributesBytes` (65536, `proto.Size`) and `MaxTagValueLength` (2048 bytes) are defined in both
+  `pluginsdk/batch.go` and `testing/contract.go`; change them together. `TestDescriptorLimitValues` and
+  `TestContractDescriptorLimitValues` pin the literals.
+- The size check is nil-guarded, so descriptors without attributes stay at 0 allocs/op; with attributes
+  `proto.Size` costs one 16 B alloc (map iteration). Batch-vs-transport size is documented, not enforced:
+  grpc-go and `payloadLimitMiddleware` reject an oversized request before any validator runs.
+- Varint length prefixes make some exact `proto.Size` values unreachable by padding one string; the test
+  helpers search a pad range for the exact size.
+- `AttributeValue` walks with `strings.Cut` and a digit-only index parser (no `strconv`, so `+0` and
+  overflow fail) and holds the current container as a Struct or ListValue pointer, because
+  `structpb.NewStructValue` would allocate.
+- protobuf-es maps `Struct` to `JsonObject`; the TS builder's `withAttributes` copies with
+  `structuredClone` so later caller edits do not leak into built descriptors.
+
 ## Active Technologies
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf
+  (`proto.Size`, `structpb`), buf v1.32.1; no new dependencies (596-resource-descriptor-attributes)
+- N/A (one optional Struct on ResourceDescriptor, two size limits, one read helper)
+  (596-resource-descriptor-attributes)
 
 - Go 1.27.1 (per go.mod) + google.golang.org/protobuf (protojson, protoreflect), gopkg.in/yaml.v3,
   santhosh-tekuri/jsonschema/v6 (tests); no new dependencies (595-manifest-writer-validator)
@@ -1365,6 +1389,12 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+
+- 596-resource-descriptor-attributes: Added ResourceDescriptor.attributes (field 12, a
+  google.protobuf.Struct) with the host redaction rule and the tags fallback, MaxAttributesBytes
+  (65536) and ErrAttributesTooLarge in both validators, MaxTagValueLength 256 to 2048 in both,
+  pluginsdk.AttributeValue, the TypeScript ResourceDescriptorBuilder.withAttributes, and the Basic
+  conformance test RPCCorrectness_GetProjectedCostWithAttributes (issue 617)
 
 - 595-manifest-writer-validator: SaveManifest writes the canonical manifest (snake_case, schema enum
   strings, stable bytes) and LoadManifest reads every earlier form; added MarshalManifestJSON/YAML,

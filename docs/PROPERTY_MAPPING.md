@@ -19,7 +19,8 @@ The `ResourceDescriptor` message is the primary data contract between Core and P
 | `resource_type` | string | **Yes** | Type of resource |
 | `sku` | string | No | Provider-specific SKU or instance type |
 | `region` | string | No | Deployment region |
-| `tags` | map | No | Resource labels, and the host's flattened input properties (see [How the Host Hands Properties to a Plugin](#how-the-host-hands-properties-to-a-plugin)) |
+| `tags` | map | No | Resource labels, and the host's flattened input properties (see [How the Host Hands Properties to a Plugin](#how-the-host-hands-properties-to-a-plugin)). Values are at most 2048 bytes |
+| `attributes` | `google.protobuf.Struct` | No | The declared input properties, nested and unflattened (see [Structured Attributes](#structured-attributes)). At most 65536 encoded bytes |
 
 ### Provider Is the Cloud, Not the Package
 
@@ -45,7 +46,9 @@ prefix.
 ## How the Host Hands Properties to a Plugin
 
 `ResourceDescriptor.tags` carries the host's flattened input properties in addition to resource labels.
-This section describes what the reference host, rshade/finfocus core, sends today
+Hosts can also send the same properties unflattened in `ResourceDescriptor.attributes`; see
+[Structured Attributes](#structured-attributes). When `attributes` is set, plugins read it first and use
+`tags` only as a fallback. This section describes what the reference host, rshade/finfocus core, sends today
 (`internal/engine/engine.go`, `ConvertValueToString`, as of core `main`, which pins spec v0.7.0). It is
 a description of current behavior, not a guarantee: the collapse rules below are lossy and kept for
 compatibility, and a host may change them.
@@ -76,15 +79,18 @@ values:
 
 Consequences for plugin authors:
 
-- A plugin never receives the nested object, only the collapsed string. Read the key the host actually
-  sends, and treat a collapsed value as lossy. Parsing the `map[...]` text is a last resort: it breaks on values
-  that contain spaces.
-- The structured form exists in one place only: `EstimateCostRequest.attributes`, a `google.protobuf.Struct`
-  that the host builds from the raw properties without flattening. `GetProjectedCostRequest` has no structured field.
+- Through `tags`, a plugin never receives the nested object, only the collapsed string. Read the key the host
+  actually sends, and treat a collapsed value as lossy. Parsing the `map[...]` text is a last resort: it breaks on
+  values that contain spaces. Prefer `attributes` when the host sends it.
+- The structured form is a `google.protobuf.Struct` that the host builds from the raw properties without
+  flattening. It is `ResourceDescriptor.attributes` on every RPC that carries a descriptor (`Supports`,
+  `GetProjectedCost`, `GetPricingSpec`, `BatchCost`, and `GetRecommendations` target resources), and
+  `EstimateCostRequest.attributes` on `EstimateCost`.
 - Tag limits have two different meanings. `pluginsdk.MaxTagsPerResource` (256 entries, key length 128, value
-  length 256; `sdk/go/pluginsdk/batch.go`) is a denial-of-service guard enforced when `BatchCost` requests are
-  validated. The contract bound `MaxTagCount` (50; `sdk/go/testing/contract.go`) is applied by the testing harness.
-  A resource with many properties can exceed the second without exceeding the first.
+  length 2048 bytes; `sdk/go/pluginsdk/batch.go`) is a denial-of-service guard enforced when `BatchCost` requests
+  are validated. The contract bound `MaxTagCount` (50, with the same key and value lengths;
+  `sdk/go/testing/contract.go`) is applied by the testing harness. A resource with many properties can exceed the
+  second without exceeding the first, which is another reason to prefer `attributes` for nested inputs.
 - Strict request validation requires a non-empty `sku` and `region`; `ValidateProjectedCostRequestLenient`
   does not. The SDK server calls neither, so each caller chooses. The reference host calls only the strict
   validator, which means a resource whose SKU the host cannot resolve never reaches the plugin: it becomes a
@@ -95,6 +101,62 @@ in addition to the collapsed value, for example `hardwareProfile.vmSize` = `Stan
 `sku.capacity` = `4`, so no information is lost. Until a host does, `hardwareProfile` arrives as the collapsed
 value and `hardwareProfile.vmSize` is absent. A plugin may accept both forms. This section will be updated when
 the reference host ships it.
+
+## Structured Attributes
+
+`ResourceDescriptor.attributes` (field 12, a `google.protobuf.Struct`) carries the resource's declared input
+properties as the IaC program declared them: maps stay maps, lists stay lists, and numbers stay numbers. It
+mirrors `EstimateCostRequest.attributes`. A Kubernetes Deployment's CPU request at
+`spec.template.spec.containers.0.resources.requests.cpu` (eight segments; a CronJob's is ten) arrives intact,
+where `tags` could carry it only as lossy text.
+
+### Rules for Hosts
+
+- **Redact before sending (required).** Omit keys that start with `__`, credential-like keys (a name that
+  contains, case-insensitively, `password`, `secret`, `token`, `credential`, `privatekey`, `accesskey`, or
+  `connectionstring`), and values that the IaC tool marks secret. For Pulumi, that is any value carrying the
+  secret signature `4dabf18193072939515e22adb298388d`. A host may redact more.
+- **Keep sending `tags`.** Plugins that predate the field read only `tags`, so `attributes` is additive.
+- **Stay within 65536 encoded bytes per resource** (`pluginsdk.MaxAttributesBytes`, the protobuf wire size).
+  Both SDK validators reject a larger value with `InvalidArgument`.
+- **Split batches by size, not only by count.** A whole request must fit the transport limit: 1 MB on the
+  Connect/HTTP path and 4 MB by default on gRPC. One hundred resources at the per-resource maximum would be about
+  6.4 MB, so a host splits a `BatchCost` request until its encoded size fits. The transport rejects an oversized
+  request before any plugin code runs, and the SDK does not lower `max_batch_size` for you.
+- **Send integers above 2^53 as strings.** Struct numbers are doubles on the wire.
+
+The reference host (rshade/finfocus core) does not populate `attributes` yet; that work is tracked in
+[rshade/finfocus#1525](https://github.com/rshade/finfocus/issues/1525). Until it ships, plugins see `tags` only.
+
+### Rules for Plugins
+
+- **Prefer `attributes`, fall back to `tags`.** Unset or empty `attributes` means the host sent none. When the
+  same property appears in both with different values, `attributes` wins, because it is the unflattened source.
+  Tags with no counterpart in `attributes`, such as resource labels, keep their meaning.
+- **Do not log `attributes` verbatim.** Redaction is the host's job, but a plugin's logs are not the place to find
+  out a host got it wrong. Log the paths you read, not the values of the whole structure.
+- **Do not try to detect redaction.** An omitted secret looks the same as a property the user never set.
+
+### Reading a Path
+
+`pluginsdk.AttributeValue` returns the value at a dot-separated path, so plugins do not each write a walker. A
+numeric segment indexes a list. Any miss returns `(nil, false)`, never an error:
+
+```go
+attrs := req.GetResource().GetAttributes()
+
+cpu := "" // fall back to tags below
+if v, ok := pluginsdk.AttributeValue(attrs, "spec.template.spec.containers.0.resources.requests.cpu"); ok {
+    cpu = v.GetStringValue()
+}
+if cpu == "" {
+    cpu = req.GetResource().GetTags()["cpu"]
+}
+```
+
+An explicit JSON `null` is found and returned as a `NullValue`. A key that itself contains `.` cannot be
+addressed by path; read it from `attrs.GetFields()` directly. The accessor works on any `Struct`, including
+`EstimateCostRequest.attributes`.
 
 ## AWS Property Mappings
 
@@ -335,6 +397,24 @@ descriptor := &proto.ResourceDescriptor{
 }
 ```
 
+Container requests and replica counts are nested, so they belong in `attributes`
+(see [Structured Attributes](#structured-attributes)):
+
+```go
+attrs, _ := structpb.NewStruct(map[string]any{
+    "spec": map[string]any{
+        "replicas": 3,
+        "template": map[string]any{"spec": map[string]any{"containers": []any{
+            map[string]any{"resources": map[string]any{"requests": map[string]any{"cpu": "250m"}}},
+        }}},
+    },
+})
+descriptor.Attributes = attrs
+
+replicas, _ := pluginsdk.AttributeValue(descriptor.GetAttributes(), "spec.replicas")
+// replicas.GetNumberValue() == 3
+```
+
 ## Generic Extraction Functions
 
 For custom resource types or providers not covered by the specific functions,
@@ -568,15 +648,23 @@ expect flat key-value pairs, and the host has already reduced every nested value
 }
 ```
 
-**Solution**: Read the key the host actually sends. The reference host collapses a single-key map to its value, so
+**Solution**: Read `attributes` first. When the host sends it, the nested value is intact and
+`pluginsdk.AttributeValue(attrs, "hardwareProfile.vmSize")` returns it. Otherwise read the key the host actually
+sends in `tags`. The reference host collapses a single-key map to its value, so
 this arrives as the tag `hardwareProfile` = `Standard_D2s_v3`; a host that follows the recommended dotted-key
 convention would also send `hardwareProfile.vmSize`. Accept both, and do not rely on the collapse for maps with
 more than one key:
 
 ```go
-props := req.GetResource().GetTags()
+var sku string
+if v, ok := pluginsdk.AttributeValue(req.GetResource().GetAttributes(), "hardwareProfile.vmSize"); ok {
+    sku = v.GetStringValue()
+}
 
-sku := props["hardwareProfile.vmSize"] // recommended convention, not emitted by any host today
+props := req.GetResource().GetTags()
+if sku == "" {
+    sku = props["hardwareProfile.vmSize"] // recommended convention, not emitted by any host today
+}
 if sku == "" {
     sku = props["hardwareProfile"] // single-key map collapsed to its value
 }

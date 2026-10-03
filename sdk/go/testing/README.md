@@ -326,6 +326,21 @@ err := plugintesting.ValidatePricingSpecResponse(specResp)
 // Validate protobuf messages
 err := plugintesting.ValidatePricingSpec(spec)
 err := plugintesting.ValidateActualCostResult(result)
+
+// Validate request inputs against the contract limits
+err := plugintesting.ValidateResourceDescriptor(resource)
+err := plugintesting.ValidateTags(resource.GetTags())
+```
+
+`ValidateResourceDescriptor` applies the contract limits: at most `MaxTagCount` (50) tags, keys of at
+most `MaxTagKeyLength` (128) bytes, values of at most `MaxTagValueLength` (2048) bytes, and an
+`attributes` encoded size of at most `MaxAttributesBytes` (65536). An oversized `attributes` returns a
+`*ContractError` with `Field` `attributes` that wraps `ErrAttributesTooLarge`:
+
+```go
+if errors.Is(err, plugintesting.ErrAttributesTooLarge) {
+    // the host must trim or redact attributes before sending
+}
 ```
 
 `ValidateActualCostBillingAccount` enforces the `GetActualCostRequest.billing_account_id` echo rule:
@@ -770,6 +785,8 @@ The conformance suite provides multi-level validation across four test categorie
 - `RPCCorrectness_TimeRangeValidation` - Time range validation
 - `RPCCorrectness_ConsistentResponses` - Response consistency
 - `RPCCorrectness_GetActualCostBillingAccount` - FOCUS records echo the request `billing_account_id`
+- `RPCCorrectness_GetProjectedCostWithAttributes` - GetProjectedCost accepts a descriptor carrying nested
+  `attributes` (Basic; a plugin that ignores the field passes)
   (Standard level; plugins without FOCUS records or with no data pass)
 - `RPCCorrectness_GetRecommendations_Pagination` - Pagination token handling
 - `RPCCorrectness_GetRecommendations_Filtering` - Filter criteria validation
@@ -908,6 +925,8 @@ func ValidateNameResponse(response *pbc.NameResponse) error
 - Unit price MUST be non-negative
 - Currency MUST be valid 3-character ISO code
 - MUST reject unsupported resources
+- MUST accept a descriptor that carries `attributes`. Reading the field is optional; a plugin that
+  ignores it falls back to `tags`
 
 **Standard Requirements:**
 

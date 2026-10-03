@@ -797,6 +797,8 @@ The [pricing specification schema](schemas/pricing_spec.schema.json) validates:
   - **[Response Builders](sdk/go/pluginsdk/README.md#response-builders-and-validation)**:
     NewActualCostResponse, FallbackHint, validation helpers
   - **[Mapping](sdk/go/pluginsdk/mapping/)**: Property extraction helpers for AWS, Azure, GCP
+  - **[Resource Attributes](sdk/go/pluginsdk/README.md#resource-descriptor-limits-and-attributes)**:
+    AttributeValue dotted-path reads of `ResourceDescriptor.attributes`, and descriptor size limits
 - **[Pricing](sdk/go/pricing/)**: Domain types, validation, 44+ billing mode constants
 - **[Currency](sdk/go/currency/)**: ISO 4217 validation (180+ currencies, zero-allocation)
 - **[Registry](sdk/go/registry/)**: Plugin registry types (8 enum types, zero-allocation)
@@ -911,7 +913,8 @@ Apache License 2.0 - see [LICENSE](LICENSE) for details.
 - **[Plugin Developer Guide](./PLUGIN_DEVELOPER_GUIDE.md)** - Complete guide to building cost source plugins
 - **[Observability Guide](./OBSERVABILITY_GUIDE.md)** - Structured logging and Prometheus metrics
 - **[Plugin Startup Protocol](./docs/PLUGIN_STARTUP_PROTOCOL.md)** - Plugin lifecycle and initialization
-- **[Property Mapping](./docs/PROPERTY_MAPPING.md)** - Extracting properties from cloud resources
+- **[Property Mapping](./docs/PROPERTY_MAPPING.md)** - Extracting properties from cloud resources, from
+  structured `attributes` or flattened `tags`
 - **[FOCUS 1.2 Columns](./docs/focus-columns.md)** - FinOps FOCUS column mapping reference
 - **[Plugin Registry Spec](./docs/plugin-registry-specification.md)** - Plugin registration and discovery
 - **[Migration Guide](./docs/PLUGIN_MIGRATION_GUIDE.md)** - Upgrading between spec versions

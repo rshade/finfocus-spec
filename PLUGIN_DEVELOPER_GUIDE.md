@@ -313,9 +313,23 @@ message GetProjectedCostResponse {
 **Implementation Notes**:
 
 - Calculate based on current pricing tables
-- Read resource inputs from `resource.tags` as the host sends them: nested objects arrive collapsed and lossy,
-  not as the structure the user wrote. See
+- Read resource inputs from `resource.attributes` first, and fall back to `resource.tags`. `attributes` is
+  the structure the user wrote, nested and unflattened; read a path with `pluginsdk.AttributeValue`. `tags`
+  carry the same inputs collapsed and lossy, and they are all an older host sends. When a property appears
+  in both with different values, `attributes` wins. See
+  [Structured Attributes](docs/PROPERTY_MAPPING.md#structured-attributes) and
   [How the Host Hands Properties to a Plugin](docs/PROPERTY_MAPPING.md#how-the-host-hands-properties-to-a-plugin)
+
+  ```go
+  var vmSize string
+  if v, ok := pluginsdk.AttributeValue(req.GetResource().GetAttributes(), "hardwareProfile.vmSize"); ok {
+      vmSize = v.GetStringValue()
+  }
+  if vmSize == "" {
+      vmSize = req.GetResource().GetTags()["hardwareProfile"] // older hosts: collapsed single-key map
+  }
+  ```
+
 - `cost_per_month` should assume 30.44 days (365.25/12)
 - Include billing context in `billing_detail`
 - To report component costs (for example, compute plus a root volume), set `cost_breakdown`
@@ -422,7 +436,7 @@ These two RPCs serve different use cases. Understanding when to use each is impo
 
 | Aspect            | GetProjectedCost                                   | EstimateCost                                |
 | ----------------- | -------------------------------------------------- | ------------------------------------------- |
-| **Input**         | `ResourceDescriptor` (provider, type, SKU, region) | Pulumi resource type + attributes `Struct`  |
+| **Input**         | `ResourceDescriptor` (provider, type, SKU, region, attributes `Struct`) | Pulumi resource type + attributes `Struct`  |
 | **Output**        | Unit price, monthly cost, billing detail           | Monthly cost only                           |
 | **Use Case**      | Generic cost projection for any resource           | Pre-deployment "what-if" analysis           |
 | **Resource ID**   | Generic format per provider                        | Pulumi format (`aws:ec2/instance:Instance`) |
@@ -659,6 +673,9 @@ func validateResourceDescriptor(rd *ResourceDescriptor) error {
 }
 ```
 
+`pluginsdk.ValidateResourceDescriptor` already bounds every field, including tag values (2048 bytes)
+and `attributes` (65536 encoded bytes, `pluginsdk.MaxAttributesBytes`), so call it before your own checks.
+
 #### Authentication
 
 - Support API keys, OAuth tokens, or service account credentials
@@ -679,6 +696,9 @@ func validateResourceDescriptor(rd *ResourceDescriptor) error {
   gRPC interceptors and HTTP middleware see every `x-finfocus-credential-*` metadata key or
   header. Skip keys that start with `pluginsdk.CredentialMetadataPrefix` before logging.
   HTTP header names arrive in canonical form, so lowercase them before comparing.
+- **Do not log `ResourceDescriptor.attributes` verbatim.** Hosts must redact secrets and
+  credential-like keys before sending it, but a plugin's logs should not be where a host's
+  mistake surfaces. Log the paths you read, not the whole structure.
 
 ```go
 creds, err := pluginsdk.ExtractCredentials(ctx)
@@ -2786,9 +2806,14 @@ func validateResourceDescriptor(rd *pb.ResourceDescriptor) error {
     }
 
     for key, value := range rd.Tags {
-        if len(key) > 128 || len(value) > 256 {
+        if len(key) > 128 || len(value) > 2048 {
             return status.Error(codes.InvalidArgument, "tag key/value too long")
         }
+    }
+
+    // Attributes validation (encoded size; matches pluginsdk.MaxAttributesBytes)
+    if attrs := rd.GetAttributes(); attrs != nil && proto.Size(attrs) > 64<<10 {
+        return status.Error(codes.InvalidArgument, "attributes too large")
     }
 
     return nil
