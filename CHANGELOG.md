@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2](https://github.com/rshade/finfocus-spec/compare/v0.7.1...v0.7.2) (2026-10-03)
+
+
+### Added
+
+* **registry:** write plugin manifests the schema and validator accept ([d15f899](https://github.com/rshade/finfocus-spec/commit/d15f8997d24b65997c90ea545f1b74779e1b6db1)), closes [#611](https://github.com/rshade/finfocus-spec/issues/611)
+
+
+### Fixed
+
+* **pluginsdk:** reject two keys that name one manifest field ([90debbd](https://github.com/rshade/finfocus-spec/commit/90debbd031e0e341a4527b52fed94dad7aebabd0))
+
+
+### Performance
+
+* **registry:** group capabilities by length; fix example manifests ([4f81f96](https://github.com/rshade/finfocus-spec/commit/4f81f96827a76ff20ee549b82ed7f920cfe062a9))
+
+
+### Documentation
+
+* **proto:** define provider as the cloud, not the IaC package ([56ef520](https://github.com/rshade/finfocus-spec/commit/56ef52023eb85df91c8c835ff13fea55bcfe9507))
+* state how Pulumi inputs reach plugin tags ([d1641a7](https://github.com/rshade/finfocus-spec/commit/d1641a7396ac732a4eed1900e5e0b5dfdf547b92)), closes [#609](https://github.com/rshade/finfocus-spec/issues/609)
+
 ## [0.7.1](https://github.com/rshade/finfocus-spec/compare/v0.7.0...v0.7.1) (2026-10-02)
 
 
