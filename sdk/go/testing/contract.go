@@ -7,8 +7,11 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 	"time"
 
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
@@ -24,8 +27,15 @@ const (
 	// MaxTagKeyLength is the maximum allowed tag key length.
 	MaxTagKeyLength = 128
 
-	// MaxTagValueLength is the maximum allowed tag value length.
-	MaxTagValueLength = 256
+	// MaxTagValueLength is the maximum allowed tag value length in bytes. It
+	// matches pluginsdk.MaxARNLength so long scalar inputs fit in a tag.
+	MaxTagValueLength = 2048
+
+	// MaxAttributesBytes is the maximum encoded (protobuf wire) size of
+	// ResourceDescriptor.attributes. Wire size is what counts against the
+	// transport limits (1 MB on Connect/HTTP, 4 MB by default on gRPC); hosts
+	// split batches so a whole request still fits.
+	MaxAttributesBytes = 64 << 10
 
 	// MaxTagCount is the maximum number of tags per resource.
 	MaxTagCount = 50
@@ -86,6 +96,13 @@ var (
 	// ErrBillingAccountIDMismatch reports a FOCUS record whose billing_account_id differs
 	// from the non-empty billing_account_id on the GetActualCostRequest.
 	ErrBillingAccountIDMismatch = errors.New("focus record billing_account_id does not match request")
+)
+
+// ErrAttributesTooLarge reports a ResourceDescriptor.attributes whose encoded
+// size exceeds MaxAttributesBytes.
+var ErrAttributesTooLarge = fmt.Errorf(
+	"attributes exceed maximum encoded size of %d bytes",
+	MaxAttributesBytes,
 )
 
 // ValidProviders is the list of valid provider values.
@@ -363,6 +380,12 @@ func ValidateResourceDescriptor(resource *pbc.ResourceDescriptor) error {
 		return err
 	}
 
+	if attrs := resource.GetAttributes(); attrs != nil {
+		if size := proto.Size(attrs); size > MaxAttributesBytes {
+			return NewContractError("attributes", size, ErrAttributesTooLarge)
+		}
+	}
+
 	// sku and region are optional - no validation required
 	return nil
 }
@@ -575,6 +598,34 @@ func registerResourceDescriptorTests(suite *ContractTestSuite) {
 	})
 
 	suite.AddTest(ContractTestCase{
+		Name:        "ResourceDescriptor_AttributesAtLimitAccepted",
+		Description: "attributes of exactly MaxAttributesBytes encoded bytes should be accepted",
+		TestFunc: func() error {
+			return ValidateResourceDescriptor(&pbc.ResourceDescriptor{
+				Provider:     providerKubernetes,
+				ResourceType: "kubernetes:apps/v1:Deployment",
+				Attributes:   paddedAttributes(MaxAttributesBytes),
+			})
+		},
+	})
+
+	suite.AddTest(ContractTestCase{
+		Name:        "ResourceDescriptor_AttributesOverLimitRejected",
+		Description: "attributes larger than MaxAttributesBytes encoded bytes should be rejected",
+		TestFunc: func() error {
+			err := ValidateResourceDescriptor(&pbc.ResourceDescriptor{
+				Provider:     providerKubernetes,
+				ResourceType: "kubernetes:apps/v1:Deployment",
+				Attributes:   paddedAttributes(MaxAttributesBytes + 1),
+			})
+			if !errors.Is(err, ErrAttributesTooLarge) {
+				return fmt.Errorf("expected ErrAttributesTooLarge, got %w", err)
+			}
+			return nil
+		},
+	})
+
+	suite.AddTest(ContractTestCase{
 		Name:        "ResourceDescriptor_ValidAccepted",
 		Description: "Valid ResourceDescriptor should be accepted",
 		TestFunc: func() error {
@@ -691,4 +742,21 @@ func RunStandardContractTests() []ContractTestResult {
 	suite := NewContractTestSuite()
 	RegisterStandardContractTests(suite)
 	return suite.Run()
+}
+
+// paddedAttributesSlack covers the key, the tags, and the varint length prefixes
+// that a one-key Struct adds around its padded string.
+const paddedAttributesSlack = 16
+
+// paddedAttributes returns a one-key Struct whose encoded size is exactly size,
+// or the closest larger size when varint length prefixes skip size.
+func paddedAttributes(size int) *structpb.Struct {
+	attrs := &structpb.Struct{Fields: map[string]*structpb.Value{}}
+	for pad := max(0, size-paddedAttributesSlack); pad <= size; pad++ {
+		attrs.Fields["p"] = structpb.NewStringValue(strings.Repeat("x", pad))
+		if proto.Size(attrs) >= size {
+			break
+		}
+	}
+	return attrs
 }
