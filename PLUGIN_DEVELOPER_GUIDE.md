@@ -213,6 +213,9 @@ message SupportsResponse {
 **Implementation Notes**:
 
 - Check `resource.provider`, `resource.resource_type`, and `resource.region`
+- Treat `resource.provider` as the cloud (`azure`), not the IaC package (`azure-native`). Read the
+  package from the `resource_type` prefix. Older hosts may still send the package name, so accept
+  both (see [Provider Is the Cloud, Not the Package](docs/PROPERTY_MAPPING.md#provider-is-the-cloud-not-the-package))
 - Return `false` with a descriptive reason for unsupported resources
 - Consider SKU-specific support (some plugins may only support certain instance types)
 

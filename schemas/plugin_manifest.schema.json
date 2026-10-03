@@ -97,7 +97,7 @@
           "minItems": 1,
           "maxItems": 5,
           "uniqueItems": true,
-          "description": "Cloud providers supported by this plugin"
+          "description": "Cloud providers supported by this plugin. Entries are clouds, not IaC packages: a plugin that prices azure-native resources lists azure."
         },
         "supported_resources": {
           "type": "object",
@@ -155,7 +155,7 @@
             }
           },
           "additionalProperties": false,
-          "description": "Resource types supported per provider"
+          "description": "Resource types supported per provider. Keys are clouds; a native package's resource types go under their cloud (azure-native types under azure)."
         },
         "capabilities": {
           "type": "array",

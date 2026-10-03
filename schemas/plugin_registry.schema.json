@@ -72,7 +72,7 @@
         },
         "supported_providers": {
           "type": "array",
-          "description": "Cloud providers supported by this plugin",
+          "description": "Cloud providers supported by this plugin. Entries are clouds, not IaC packages: a plugin that prices azure-native resources lists azure.",
           "items": {
             "type": "string",
             "enum": ["aws", "azure", "gcp", "kubernetes", "custom"]

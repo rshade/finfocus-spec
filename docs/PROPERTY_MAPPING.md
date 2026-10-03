@@ -21,6 +21,27 @@ The `ResourceDescriptor` message is the primary data contract between Core and P
 | `region` | string | No | Deployment region |
 | `tags` | map | No | Resource labels, and the host's flattened input properties (see [How the Host Hands Properties to a Plugin](#how-the-host-hands-properties-to-a-plugin)) |
 
+### Provider Is the Cloud, Not the Package
+
+`provider` names the cloud that bills the resource. The IaC package that
+declared the resource is not a provider. It stays visible as the
+`resource_type` prefix, so a plugin can still tell `azure:` and
+`azure-native:` resources apart.
+
+| `resource_type` prefix | `provider` |
+|------------------------|------------|
+| `aws`, `aws-native`, Terraform `aws_` | `aws` |
+| `azure`, `azure-native`, Terraform `azurerm_` | `azure` |
+| `gcp`, `google-native`, Terraform `google_` | `gcp` |
+| `kubernetes` | `kubernetes` |
+
+Hosts map the prefix to the cloud before they send a descriptor
+([rshade/finfocus#1645](https://github.com/rshade/finfocus/issues/1645)).
+Plugins list clouds in `GetPluginInfo.providers` and in a manifest's
+`supported_providers` and `supported_resources` keys. A plugin should
+still accept a package name in `provider`, because older hosts send the raw
+prefix.
+
 ## How the Host Hands Properties to a Plugin
 
 `ResourceDescriptor.tags` carries the host's flattened input properties in addition to resource labels.
@@ -163,7 +184,7 @@ The `ExtractAzureRegion()` function checks keys in priority order:
 | Pulumi Resource Type | SKU Property | Region Property | Notes |
 |---------------------|--------------|-----------------|-------|
 | `azure:compute/virtualMachine:VirtualMachine` | `vmSize` | `location` | Under `hardwareProfile` |
-| `azure-native:compute:VirtualMachine` | `vmSize` | `location` | Native provider |
+| `azure-native:compute:VirtualMachine` | `vmSize` | `location` | Native package; provider is `azure` |
 | `azure:storage/account:Account` | `accountTier` | `location` | Use `tier` fallback |
 | `azure:sql/database:Database` | `sku` | `location` | SKU object with name/tier |
 | `azure:containerservice/kubernetesCluster:KubernetesCluster` | `vmSize` | `location` | Node pool VM size |

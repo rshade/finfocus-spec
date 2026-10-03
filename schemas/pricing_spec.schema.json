@@ -10,7 +10,7 @@
         "type": "string", 
         "minLength": 1,
         "enum": ["aws", "azure", "gcp", "kubernetes", "custom"],
-        "description": "Cloud provider identifier"
+        "description": "Cloud provider identifier. This is the cloud, not the IaC package: azure-native resources use azure."
     },
     "resource_type": { 
         "type": "string", 

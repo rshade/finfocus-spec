@@ -2299,7 +2299,8 @@ func (x *LineageNode) GetMetadata() map[string]string {
 //   - See PLUGIN_DEVELOPER_GUIDE.md section "Cost Diff Pattern: Handling Sparse Properties"
 //
 // Validation Rules:
-//   - provider: Must be one of: "aws", "azure", "gcp", "kubernetes", "custom"
+//   - provider: Must be one of: "aws", "azure", "gcp", "kubernetes", "custom".
+//     The value is the cloud, not the IaC package (see the provider field below).
 //   - resource_type: Must match the plugin's supported resource types
 //   - sku: Format varies by provider (e.g., "t3.micro" for AWS, "Standard_B1s" for Azure)
 //   - region: Must match provider's region naming (e.g., "us-east-1", "eastus", "us-central1")
@@ -2309,6 +2310,17 @@ type ResourceDescriptor struct {
 	// provider identifies the cloud provider.
 	// REQUIRED. Must be one of: "aws", "azure", "gcp", "kubernetes", "custom".
 	// Empty or unrecognized values will result in InvalidArgument error.
+	//
+	// provider is the cloud that bills the resource, not the IaC package that
+	// declared it. The package stays visible as the resource_type prefix, so
+	// "azure-native:compute:VirtualMachine" has provider "azure". Hosts map
+	// package prefixes to their cloud before sending a descriptor:
+	//   - "aws-native" -> "aws"
+	//   - "azure-native", "azurerm" (Terraform) -> "azure"
+	//   - "google-native", "google" (Terraform) -> "gcp"
+	//
+	// Plugins should accept a package name here as well, because older hosts
+	// send the raw resource_type prefix.
 	Provider string `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
 	// resource_type specifies the type of resource being described.
 	// REQUIRED. Must match a resource type supported by the target plugin.
@@ -2784,7 +2796,9 @@ func (x *UsageMetricHint) GetUnit() string {
 // PricingSpec provides detailed pricing information for a specific resource type.
 type PricingSpec struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// provider identifies the cloud provider for this pricing specification
+	// provider identifies the cloud provider for this pricing specification.
+	// It is the cloud ("azure"), not the IaC package ("azure-native"); see
+	// ResourceDescriptor.provider.
 	Provider string `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
 	// resource_type specifies the type of resource being priced
 	ResourceType string `protobuf:"bytes,2,opt,name=resource_type,json=resourceType,proto3" json:"resource_type,omitempty"`
@@ -6032,6 +6046,8 @@ type GetPluginInfoResponse struct {
 	SpecVersion string `protobuf:"bytes,3,opt,name=spec_version,json=specVersion,proto3" json:"spec_version,omitempty"`
 	// providers lists the cloud providers supported by this plugin (e.g., ["aws"]).
 	// At least one provider should be listed for functional plugins.
+	// List clouds, not IaC packages: a plugin that prices "azure-native" and
+	// "azure" resources lists ["azure"]. See ResourceDescriptor.provider.
 	Providers []string `protobuf:"bytes,4,rep,name=providers,proto3" json:"providers,omitempty"`
 	// metadata contains optional key-value pairs for additional information
 	// such as build hash, commit ID, or plugin-specific configuration.
