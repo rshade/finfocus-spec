@@ -553,14 +553,17 @@ export type PluginSpecification = Message<"finfocus.v1.PluginSpecification"> & {
   specVersion: string;
 
   /**
-   * supported_providers lists supported cloud providers
+   * supported_providers lists supported cloud providers. Entries are clouds,
+   * not IaC packages; see ResourceDescriptor.provider.
    *
    * @generated from field: repeated string supported_providers = 2;
    */
   supportedProviders: string[];
 
   /**
-   * supported_resources lists supported resource types per provider
+   * supported_resources lists supported resource types per provider. Keys are
+   * clouds. Resource types from a native package go under their cloud, so
+   * "azure-native" types are listed under "azure".
    *
    * @generated from field: map<string, finfocus.v1.ProviderResources> supported_resources = 3;
    */

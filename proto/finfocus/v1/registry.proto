@@ -217,9 +217,12 @@ message PluginMetadata {
 message PluginSpecification {
   // spec_version indicates the FinFocus spec version supported
   string spec_version = 1;
-  // supported_providers lists supported cloud providers
+  // supported_providers lists supported cloud providers. Entries are clouds,
+  // not IaC packages; see ResourceDescriptor.provider.
   repeated string supported_providers = 2;
-  // supported_resources lists supported resource types per provider
+  // supported_resources lists supported resource types per provider. Keys are
+  // clouds. Resource types from a native package go under their cloud, so
+  // "azure-native" types are listed under "azure".
   map<string, ProviderResources> supported_resources = 3;
   // capabilities lists plugin-specific capabilities
   repeated string capabilities = 4;

@@ -1197,9 +1197,12 @@ type PluginSpecification struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// spec_version indicates the FinFocus spec version supported
 	SpecVersion string `protobuf:"bytes,1,opt,name=spec_version,json=specVersion,proto3" json:"spec_version,omitempty"`
-	// supported_providers lists supported cloud providers
+	// supported_providers lists supported cloud providers. Entries are clouds,
+	// not IaC packages; see ResourceDescriptor.provider.
 	SupportedProviders []string `protobuf:"bytes,2,rep,name=supported_providers,json=supportedProviders,proto3" json:"supported_providers,omitempty"`
-	// supported_resources lists supported resource types per provider
+	// supported_resources lists supported resource types per provider. Keys are
+	// clouds. Resource types from a native package go under their cloud, so
+	// "azure-native" types are listed under "azure".
 	SupportedResources map[string]*ProviderResources `protobuf:"bytes,3,rep,name=supported_resources,json=supportedResources,proto3" json:"supported_resources,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// capabilities lists plugin-specific capabilities
 	Capabilities []string `protobuf:"bytes,4,rep,name=capabilities,proto3" json:"capabilities,omitempty"`

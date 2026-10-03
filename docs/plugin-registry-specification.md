@@ -195,8 +195,10 @@ Defines plugin capabilities and interface compliance:
 **Key Components**:
 
 - `spec_version`: FinFocus specification version supported
-- `supported_providers`: Array of cloud providers (aws, azure, gcp, kubernetes, custom)
-- `supported_resources`: Detailed resource support per provider
+- `supported_providers`: Array of cloud providers (aws, azure, gcp, kubernetes, custom).
+  Entries are clouds, not IaC packages: a plugin that prices `azure-native` resources lists `azure`
+- `supported_resources`: Detailed resource support per provider. Keys are clouds, and a native
+  package's resource types go under their cloud (`azure-native` types under `azure`)
 - `service_definition`: gRPC service implementation details
 - `observability_support`: Telemetry and monitoring capabilities
 
