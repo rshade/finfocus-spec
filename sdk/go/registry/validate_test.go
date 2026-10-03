@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/rshade/finfocus-spec/sdk/go/registry"
 )
 
@@ -392,5 +394,212 @@ func TestValidatePluginManifest_Examples(t *testing.T) {
 		if err != nil {
 			t.Errorf("Example manifest %d failed validation: %v", i+1, err)
 		}
+	}
+}
+
+// manifestCase is a manifest with one specification field overridden. An empty wantErr means the
+// manifest is valid.
+type manifestCase struct {
+	name    string
+	field   string
+	value   any
+	wantErr string
+}
+
+func (c manifestCase) manifest(t *testing.T) []byte {
+	t.Helper()
+	doc := map[string]any{
+		"metadata": map[string]any{
+			"name": "test-plugin", "version": "1.0.0",
+			"description": "Test plugin for validation", "author": "Test Author",
+		},
+		"specification": map[string]any{
+			"spec_version":        "0.1.0",
+			"supported_providers": []any{"azure"},
+			"service_definition": map[string]any{
+				"service_name": "CostSourceService", "package_name": "finfocus.v1", "methods": []any{"Name"},
+			},
+			c.field: c.value,
+		},
+		"installation": map[string]any{"installation_method": "binary"},
+	}
+	data, err := json.Marshal(doc)
+	require.NoError(t, err)
+	return data
+}
+
+func resources(types ...any) map[string]any {
+	return map[string]any{"azure": map[string]any{"resource_types": append([]any{}, types...)}}
+}
+
+func supportedResourcesCases() []manifestCase {
+	const field = "supported_resources"
+	const prefix = "specification.supported_resources.azure"
+	token60 := "azure-native:compute:" + strings.Repeat("V", 60-len("azure-native:compute:"))
+	return []manifestCase{
+		{name: "60-character azure-native token", field: field, value: resources(token60)},
+		{
+			name: "53-character azure token", field: field,
+			value: resources("azure:compute/linuxVirtualMachine:LinuxVirtualMachine"),
+		},
+		{name: "256-character token", field: field, value: resources(strings.Repeat("a", 256))},
+		{
+			name: "short names with billing modes and regions", field: field,
+			value: map[string]any{
+				"aws":   map[string]any{"resource_types": []any{"ec2"}, "billing_modes": []any{"per_hour", "spot"}},
+				"azure": map[string]any{"resource_types": []any{"vm"}, "regions": []any{"eastus", "westeurope"}},
+			},
+		},
+		{
+			name: "not an object", field: field, value: []any{"azure"},
+			wantErr: "specification.supported_resources must be an object",
+		},
+		{
+			name: "package name as key", field: field,
+			value:   map[string]any{"azure-native": map[string]any{"resource_types": []any{"vm"}}},
+			wantErr: "specification.supported_resources: 'azure-native' is not a valid provider",
+		},
+		{
+			name: "entry not an object", field: field, value: map[string]any{"azure": "vm"},
+			wantErr: prefix + " must be an object",
+		},
+		{
+			name: "unknown field", field: field,
+			value:   map[string]any{"azure": map[string]any{"resource_types": []any{"vm"}, "skus": []any{"b1s"}}},
+			wantErr: prefix + ": unknown field 'skus'",
+		},
+		{
+			name: "missing resource_types", field: field,
+			value:   map[string]any{"azure": map[string]any{"regions": []any{"eastus"}}},
+			wantErr: prefix + ".resource_types is required",
+		},
+		{
+			name: "empty resource_types", field: field, value: resources(),
+			wantErr: prefix + ".resource_types must contain at least one resource type",
+		},
+		{
+			name: "duplicate resource type", field: field, value: resources("vm", "vm"),
+			wantErr: prefix + ".resource_types contains duplicate resource type 'vm'",
+		},
+		{
+			name: "empty resource type", field: field, value: resources(""),
+			wantErr: prefix + ".resource_types[0] must be 1 to 256 characters",
+		},
+		{
+			name: "257-character token", field: field, value: resources(strings.Repeat("a", 257)),
+			wantErr: prefix + ".resource_types[0] must be 1 to 256 characters",
+		},
+		{
+			name: "resource type not a string", field: field, value: resources(42),
+			wantErr: prefix + ".resource_types[0] must be a string",
+		},
+		{
+			name: "unknown billing mode", field: field,
+			value: map[string]any{"azure": map[string]any{
+				"resource_types": []any{"vm"}, "billing_modes": []any{"hourly"},
+			}},
+			wantErr: prefix + ".billing_modes[0]: 'hourly' is not a valid billing mode",
+		},
+		{
+			name: "duplicate billing mode", field: field,
+			value: map[string]any{"azure": map[string]any{
+				"resource_types": []any{"vm"}, "billing_modes": []any{"per_hour", "per_hour"},
+			}},
+			wantErr: prefix + ".billing_modes contains duplicate billing mode 'per_hour'",
+		},
+		{
+			name: "region too short", field: field,
+			value:   map[string]any{"azure": map[string]any{"resource_types": []any{"vm"}, "regions": []any{"x"}}},
+			wantErr: prefix + ".regions[0] must be 2 to 30 characters",
+		},
+		{
+			name: "region too long", field: field,
+			value: map[string]any{"azure": map[string]any{
+				"resource_types": []any{"vm"}, "regions": []any{strings.Repeat("r", 31)},
+			}},
+			wantErr: prefix + ".regions[0] must be 2 to 30 characters",
+		},
+		{
+			name: "duplicate region", field: field,
+			value: map[string]any{"azure": map[string]any{
+				"resource_types": []any{"vm"}, "regions": []any{"eastus", "eastus"},
+			}},
+			wantErr: prefix + ".regions contains duplicate region 'eastus'",
+		},
+	}
+}
+
+func methodCapabilityCases() []manifestCase {
+	allMethods := []any{
+		"Name", "Supports", "GetActualCost", "GetProjectedCost", "GetPricingSpec", "EstimateCost",
+		"GetRecommendations", "DismissRecommendation", "GetBudgets", "GetPluginInfo", "DryRun",
+		"BatchCost", "ResolveResourceTypes",
+	}
+	protoCapabilities := []any{
+		"projected_costs", "actual_costs", "carbon", "recommendations", "dry_run", "budgets", "energy",
+		"water", "pricing_spec", "estimate_cost", "dismiss_recommendations", "batch_cost",
+		"resolve_resource_types", "usage_stats", "allocation", "contract_commitments", "invoice_data",
+		"recommendation_scoring",
+	}
+	serviceDefinition := func(methods ...any) map[string]any {
+		return map[string]any{
+			"service_name": "CostSourceService", "package_name": "finfocus.v1", "methods": methods,
+		}
+	}
+	return []manifestCase{
+		{name: "every CostSourceService RPC", field: "service_definition", value: serviceDefinition(allMethods...)},
+		{
+			name: "RPC of another service", field: "service_definition", value: serviceDefinition("Allocate"),
+			wantErr: "specification.service_definition.methods[0]: 'Allocate' is not a valid method",
+		},
+		{name: "every protocol capability", field: "capabilities", value: protoCapabilities},
+		{name: "existing capabilities", field: "capabilities", value: []any{"cost_retrieval", "caching"}},
+		{
+			name: "unknown capability", field: "capabilities", value: []any{"teleport"},
+			wantErr: "specification.capabilities[0]: 'teleport' is not a valid capability",
+		},
+		{
+			name: "proto enum name as capability", field: "capabilities", value: []any{"PLUGIN_CAPABILITY_DRY_RUN"},
+			wantErr: "specification.capabilities[0]: 'PLUGIN_CAPABILITY_DRY_RUN' is not a valid capability",
+		},
+		{
+			name: "capabilities not an array", field: "capabilities", value: "dry_run",
+			wantErr: "specification.capabilities must be an array",
+		},
+		{
+			name: "duplicate capability", field: "capabilities", value: []any{"dry_run", "dry_run"},
+			wantErr: "specification.capabilities contains duplicate capability 'dry_run'",
+		},
+	}
+}
+
+func TestValidateSupportedResources(t *testing.T) {
+	runManifestCases(t, supportedResourcesCases())
+}
+
+func TestValidateMethodsAndCapabilities(t *testing.T) {
+	runManifestCases(t, methodCapabilityCases())
+}
+
+// runManifestCases checks each case against the SDK validator; an error must start with wantErr,
+// which pins the field path.
+func runManifestCases(t *testing.T, cases []manifestCase) {
+	t.Helper()
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := registry.ValidatePluginManifest(tc.manifest(t))
+			if tc.wantErr == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			require.True(
+				t,
+				strings.HasPrefix(err.Error(), tc.wantErr),
+				"error %q should start with %q",
+				err,
+				tc.wantErr,
+			)
+		})
 	}
 }

@@ -198,9 +198,26 @@ Defines plugin capabilities and interface compliance:
 - `supported_providers`: Array of cloud providers (aws, azure, gcp, kubernetes, custom).
   Entries are clouds, not IaC packages: a plugin that prices `azure-native` resources lists `azure`
 - `supported_resources`: Detailed resource support per provider. Keys are clouds, and a native
-  package's resource types go under their cloud (`azure-native` types under `azure`)
-- `service_definition`: gRPC service implementation details
+  package's resource types go under their cloud (`azure-native` types under `azure`).
+  Each `resource_types` entry is the string the plugin matches against
+  `ResourceDescriptor.resource_type`, up to 256 characters. Use the full type token
+  (`azure-native:compute:VirtualMachine`, `aws:ec2/instance:Instance`); short names such as `ec2`
+  remain valid. `billing_modes` come from the schema's list and `regions` are 2 to 30 characters
+- `capabilities`: The manifest capability strings shown above, plus every `PluginCapability` value
+  from `enums.proto` written as the lowercase value name without the `PLUGIN_CAPABILITY_` prefix
+  (`PLUGIN_CAPABILITY_DRY_RUN` is `dry_run`). The Go SDK's `registry.ManifestCapabilityName`
+  converts a value
+- `service_definition`: gRPC service implementation details. `methods` lists the
+  `CostSourceService` RPCs the plugin implements, by proto method name: `Name`, `Supports`,
+  `GetActualCost`, `GetProjectedCost`, `GetPricingSpec`, `EstimateCost`, `GetRecommendations`,
+  `DismissRecommendation`, `GetBudgets`, `GetPluginInfo`, `DryRun`, `BatchCost`, and
+  `ResolveResourceTypes`. RPCs of other services are discovered through capabilities
 - `observability_support`: Telemetry and monitoring capabilities
+
+**Serialized form**: Keys are snake_case and enum fields use the schema strings
+(`installation_method: binary`, `security_level: verified`). The Go SDK's `pluginsdk.SaveManifest`
+writes this form for JSON and YAML, with sorted keys and stable bytes, and its output passes both
+this schema and `registry.ValidatePluginManifest` as written.
 
 ### Security Section
 

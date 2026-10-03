@@ -107,24 +107,39 @@ registry.InstallationMethodPackage   // "package"
 
 ### PluginCapability
 
-Plugin feature capabilities:
+Plugin feature capabilities. A manifest's `specification.capabilities` accepts two kinds of value.
+
+The 14 manifest capability strings have constants:
 
 ```go
 registry.PluginCapabilityCostRetrieval   // "cost_retrieval"
 registry.PluginCapabilityCostProjection  // "cost_projection"
 registry.PluginCapabilityPricingSpecs    // "pricing_specs"
-registry.PluginCapabilityCostEstimation  // "cost_estimation"
-registry.PluginCapabilityRecommendations // "recommendations"
-registry.PluginCapabilityBudgets         // "budgets"
-registry.PluginCapabilityDryRun          // "dry_run"
-registry.PluginCapabilityMultiRegion     // "multi_region"
-registry.PluginCapabilityRealtime        // "realtime"
-registry.PluginCapabilityBatch           // "batch"
-registry.PluginCapabilityStreaming       // "streaming"
+registry.PluginCapabilityHistoricalData  // "historical_data"
+registry.PluginCapabilityRealTimeData    // "real_time_data"
+registry.PluginCapabilityBatchProcessing // "batch_processing"
+registry.PluginCapabilityRateLimiting    // "rate_limiting"
 registry.PluginCapabilityCaching         // "caching"
-registry.PluginCapabilityRetry           // "retry"
-registry.PluginCapabilityMetrics         // "metrics"
+registry.PluginCapabilityEncryption      // "encryption"
+registry.PluginCapabilityCompression     // "compression"
+registry.PluginCapabilityFiltering       // "filtering"
+registry.PluginCapabilityAggregation     // "aggregation"
+registry.PluginCapabilityMultiTenancy    // "multi_tenancy"
+registry.PluginCapabilityAuditLogging    // "audit_logging"
 ```
+
+Every `PluginCapability` value from `enums.proto` is also accepted, written as the lowercase value name
+without the `PLUGIN_CAPABILITY_` prefix. `ManifestCapabilityName` converts a protocol value, so a plugin
+can list the same capabilities it reports through `GetPluginInfo`:
+
+```go
+registry.ManifestCapabilityName(pbc.PluginCapability_PLUGIN_CAPABILITY_DRY_RUN)       // "dry_run"
+registry.ManifestCapabilityName(pbc.PluginCapability_PLUGIN_CAPABILITY_ESTIMATE_COST) // "estimate_cost"
+registry.ManifestCapabilityName(pbc.PluginCapability_PLUGIN_CAPABILITY_UNSPECIFIED)   // ""
+```
+
+`pricing_spec` (protocol) and `pricing_specs` (manifest string) are distinct, and both are valid.
+`AllPluginCapabilities` returns the 14 strings followed by the protocol names in enum-number order.
 
 ### SystemPermission
 
@@ -180,6 +195,34 @@ registry.AllPluginCapabilities() []PluginCapability
 registry.AllSystemPermissions() []SystemPermission
 registry.AllAuthMethods() []AuthMethod
 ```
+
+## Manifest Validation
+
+`ValidatePluginManifest(manifestJSON []byte) error` checks a manifest in the canonical form that
+`pluginsdk.SaveManifest` and `pluginsdk.MarshalManifestJSON` write. Beyond metadata, providers, and
+installation, it checks:
+
+- `specification.supported_resources`: keys are clouds (`aws`, `azure`, `gcp`, `kubernetes`,
+  `custom`); each entry has only `resource_types` (required, non-empty, unique, 1 to
+  `MaxResourceTypeLength` = 256 characters), `billing_modes` (unique, from
+  `AllManifestBillingModes`), and `regions` (unique, 2 to 30 characters)
+- `specification.capabilities`: unique values accepted by `IsValidPluginCapability`
+- `specification.service_definition.methods`: unique `CostSourceService` RPC names
+
+The method and capability lists are read from the proto descriptors, and a test compares them with
+`schemas/plugin_manifest.schema.json`, so the SDK and the schema give the same verdict.
+
+```go
+registry.AllServiceMethods() []string            // CostSourceService RPCs, declaration order
+registry.IsValidServiceMethod(s string) bool
+registry.AllManifestBillingModes() []string      // manifest billing modes (not pricing.BillingMode)
+registry.IsValidManifestBillingMode(s string) bool
+registry.ManifestCapabilityName(c pbc.PluginCapability) string
+```
+
+A resource type entry is the string the plugin matches against `ResourceDescriptor.resource_type`.
+Use the full type token (`azure-native:compute:VirtualMachine`) and list a native package's types
+under their cloud.
 
 ## Performance
 

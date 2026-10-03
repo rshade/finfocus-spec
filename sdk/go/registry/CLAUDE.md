@@ -19,7 +19,8 @@ The package defines 8 enum types with optimized zero-allocation validation:
 3. **PluginStatus** (6 values): `available`, `installed`, `active`, `inactive`, `error`, `updating`
 4. **SecurityLevel** (4 values): `untrusted`, `community`, `verified`, `official`
 5. **InstallationMethod** (4 values): `binary`, `container`, `script`, `package`
-6. **PluginCapability** (14 values): `cost_retrieval`, `cost_projection`, `pricing_specs`, etc.
+6. **PluginCapability** (32 values): the 14 manifest strings (`cost_retrieval`, `cost_projection`, ...) plus
+   the 18 `pbc.PluginCapability` names built at init (`dry_run`, `estimate_cost`, ...)
 7. **SystemPermission** (9 values): `network_access`, `filesystem_read`, `filesystem_write`, etc.
 8. **AuthMethod** (6 values): `none`, `api_key`, `jwt`, `oauth2`, `mtls`, `basic_auth`
 

@@ -2905,6 +2905,43 @@ manifest, err := pluginsdk.LoadManifest("plugin-manifest.yaml")
 err := pluginsdk.SaveManifest("plugin-manifest.json", manifest)
 ```
 
+`SaveManifest` writes the canonical form that `schemas/plugin_manifest.schema.json` and
+`registry.ValidatePluginManifest` expect, with no translation step:
+
+- snake_case keys (`spec_version`, `supported_resources`) in JSON and YAML
+- schema enum strings: `installation_method: binary`, `security_level: verified`
+- RFC 3339 timestamps, and keys sorted at every level with list order kept
+- the same bytes every time for the same manifest, so a generated manifest does not churn
+
+`MarshalManifestJSON` and `MarshalManifestYAML` return the same bytes without writing a file, so a
+plugin can validate before it saves. Build the capability list from the `PluginCapability` values the
+plugin reports through `GetPluginInfo`:
+
+```go
+caps := []string{}
+for _, c := range []pbc.PluginCapability{
+    pbc.PluginCapability_PLUGIN_CAPABILITY_PROJECTED_COSTS,
+    pbc.PluginCapability_PLUGIN_CAPABILITY_DRY_RUN,
+} {
+    caps = append(caps, registry.ManifestCapabilityName(c)) // "projected_costs", "dry_run"
+}
+manifest.Specification.Capabilities = caps
+
+data, err := pluginsdk.MarshalManifestJSON(manifest)
+if err != nil {
+    return err
+}
+if err := registry.ValidatePluginManifest(data); err != nil {
+    return fmt.Errorf("invalid manifest: %w", err)
+}
+return pluginsdk.SaveManifest("plugin-manifest.yaml", manifest)
+```
+
+`LoadManifest` also reads files written by earlier SDK versions: protojson camelCase keys, full enum
+names (`INSTALLATION_METHOD_BINARY`), integer enums, and YAML with lowercased Go field names. It
+ignores unknown keys and does not validate; an enum value it cannot match is an error that names
+the field.
+
 ## Property Mapping (mapping subpackage)
 
 The `mapping` subpackage provides helper functions for extracting SKU, region, and other
@@ -3895,6 +3932,8 @@ The `pbc` alias remains the same, so no other code changes are required.
 | `NoDataError(resourceID)`                              | Create no-data error                |
 | `LoadManifest(path)`                                   | Load manifest from file             |
 | `SaveManifest(path, manifest)`                         | Save manifest to file               |
+| `MarshalManifestJSON(manifest)`                        | Canonical manifest JSON bytes       |
+| `MarshalManifestYAML(manifest)`                        | Canonical manifest YAML bytes       |
 | `NewTestServer(t, plugin)`                             | Create test server                  |
 | `NewTestPlugin(t, plugin)`                             | Create test plugin helper           |
 | `CreateTestResource(provider, type, props)`            | Create test resource                |

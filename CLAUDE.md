@@ -1150,7 +1150,31 @@ parallel subtests complete.
   `unscorable_item` conformance scenario is the only one that elicits a per-item error, so it is what
   catches that flag.
 
+### Plugin Manifest Pattern (595-manifest-writer-validator)
+
+- `SaveManifest` writes the canonical form (`manifest_codec.go`): protojson `UseProtoNames`, enums shortened
+  by the descriptor's zero-value prefix (`INSTALLATION_METHOD_BINARY` → `binary`), re-encoded with
+  `encoding/json` for sorted keys and stable bytes. protojson randomizes whitespace on purpose, so never
+  ship its raw output as a file format.
+- YAML is built from the canonical JSON as a `yaml.Node` tree. Clearing `Style` on a `!!str` node drops
+  its quotes, so `blockStyle` keeps quotes whenever `yaml.Marshal` of the value would quote it
+  (`"1.0"`, `"no"`, timestamps). Golden files in `pluginsdk/testdata/` pin the bytes (`-update`).
+- `LoadManifest` normalizes keys and enums against the message descriptor, so it reads the canonical
+  form, protojson camelCase, and yaml.v3's lowercased Go field names (`specversion`). It does not validate.
+- `registry` derives `AllServiceMethods` and the protocol half of `AllPluginCapabilities` from descriptors
+  at init. `TestSchemaDrift` compares them, `AllManifestBillingModes`, and `MaxResourceTypeLength` (256)
+  with the schemas; adding a `CostSourceService` RPC or `PluginCapability` value fails it until the
+  manifest schema enum gains the value.
+- The registry index schema's `capabilities` enum is a superset (it keeps registry-only values such as
+  `tagging`); the drift test checks containment there, equality for the manifest schema.
+- Two `examples/plugins/` files already fail the manifest schema (`azure-cost-plugin.json` download_url is
+  not a URI; `greenops-plugin.json` is not a manifest). `TestExampleManifests` covers the other four.
+
 ## Active Technologies
+
+- Go 1.27.1 (per go.mod) + google.golang.org/protobuf (protojson, protoreflect), gopkg.in/yaml.v3,
+  santhosh-tekuri/jsonschema/v6 (tests); no new dependencies (595-manifest-writer-validator)
+- Files (canonical plugin manifest JSON or YAML) (595-manifest-writer-validator)
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf, buf v1.32.1;
   no new dependencies (592-cross-batch-scoring-groups)
@@ -1335,6 +1359,11 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+
+- 595-manifest-writer-validator: SaveManifest writes the canonical manifest (snake_case, schema enum
+  strings, stable bytes) and LoadManifest reads every earlier form; added MarshalManifestJSON/YAML,
+  supported_resources and capabilities validation, descriptor-derived methods and capabilities,
+  ManifestCapabilityName, and a 256-character resource type bound (issue 611)
 
 - 594-allocation-row-provenance: Added AllocationRow allocated_method_id (7), allocated_method_details (8),
   allocated_resource_id (9); a method id requires a resource id; field 10 held by comment for a later LineageNode

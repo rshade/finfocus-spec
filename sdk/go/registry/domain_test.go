@@ -3,6 +3,9 @@ package registry_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 	"github.com/rshade/finfocus-spec/sdk/go/registry"
 )
 
@@ -417,7 +420,7 @@ func TestAllFunctions(t *testing.T) {
 		{"registry.AllPluginStatuses", 6, func() int { return len(registry.AllPluginStatuses()) }},
 		{"registry.AllSecurityLevels", 4, func() int { return len(registry.AllSecurityLevels()) }},
 		{"registry.AllInstallationMethods", 4, func() int { return len(registry.AllInstallationMethods()) }},
-		{"registry.AllPluginCapabilities", 14, func() int { return len(registry.AllPluginCapabilities()) }},
+		{"registry.AllPluginCapabilities", 32, func() int { return len(registry.AllPluginCapabilities()) }},
 		{"registry.AllSystemPermissions", 9, func() int { return len(registry.AllSystemPermissions()) }},
 		{"registry.AllAuthMethods", 6, func() int { return len(registry.AllAuthMethods()) }},
 	}
@@ -619,6 +622,66 @@ func BenchmarkValidation_9Values(b *testing.B) {
 // BenchmarkValidation_14Values tests validation performance for 14-value enums (PluginCapability).
 func BenchmarkValidation_14Values(b *testing.B) {
 	testCases := []string{"cost_retrieval", "invalid", "caching", ""}
+	b.ResetTimer()
+	for i := range b.N {
+		_ = registry.IsValidPluginCapability(testCases[i%len(testCases)])
+	}
+}
+
+func TestServiceMethods(t *testing.T) {
+	want := []string{
+		"Name", "Supports", "GetActualCost", "GetProjectedCost", "GetPricingSpec", "EstimateCost",
+		"GetRecommendations", "DismissRecommendation", "GetBudgets", "GetPluginInfo", "DryRun",
+		"BatchCost", "ResolveResourceTypes",
+	}
+	require.Equal(t, want, registry.AllServiceMethods())
+	for _, method := range want {
+		require.True(t, registry.IsValidServiceMethod(method), method)
+	}
+	for _, method := range []string{"Allocate", "GetStats", "HealthCheck", "", "name"} {
+		require.False(t, registry.IsValidServiceMethod(method), method)
+	}
+}
+
+func TestManifestCapabilityName(t *testing.T) {
+	require.Equal(t, "dry_run", registry.ManifestCapabilityName(pbc.PluginCapability_PLUGIN_CAPABILITY_DRY_RUN))
+	require.Equal(t, "recommendation_scoring",
+		registry.ManifestCapabilityName(pbc.PluginCapability_PLUGIN_CAPABILITY_RECOMMENDATION_SCORING))
+	require.Empty(t, registry.ManifestCapabilityName(pbc.PluginCapability_PLUGIN_CAPABILITY_UNSPECIFIED))
+	require.Empty(t, registry.ManifestCapabilityName(pbc.PluginCapability(999)))
+
+	values := pbc.PluginCapability(0).Descriptor().Values()
+	for i := 1; i < values.Len(); i++ {
+		c := pbc.PluginCapability(values.Get(i).Number())
+		name := registry.ManifestCapabilityName(c)
+		require.NotEmpty(t, name, c.String())
+		require.True(t, registry.IsValidPluginCapability(name), name)
+	}
+	for _, capability := range []string{"cost_retrieval", "caching", "pricing_specs", "pricing_spec"} {
+		require.True(t, registry.IsValidPluginCapability(capability), capability)
+	}
+	for _, capability := range []string{"teleport", "DRY_RUN", "PLUGIN_CAPABILITY_DRY_RUN", "unspecified", ""} {
+		require.False(t, registry.IsValidPluginCapability(capability), capability)
+	}
+}
+
+func TestManifestBillingModes(t *testing.T) {
+	require.Len(t, registry.AllManifestBillingModes(), 38)
+	require.True(t, registry.IsValidManifestBillingMode("per_hour"))
+	require.True(t, registry.IsValidManifestBillingMode("per_query"))
+	require.False(t, registry.IsValidManifestBillingMode("hourly"))
+}
+
+func BenchmarkIsValidServiceMethod(b *testing.B) {
+	testCases := []string{"GetProjectedCost", "invalid", "ResolveResourceTypes", ""}
+	b.ResetTimer()
+	for i := range b.N {
+		_ = registry.IsValidServiceMethod(testCases[i%len(testCases)])
+	}
+}
+
+func BenchmarkIsValidProtoPluginCapability(b *testing.B) {
+	testCases := []string{"recommendation_scoring", "invalid", "dry_run", ""}
 	b.ResetTimer()
 	for i := range b.N {
 		_ = registry.IsValidPluginCapability(testCases[i%len(testCases)])

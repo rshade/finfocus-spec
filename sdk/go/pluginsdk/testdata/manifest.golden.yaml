@@ -1,0 +1,82 @@
+configuration:
+  default_config: "{}"
+  examples:
+    - config: "{\"api_key\": \"123\"}"
+      description: A basic configuration
+      name: example-config
+  required_fields:
+    - api_key
+  schema: "{}"
+installation:
+  checksum: 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
+  checksum_algorithm: sha256
+  download_url: https://example.com/download
+  install_script: install.sh
+  installation_method: binary
+  post_install_steps:
+    - restart_service
+  pre_install_checks:
+    - check_docker
+metadata:
+  author: Test Author
+  created_at: "2025-01-01T12:00:00Z"
+  description: A test plugin for FinFocus
+  homepage: https://example.com/plugins?name=test&tab=docs
+  keywords:
+    - cost
+    - cloud
+    - alpha
+  license: Apache-2.0
+  name: test-plugin
+  repository: https://github.com/example/test-plugin
+  updated_at: "2025-01-01T12:00:00Z"
+  version: 1.0.0
+security:
+  certificate_chain:
+    - cert1
+    - cert2
+  permissions:
+    - network_access
+  public_key: some-public-key
+  sandbox_required: true
+  security_level: verified
+  signature: c2lnbmF0dXJl
+specification:
+  capabilities:
+    - cost_projection
+    - cost_retrieval
+  observability_support:
+    health_checks_enabled: true
+    logging_enabled: true
+    metrics_enabled: true
+    tracing_enabled: true
+  service_definition:
+    health_check_path: /healthz
+    methods:
+      - GetProjectedCost
+      - GetActualCost
+    package_name: finfocus.v1
+    port: 50051
+    service_name: CostSourceService
+  spec_version: 0.1.0
+  supported_providers:
+    - azure
+    - aws
+  supported_resources:
+    aws:
+      billing_modes:
+        - per_hour
+        - per_gb_month
+      regions:
+        - us-east-1
+        - us-west-2
+      resource_types:
+        - aws:ec2/instance:Instance
+        - aws:s3/bucket:Bucket
+    azure:
+      billing_modes:
+        - per_hour
+      regions:
+        - eastus
+      resource_types:
+        - azure-native:compute:VirtualMachine

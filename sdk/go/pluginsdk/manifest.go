@@ -6,10 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/yaml.v3"
-
-	"google.golang.org/protobuf/encoding/protojson"
-
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
 
@@ -29,65 +25,59 @@ func (errs ValidationErrors) Error() string {
 	return b.String()
 }
 
-// LoadManifest loads a plugin manifest from a file path.
-// LoadManifest reads a plugin manifest from path, decodes it as YAML (.yaml/.yml) or JSON (.json) based on the file extension, validates the manifest, and returns the parsed Manifest.
-// It returns an error if the file cannot be read, if the extension is unsupported, if decoding fails, or if the manifest does not pass validation.
+// LoadManifest reads a plugin manifest from path and decodes it as YAML (.yaml, .yml) or JSON (.json)
+// based on the file extension.
+//
+// It reads the canonical form that SaveManifest writes and the forms earlier SDK versions wrote:
+// protojson camelCase keys, full enum value names (INSTALLATION_METHOD_BINARY), integer enums, and
+// YAML with lowercased Go field names. Unknown keys are ignored.
+//
+// LoadManifest does not validate the manifest; call registry.ValidatePluginManifest on the canonical
+// JSON (MarshalManifestJSON) to do that. It returns an error if the file cannot be read, the extension
+// is unsupported, decoding fails, or an enum value matches none of the accepted forms.
 func LoadManifest(path string) (*pbc.PluginManifest, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("reading manifest file: %w", err)
 	}
 
-	manifest := &pbc.PluginManifest{}
-	ext := filepath.Ext(path)
-
-	switch ext {
+	switch ext := filepath.Ext(path); ext {
 	case ".yaml", ".yml":
-		//nolint:musttag // Protobuf messages use json tags which yaml.v3 respects
-		if yamlErr := yaml.Unmarshal(data, manifest); yamlErr != nil {
-			return nil, fmt.Errorf("parsing YAML manifest: %w", yamlErr)
+		manifest, decodeErr := decodeManifest(data, true)
+		if decodeErr != nil {
+			return nil, fmt.Errorf("parsing YAML manifest: %w", decodeErr)
 		}
+		return manifest, nil
 	case ".json":
-		unmarshaler := protojson.UnmarshalOptions{
-			AllowPartial:   true,
-			DiscardUnknown: true,
+		manifest, decodeErr := decodeManifest(data, false)
+		if decodeErr != nil {
+			return nil, fmt.Errorf("parsing JSON manifest: %w", decodeErr)
 		}
-		if jsonErr := unmarshaler.Unmarshal(data, manifest); jsonErr != nil {
-			return nil, fmt.Errorf("parsing JSON manifest: %w", jsonErr)
-		}
+		return manifest, nil
 	default:
 		return nil, fmt.Errorf("unsupported manifest file extension: %s (supported: .yaml, .yml, .json)", ext)
 	}
-
-	return manifest, nil
 }
 
-// SaveManifest saves a plugin manifest to a file path.
-// Format is determined by file extension.
+// SaveManifest writes a plugin manifest to path as JSON (.json) or YAML (.yaml, .yml), creating the
+// parent directory if needed.
+//
+// The output is the canonical manifest form that schemas/plugin_manifest.schema.json and
+// registry.ValidatePluginManifest expect: snake_case keys, schema enum strings (binary, verified),
+// RFC 3339 timestamps, and keys sorted at every level. The same manifest always produces the same
+// bytes. See MarshalManifestJSON and MarshalManifestYAML.
 func SaveManifest(path string, m *pbc.PluginManifest) error {
-	ext := filepath.Ext(path)
-	// Ensure target directory exists
-	if dir := filepath.Dir(path); dir != "" && dir != "." {
-		if err := os.MkdirAll(dir, 0o750); err != nil {
-			return fmt.Errorf("creating manifest directory: %w", err)
-		}
-	}
-
 	var data []byte
 	var err error
 
-	switch ext {
+	switch ext := filepath.Ext(path); ext {
 	case ".yaml", ".yml":
-		//nolint:musttag // Protobuf messages use json tags which yaml.v3 respects
-		data, err = yaml.Marshal(m)
+		data, err = MarshalManifestYAML(m)
 		if err != nil {
 			return fmt.Errorf("marshaling to YAML: %w", err)
 		}
 	case ".json":
-		marshaler := protojson.MarshalOptions{
-			Indent: "  ",
-		}
-		data, err = marshaler.Marshal(m)
+		data, err = MarshalManifestJSON(m)
 		if err != nil {
 			return fmt.Errorf("marshaling to JSON: %w", err)
 		}
@@ -95,9 +85,28 @@ func SaveManifest(path string, m *pbc.PluginManifest) error {
 		return fmt.Errorf("unsupported manifest file extension: %s (supported: .yaml, .yml, .json)", ext)
 	}
 
+	if dir := filepath.Dir(path); dir != "" && dir != "." {
+		if mkdirErr := os.MkdirAll(dir, 0o750); mkdirErr != nil {
+			return fmt.Errorf("creating manifest directory: %w", mkdirErr)
+		}
+	}
 	if writeErr := os.WriteFile(path, data, 0o600); writeErr != nil {
 		return fmt.Errorf("writing manifest file: %w", writeErr)
 	}
 
 	return nil
+}
+
+// MarshalManifestJSON returns the canonical JSON form of a plugin manifest, byte for byte what
+// SaveManifest writes to a .json path. Pass the result to registry.ValidatePluginManifest to
+// validate a manifest before saving it.
+func MarshalManifestJSON(m *pbc.PluginManifest) ([]byte, error) {
+	return encodeManifestJSON(m)
+}
+
+// MarshalManifestYAML returns the canonical YAML form of a plugin manifest, byte for byte what
+// SaveManifest writes to a .yaml or .yml path. It carries the same keys, values, and order as
+// MarshalManifestJSON; strings that YAML would read as another type are quoted.
+func MarshalManifestYAML(m *pbc.PluginManifest) ([]byte, error) {
+	return encodeManifestYAML(m)
 }

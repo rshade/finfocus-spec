@@ -82,7 +82,7 @@
         },
         "capabilities": {
           "type": "array",
-          "description": "Plugin capabilities from registry.proto",
+          "description": "Plugin capabilities. Accepts every capability a plugin manifest accepts (see plugin_manifest.schema.json), including the PluginCapability values from enums.proto written as the lowercase value name without the PLUGIN_CAPABILITY_ prefix, plus the registry-only values tagging, anomaly_detection, forecasting, alerts, and custom.",
           "items": {
             "type": "string",
             "enum": [
@@ -99,7 +99,30 @@
               "forecasting",
               "budgets",
               "alerts",
-              "custom"
+              "custom",
+              "batch_processing",
+              "rate_limiting",
+              "caching",
+              "encryption",
+              "compression",
+              "multi_tenancy",
+              "audit_logging",
+              "projected_costs",
+              "actual_costs",
+              "carbon",
+              "dry_run",
+              "energy",
+              "water",
+              "pricing_spec",
+              "estimate_cost",
+              "dismiss_recommendations",
+              "batch_cost",
+              "resolve_resource_types",
+              "usage_stats",
+              "allocation",
+              "contract_commitments",
+              "invoice_data",
+              "recommendation_scoring"
             ]
           },
           "uniqueItems": true
