@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
+	"unicode/utf8"
 )
 
 const (
@@ -17,6 +19,10 @@ const (
 	MinAuthorLength = 2
 	// MaxAuthorLength defines the maximum allowed length for plugin author names.
 	MaxAuthorLength = 100
+	// MaxResourceTypeLength defines the maximum length of a supported_resources resource_types entry,
+	// long enough for full Pulumi and Terraform type tokens such as
+	// "azure-native:compute:VirtualMachine".
+	MaxResourceTypeLength = 256
 )
 
 // ValidatePluginManifest validates a plugin manifest JSON document against the schema.
@@ -151,6 +157,16 @@ func validateSpecification(manifest map[string]interface{}) error {
 		return err
 	}
 
+	if err := validateSupportedResources(specification); err != nil {
+		return err
+	}
+
+	if capabilities, exists := specification["capabilities"]; exists {
+		if err := validateStringList("specification.capabilities", capabilities, capabilityRule); err != nil {
+			return err
+		}
+	}
+
 	// Validate service_definition
 	if err := validateServiceDefinition(specification); err != nil {
 		return err
@@ -166,33 +182,143 @@ func validateSupportedProviders(specification map[string]interface{}) error {
 		return errors.New("specification.supported_providers is required")
 	}
 
-	providers, ok := providersInterface.([]interface{})
+	return validateStringList("specification.supported_providers", providersInterface, providerRule)
+}
+
+// listRule describes a JSON array of unique strings: the noun used in messages, whether the array
+// must be non-empty, and a check that returns "" for a valid item or the message suffix for an
+// invalid one.
+type listRule struct {
+	noun     string
+	nonEmpty bool
+	check    func(item string) string
+}
+
+//nolint:gochecknoglobals // Shared, immutable validation rules.
+var (
+	providerRule = listRule{noun: "provider", nonEmpty: true, check: func(item string) string {
+		if IsValidProvider(item) {
+			return ""
+		}
+		return fmt.Sprintf(": '%s' is not a valid provider, must be one of: %s",
+			item, strings.Join(getAllProviderStrings(), ", "))
+	}}
+	methodRule     = listRule{noun: "method", nonEmpty: true, check: enumCheck("method", IsValidServiceMethod)}
+	capabilityRule = listRule{noun: "capability", check: enumCheck("capability", IsValidPluginCapability)}
+	resourceRule   = listRule{noun: "resource type", nonEmpty: true, check: lengthCheck(1, MaxResourceTypeLength)}
+	billingRule    = listRule{noun: "billing mode", check: enumCheck("billing mode", IsValidManifestBillingMode)}
+	regionRule     = listRule{noun: "region", check: lengthCheck(minRegionLength, maxRegionLength)}
+)
+
+const (
+	minRegionLength = 2
+	maxRegionLength = 30
+)
+
+func enumCheck(noun string, valid func(string) bool) func(string) string {
+	return func(item string) string {
+		if valid(item) {
+			return ""
+		}
+		return fmt.Sprintf(": '%s' is not a valid %s", item, noun)
+	}
+}
+
+// lengthCheck counts characters (not bytes), as JSON Schema minLength and maxLength do.
+func lengthCheck(minLen, maxLen int) func(string) string {
+	return func(item string) string {
+		if n := utf8.RuneCountInString(item); n >= minLen && n <= maxLen {
+			return ""
+		}
+		return fmt.Sprintf(" must be %d to %d characters", minLen, maxLen)
+	}
+}
+
+// validateStringList validates a JSON array of unique strings at path.
+func validateStringList(path string, raw interface{}, rule listRule) error {
+	items, ok := raw.([]interface{})
 	if !ok {
-		return errors.New("specification.supported_providers must be an array")
+		return fmt.Errorf("%s must be an array", path)
+	}
+	if rule.nonEmpty && len(items) == 0 {
+		return fmt.Errorf("%s must contain at least one %s", path, rule.noun)
 	}
 
-	if len(providers) == 0 {
-		return errors.New("specification.supported_providers must contain at least one provider")
-	}
-
-	providerSet := make(map[string]bool)
-	for i, providerInterface := range providers {
-		provider, providerOK := providerInterface.(string)
-		if !providerOK {
-			return fmt.Errorf("specification.supported_providers[%d] must be a string", i)
+	seen := make(map[string]bool, len(items))
+	for i, rawItem := range items {
+		item, isString := rawItem.(string)
+		if !isString {
+			return fmt.Errorf("%s[%d] must be a string", path, i)
 		}
+		if msg := rule.check(item); msg != "" {
+			return fmt.Errorf("%s[%d]%s", path, i, msg)
+		}
+		if seen[item] {
+			return fmt.Errorf("%s contains duplicate %s '%s'", path, rule.noun, item)
+		}
+		seen[item] = true
+	}
+	return nil
+}
 
+// validateSupportedResources validates the optional supported_resources object. Providers are
+// checked in sorted order so the first reported error does not depend on map iteration.
+func validateSupportedResources(specification map[string]interface{}) error {
+	raw, exists := specification["supported_resources"]
+	if !exists {
+		return nil
+	}
+	resources, ok := raw.(map[string]interface{})
+	if !ok {
+		return errors.New("specification.supported_resources must be an object")
+	}
+
+	providers := make([]string, 0, len(resources))
+	for provider := range resources {
+		providers = append(providers, provider)
+	}
+	sort.Strings(providers)
+
+	for _, provider := range providers {
 		if !IsValidProvider(provider) {
-			return fmt.Errorf("specification.supported_providers[%d]: '%s' is not a valid provider, must be one of: %s",
-				i, provider, strings.Join(getAllProviderStrings(), ", "))
+			return fmt.Errorf("specification.supported_resources: '%s' is not a valid provider, must be one of: %s",
+				provider, strings.Join(getAllProviderStrings(), ", "))
 		}
+		if err := validateProviderResources("specification.supported_resources."+provider,
+			resources[provider]); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
-		if providerSet[provider] {
-			return fmt.Errorf("specification.supported_providers contains duplicate provider '%s'", provider)
-		}
-		providerSet[provider] = true
+// validateProviderResources validates one supported_resources entry.
+func validateProviderResources(path string, raw interface{}) error {
+	entry, ok := raw.(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("%s must be an object", path)
 	}
 
+	rules := map[string]listRule{"resource_types": resourceRule, "billing_modes": billingRule, "regions": regionRule}
+	fields := make([]string, 0, len(entry))
+	for field := range entry {
+		fields = append(fields, field)
+	}
+	sort.Strings(fields)
+	for _, field := range fields {
+		if _, known := rules[field]; !known {
+			return fmt.Errorf("%s: unknown field '%s'", path, field)
+		}
+	}
+
+	if _, exists := entry["resource_types"]; !exists {
+		return fmt.Errorf("%s.resource_types is required", path)
+	}
+	for _, field := range fields {
+		if err := validateStringList(path+"."+field, entry[field], rules[field]); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -254,38 +380,7 @@ func validateServiceMethods(serviceDef map[string]interface{}) error {
 		return errors.New("specification.service_definition.methods is required")
 	}
 
-	methods, ok := methodsInterface.([]interface{})
-	if !ok {
-		return errors.New("specification.service_definition.methods must be an array")
-	}
-
-	if len(methods) == 0 {
-		return errors.New("specification.service_definition.methods must contain at least one method")
-	}
-
-	validMethods := map[string]bool{
-		"Name": true, "Supports": true, "GetActualCost": true,
-		"GetProjectedCost": true, "GetPricingSpec": true,
-	}
-
-	methodSet := make(map[string]bool)
-	for i, methodInterface := range methods {
-		method, methodOK := methodInterface.(string)
-		if !methodOK {
-			return fmt.Errorf("specification.service_definition.methods[%d] must be a string", i)
-		}
-
-		if !validMethods[method] {
-			return fmt.Errorf("specification.service_definition.methods[%d]: '%s' is not a valid method", i, method)
-		}
-
-		if methodSet[method] {
-			return fmt.Errorf("specification.service_definition.methods contains duplicate method '%s'", method)
-		}
-		methodSet[method] = true
-	}
-
-	return nil
+	return validateStringList("specification.service_definition.methods", methodsInterface, methodRule)
 }
 
 // validateInstallation validates the installation section.

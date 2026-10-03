@@ -110,11 +110,11 @@
                   "items": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 50
+                    "maxLength": 256
                   },
                   "minItems": 1,
                   "uniqueItems": true,
-                  "description": "Supported resource types for this provider"
+                  "description": "Supported resource types for this provider. Each entry is the resource type string the plugin matches against ResourceDescriptor.resource_type. The full type token is recommended (for example azure-native:compute:VirtualMachine or aws:ec2/instance:Instance). A native package's types are listed under their cloud, so azure-native types go under azure."
                 },
                 "billing_modes": {
                   "type": "array",
@@ -165,11 +165,16 @@
               "cost_retrieval", "cost_projection", "pricing_specs",
               "historical_data", "real_time_data", "batch_processing",
               "rate_limiting", "caching", "encryption", "compression",
-              "filtering", "aggregation", "multi_tenancy", "audit_logging"
+              "filtering", "aggregation", "multi_tenancy", "audit_logging",
+              "projected_costs", "actual_costs", "carbon", "recommendations",
+              "dry_run", "budgets", "energy", "water", "pricing_spec",
+              "estimate_cost", "dismiss_recommendations", "batch_cost",
+              "resolve_resource_types", "usage_stats", "allocation",
+              "contract_commitments", "invoice_data", "recommendation_scoring"
             ]
           },
           "uniqueItems": true,
-          "description": "Plugin-specific capabilities"
+          "description": "Plugin capabilities. Accepts the manifest capability strings (cost_retrieval through audit_logging) and every PluginCapability value from enums.proto, written as the lowercase value name without the PLUGIN_CAPABILITY_ prefix (PLUGIN_CAPABILITY_DRY_RUN is dry_run)."
         },
         "service_definition": {
           "type": "object",
@@ -189,12 +194,15 @@
               "type": "array",
               "items": {
                 "type": "string",
-                "enum": ["Name", "Supports", "GetActualCost", "GetProjectedCost", "GetPricingSpec"]
+                "enum": [
+                  "Name", "Supports", "GetActualCost", "GetProjectedCost", "GetPricingSpec",
+                  "EstimateCost", "GetRecommendations", "DismissRecommendation", "GetBudgets",
+                  "GetPluginInfo", "DryRun", "BatchCost", "ResolveResourceTypes"
+                ]
               },
               "minItems": 1,
-              "maxItems": 5,
               "uniqueItems": true,
-              "description": "Implemented gRPC methods"
+              "description": "Implemented CostSourceService RPCs, by proto method name. RPCs of other services are discovered through capabilities."
             },
             "port": {
               "type": "integer",

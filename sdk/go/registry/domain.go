@@ -7,6 +7,9 @@ package registry
 import (
 	"errors"
 	"fmt"
+	"strings"
+
+	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
 
 // Provider represents supported cloud providers.
@@ -283,19 +286,51 @@ const (
 	PluginCapabilityAuditLogging PluginCapability = "audit_logging"
 )
 
-// allPluginCapabilities is a package-level slice containing all valid PluginCapability values.
+// allPluginCapabilities is a package-level slice containing all valid PluginCapability values: the
+// manifest strings above followed by the protocol capability names (see ManifestCapabilityName).
 // This is allocated once at package initialization for zero-allocation validation.
 //
 //nolint:gochecknoglobals // Intentional optimization for zero-allocation validation
-var allPluginCapabilities = []PluginCapability{
+var allPluginCapabilities = append([]PluginCapability{
 	PluginCapabilityCostRetrieval, PluginCapabilityCostProjection, PluginCapabilityPricingSpecs,
 	PluginCapabilityHistoricalData, PluginCapabilityRealTimeData, PluginCapabilityBatchProcessing,
 	PluginCapabilityRateLimiting, PluginCapabilityCaching, PluginCapabilityEncryption,
 	PluginCapabilityCompression, PluginCapabilityFiltering, PluginCapabilityAggregation,
 	PluginCapabilityMultiTenancy, PluginCapabilityAuditLogging,
+}, protoPluginCapabilities()...)
+
+const protoCapabilityPrefix = "PLUGIN_CAPABILITY_"
+
+// protoPluginCapabilities returns the manifest names of every pbc.PluginCapability value except
+// UNSPECIFIED, in enum-number order.
+func protoPluginCapabilities() []PluginCapability {
+	values := pbc.PluginCapability(0).Descriptor().Values()
+	out := make([]PluginCapability, 0, values.Len())
+	for i := range values.Len() {
+		if name := ManifestCapabilityName(pbc.PluginCapability(values.Get(i).Number())); name != "" {
+			out = append(out, PluginCapability(name))
+		}
+	}
+	return out
 }
 
-// AllPluginCapabilities returns all valid plugin capabilities.
+// ManifestCapabilityName returns the manifest capability string for a protocol capability: the
+// lowercase value name without the PLUGIN_CAPABILITY_ prefix, so PLUGIN_CAPABILITY_DRY_RUN becomes
+// "dry_run". Plugins can build a manifest's specification.capabilities from the same values they
+// report through GetPluginInfo. It returns "" for PLUGIN_CAPABILITY_UNSPECIFIED and unknown values.
+func ManifestCapabilityName(c pbc.PluginCapability) string {
+	if c == pbc.PluginCapability_PLUGIN_CAPABILITY_UNSPECIFIED {
+		return ""
+	}
+	value := c.Descriptor().Values().ByNumber(c.Number())
+	if value == nil {
+		return ""
+	}
+	return strings.ToLower(strings.TrimPrefix(string(value.Name()), protoCapabilityPrefix))
+}
+
+// AllPluginCapabilities returns all valid plugin capabilities: the 14 manifest capability strings
+// followed by the protocol capability names in enum-number order.
 func AllPluginCapabilities() []PluginCapability {
 	return allPluginCapabilities
 }
@@ -305,7 +340,8 @@ func (p PluginCapability) String() string {
 	return string(p)
 }
 
-// IsValidPluginCapability checks if a plugin capability is valid.
+// IsValidPluginCapability checks if a plugin capability is valid. It accepts the manifest capability
+// strings and the protocol capability names returned by ManifestCapabilityName.
 func IsValidPluginCapability(capability string) bool {
 	pluginCapability := PluginCapability(capability)
 	for _, validCapability := range allPluginCapabilities {
