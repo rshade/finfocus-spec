@@ -2939,8 +2939,8 @@ return pluginsdk.SaveManifest("plugin-manifest.yaml", manifest)
 
 `LoadManifest` also reads files written by earlier SDK versions: protojson camelCase keys, full enum
 names (`INSTALLATION_METHOD_BINARY`), integer enums, and YAML with lowercased Go field names. It
-ignores unknown keys and does not validate; an enum value it cannot match is an error that names
-the field.
+ignores unknown keys and does not validate. An enum value it cannot match, or two spellings of one
+field in the same object (`spec_version` and `specVersion`), is an error that names the field.
 
 ## Property Mapping (mapping subpackage)
 

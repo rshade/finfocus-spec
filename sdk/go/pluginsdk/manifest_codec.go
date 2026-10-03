@@ -213,9 +213,12 @@ func decodeManifest(data []byte, isYAML bool) (*pbc.PluginManifest, error) {
 }
 
 // normalizeMessage rewrites obj into the form protojson reads: keys become proto field names and
-// enum values become full value names. Keys that match no field are dropped.
+// enum values become full value names. Keys that match no field are dropped. Two keys that name the
+// same field (spec_version and specVersion) are an error, as they are for protojson; picking one
+// would depend on map order and could differ from what a validator read.
 func normalizeMessage(md protoreflect.MessageDescriptor, obj map[string]any, path string) (map[string]any, error) {
 	out := make(map[string]any, len(obj))
+	sourceKeys := make(map[string]string, len(obj))
 	for key, val := range obj {
 		fd := findField(md, key)
 		if fd == nil {
@@ -226,6 +229,11 @@ func normalizeMessage(md protoreflect.MessageDescriptor, obj map[string]any, pat
 		if path != "" {
 			fieldPath = path + "." + name
 		}
+		if previous, seen := sourceKeys[name]; seen {
+			first, second := min(previous, key), max(previous, key)
+			return nil, fmt.Errorf("%s: keys %q and %q set the same field", fieldPath, first, second)
+		}
+		sourceKeys[name] = key
 		normalized, err := normalizeField(fd, val, fieldPath)
 		if err != nil {
 			return nil, err

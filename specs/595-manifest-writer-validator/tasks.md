@@ -296,3 +296,5 @@ Developer C: T027-T038 (US4, after B's T024 for the drift test)
 - [X] T046 Change the US4 test selector in `specs/595-manifest-writer-validator/quickstart.md` §3 and the
   Phase 6 Independent Test in `tasks.md` to match `TestManifestCapabilityName`,
   `TestValidateMethodsAndCapabilities`, and `TestManifestBillingModes`, per T028 (partial)
+- [X] T047 Reject two keys that name one field in `normalizeMessage` (`sdk/go/pluginsdk/manifest_codec.go`),
+  with `TestLoadManifestConflictingKeys`, per FR-007b (contradicts; found by the push security review)

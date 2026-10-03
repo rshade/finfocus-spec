@@ -34,7 +34,8 @@ func (errs ValidationErrors) Error() string {
 //
 // LoadManifest does not validate the manifest; call registry.ValidatePluginManifest on the canonical
 // JSON (MarshalManifestJSON) to do that. It returns an error if the file cannot be read, the extension
-// is unsupported, decoding fails, or an enum value matches none of the accepted forms.
+// is unsupported, decoding fails, an enum value matches none of the accepted forms, or two keys
+// name the same field (spec_version and specVersion).
 func LoadManifest(path string) (*pbc.PluginManifest, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
