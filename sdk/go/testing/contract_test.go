@@ -7,6 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
@@ -996,4 +999,71 @@ func TestValidateActualCostBillingAccount(t *testing.T) {
 			}
 		})
 	}
+}
+
+// attributesOfSize returns a one-key Struct whose proto.Size is exactly n.
+func attributesOfSize(t testing.TB, n int) *structpb.Struct {
+	t.Helper()
+	for pad := max(0, n-16); pad <= n; pad++ {
+		attrs := &structpb.Struct{Fields: map[string]*structpb.Value{
+			"p": structpb.NewStringValue(strings.Repeat("x", pad)),
+		}}
+		if proto.Size(attrs) == n {
+			return attrs
+		}
+	}
+	t.Fatalf("no single-key Struct encodes to exactly %d bytes", n)
+	return nil
+}
+
+// TestContractDescriptorLimitValues pins the published limits so a change is deliberate.
+func TestContractDescriptorLimitValues(t *testing.T) {
+	require.Equal(t, 65536, plugintesting.MaxAttributesBytes)
+	require.Equal(t, 2048, plugintesting.MaxTagValueLength)
+	require.Equal(t, 128, plugintesting.MaxTagKeyLength)
+	require.Equal(t, 50, plugintesting.MaxTagCount)
+}
+
+// TestValidateResourceDescriptorAttributesAndTagBounds covers the attributes size
+// bound and the tag value bound at and just past each limit.
+func TestValidateResourceDescriptorAttributesAndTagBounds(t *testing.T) {
+	base := func() *pbc.ResourceDescriptor {
+		return &pbc.ResourceDescriptor{Provider: "kubernetes", ResourceType: "kubernetes:apps/v1:Deployment"}
+	}
+
+	t.Run("attributes at limit", func(t *testing.T) {
+		r := base()
+		r.Attributes = attributesOfSize(t, 65536)
+		require.NoError(t, plugintesting.ValidateResourceDescriptor(r))
+	})
+
+	t.Run("empty attributes", func(t *testing.T) {
+		r := base()
+		r.Attributes = &structpb.Struct{}
+		require.NoError(t, plugintesting.ValidateResourceDescriptor(r))
+	})
+
+	t.Run("attributes one byte over limit", func(t *testing.T) {
+		r := base()
+		r.Attributes = attributesOfSize(t, 65537)
+		err := plugintesting.ValidateResourceDescriptor(r)
+		require.ErrorIs(t, err, plugintesting.ErrAttributesTooLarge)
+		var contractErr *plugintesting.ContractError
+		require.ErrorAs(t, err, &contractErr)
+		require.Equal(t, "attributes", contractErr.Field)
+		require.Contains(t, err.Error(), "65537")
+		require.Contains(t, err.Error(), "65536")
+	})
+
+	t.Run("tag value at limit", func(t *testing.T) {
+		require.NoError(t, plugintesting.ValidateTags(map[string]string{"policy": strings.Repeat("v", 2048)}))
+		r := base()
+		r.Tags = map[string]string{"policy": strings.Repeat("v", 2048)}
+		require.NoError(t, plugintesting.ValidateResourceDescriptor(r))
+	})
+
+	t.Run("tag value one byte over limit", func(t *testing.T) {
+		err := plugintesting.ValidateTags(map[string]string{"policy": strings.Repeat("v", 2049)})
+		require.ErrorIs(t, err, plugintesting.ErrTagValueTooLong)
+	})
 }

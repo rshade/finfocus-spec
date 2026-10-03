@@ -10,6 +10,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
@@ -240,6 +241,76 @@ func testGetProjectedCostRPC(harness *TestHarness) TestResult {
 		Success:  true,
 		Duration: duration,
 		Details:  fmt.Sprintf("Unit price: %.6f %s", resp.GetUnitPrice(), resp.GetCurrency()),
+	}
+}
+
+// conformanceAttributes is a nested attributes value ten segments deep, the depth
+// of a Kubernetes CronJob container's CPU request. Plugins are not expected to
+// read it; the test proves a descriptor carrying it is accepted.
+func conformanceAttributes() (*structpb.Struct, error) {
+	const spec = "spec"
+	return structpb.NewStruct(map[string]any{
+		spec: map[string]any{"jobTemplate": map[string]any{spec: map[string]any{
+			"template": map[string]any{spec: map[string]any{"containers": []any{
+				map[string]any{"resources": map[string]any{"requests": map[string]any{"cpu": "250m"}}},
+			}}},
+		}}},
+		"tags": map[string]any{"team": "platform"},
+	})
+}
+
+// testGetProjectedCostWithAttributesRPC tests that GetProjectedCost accepts a
+// ResourceDescriptor carrying nested attributes alongside tags. A plugin that
+// ignores attributes passes.
+func testGetProjectedCostWithAttributesRPC(harness *TestHarness) TestResult {
+	attrs, err := conformanceAttributes()
+	if err != nil {
+		return TestResult{
+			Method:   MethodGetProjectedCost,
+			Category: CategoryRPCCorrectness,
+			Success:  false,
+			Error:    err,
+			Details:  "failed to build attributes fixture",
+		}
+	}
+	resource := CreateResourceDescriptor(providerAWS, ec2ResourceType, "t3.micro", "us-east-1")
+	resource.Tags = map[string]string{"team": "platform"}
+	resource.Attributes = attrs
+
+	start := time.Now()
+	resp, err := harness.Client().GetProjectedCost(context.Background(), &pbc.GetProjectedCostRequest{
+		Resource: resource,
+	})
+	duration := time.Since(start)
+
+	if err != nil {
+		return TestResult{
+			Method:   MethodGetProjectedCost,
+			Category: CategoryRPCCorrectness,
+			Success:  false,
+			Error:    err,
+			Duration: duration,
+			Details:  MethodGetProjectedCost + " RPC failed for a descriptor with attributes",
+		}
+	}
+
+	if valErr := ValidateProjectedCostResponse(resp); valErr != nil {
+		return TestResult{
+			Method:   MethodGetProjectedCost,
+			Category: CategoryRPCCorrectness,
+			Success:  false,
+			Error:    valErr,
+			Duration: duration,
+			Details:  errResponseValidationFailed,
+		}
+	}
+
+	return TestResult{
+		Method:   MethodGetProjectedCost,
+		Category: CategoryRPCCorrectness,
+		Success:  true,
+		Duration: duration,
+		Details:  "Descriptor with nested attributes accepted",
 	}
 }
 
@@ -487,6 +558,13 @@ func RPCCorrectnessTests() []ConformanceSuiteTest {
 			TestFunc:    createGetProjectedCostRPCTest(),
 		},
 		{
+			Name:        "RPCCorrectness_GetProjectedCostWithAttributes",
+			Description: "Validates GetProjectedCost accepts a descriptor with nested attributes",
+			Category:    CategoryRPCCorrectness,
+			MinLevel:    ConformanceLevelBasic,
+			TestFunc:    createGetProjectedCostWithAttributesRPCTest(),
+		},
+		{
 			Name:        "RPCCorrectness_GetPricingSpecRPC",
 			Description: "Validates GetPricingSpec RPC returns valid response",
 			Category:    CategoryRPCCorrectness,
@@ -529,6 +607,10 @@ func createGetActualCostBillingAccountRPCTest() func(*TestHarness) TestResult {
 
 func createGetProjectedCostRPCTest() func(*TestHarness) TestResult {
 	return testGetProjectedCostRPC
+}
+
+func createGetProjectedCostWithAttributesRPCTest() func(*TestHarness) TestResult {
+	return testGetProjectedCostWithAttributesRPC
 }
 
 func createGetPricingSpecRPCTest() func(*TestHarness) TestResult {

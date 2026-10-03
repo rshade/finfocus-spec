@@ -15,6 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/rshade/finfocus-spec/sdk/go/internal/testutil"
@@ -1135,6 +1137,111 @@ func BenchmarkServerBatchCost_Fallback_1000Resources(b *testing.B) {
 		}
 		if len(resp.GetResults()) != MaxBatchSize {
 			b.Fatalf("expected %d results, got %d", MaxBatchSize, len(resp.GetResults()))
+		}
+	}
+}
+
+// attributesOfSize returns a one-key Struct whose proto.Size is exactly n.
+func attributesOfSize(t testing.TB, n int) *structpb.Struct {
+	t.Helper()
+	for pad := max(0, n-16); pad <= n; pad++ {
+		attrs := &structpb.Struct{Fields: map[string]*structpb.Value{
+			"p": structpb.NewStringValue(strings.Repeat("x", pad)),
+		}}
+		if proto.Size(attrs) == n {
+			return attrs
+		}
+	}
+	t.Fatalf("no single-key Struct encodes to exactly %d bytes", n)
+	return nil
+}
+
+// TestDescriptorLimitValues pins the published limits so a change is deliberate.
+func TestDescriptorLimitValues(t *testing.T) {
+	assert.Equal(t, 65536, MaxAttributesBytes)
+	assert.Equal(t, 2048, MaxTagValueLength)
+	assert.Equal(t, 128, MaxTagKeyLength)
+	assert.Equal(t, 256, MaxTagsPerResource)
+}
+
+// TestValidateResourceDescriptorAttributesAndTagBounds covers the attributes size
+// bound and the tag value bound at and just past each limit.
+func TestValidateResourceDescriptorAttributesAndTagBounds(t *testing.T) {
+	base := func() *pbc.ResourceDescriptor {
+		return &pbc.ResourceDescriptor{Provider: "kubernetes", ResourceType: "kubernetes:apps/v1:Deployment"}
+	}
+	withAttrs := func(a *structpb.Struct) *pbc.ResourceDescriptor {
+		r := base()
+		r.Attributes = a
+		return r
+	}
+	withTagValue := func(n int) *pbc.ResourceDescriptor {
+		r := base()
+		r.Tags = map[string]string{"policy": strings.Repeat("v", n)}
+		return r
+	}
+
+	tests := []struct {
+		name      string
+		resource  *pbc.ResourceDescriptor
+		errorText []string
+	}{
+		{name: "nil attributes", resource: base()},
+		{name: "empty attributes", resource: withAttrs(&structpb.Struct{})},
+		{name: "attributes at limit", resource: withAttrs(attributesOfSize(t, 65536))},
+		{
+			name:      "attributes one byte over limit",
+			resource:  withAttrs(attributesOfSize(t, 65537)),
+			errorText: []string{"attributes", "65537", "65536"},
+		},
+		{name: "tag value at limit", resource: withTagValue(2048)},
+		{
+			name:      "tag value one byte over limit",
+			resource:  withTagValue(2049),
+			errorText: []string{"tag value", "2049", "2048"},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateResourceDescriptor(tc.resource)
+			if tc.errorText == nil {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			assert.Equal(t, codes.InvalidArgument, status.Code(err))
+			for _, want := range tc.errorText {
+				assert.Contains(t, err.Error(), want)
+			}
+		})
+	}
+}
+
+// TestValidateBatchCostRequestRejectsOversizeAttributes checks the bound applies to
+// each resource of a BatchCost request.
+func TestValidateBatchCostRequestRejectsOversizeAttributes(t *testing.T) {
+	req := &pbc.BatchCostRequest{Resources: []*pbc.ResourceDescriptor{
+		{Provider: "aws", ResourceType: "ec2", Attributes: attributesOfSize(t, 1024)},
+		{Provider: "aws", ResourceType: "ec2", Attributes: attributesOfSize(t, MaxAttributesBytes+1)},
+	}}
+	_, err := ValidateBatchCostRequest(req, DefaultMaxBatchSize)
+	require.Error(t, err)
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	assert.Contains(t, err.Error(), "attributes")
+}
+
+// BenchmarkValidateResourceDescriptor_WithAttributes measures the attributes size check.
+func BenchmarkValidateResourceDescriptor_WithAttributes(b *testing.B) {
+	resource := &pbc.ResourceDescriptor{
+		Provider:     "kubernetes",
+		ResourceType: "kubernetes:apps/v1:Deployment",
+		Attributes:   attributesOfSize(b, 4096),
+	}
+	b.ReportAllocs()
+	for b.Loop() {
+		if err := ValidateResourceDescriptor(resource); err != nil {
+			b.Fatal(err)
 		}
 	}
 }

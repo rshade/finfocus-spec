@@ -214,3 +214,30 @@ func TestRPCCorrectnessGetActualCostBillingAccount(t *testing.T) {
 		})
 	}
 }
+
+// TestRPCCorrectnessGetProjectedCostWithAttributes checks that a plugin which ignores
+// ResourceDescriptor.attributes passes the Basic-level attributes test.
+func TestRPCCorrectnessGetProjectedCostWithAttributes(t *testing.T) {
+	plugin := plugintesting.NewMockPlugin()
+	harness := plugintesting.NewTestHarness(plugin)
+	harness.Start(t)
+	defer harness.Stop()
+
+	var found bool
+	for _, test := range plugintesting.RPCCorrectnessTests() {
+		if test.Name != "RPCCorrectness_GetProjectedCostWithAttributes" {
+			continue
+		}
+		found = true
+		if test.MinLevel != plugintesting.ConformanceLevelBasic {
+			t.Errorf("MinLevel = %v, want Basic", test.MinLevel)
+		}
+		result := test.TestFunc(harness)
+		if !result.Success {
+			t.Errorf("attributes test failed: %s: %v", result.Details, result.Error)
+		}
+	}
+	if !found {
+		t.Fatal("RPCCorrectness_GetProjectedCostWithAttributes not registered")
+	}
+}

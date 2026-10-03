@@ -380,23 +380,37 @@ Construct complex requests using fluent builder APIs:
 import { ResourceDescriptorBuilder } from "@rshade/finfocus-client";
 
 const resource = new ResourceDescriptorBuilder()
-  .withResourceType("aws:ec2:instance")
-  .withInstanceType("t3.medium")
+  .withProvider("aws")
+  .withResourceType("aws:ec2/instance:Instance")
+  .withSku("t3.medium")
   .withRegion("us-east-1")
-  .withAvailabilityZone("us-east-1a")
   .withTags({ Environment: "production", Team: "platform" })
+  .withAttributes({
+    instanceType: "t3.medium",
+    availabilityZone: "us-east-1a",
+    rootBlockDevice: { volumeSize: 100 },
+  })
   .build();
 ```
+
+`withAttributes` sets the resource's declared properties as a nested object (`ResourceDescriptor.attributes`).
+Hosts redact secrets and credential-like keys first, and the encoded size must stay at or under 65536 bytes.
+Keep sending `tags`: plugins prefer `attributes` and fall back to `tags` when it is absent.
 
 #### RecommendationFilterBuilder
 
 ```typescript
-import { RecommendationFilterBuilder, RecommendationPriority } from "@rshade/finfocus-client";
+import {
+  RecommendationCategory,
+  RecommendationFilterBuilder,
+  RecommendationPriority,
+} from "@rshade/finfocus-client";
 
 const filter = new RecommendationFilterBuilder()
   .withPriority(RecommendationPriority.HIGH)
-  .withCategory(RecommendationCategory.COST_OPTIMIZATION)
-  .withResourceTypes(["aws:ec2:instance", "aws:rds:db-instance"])
+  .withCategory(RecommendationCategory.COST)
+  .withTags({ Environment: "production" })
+  .withMinConfidenceScore(0.8)
   .build();
 ```
 
@@ -405,15 +419,12 @@ const filter = new RecommendationFilterBuilder()
 ```typescript
 import { FocusRecordBuilder } from "@rshade/finfocus-client";
 
+// FOCUS billing periods are half-open: [start, end).
 const record = new FocusRecordBuilder()
-  .withBillingAccountId("123456789012")
-  .withBillingPeriodStart({ year: 2024, month: 1, day: 1 })
-  .withBillingPeriodEnd({ year: 2024, month: 1, day: 31 })
-  .withChargeCategory(FocusChargeCategory.USAGE)
-  .withChargeClass(FocusChargeClass.REGULAR)
   .withResourceId("i-1234567890abcdef0")
-  .withServiceName("Amazon Elastic Compute Cloud")
-  .withBilledCost(150.25)
+  .withBillingPeriod(new Date("2024-01-01T00:00:00Z"), new Date("2024-02-01T00:00:00Z"))
+  .withBilledCost(150.25, "USD")
+  .withInvoiceDetailId("INV-2024-01-L3")
   .build();
 ```
 
@@ -524,8 +535,8 @@ import {
 // Type-safe enum values with IDE autocomplete
 const filter = new RecommendationFilterBuilder()
   .withPriority(RecommendationPriority.HIGH)  // Type-safe
-  .withCategory(RecommendationCategory.COST_OPTIMIZATION)
-  .withActionType(RecommendationActionType.RESIZE)
+  .withCategory(RecommendationCategory.COST)
+  .withActionType(RecommendationActionType.RIGHTSIZE)
   .build();
 
 // Service category classification
@@ -534,7 +545,7 @@ const categoryName = FocusServiceCategory[category];  // "COMPUTE"
 
 // Check plugin capabilities
 const hasRecommendations = info.capabilities.includes(
-  PluginCapability.PLUGIN_CAPABILITY_RECOMMENDATIONS
+  PluginCapability.RECOMMENDATIONS
 );
 ```
 
