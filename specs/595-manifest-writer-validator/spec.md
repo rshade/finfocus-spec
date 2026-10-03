@@ -169,6 +169,9 @@ run the drift test.
   objects).
 - **FR-007a**: The loader MUST return an error naming the field when an enum value matches no value in any
   accepted form (for example `installation_method: zip`).
+- **FR-007b**: The loader MUST return an error naming the field when two keys in one object name the
+  same field (for example `spec_version` and `specVersion`), as `protojson` does, so the loaded manifest
+  cannot differ from what a validator read in the same file.
 - **FR-008**: The SDK MUST expose a way to obtain the canonical JSON bytes of a manifest without writing a
   file, so a caller can validate before saving.
 

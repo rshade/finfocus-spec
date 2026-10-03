@@ -323,6 +323,22 @@ func TestLoadManifestInvalidEnum(t *testing.T) {
 	}
 }
 
+// Two spellings of one field must be rejected, as protojson rejects them, so a loaded manifest
+// cannot differ from what registry.ValidatePluginManifest saw in the same file.
+func TestLoadManifestConflictingKeys(t *testing.T) {
+	cases := map[string]string{
+		"m.json": `{"specification":{"spec_version":"0.1.0","specVersion":"9.9.9"}}`,
+		"m.yaml": "specification:\n  spec_version: 0.1.0\n  specversion: 9.9.9\n",
+		"m.yml":  "installation:\n  installation_method: binary\n  installationMethod: script\n",
+	}
+	for file, content := range cases {
+		t.Run(file, func(t *testing.T) {
+			_, err := pluginsdk.LoadManifest(writeManifestFile(t, file, []byte(content)))
+			require.ErrorContains(t, err, "set the same field")
+		})
+	}
+}
+
 func TestManifestYAMLKeepsStrings(t *testing.T) {
 	want := &pbc.PluginManifest{
 		Metadata: &pbc.PluginMetadata{Name: "test-plugin", Version: "1.0", Keywords: []string{"true", "null", "0x10"}},
