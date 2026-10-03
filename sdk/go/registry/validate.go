@@ -208,6 +208,11 @@ var (
 	resourceRule   = listRule{noun: "resource type", nonEmpty: true, check: lengthCheck(1, MaxResourceTypeLength)}
 	billingRule    = listRule{noun: "billing mode", check: enumCheck("billing mode", IsValidManifestBillingMode)}
 	regionRule     = listRule{noun: "region", check: lengthCheck(minRegionLength, maxRegionLength)}
+
+	// providerResourceRules maps each field a supported_resources entry may hold to its rule.
+	providerResourceRules = map[string]listRule{
+		"resource_types": resourceRule, "billing_modes": billingRule, "regions": regionRule,
+	}
 )
 
 const (
@@ -299,7 +304,7 @@ func validateProviderResources(path string, raw interface{}) error {
 		return fmt.Errorf("%s must be an object", path)
 	}
 
-	rules := map[string]listRule{"resource_types": resourceRule, "billing_modes": billingRule, "regions": regionRule}
+	rules := providerResourceRules
 	fields := make([]string, 0, len(entry))
 	for field := range entry {
 		fields = append(fields, field)

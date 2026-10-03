@@ -11,13 +11,21 @@
   "specification": {
     "spec_version": "1.0.0",
     "supported_providers": ["aws", "gcp", "azure"],
-    "supported_metrics": [
-      "METRIC_KIND_CARBON_FOOTPRINT",
-      "METRIC_KIND_ENERGY_CONSUMPTION",
-      "METRIC_KIND_WATER_USAGE"
-    ],
     "capabilities": [
-      "impact_modeling", "utilization_adjustment"
-    ]
+      "projected_costs", "carbon", "energy", "water", "dry_run"
+    ],
+    "service_definition": {
+      "service_name": "CostSourceService",
+      "package_name": "finfocus.v1",
+      "methods": ["Name", "Supports", "GetProjectedCost", "GetPluginInfo", "DryRun"],
+      "port": 50055,
+      "health_check_path": "/health"
+    }
+  },
+  "installation": {
+    "installation_method": "binary",
+    "download_url": "https://releases.finfocus.dev/greenops-plugin/v1.0.0/greenops-plugin-linux-amd64.tar.gz",
+    "checksum": "c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567890",
+    "checksum_algorithm": "sha256"
   }
 }

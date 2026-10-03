@@ -271,9 +271,10 @@ run the drift test.
 - The writer's previous output format is read for backward compatibility but never written.
 - `PluginManifest` has no `requirements` field, so the schema's `requirements` section (with its 64-bit
   integer fields) is never produced by the writer.
-- Two example files already fail the manifest schema and are left as they are: `azure-cost-plugin.json`
-  (its `download_url` is a container reference, not a URI) and `greenops-plugin.json` (not shaped as a
-  manifest). Fixing them is outside this feature.
+- Two example files failed the manifest schema before this feature: `azure-cost-plugin.json` (its
+  `download_url` was a container reference, not a URI) and `greenops-plugin.json` (not shaped as a
+  manifest). Both were fixed during PR review (an `oci://` URI, and a manifest that uses the new protocol
+  capabilities), and `TestExampleManifests` now covers all six files.
 - The TypeScript SDK has no manifest writer or validator, so SDK parity needs only the shared schema
   change; no TypeScript code changes are expected.
 - Provider normalization by hosts (rshade/finfocus#1645), a per-type input field catalog, and changes to

@@ -298,3 +298,16 @@ Developer C: T027-T038 (US4, after B's T024 for the drift test)
   `TestValidateMethodsAndCapabilities`, and `TestManifestBillingModes`, per T028 (partial)
 - [X] T047 Reject two keys that name one field in `normalizeMessage` (`sdk/go/pluginsdk/manifest_codec.go`),
   with `TestLoadManifestConflictingKeys`, per FR-007b (contradicts; found by the push security review)
+
+## Phase 9: PR Review Follow-up
+
+- [X] T048 Add `BenchmarkMarshalManifestJSON`, `BenchmarkMarshalManifestYAML`, and `BenchmarkLoadManifest`
+  in `sdk/go/pluginsdk/manifest_test.go`, per Constitution VIII (CodeRabbit)
+- [X] T049 Move the `supported_resources` field rules to package-level `providerResourceRules` in
+  `sdk/go/registry/validate.go` (CodeRabbit)
+- [X] T050 Group capabilities by length (`pluginCapabilitiesByLength`) in `sdk/go/registry/domain.go` so
+  `IsValidPluginCapability` misses no longer scan 32 values; rename `BenchmarkValidation_14Values` to
+  `_32Values` (CI benchmark alert, 3.2 to 6.2 ns; now 2.4 ns)
+- [X] T051 Make `examples/plugins/azure-cost-plugin.json` and `greenops-plugin.json` valid manifests and
+  cover all six files in `TestExampleManifests`, per FR-020
+- [X] T052 Correct the `SystemPermission` list in `sdk/go/registry/README.md` to the nine constants

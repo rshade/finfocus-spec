@@ -340,11 +340,32 @@ func (p PluginCapability) String() string {
 	return string(p)
 }
 
+// pluginCapabilitiesByLength groups allPluginCapabilities by string length, so a lookup scans only
+// the few values of the input's length instead of all 32.
+//
+//nolint:gochecknoglobals // Intentional optimization for zero-allocation validation
+var pluginCapabilitiesByLength = groupByLength(allPluginCapabilities)
+
+func groupByLength(values []PluginCapability) [][]PluginCapability {
+	maxLen := 0
+	for _, v := range values {
+		maxLen = max(maxLen, len(v))
+	}
+	groups := make([][]PluginCapability, maxLen+1)
+	for _, v := range values {
+		groups[len(v)] = append(groups[len(v)], v)
+	}
+	return groups
+}
+
 // IsValidPluginCapability checks if a plugin capability is valid. It accepts the manifest capability
 // strings and the protocol capability names returned by ManifestCapabilityName.
 func IsValidPluginCapability(capability string) bool {
+	if len(capability) >= len(pluginCapabilitiesByLength) {
+		return false
+	}
 	pluginCapability := PluginCapability(capability)
-	for _, validCapability := range allPluginCapabilities {
+	for _, validCapability := range pluginCapabilitiesByLength[len(capability)] {
 		if pluginCapability == validCapability {
 			return true
 		}

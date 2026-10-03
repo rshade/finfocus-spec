@@ -136,7 +136,8 @@ func TestSchemaDrift(t *testing.T) {
 func TestExampleManifests(t *testing.T) {
 	schema := compileSchema(t, "plugin_manifest.schema.json")
 	for _, name := range []string{
-		"aws-cost-plugin.json", "gcp-cost-plugin.json", "kubecost-plugin.json", "minimal-plugin.json",
+		"aws-cost-plugin.json", "azure-cost-plugin.json", "gcp-cost-plugin.json", "greenops-plugin.json",
+		"kubecost-plugin.json", "minimal-plugin.json",
 	} {
 		t.Run(name, func(t *testing.T) {
 			doc, err := os.ReadFile(filepath.Join("..", "..", "..", "examples", "plugins", name))

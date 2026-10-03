@@ -620,7 +620,7 @@ func BenchmarkValidation_9Values(b *testing.B) {
 }
 
 // BenchmarkValidation_14Values tests validation performance for 14-value enums (PluginCapability).
-func BenchmarkValidation_14Values(b *testing.B) {
+func BenchmarkValidation_32Values(b *testing.B) {
 	testCases := []string{"cost_retrieval", "invalid", "caching", ""}
 	b.ResetTimer()
 	for i := range b.N {

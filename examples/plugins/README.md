@@ -44,6 +44,14 @@ providers and deployment scenarios.
 - **Optional dependencies** example
 - **Multiple configuration scenarios** (in-cluster, external)
 
+#### GreenOps Plugin (`greenops-plugin.json`)
+
+- **Protocol capabilities** in a manifest: `projected_costs`, `carbon`, `energy`, `water`, `dry_run`
+  (the `PluginCapability` names without the `PLUGIN_CAPABILITY_` prefix)
+- **Methods beyond the core five**: `GetPluginInfo` and `DryRun`
+- Per-resource metric support is reported at runtime through `SupportsResponse.supported_metrics`,
+  not in the manifest
+
 ### Minimal Example
 
 #### Minimal Plugin (`minimal-plugin.json`)
@@ -76,7 +84,8 @@ done
 
 2. **Container** (`azure-cost-plugin.json`)
    - Docker image deployment
-   - Registry-based distribution
+   - Registry-based distribution, with `download_url` as an `oci://` image reference (the schema
+     requires a URI)
    - Containerized runtime isolation
 
 3. **Script** (`kubecost-plugin.json`)

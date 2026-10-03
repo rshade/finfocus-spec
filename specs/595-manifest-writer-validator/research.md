@@ -122,6 +122,9 @@
   `kubecost-plugin.json`, and `minimal-plugin.json` pass. `azure-cost-plugin.json` fails on
   `download_url` (a container reference, not a URI) and `greenops-plugin.json` is not shaped as a
   manifest. A Go test validates the four passing files with the schema and the SDK validator.
+- **Follow-up (PR review)**: `azure-cost-plugin.json` now uses `oci://registry.hub.docker.com/...`, and
+  `greenops-plugin.json` became a manifest: its `supported_metrics` (a `SupportsResponse` field, not a
+  manifest field) gave way to the `carbon`, `energy`, and `water` capabilities. The test covers all six.
 
 ## R10. TypeScript SDK parity
 

@@ -339,6 +339,44 @@ func TestLoadManifestConflictingKeys(t *testing.T) {
 	}
 }
 
+func BenchmarkMarshalManifestJSON(b *testing.B) {
+	m := newTestManifest()
+	b.ReportAllocs()
+	for range b.N {
+		if _, err := pluginsdk.MarshalManifestJSON(m); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkMarshalManifestYAML(b *testing.B) {
+	m := newTestManifest()
+	b.ReportAllocs()
+	for range b.N {
+		if _, err := pluginsdk.MarshalManifestYAML(m); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkLoadManifest(b *testing.B) {
+	for _, ext := range []string{".json", ".yaml"} {
+		b.Run(ext, func(b *testing.B) {
+			path := filepath.Join(b.TempDir(), "manifest"+ext)
+			if err := pluginsdk.SaveManifest(path, newTestManifest()); err != nil {
+				b.Fatal(err)
+			}
+			b.ReportAllocs()
+			b.ResetTimer()
+			for range b.N {
+				if _, err := pluginsdk.LoadManifest(path); err != nil {
+					b.Fatal(err)
+				}
+			}
+		})
+	}
+}
+
 func TestManifestYAMLKeepsStrings(t *testing.T) {
 	want := &pbc.PluginManifest{
 		Metadata: &pbc.PluginMetadata{Name: "test-plugin", Version: "1.0", Keywords: []string{"true", "null", "0x10"}},
