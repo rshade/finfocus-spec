@@ -80,6 +80,7 @@ and SDK. Use this guide to navigate to the appropriate documentation for your ne
   - AWS property mapping (ARN, region, SKU)
   - Azure property mapping
   - GCP property mapping
+  - How the host flattens Pulumi inputs into `tags`
 
 - **[Testing Framework](../sdk/go/testing/README.md)** - Plugin testing reference
   - Test harness with bufconn
