@@ -1165,10 +1165,16 @@ parallel subtests complete.
   at init. `TestSchemaDrift` compares them, `AllManifestBillingModes`, and `MaxResourceTypeLength` (256)
   with the schemas; adding a `CostSourceService` RPC or `PluginCapability` value fails it until the
   manifest schema enum gains the value.
+- `IsValidPluginCapability` scans `pluginCapabilitiesByLength` (values grouped by length at init), not all 32
+  values: a flat scan doubled the miss cost (3.2 to 6.2 ns) and tripped the CI benchmark alert; grouped it is
+  2.4 ns, 0 allocs. The same CI alert also flags untouched packages (currency) at about 2x; A/B against main
+  with prebuilt binaries before believing it.
 - The registry index schema's `capabilities` enum is a superset (it keeps registry-only values such as
   `tagging`); the drift test checks containment there, equality for the manifest schema.
-- Two `examples/plugins/` files already fail the manifest schema (`azure-cost-plugin.json` download_url is
-  not a URI; `greenops-plugin.json` is not a manifest). `TestExampleManifests` covers the other four.
+- `TestExampleManifests` runs all six `examples/plugins/` manifests through the schema and the SDK validator.
+  A container image `download_url` needs a scheme (`oci://registry/...`) for the schema's `uri` format.
+  Per-resource sustainability metrics are a `SupportsResponse.supported_metrics` concern, not a manifest field;
+  a manifest declares `carbon`, `energy`, and `water` capabilities instead.
 
 ## Active Technologies
 

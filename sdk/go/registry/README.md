@@ -146,15 +146,15 @@ registry.ManifestCapabilityName(pbc.PluginCapability_PLUGIN_CAPABILITY_UNSPECIFI
 Required system permissions:
 
 ```go
-registry.SystemPermissionNetworkAccess    // "network_access"
-registry.SystemPermissionFilesystemRead   // "filesystem_read"
-registry.SystemPermissionFilesystemWrite  // "filesystem_write"
-registry.SystemPermissionEnvRead          // "env_read"
-registry.SystemPermissionEnvWrite         // "env_write"
-registry.SystemPermissionProcessSpawn     // "process_spawn"
-registry.SystemPermissionSocketBind       // "socket_bind"
-registry.SystemPermissionSecretsAccess    // "secrets_access"
-registry.SystemPermissionCloudCredentials // "cloud_credentials"
+registry.SystemPermissionNetworkAccess   // "network_access"
+registry.SystemPermissionFilesystemRead  // "filesystem_read"
+registry.SystemPermissionFilesystemWrite // "filesystem_write"
+registry.SystemPermissionEnvironmentRead // "environment_read"
+registry.SystemPermissionProcessSpawn    // "process_spawn"
+registry.SystemPermissionSystemInfo      // "system_info"
+registry.SystemPermissionTempFiles       // "temp_files"
+registry.SystemPermissionConfigRead      // "config_read"
+registry.SystemPermissionMetricsCollect  // "metrics_collect"
 ```
 
 ### AuthMethod
