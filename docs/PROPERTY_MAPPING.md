@@ -19,7 +19,61 @@ The `ResourceDescriptor` message is the primary data contract between Core and P
 | `resource_type` | string | **Yes** | Type of resource |
 | `sku` | string | No | Provider-specific SKU or instance type |
 | `region` | string | No | Deployment region |
-| `tags` | map | No | Resource labels/tags for filtering |
+| `tags` | map | No | Resource labels, and the host's flattened input properties (see [How the Host Hands Properties to a Plugin](#how-the-host-hands-properties-to-a-plugin)) |
+
+## How the Host Hands Properties to a Plugin
+
+`ResourceDescriptor.tags` carries the host's flattened input properties in addition to resource labels.
+This section describes what the reference host, rshade/finfocus core, sends today
+(`internal/engine/engine.go`, `ConvertValueToString`, as of core `main`, which pins spec v0.7.0). It is
+a description of current behavior, not a guarantee: the collapse rules below are lossy and kept for
+compatibility, and a host may change them.
+
+| Input value | What arrives in `tags` |
+|-------------|------------------------|
+| string | the string |
+| number | integer text when whole (`128`), otherwise the shortest decimal (`0.05`) |
+| bool | `true` or `false` |
+| null | an empty string |
+| map | its `value`, else `id`, else `name` entry; else the inner value when it has exactly one key; else Go `fmt` text such as `map[adminUsername:azureuser computerName:lin]` |
+| array | an empty string when empty, the element when there is one, otherwise the elements joined with `,` |
+
+Keys that start with `__` (for example `__createBeforeDelete`, or `__defaults` in some Pulumi providers)
+are passed through. Only the host's overview display hides them.
+
+A worked example, from a real `pulumi preview --json` of an azure-native 3.28.0 virtual machine with fake
+values:
+
+| Pulumi input | `tags` entry |
+|--------------|--------------|
+| `hardwareProfile: {vmSize: Standard_D4s_v5}` | `hardwareProfile` = `Standard_D4s_v5` (single-key map) |
+| `billingProfile: {maxPrice: 0.05}` | `billingProfile` = `0.05` |
+| `priority: Spot` | `priority` = `Spot` |
+| `zones: ["1"]` | `zones` = `1` |
+| `osProfile: {adminUsername, computerName, linuxConfiguration: {...}}` | `osProfile` = `map[adminUsername:azureuser computerName:lin linuxConfiguration:map[disablePasswordAuthentication:false]]` |
+| `sku: {name: GP_Gen5, capacity: 4}` (an Azure SQL database) | `sku` = `GP_Gen5`; the capacity is lost |
+
+Consequences for plugin authors:
+
+- A plugin never receives the nested object, only the collapsed string. Read the key the host actually
+  sends, and treat a collapsed value as lossy. Parsing the `map[...]` text is a last resort: it breaks on values
+  that contain spaces.
+- The structured form exists in one place only: `EstimateCostRequest.attributes`, a `google.protobuf.Struct`
+  that the host builds from the raw properties without flattening. `GetProjectedCostRequest` has no structured field.
+- Tag limits have two different meanings. `pluginsdk.MaxTagsPerResource` (256 entries, key length 128, value
+  length 256; `sdk/go/pluginsdk/batch.go`) is a denial-of-service guard enforced when `BatchCost` requests are
+  validated. The contract bound `MaxTagCount` (50; `sdk/go/testing/contract.go`) is applied by the testing harness.
+  A resource with many properties can exceed the second without exceeding the first.
+- Strict request validation requires a non-empty `sku` and `region`; `ValidateProjectedCostRequestLenient`
+  does not. The SDK server calls neither, so each caller chooses. The reference host calls only the strict
+  validator, which means a resource whose SKU the host cannot resolve never reaches the plugin: it becomes a
+  validation placeholder instead.
+
+**Recommended convention (not emitted by any host today).** A host should flatten a nested map to dotted keys
+in addition to the collapsed value, for example `hardwareProfile.vmSize` = `Standard_D4s_v5` and
+`sku.capacity` = `4`, so no information is lost. Until a host does, `hardwareProfile` arrives as the collapsed
+value and `hardwareProfile.vmSize` is absent. A plugin may accept both forms. This section will be updated when
+the reference host ships it.
 
 ## AWS Property Mappings
 
@@ -479,12 +533,12 @@ func TestSparseOldStateProperties(t *testing.T) {
 ### 1. Nested Struct Properties
 
 Cloud provider properties often contain nested structures, but the mapping functions
-expect flattened key-value pairs. You must extract values from nested objects before mapping.
+expect flat key-value pairs, and the host has already reduced every nested value to a string in
+`ResourceDescriptor.tags` (see [How the Host Hands Properties to a Plugin](#how-the-host-hands-properties-to-a-plugin)).
 
-**Problem**: Azure VM sizes are nested under `hardwareProfile`:
+**Problem**: Azure VM sizes are nested under `hardwareProfile`. What the user's Pulumi program declares:
 
-```go
-// Azure API returns nested structure
+```json
 {
     "hardwareProfile": {
         "vmSize": "Standard_D2s_v3"
@@ -493,16 +547,22 @@ expect flattened key-value pairs. You must extract values from nested objects be
 }
 ```
 
-**Solution**: Flatten the properties before using mapping functions:
+**Solution**: Read the key the host actually sends. The reference host collapses a single-key map to its value, so
+this arrives as the tag `hardwareProfile` = `Standard_D2s_v3`; a host that follows the recommended dotted-key
+convention would also send `hardwareProfile.vmSize`. Accept both, and do not rely on the collapse for maps with
+more than one key:
 
 ```go
-// Flatten before extraction
-props := map[string]string{
-    "vmSize":   resource.HardwareProfile.VMSize,  // Extract from nested struct
-    "location": resource.Location,
+props := req.GetResource().GetTags()
+
+sku := props["hardwareProfile.vmSize"] // recommended convention, not emitted by any host today
+if sku == "" {
+    sku = props["hardwareProfile"] // single-key map collapsed to its value
 }
-sku := mapping.ExtractAzureSKU(props)  // "Standard_D2s_v3"
 ```
+
+`mapping.ExtractAzureSKU` reads only the top-level keys `vmSize`, `sku` and `tier`, so pass it a map in which
+you have placed the value under one of those names.
 
 ### 2. Case Sensitivity in Property Keys
 
@@ -675,7 +735,8 @@ Some resources require additional properties beyond SKU and region:
 
 ### 5. Use Tags for Cost Allocation
 
-Tags enable cost attribution across teams, environments, and projects:
+Tags enable cost attribution across teams, environments, and projects. (A host may also place its flattened
+input properties in `tags`; see [How the Host Hands Properties to a Plugin](#how-the-host-hands-properties-to-a-plugin).)
 
 ```go
 descriptor := &proto.ResourceDescriptor{

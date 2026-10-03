@@ -102,9 +102,11 @@ optional interfaces you implement:
 ```go
 type MyPlugin struct{}
 
-// Base capabilities (always present):
+// Base capabilities (always present, whatever the plugin implements):
 // - PLUGIN_CAPABILITY_PROJECTED_COSTS
 // - PLUGIN_CAPABILITY_ACTUAL_COSTS
+// - PLUGIN_CAPABILITY_PRICING_SPEC
+// - PLUGIN_CAPABILITY_ESTIMATE_COST
 
 // Optional capabilities (add by implementing interfaces):
 
@@ -134,6 +136,12 @@ func (s *server) Supports(ctx context.Context, req *pb.SupportsRequest) (*pb.Sup
     }, nil
 }
 ```
+
+A plugin that does not offer all four, for example an actual-cost-only plugin, must declare its
+capabilities explicitly with `pluginsdk.WithCapabilities(...)`, which replaces the inferred list. A plugin
+that implements `PluginInfoProvider` must instead return the intended list from its own `GetPluginInfo`: a
+non-empty list it returns is used as is, and `WithCapabilities` does not override it. See
+[Declare Capabilities Explicitly](#declare-capabilities-explicitly).
 
 #### Manual Capability Override
 
@@ -302,6 +310,9 @@ message GetProjectedCostResponse {
 **Implementation Notes**:
 
 - Calculate based on current pricing tables
+- Read resource inputs from `resource.tags` as the host sends them: nested objects arrive collapsed and lossy,
+  not as the structure the user wrote. See
+  [How the Host Hands Properties to a Plugin](docs/PROPERTY_MAPPING.md#how-the-host-hands-properties-to-a-plugin)
 - `cost_per_month` should assume 30.44 days (365.25/12)
 - Include billing context in `billing_detail`
 - To report component costs (for example, compute plus a root volume), set `cost_breakdown`
@@ -543,7 +554,10 @@ if requestCount == "" {
 
 #### Validation Strategy
 
-For sparse property scenarios, use **lenient validation** that allows missing SKU and region:
+For sparse property scenarios, use **lenient validation** that allows missing SKU and region. The SDK server
+calls neither validator; each caller chooses. A host that applies the strict validator, as the reference host
+does, never sends a resource with an empty SKU or region to your plugin, so lenient validation only helps for
+callers that opt into it:
 
 ```go
 // Use lenient validation for old-state baseline lookups
