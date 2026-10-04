@@ -126,7 +126,9 @@ type CostSourceServiceClient interface {
 	// don't support dismissals should return Unimplemented.
 	//
 	// When a recommendation is dismissed:
-	//   - It should not appear in future GetRecommendations responses
+	//   - It should not appear in future GetRecommendations responses unless
+	//     include_dismissed is true
+	//   - excluded_recommendation_ids still omits the ID in both cases
 	//   - The dismissal may expire after a configurable period
 	//   - Users can optionally provide a reason for the dismissal
 	//
@@ -462,7 +464,9 @@ type CostSourceServiceHandler interface {
 	// don't support dismissals should return Unimplemented.
 	//
 	// When a recommendation is dismissed:
-	//   - It should not appear in future GetRecommendations responses
+	//   - It should not appear in future GetRecommendations responses unless
+	//     include_dismissed is true
+	//   - excluded_recommendation_ids still omits the ID in both cases
 	//   - The dismissal may expire after a configurable period
 	//   - Users can optionally provide a reason for the dismissal
 	//

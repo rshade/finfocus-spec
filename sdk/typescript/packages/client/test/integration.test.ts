@@ -143,6 +143,16 @@ describe('CostSourceClient Integration', () => {
     expectPriceOptions(response.priceOptions);
   });
 
+  it('round-trips includeDismissed', () => {
+    const request = create(GetRecommendationsRequestSchema, {
+      includeDismissed: true,
+      excludedRecommendationIds: ['rec-1'],
+    });
+
+    expect(request.includeDismissed).toBe(true);
+    expect(request.excludedRecommendationIds).toEqual(['rec-1']);
+  });
+
   it('fetches recommendations', async () => {
     const request = create(GetRecommendationsRequestSchema);
     const response = await client.getRecommendations(request);

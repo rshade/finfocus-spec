@@ -747,6 +747,7 @@ message GetRecommendationsRequest {
   int32 page_size = 3;                       // Max recommendations to return (default: 50, max: 1000)
   string page_token = 4;                     // Pagination token from previous response
   repeated string excluded_recommendation_ids = 5;  // Recommendation IDs to exclude from results
+  bool include_dismissed = 8;  // When true, also return recommendations this plugin dismissed or snoozed
 }
 ```
 
@@ -769,6 +770,10 @@ message GetRecommendationsResponse {
 - Support filtering by provider, region, resource type, category, action type, SKU, and tags
 - Return `InvalidArgument` for invalid filter criteria or pagination tokens
 - Return `Unavailable` when the backend recommendation service is down
+- **`include_dismissed`** (field 8, default false): a plugin that stores dismissals or snoozes
+  omits those recommendations unless this field is true. `excluded_recommendation_ids` still
+  omits its IDs in both cases. A plugin with no dismissal store ignores the field. Apply both
+  rules with `pluginsdk.ApplyRecommendationVisibility` before pagination.
 
 **Filter Criteria**:
 
@@ -937,7 +942,8 @@ req = &pbc.GetRecommendationsRequest{
 
 #### DismissRecommendation RPC
 
-Dismisses a recommendation so it won't appear in future GetRecommendations responses.
+Dismisses a recommendation so it stays out of later GetRecommendations responses
+unless the request sets `include_dismissed`. `excluded_recommendation_ids` still omits that ID.
 This is an **optional RPC** - plugins that don't support dismissals should return `Unimplemented`.
 For stateless plugins, use `excluded_recommendation_ids` in GetRecommendationsRequest instead.
 
@@ -981,7 +987,9 @@ message DismissRecommendationResponse {
 - **Optional RPC**: Return `codes.Unimplemented` if your plugin doesn't support dismissals
 - Dismissals may be temporary (using `expires_at`) or permanent
 - Use `dismissed_by` for audit trails in enterprise environments
-- Dismissed recommendations should not appear in subsequent GetRecommendations calls
+- Dismissed recommendations should not appear in subsequent GetRecommendations calls unless
+  the request sets `include_dismissed`
+- IDs in `excluded_recommendation_ids` stay omitted whether or not `include_dismissed` is set
 - Validate that `recommendation_id` exists before dismissing
 - Return `NotFound` if the recommendation doesn't exist
 - Return `InvalidArgument` if `custom_reason` is empty when reason is `OTHER`

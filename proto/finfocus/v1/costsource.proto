@@ -61,7 +61,9 @@ service CostSourceService {
   // don't support dismissals should return Unimplemented.
   //
   // When a recommendation is dismissed:
-  //   - It should not appear in future GetRecommendations responses
+  //   - It should not appear in future GetRecommendations responses unless
+  //     include_dismissed is true
+  //   - excluded_recommendation_ids still omits the ID in both cases
   //   - The dismissal may expire after a configurable period
   //   - Users can optionally provide a reason for the dismissal
   //
@@ -1596,6 +1598,17 @@ message GetRecommendationsRequest {
   // When UNSPECIFIED (default), plugins use their standard prioritization.
   // Unknown values are treated as UNSPECIFIED for forward compatibility.
   UsageProfile usage_profile = 7;
+
+  // include_dismissed tells a plugin that stores dismissals whether to return them.
+  //
+  // When false (the default), the plugin MUST omit recommendations it has dismissed
+  // or snoozed. When true, the plugin MUST include those recommendations.
+  //
+  // excluded_recommendation_ids still applies in both cases. An ID in that list is
+  // omitted even when include_dismissed is true.
+  //
+  // A plugin that does not store dismissal state ignores this field.
+  bool include_dismissed = 8;
 }
 
 // GetRecommendationsResponse contains the recommendations and summary.

@@ -1628,6 +1628,11 @@ type RecommendationsConfig struct {
 	ShouldError     bool
 	ErrorMessage    string
 	Delay           time.Duration
+	// DismissedIDs are recommendations this mock has dismissed or snoozed.
+	// GetRecommendations omits them unless the request sets include_dismissed.
+	// excluded_recommendation_ids are omitted either way. Filtering happens
+	// before pagination.
+	DismissedIDs []string
 }
 
 // SetRecommendationsConfig configures the recommendations response.
@@ -1804,6 +1809,15 @@ func (m *MockPlugin) GetRecommendations(
 		recs = applyMockFilter(recs, req.GetFilter())
 	}
 
+	// Dismissal filtering matches pluginsdk.ApplyRecommendationVisibility.
+	// pluginsdk imports this package, so the mock cannot call that helper.
+	recs = applyMockRecommendationVisibility(
+		recs,
+		req.GetIncludeDismissed(),
+		m.RecommendationsConfig.DismissedIDs,
+		req.GetExcludedRecommendationIds(),
+	)
+
 	// Apply pagination if page_size is specified
 	var nextToken string
 	if req.GetPageSize() > 0 || req.GetPageToken() != "" {
@@ -1829,6 +1843,48 @@ func (m *MockPlugin) GetRecommendations(
 		Summary:         summary,
 		NextPageToken:   nextToken,
 	}, nil
+}
+
+// applyMockRecommendationVisibility omits dismissed IDs unless includeDismissed
+// is set, then omits excluded IDs. It matches pluginsdk.ApplyRecommendationVisibility.
+func applyMockRecommendationVisibility(
+	recs []*pbc.Recommendation,
+	includeDismissed bool,
+	dismissedIDs []string,
+	excludedIDs []string,
+) []*pbc.Recommendation {
+	if !includeDismissed {
+		recs = omitMockRecommendationIDs(recs, dismissedIDs)
+	}
+	return omitMockRecommendationIDs(recs, excludedIDs)
+}
+
+// omitMockRecommendationIDs returns recs whose IDs are not in ids.
+// Empty ids, or ids that are only empty strings, return the input slice.
+func omitMockRecommendationIDs(recs []*pbc.Recommendation, ids []string) []*pbc.Recommendation {
+	if len(recs) == 0 || len(ids) == 0 {
+		return recs
+	}
+	skip := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		if id == "" {
+			continue
+		}
+		skip[id] = struct{}{}
+	}
+	if len(skip) == 0 {
+		return recs
+	}
+	filtered := make([]*pbc.Recommendation, 0, len(recs))
+	for _, rec := range recs {
+		if rec != nil {
+			if _, found := skip[rec.GetId()]; found {
+				continue
+			}
+		}
+		filtered = append(filtered, rec)
+	}
+	return filtered
 }
 
 // GetBudgets implements the mock GetBudgets RPC method.
