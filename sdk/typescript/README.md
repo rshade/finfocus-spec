@@ -122,8 +122,14 @@ const client = new CostSourceClient({ baseUrl: "https://plugin.example.com", tra
 The main client for interacting with FinFocus cost source plugins:
 
 ```typescript
-import { CostSourceClient, create, ValidationError } from "@rshade/finfocus-client";
-import { GetProjectedCostRequestSchema, ResourceDescriptor } from "@rshade/finfocus-client";
+import {
+  CostSourceClient,
+  create,
+  GetProjectedCostRequestSchema,
+  ResourceDescriptorBuilder,
+  SupportsRequestSchema,
+  ValidationError,
+} from "@rshade/finfocus-client";
 
 const client = new CostSourceClient({
   baseUrl: "https://plugin.example.com"
@@ -134,27 +140,23 @@ const info = await client.getPluginInfo();
 console.log(`Plugin: ${info.name} v${info.version}`);
 console.log(`Providers: ${info.providers.join(", ")}`);
 
+const resource = new ResourceDescriptorBuilder()
+  .withProvider("aws")
+  .withResourceType("aws:ec2/instance:Instance")
+  .withSku("t3.medium")
+  .withRegion("us-east-1")
+  .build();
+
 // Check resource support
-const supports = await client.supports({
-  resourceType: "aws:ec2:instance"
-});
+const supports = await client.supports(create(SupportsRequestSchema, { resource }));
 console.log(`Supported: ${supports.supported}`);
 
 // Get projected costs
-const resource = create(ResourceDescriptor, {
-  resourceType: "aws:ec2:instance",
-  instanceType: "t3.medium",
-  region: "us-east-1"
-});
-
-const projectedReq = create(GetProjectedCostRequestSchema, {
-  resource,
-  months: 12
-});
+const projectedReq = create(GetProjectedCostRequestSchema, { resource });
 
 try {
   const projected = await client.getProjectedCost(projectedReq);
-  console.log(`Projected annual cost: ${projected.projectedCost}`);
+  console.log(`Projected monthly cost: ${projected.costPerMonth} ${projected.currency}`);
 } catch (error) {
   if (error instanceof ValidationError) {
     console.error(`Validation error: ${error.message} (field: ${error.field})`);
@@ -271,10 +273,14 @@ Scores are ranking signals and never approval to act.
 ```typescript
 import { create } from "@bufbuild/protobuf";
 import {
+  CostSourceClient,
   RecommendationScorerClient,
   ScoreRecommendationsRequestSchema,
   ScoreSignal,
 } from "@rshade/finfocus-client";
+
+const costSource = new CostSourceClient({ baseUrl: "https://plugin.example.com" });
+const { recommendations } = await costSource.getRecommendations();
 
 const scorer = new RecommendationScorerClient({ baseUrl: "https://scorer-plugin.example.com" });
 const resp = await scorer.scoreRecommendations(
@@ -335,8 +341,15 @@ arrive as `ConnectError` with the plugin's code.
 Iterate through large result sets using the async iterator pattern:
 
 ```typescript
-import { recommendationsIterator, create } from "@rshade/finfocus-client";
-import { GetRecommendationsRequestSchema } from "@rshade/finfocus-client";
+import {
+  CostSourceClient,
+  create,
+  GetRecommendationsRequestSchema,
+  RecommendationPriority,
+  recommendationsIterator,
+} from "@rshade/finfocus-client";
+
+const client = new CostSourceClient({ baseUrl: "https://plugin.example.com" });
 
 const request = create(GetRecommendationsRequestSchema, {
   filter: {
@@ -348,22 +361,31 @@ const request = create(GetRecommendationsRequestSchema, {
 // Automatically handles pagination across all pages
 for await (const rec of recommendationsIterator(client, request)) {
   console.log(`${rec.id}: ${rec.description}`);
-  console.log(`Estimated savings: $${rec.estimatedMonthlySavings}/month`);
+  console.log(`Estimated savings: ${rec.impact?.estimatedSavings ?? 0} ${rec.impact?.currency ?? ""}`);
 }
 ```
 
 **Resume pagination** from a specific page token:
 
 ```typescript
-// Resume from a previous page
-const resumeRequest = create(GetRecommendationsRequestSchema, {
-  filter: { /* same filters */ },
-  pageToken: "abc123" // Token from previous response
-});
+import {
+  CostSourceClient,
+  create,
+  GetRecommendationsRequestSchema,
+  recommendationsIterator,
+} from "@rshade/finfocus-client";
 
-// Continue iterating from that point
-for await (const rec of recommendationsIterator(client, resumeRequest)) {
-  console.log(rec.description);
+// pageToken is the nextPageToken of an earlier response
+async function resume(client: CostSourceClient, pageToken: string) {
+  const resumeRequest = create(GetRecommendationsRequestSchema, {
+    filter: { /* same filters as the first request */ },
+    pageToken
+  });
+
+  // Continue iterating from that point
+  for await (const rec of recommendationsIterator(client, resumeRequest)) {
+    console.log(rec.description);
+  }
 }
 ```
 
@@ -464,7 +486,13 @@ const record = new FocusRecordBuilder()
 The SDK provides two types of errors to handle:
 
 ```typescript
-import { CostSourceClient, ValidationError } from "@rshade/finfocus-client";
+import {
+  CostSourceClient,
+  create,
+  DismissalReason,
+  DismissRecommendationRequestSchema,
+  ValidationError,
+} from "@rshade/finfocus-client";
 import { ConnectError, Code } from "@connectrpc/connect";
 
 const client = new CostSourceClient({
@@ -472,10 +500,10 @@ const client = new CostSourceClient({
 });
 
 try {
-  await client.dismissRecommendation({
+  await client.dismissRecommendation(create(DismissRecommendationRequestSchema, {
     recommendationId: "rec-123",
-    reason: "Already implemented"
-  });
+    reason: DismissalReason.ALREADY_IMPLEMENTED
+  }));
 } catch (error) {
   if (error instanceof ValidationError) {
     // Client-side validation failure (before request is sent)
@@ -556,9 +584,10 @@ import {
   RecommendationPriority,
   RecommendationCategory,
   RecommendationActionType,
+  RecommendationFilterBuilder,
   FocusServiceCategory,
-  FocusChargeCategory,
-  PluginCapability
+  PluginCapability,
+  type GetPluginInfoResponse
 } from "@rshade/finfocus-client";
 
 // Type-safe enum values with IDE autocomplete
@@ -572,10 +601,10 @@ const filter = new RecommendationFilterBuilder()
 const category = FocusServiceCategory.COMPUTE;  // 1
 const categoryName = FocusServiceCategory[category];  // "COMPUTE"
 
-// Check plugin capabilities
-const hasRecommendations = info.capabilities.includes(
-  PluginCapability.RECOMMENDATIONS
-);
+// Check plugin capabilities (info comes from client.getPluginInfo())
+function hasRecommendations(info: GetPluginInfoResponse): boolean {
+  return info.capabilities.includes(PluginCapability.RECOMMENDATIONS);
+}
 ```
 
 **Available enums:**
@@ -616,15 +645,18 @@ plugin did not set them:
 
 ```typescript
 import { timestampDate } from "@bufbuild/protobuf/wkt";
+import type { GetActualCostResponse } from "@rshade/finfocus-client";
 
-for (const result of response.results) {
-  // Check optional fields
-  if (result.expiresAt !== undefined) {
-    console.log(`Cache until: ${timestampDate(result.expiresAt).toISOString()}`);
+function logResults(response: GetActualCostResponse) {
+  for (const result of response.results) {
+    // Check optional fields
+    if (result.expiresAt !== undefined) {
+      console.log(`Cache until: ${timestampDate(result.expiresAt).toISOString()}`);
+    }
+
+    // Use optional chaining
+    console.log(`Billing account: ${result.focusRecord?.billingAccountId ?? "not supplied"}`);
   }
-
-  // Use optional chaining
-  console.log(`Billing account: ${result.focusRecord?.billingAccountId ?? "not supplied"}`);
 }
 ```
 
@@ -635,6 +667,8 @@ for (const result of response.results) {
 The default transport uses `fetch` API and works in all modern browsers:
 
 ```typescript
+import { CostSourceClient } from "@rshade/finfocus-client";
+
 const client = new CostSourceClient({
   baseUrl: "https://plugin.example.com"
 });
@@ -645,6 +679,7 @@ const client = new CostSourceClient({
 For server-side Node.js environments, use the Node.js HTTP transport from `finfocus-middleware`:
 
 ```typescript
+import { CostSourceClient } from "@rshade/finfocus-client";
 import { createNodeTransport } from "finfocus-middleware";
 import * as https from "https";
 
@@ -673,17 +708,25 @@ Set `httpVersion: "2"` to use HTTP/2 instead; `nodeOptions` applies to HTTP/1.1 
 
 ### Custom Transport
 
-Implement custom transport for advanced use cases:
+Pass any Connect `Transport`. To add auth headers, logging, or retries, build one with interceptors:
 
 ```typescript
-import { Transport } from "@connectrpc/connect";
+import type { Interceptor } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-web";
+import { CostSourceClient } from "@rshade/finfocus-client";
 
-// Custom transport with retry logic, auth, etc.
-const customTransport: Transport = {
-  // Implementation details...
+// Adds an auth header to every call
+const auth: Interceptor = (next) => async (req) => {
+  req.header.set("authorization", "Bearer example-token");
+  return next(req);
 };
 
-const client = new CostSourceClient({ transport: customTransport });
+const customTransport = createConnectTransport({
+  baseUrl: "https://plugin.example.com",
+  interceptors: [auth]
+});
+
+const client = new CostSourceClient({ baseUrl: "https://plugin.example.com", transport: customTransport });
 ```
 
 ## Testing
@@ -765,7 +808,7 @@ describe("CostSourceClient Integration", () => {
 
 ```typescript
 import { describe, it, expect } from "vitest";
-import { recommendationsIterator, create } from "@rshade/finfocus-client";
+import { CostSourceClient, recommendationsIterator, create } from "@rshade/finfocus-client";
 import { GetRecommendationsRequestSchema } from "@rshade/finfocus-client";
 
 describe("Pagination", () => {
@@ -785,7 +828,7 @@ describe("Pagination", () => {
     const client = new CostSourceClient({ baseUrl: "http://test" });
 
     // Get first page
-    const page1 = await client.getRecommendations({});
+    const page1 = await client.getRecommendations();
     const token = page1.nextPageToken;
 
     // Resume from token
@@ -806,8 +849,13 @@ describe("Pagination", () => {
 ### Testing Error Handling
 
 ```typescript
-import { describe, it, expect } from "vitest";
-import { CostSourceClient, ValidationError } from "@rshade/finfocus-client";
+import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
+import {
+  CostSourceClient,
+  create,
+  DismissRecommendationRequestSchema,
+  ValidationError,
+} from "@rshade/finfocus-client";
 import { ConnectError, Code } from "@connectrpc/connect";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -830,7 +878,7 @@ describe("Error Handling", () => {
     const client = new CostSourceClient({ baseUrl: "http://test" });
 
     await expect(
-      client.dismissRecommendation({ recommendationId: "" })
+      client.dismissRecommendation(create(DismissRecommendationRequestSchema, { recommendationId: "" }))
     ).rejects.toThrow(ValidationError);
   });
 
@@ -838,7 +886,9 @@ describe("Error Handling", () => {
     const client = new CostSourceClient({ baseUrl: "http://test" });
 
     try {
-      await client.dismissRecommendation({ recommendationId: "rec-123" });
+      await client.dismissRecommendation(
+        create(DismissRecommendationRequestSchema, { recommendationId: "rec-123" })
+      );
       expect.fail("Should have thrown ConnectError");
     } catch (error) {
       expect(error).toBeInstanceOf(ConnectError);

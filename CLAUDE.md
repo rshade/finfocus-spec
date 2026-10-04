@@ -854,6 +854,11 @@ parallel subtests complete.
 - Depend on the scoped `@rshade/finfocus-client`, never the unscoped name, which would resolve
   from the public registry without the lockfile.
 - TypeScript 6 defaults `types` to `[]`; Node packages need `"types": ["node"]`.
+- `@rshade/finfocus-client` has no `exports` map and ships one CJS-flavored `dist/index.d.ts`. An ESM
+  consumer on `moduleResolution: nodenext` that passes its own `createConnectTransport(...)` to a
+  client gets a CJS-vs-ESM `Transport` type mismatch; bundler resolution and CommonJS are fine.
+- Compile-check README TypeScript blocks one per file from the package dir whose imports they use
+  (client, middleware, framework-plugins), as `.mts` with `export {};` appended and `--types node`.
 - tsup externalizes only `dependencies`/`peerDependencies`. Framework adapters declare express,
   fastify, and NestJS as optional `peerDependencies`, or tsup tries to bundle them.
 - `RESTGateway` speaks proto3 JSON (`fromJson`/`toJson` via service descriptors). Never
