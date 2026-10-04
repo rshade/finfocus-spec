@@ -5,7 +5,7 @@ description: "Tasks for keeping handler status codes in pluginsdk.Server"
 
 # Tasks: Keep Handler Status Codes in the Plugin SDK Server
 
-**Input**: `specs/599-handler-status-codes/` (spec, plan, research, contracts/server-errors.md)
+**Input**: `specs/600-handler-status-codes/` (spec, plan, research, contracts/server-errors.md)
 
 **Tests**: Required and written first (Principle V). Test names are neutral (FR-008).
 
@@ -65,7 +65,7 @@ description: "Tasks for keeping handler status codes in pluginsdk.Server"
 
 ## Phase 5: Polish
 
-- [X] T015 Add a "Handler Status Pattern (599-handler-status-codes)" section and Active Technologies
+- [X] T015 Add a "Handler Status Pattern (600-handler-status-codes)" section and Active Technologies
   / Recent Changes entries by hand in CLAUDE.md
 - [X] T016 Run gates: gofmt/goimports, `make lint-go` (0 issues), `make test`,
   `go test -v -tags=integration ./sdk/go/testing/`, `make lint-markdown`, `make lint-yaml`,
