@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.4](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.7.3...finfocus-client-v0.7.4) (2026-10-04)
+
+
+### Features
+
+* **proto:** add include_dismissed to recommendations ([db4624a](https://github.com/rshade/finfocus-spec/commit/db4624a3bcbf92b77f897d08cbf8b9dc6569f63d))
+
 ## [0.7.3](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.7.2...finfocus-client-v0.7.3) (2026-10-04)
 
 
