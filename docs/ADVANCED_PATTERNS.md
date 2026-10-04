@@ -344,14 +344,34 @@ func (p *MultiProviderPlugin) GetProjectedCost(
 
 When dealing with resources from multiple providers, use the mapping package's
 provider-specific extractors. They read the flat `tags` map. When the host also sends the nested
-`attributes` Struct, prefer it (read paths with `pluginsdk.AttributeValue`) and fall back to `tags`:
+`attributes` Struct, prefer it (read paths with `pluginsdk.AttributeValue`) and fall back to `tags`. The
+example copies the tags and lets each attribute the host sent replace the tag the extractor reads, so the
+extractors run unchanged:
 
 ```go
+// attributePaths maps each key the mapping extractors read to the attribute
+// path that holds the same input.
+var attributePaths = map[string]map[string]string{
+    "aws":   {"instanceType": "instanceType", "availabilityZone": "availabilityZone"},
+    "azure": {"vmSize": "hardwareProfile.vmSize", "location": "location"},
+    "gcp":   {"machineType": "machineType", "zone": "zone"},
+}
+
 func (p *MultiProviderPlugin) extractResourceDetails(
     resource *pbc.ResourceDescriptor,
 ) (sku, region string, err error) {
-    props := resource.GetTags()
     provider := resource.GetProvider()
+
+    // A present attribute wins over its tag, even when it is empty.
+    props := maps.Clone(resource.GetTags())
+    if props == nil {
+        props = map[string]string{}
+    }
+    for key, path := range attributePaths[provider] {
+        if v, ok := pluginsdk.AttributeValue(resource.GetAttributes(), path); ok {
+            props[key] = v.GetStringValue()
+        }
+    }
 
     switch provider {
     case "aws":
@@ -666,8 +686,9 @@ costDiff := modifiedResp.CostPerMonth - baselineResp.CostPerMonth
 ```
 
 The example carries properties in `tags`. A host may also send them nested in `ResourceDescriptor.attributes`;
-plugins prefer `attributes` when it is set and fall back to `tags` when it is absent, so the patterns below apply
-to either source.
+plugins prefer `attributes` when it is set and fall back to `tags` when it is absent. For brevity, the patterns
+below read `tags` only. In a plugin, build the property map attribute-first as
+[`extractResourceDetails`](#provider-specific-property-extraction) does, then apply the pattern to that map.
 
 ### Pattern 1: Graceful Degradation with Partial Properties
 

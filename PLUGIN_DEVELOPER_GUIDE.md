@@ -324,8 +324,7 @@ message GetProjectedCostResponse {
   var vmSize string
   if v, ok := pluginsdk.AttributeValue(req.GetResource().GetAttributes(), "hardwareProfile.vmSize"); ok {
       vmSize = v.GetStringValue()
-  }
-  if vmSize == "" {
+  } else {
       vmSize = req.GetResource().GetTags()["hardwareProfile"] // older hosts: collapsed single-key map
   }
   ```

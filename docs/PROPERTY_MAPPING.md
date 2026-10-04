@@ -118,7 +118,9 @@ where `tags` could carry it only as lossy text.
   secret signature `4dabf18193072939515e22adb298388d`. A host may redact more.
 - **Keep sending `tags`.** Plugins that predate the field read only `tags`, so `attributes` is additive.
 - **Stay within 65536 encoded bytes per resource** (`pluginsdk.MaxAttributesBytes`, the protobuf wire size).
-  Both SDK validators reject a larger value with `InvalidArgument`.
+  Both SDK validators reject a larger value: `pluginsdk.ValidateResourceDescriptor` returns a gRPC
+  `InvalidArgument` status, and `plugintesting.ValidateResourceDescriptor` returns a `*ContractError` that
+  wraps `ErrAttributesTooLarge` (check it with `errors.Is`).
 - **Split batches by size, not only by count.** A whole request must fit the transport limit: 1 MB on the
   Connect/HTTP path and 4 MB by default on gRPC. One hundred resources at the per-resource maximum would be about
   6.4 MB, so a host splits a `BatchCost` request until its encoded size fits. The transport rejects an oversized
@@ -145,14 +147,16 @@ numeric segment indexes a list. Any miss returns `(nil, false)`, never an error:
 ```go
 attrs := req.GetResource().GetAttributes()
 
-cpu := "" // fall back to tags below
+var cpu string
 if v, ok := pluginsdk.AttributeValue(attrs, "spec.template.spec.containers.0.resources.requests.cpu"); ok {
     cpu = v.GetStringValue()
-}
-if cpu == "" {
+} else {
     cpu = req.GetResource().GetTags()["cpu"]
 }
 ```
+
+Decide the fallback on the `ok` result, not on an empty value. A present attribute wins even when it is empty or
+`null`, so a conflicting tag never overrides it.
 
 An explicit JSON `null` is found and returned as a `NullValue`. A key that itself contains `.` cannot be
 addressed by path; read it from `attrs.GetFields()` directly. The accessor works on any `Struct`, including
@@ -659,14 +663,12 @@ more than one key:
 var sku string
 if v, ok := pluginsdk.AttributeValue(req.GetResource().GetAttributes(), "hardwareProfile.vmSize"); ok {
     sku = v.GetStringValue()
-}
-
-props := req.GetResource().GetTags()
-if sku == "" {
+} else {
+    props := req.GetResource().GetTags()
     sku = props["hardwareProfile.vmSize"] // recommended convention, not emitted by any host today
-}
-if sku == "" {
-    sku = props["hardwareProfile"] // single-key map collapsed to its value
+    if sku == "" {
+        sku = props["hardwareProfile"] // single-key map collapsed to its value
+    }
 }
 ```
 
