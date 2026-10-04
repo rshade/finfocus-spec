@@ -41,17 +41,18 @@ pass before and after, and guard against regressions.
 
 **Goal**: A request carrying a descriptor validates and reaches the plugin, which reads it.
 
-**Independent Test**: `go test ./sdk/go/testing/ -run TestMockActualCostResource` and the valid-request
-cases in `TestValidateActualCostRequestResource` / `TestValidateGetActualCostRequest`.
+**Independent Test**: `go test ./sdk/go/testing/ -run TestMockPluginGetActualCost_Resource` and the valid-request
+cases in `TestValidateActualCostRequest_Resource` / `TestValidateGetActualCostRequest`.
 
 ### Tests (write first, confirm they fail)
 
 - [X] T005 [P] [US1] Create sdk/go/testing/mock_actual_cost_resource_test.go (Apache 2.0 header, `package
-  testing_test`) with `TestMockActualCostResource`: over a `TestHarness`, without `t.Parallel()` in subtests, assert
-  (a) with `billing_account_id` set and a descriptor `aws`/`ec2`/`t3.micro`/`us-east-1`, every FOCUS record has
-  `resource_type` `ec2`, `region_id` `us-east-1`, `sku_id` `t3.micro`; (b) costs are identical with and without the
-  descriptor; (c) with no descriptor the record's `resource_type`, `region_id`, `sku_id` are empty, as before
-- [X] T006 [P] [US1] Add valid cases to `TestValidateActualCostRequestResource` in sdk/go/pluginsdk/validation_test.go:
+  testing_test`) with `TestMockPluginGetActualCost_Resource`: over a `TestHarness`, without `t.Parallel()` in
+  subtests, assert (a) with `billing_account_id` set and a descriptor `aws`/`ec2`/`t3.micro`/`us-east-1`, every FOCUS
+  record has `resource_type` `ec2`, `region_id` `us-east-1`, `sku_id` `t3.micro`; (b) costs are identical with and
+  without the descriptor; (c) with no descriptor the record's `resource_type`, `region_id`, `sku_id` are empty, as
+  before
+- [X] T006 [P] [US1] Add valid cases to `TestValidateActualCostRequest_Resource` in sdk/go/pluginsdk/validation_test.go:
   a request with a full descriptor (tags plus a small `attributes` Struct) passes; a request with an empty
   `&pbc.ResourceDescriptor{}` passes (the `pluginsdk` layer checks lengths only)
 - [X] T007 [P] [US1] Add a valid case to `TestValidateGetActualCostRequest` in sdk/go/testing/contract_test.go: a
@@ -77,7 +78,7 @@ nil-resource validator cases.
 
 ### Tests (write first)
 
-- [X] T010 [P] [US2] Add nil-resource cases (`Resource: nil`) to `TestValidateActualCostRequestResource` in
+- [X] T010 [P] [US2] Add nil-resource cases (`Resource: nil`) to `TestValidateActualCostRequest_Resource` in
   sdk/go/pluginsdk/validation_test.go and `TestValidateGetActualCostRequest` in sdk/go/testing/contract_test.go: both
   pass; add a precedence case where `resource_id` is empty and the descriptor is invalid, and assert the existing
   `resource_id` error is returned (descriptor checked last)
@@ -113,7 +114,7 @@ nil-resource validator cases.
 
 ### Tests (write first)
 
-- [X] T015 [P] [US3] In sdk/go/pluginsdk/validation_test.go add rejection cases to `TestValidateActualCostRequestResource`:
+- [X] T015 [P] [US3] In sdk/go/pluginsdk/validation_test.go add rejection cases to `TestValidateActualCostRequest_Resource`:
   `attributes` whose `proto.Size` exceeds `MaxAttributesBytes` (65536) → `codes.InvalidArgument`; a tag value longer
   than `MaxTagValueLength` (2048 bytes) → `codes.InvalidArgument`; a `resource_type` longer than
   `MaxResourceTypeLength` → `codes.InvalidArgument`

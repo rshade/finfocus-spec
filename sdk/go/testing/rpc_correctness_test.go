@@ -276,9 +276,9 @@ func (p *resourceRejectingPlugin) GetActualCost(
 	return p.MockPlugin.GetActualCost(ctx, req)
 }
 
-// TestRPCCorrectnessGetActualCostWithResource checks that a descriptor on GetActualCost is
+// TestRPCCorrectness_GetActualCostWithResource checks that a descriptor on GetActualCost is
 // additive: plugins that read it or ignore it pass, and only rejecting it fails.
-func TestRPCCorrectnessGetActualCostWithResource(t *testing.T) {
+func TestRPCCorrectness_GetActualCostWithResource(t *testing.T) {
 	var test plugintesting.ConformanceSuiteTest
 	for _, candidate := range plugintesting.RPCCorrectnessTests() {
 		if candidate.Name == "RPCCorrectness_GetActualCostWithResource" {

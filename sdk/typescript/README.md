@@ -875,15 +875,17 @@ same inputs. Unset means none was sent, and plugins fall back to `tags`, `resour
 `tags`. Send the same `resource` on every page of one query.
 
 ```typescript
-import { create } from "@bufbuild/protobuf";
 import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 import {
+  actualCostIterator,
+  type ActualCostResult,
   CostSourceClient,
+  create,
   GetActualCostRequestSchema,
   ResourceDescriptorBuilder,
 } from "@rshade/finfocus-client";
 
-async function actualCostWithResource(client: CostSourceClient) {
+async function actualCostWithResource(client: CostSourceClient): Promise<ActualCostResult[]> {
   const resource = new ResourceDescriptorBuilder()
     .withProvider("azure")
     .withResourceType("azure-native:compute:VirtualMachineScaleSet")
@@ -900,8 +902,12 @@ async function actualCostWithResource(client: CostSourceClient) {
     resource,
   });
 
-  const response = await client.getActualCost(request);
-  return response.results;
+  // actualCostIterator clones the request for each page, so every page carries the same resource
+  const results: ActualCostResult[] = [];
+  for await (const result of actualCostIterator(client, request)) {
+    results.push(result);
+  }
+  return results;
 }
 ```
 

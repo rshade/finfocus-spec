@@ -753,7 +753,7 @@ func newActualCostRequestWithResource(resource *pbc.ResourceDescriptor) *pbc.Get
 	}
 }
 
-func TestValidateActualCostRequestResource(t *testing.T) {
+func TestValidateActualCostRequest_Resource(t *testing.T) {
 	smallAttrs, attrErr := structpb.NewStruct(map[string]any{"sku": map[string]any{"capacity": 3}})
 	if attrErr != nil {
 		t.Fatal(attrErr)
@@ -837,7 +837,7 @@ func TestValidateActualCostRequestResource(t *testing.T) {
 	})
 }
 
-func TestValidateActualCostRequestResourceAllocations(t *testing.T) {
+func TestValidateActualCostRequest_ResourceAllocations(t *testing.T) {
 	shapes := map[string]*pbc.GetActualCostRequest{
 		"nil resource": newActualCostRequestWithResource(nil),
 		"resource without attributes": newActualCostRequestWithResource(&pbc.ResourceDescriptor{

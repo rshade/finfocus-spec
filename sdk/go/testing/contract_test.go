@@ -1077,9 +1077,9 @@ func attributesOfSize(t testing.TB, n int) *structpb.Struct {
 	return nil
 }
 
-// TestValidateGetActualCostRequestResourceErrors checks the sentinels a descriptor on the
+// TestValidateGetActualCostRequest_ResourceErrors checks the sentinels a descriptor on the
 // actual cost path reports, which match the ones every other descriptor path reports.
-func TestValidateGetActualCostRequestResourceErrors(t *testing.T) {
+func TestValidateGetActualCostRequest_ResourceErrors(t *testing.T) {
 	now := time.Now()
 	base := func(resource *pbc.ResourceDescriptor) *pbc.GetActualCostRequest {
 		return &pbc.GetActualCostRequest{

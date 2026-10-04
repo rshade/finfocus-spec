@@ -31,7 +31,7 @@ func newActualCostResourceRequest(resource *pbc.ResourceDescriptor) *pbc.GetActu
 	return req
 }
 
-func TestMockActualCostResource(t *testing.T) {
+func TestMockPluginGetActualCost_Resource(t *testing.T) {
 	plugin := plugintesting.NewMockPlugin()
 	harness := plugintesting.NewTestHarness(plugin)
 	harness.Start(t)
