@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"google.golang.org/protobuf/proto"
@@ -604,7 +605,7 @@ func registerResourceDescriptorTests(suite *ContractTestSuite) {
 			return ValidateResourceDescriptor(&pbc.ResourceDescriptor{
 				Provider:     providerKubernetes,
 				ResourceType: "kubernetes:apps/v1:Deployment",
-				Attributes:   paddedAttributes(MaxAttributesBytes),
+				Attributes:   attributesAtLimit(),
 			})
 		},
 	})
@@ -616,7 +617,7 @@ func registerResourceDescriptorTests(suite *ContractTestSuite) {
 			err := ValidateResourceDescriptor(&pbc.ResourceDescriptor{
 				Provider:     providerKubernetes,
 				ResourceType: "kubernetes:apps/v1:Deployment",
-				Attributes:   paddedAttributes(MaxAttributesBytes + 1),
+				Attributes:   attributesOverLimit(),
 			})
 			if !errors.Is(err, ErrAttributesTooLarge) {
 				return fmt.Errorf("expected ErrAttributesTooLarge, got %w", err)
@@ -747,6 +748,12 @@ func RunStandardContractTests() []ContractTestResult {
 // paddedAttributesSlack covers the key, the tags, and the varint length prefixes
 // that a one-key Struct adds around its padded string.
 const paddedAttributesSlack = 16
+
+//nolint:gochecknoglobals // Built once: the contract cases share these read-only 64 KiB Structs.
+var (
+	attributesAtLimit   = sync.OnceValue(func() *structpb.Struct { return paddedAttributes(MaxAttributesBytes) })
+	attributesOverLimit = sync.OnceValue(func() *structpb.Struct { return paddedAttributes(MaxAttributesBytes + 1) })
+)
 
 // paddedAttributes returns a one-key Struct whose encoded size is exactly size,
 // or the closest larger size when varint length prefixes skip size.

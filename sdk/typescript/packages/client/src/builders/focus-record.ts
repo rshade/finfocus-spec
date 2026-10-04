@@ -58,11 +58,6 @@ export class FocusRecordBuilder {
   }
 
   /**
-   * Sets the FOCUS 1.4 CommitmentProgramEligibilityDetails column, a JSON object such as
-   * {"CommitmentPrograms":[{"ProgramType":"Savings Plan"}]}. Throws a ValidationError
-   * unless the value parses to a JSON object (not an array, null, or a scalar).
-   */
-  /**
    * Stores a FOCUS ContractApplied JSON object. Use formatContractApplied to build one.
    * A value that is not a JSON object is rejected. A legacy bare commitment ID is not
    * accepted here; that remains the deprecated Go setter.
@@ -73,6 +68,11 @@ export class FocusRecordBuilder {
     return this;
   }
 
+  /**
+   * Sets the FOCUS 1.4 CommitmentProgramEligibilityDetails column, a JSON object such as
+   * {"CommitmentPrograms":[{"ProgramType":"Savings Plan"}]}. Throws a ValidationError
+   * unless the value parses to a JSON object (not an array, null, or a scalar).
+   */
   withCommitmentProgramEligibilityDetails(detailsJson: string): this {
     let parsed: unknown;
     try {
