@@ -62,6 +62,9 @@ func runParallelRequests(harness *TestHarness, config ConcurrencyConfig) ([]Test
 	ctx, cancel := context.WithTimeout(context.Background(), config.Timeout)
 	defer cancel()
 
+	// One copy shared read-only by every goroutine: gRPC marshaling does not modify it.
+	resource := harness.SampleResource()
+
 	for i := range config.ParallelRequests {
 		wg.Add(1)
 		go func(reqNum int) {
@@ -74,13 +77,10 @@ func runParallelRequests(harness *TestHarness, config ConcurrencyConfig) ([]Test
 			case MethodName:
 				_, err = harness.Client().Name(ctx, &pbc.NameRequest{})
 			case MethodSupports:
-				resource := CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1")
 				_, err = harness.Client().Supports(ctx, &pbc.SupportsRequest{Resource: resource})
 			case MethodGetProjectedCost:
-				resource := CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1")
 				_, err = harness.Client().GetProjectedCost(ctx, &pbc.GetProjectedCostRequest{Resource: resource})
 			case MethodGetPricingSpec:
-				resource := CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1")
 				_, err = harness.Client().GetPricingSpec(ctx, &pbc.GetPricingSpecRequest{Resource: resource})
 			default:
 				err = fmt.Errorf("unsupported method: %s", config.Method)

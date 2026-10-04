@@ -55,7 +55,7 @@ func testNameRPC(harness *TestHarness) TestResult {
 // testSupportsRPC tests the Supports RPC method with valid input.
 func testSupportsRPC(harness *TestHarness) TestResult {
 	start := time.Now()
-	resource := CreateResourceDescriptor(providerAWS, ec2ResourceType, "t3.micro", "us-east-1")
+	resource := harness.SampleResource()
 	resp, err := harness.Client().Supports(context.Background(), &pbc.SupportsRequest{
 		Resource: resource,
 	})
@@ -100,6 +100,7 @@ func testGetActualCostRPC(harness *TestHarness) TestResult {
 		ResourceId: testResourceID,
 		Start:      timeStart,
 		End:        timeEnd,
+		Resource:   harness.SampleResource(),
 	})
 	duration := time.Since(start)
 
@@ -167,6 +168,7 @@ func testGetActualCostBillingAccountRPC(harness *TestHarness) TestResult {
 		Start:            timeStart,
 		End:              timeEnd,
 		BillingAccountId: testBillingAccountID,
+		Resource:         harness.SampleResource(),
 	}
 	resp, err := harness.Client().GetActualCost(context.Background(), req)
 	duration := time.Since(start)
@@ -227,8 +229,11 @@ func testGetActualCostWithResourceRPC(harness *TestHarness) TestResult {
 			Details:  "failed to build attributes fixture",
 		}
 	}
-	resource := CreateResourceDescriptor(providerAWS, ec2ResourceType, "t3.micro", "us-east-1")
-	resource.Tags = map[string]string{conformanceTeamTagKey: conformanceTeamTag}
+	resource := harness.SampleResource()
+	if resource.Tags == nil {
+		resource.Tags = map[string]string{}
+	}
+	resource.Tags[conformanceTeamTagKey] = conformanceTeamTag
 	resource.Attributes = attrs
 
 	start := time.Now()
@@ -286,7 +291,7 @@ func testGetActualCostWithResourceRPC(harness *TestHarness) TestResult {
 // testGetProjectedCostRPC tests the GetProjectedCost RPC method.
 func testGetProjectedCostRPC(harness *TestHarness) TestResult {
 	start := time.Now()
-	resource := CreateResourceDescriptor(providerAWS, ec2ResourceType, "t3.micro", "us-east-1")
+	resource := harness.SampleResource()
 	resp, err := harness.Client().GetProjectedCost(context.Background(), &pbc.GetProjectedCostRequest{
 		Resource: resource,
 	})
@@ -352,8 +357,11 @@ func testGetProjectedCostWithAttributesRPC(harness *TestHarness) TestResult {
 			Details:  "failed to build attributes fixture",
 		}
 	}
-	resource := CreateResourceDescriptor(providerAWS, ec2ResourceType, "t3.micro", "us-east-1")
-	resource.Tags = map[string]string{conformanceTeamTagKey: conformanceTeamTag}
+	resource := harness.SampleResource()
+	if resource.Tags == nil {
+		resource.Tags = map[string]string{}
+	}
+	resource.Tags[conformanceTeamTagKey] = conformanceTeamTag
 	resource.Attributes = attrs
 
 	start := time.Now()
@@ -396,7 +404,7 @@ func testGetProjectedCostWithAttributesRPC(harness *TestHarness) TestResult {
 // testGetPricingSpecRPC tests the GetPricingSpec RPC method.
 func testGetPricingSpecRPC(harness *TestHarness) TestResult {
 	start := time.Now()
-	resource := CreateResourceDescriptor(providerAWS, ec2ResourceType, "t3.micro", "us-east-1")
+	resource := harness.SampleResource()
 	resp, err := harness.Client().GetPricingSpec(context.Background(), &pbc.GetPricingSpecRequest{
 		Resource: resource,
 	})
@@ -550,6 +558,7 @@ func testInvalidTimeRangeHandling(harness *TestHarness) TestResult {
 		ResourceId: "test-resource",
 		Start:      end,   // Swap start/end to create invalid range
 		End:        start, // Swap start/end to create invalid range
+		Resource:   harness.SampleResource(),
 	})
 	duration := time.Since(startTest)
 
@@ -610,21 +619,21 @@ func RPCCorrectnessTests() []ConformanceSuiteTest {
 		},
 		{
 			Name:        "RPCCorrectness_InvalidTimeRange",
-			Description: "Validates plugin rejects invalid time ranges",
+			Description: "Validates GetActualCost rejects an end before start for the sample resource (sent as resource)",
 			Category:    CategoryRPCCorrectness,
 			MinLevel:    ConformanceLevelBasic,
 			TestFunc:    createInvalidTimeRangeTest(),
 		},
 		{
 			Name:        "RPCCorrectness_GetActualCostRPC",
-			Description: "Validates GetActualCost RPC returns valid response",
+			Description: "Validates GetActualCost for the sample resource (sent as resource); requests without one are not checked",
 			Category:    CategoryRPCCorrectness,
 			MinLevel:    ConformanceLevelStandard,
 			TestFunc:    createGetActualCostRPCTest(),
 		},
 		{
 			Name:        "RPCCorrectness_GetActualCostBillingAccount",
-			Description: "Validates FOCUS records echo the GetActualCost billing_account_id",
+			Description: "Validates FOCUS records echo billing_account_id for the sample resource (sent as resource)",
 			Category:    CategoryRPCCorrectness,
 			MinLevel:    ConformanceLevelStandard,
 			TestFunc:    createGetActualCostBillingAccountRPCTest(),

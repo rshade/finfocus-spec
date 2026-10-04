@@ -1792,6 +1792,39 @@ func TestPluginConformance(t *testing.T) {
 | `RunStandardConformance(plugin)` | Production-ready (includes error handling) | Production deployments         |
 | `RunAdvancedConformance(plugin)` | High performance (strict latency limits)   | Performance-critical scenarios |
 
+**Sample Resource**:
+
+Every check that sends a resource descriptor sends one sample resource. The default is
+`aws`/`ec2`/`t3.micro`/`us-east-1`, kept for compatibility. If your plugin does not price it,
+pass one it does with `RunConformance`, which takes any level:
+
+```go
+func TestPluginConformanceWithSample(t *testing.T) {
+    plugin := NewMyPlugin()
+
+    sample := &pbc.ResourceDescriptor{
+        Provider:     "custom",
+        ResourceType: "instance",
+        Sku:          "standard",
+        Region:       "region-1",
+    }
+    result, err := pluginsdk.RunConformance(plugin, pluginsdk.ConformanceLevelStandard,
+        pluginsdk.WithSampleResource(sample))
+    if err != nil {
+        t.Fatalf("Conformance test error: %v", err)
+    }
+    if !result.Passed() {
+        t.Errorf("Standard conformance failed: %d/%d tests passed",
+            result.Summary.Passed, result.Summary.Total)
+    }
+}
+```
+
+The `GetActualCost` checks send the sample in `GetActualCostRequest.resource`; no check sends an
+actual-cost request without one. An invalid sample resource or an unknown level returns an error
+before any check runs. See the
+[testing README](../testing/README.md#sample-resource) for the full rules.
+
 **Type Aliases**:
 
 The package re-exports key types from `sdk/go/testing` for convenience:
@@ -1801,6 +1834,7 @@ The package re-exports key types from `sdk/go/testing` for convenience:
 var level pluginsdk.ConformanceLevel = pluginsdk.ConformanceLevelStandard
 var result *pluginsdk.ConformanceResult
 var summary pluginsdk.ResultSummary
+var option pluginsdk.ConformanceOption = pluginsdk.WithSampleResource(nil) // nil keeps the default
 ```
 
 **Complete Example**:

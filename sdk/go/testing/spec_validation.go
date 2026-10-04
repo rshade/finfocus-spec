@@ -198,7 +198,7 @@ func RunSpecValidation(impl pbc.CostSourceServiceServer) (*SpecValidationResult,
 	client := pbc.NewCostSourceServiceClient(conn)
 
 	// Get a sample resource to test with
-	resource := CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1")
+	resource := harness.SampleResource()
 
 	// Get the pricing spec
 	resp, err := client.GetPricingSpec(ctx, &pbc.GetPricingSpecRequest{Resource: resource})
@@ -260,7 +260,7 @@ func SpecValidationTests() []ConformanceSuiteTest {
 func createSpecValidationValidTest() func(*TestHarness) TestResult {
 	return func(harness *TestHarness) TestResult {
 		start := time.Now()
-		resource := CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1")
+		resource := harness.SampleResource()
 
 		resp, err := harness.Client().GetPricingSpec(
 			context.Background(),
@@ -305,7 +305,7 @@ func createSpecValidationValidTest() func(*TestHarness) TestResult {
 func createBillingModeEnumTest() func(*TestHarness) TestResult {
 	return func(harness *TestHarness) TestResult {
 		start := time.Now()
-		resource := CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1")
+		resource := harness.SampleResource()
 
 		resp, err := harness.Client().GetPricingSpec(
 			context.Background(),
@@ -350,7 +350,7 @@ func createBillingModeEnumTest() func(*TestHarness) TestResult {
 func createRequiredFieldsTest() func(*TestHarness) TestResult {
 	return func(harness *TestHarness) TestResult {
 		start := time.Now()
-		resource := CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1")
+		resource := harness.SampleResource()
 
 		resp, err := harness.Client().GetPricingSpec(
 			context.Background(),

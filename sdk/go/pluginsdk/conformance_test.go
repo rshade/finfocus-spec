@@ -10,6 +10,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
@@ -986,6 +988,92 @@ func TestInferCapabilitiesConcurrentNilSafety(t *testing.T) {
 	}
 
 	wg.Wait()
+}
+
+// customOnlyPlugin prices only the custom provider and rejects every other provider
+// with InvalidArgument, as a plugin for a single provider does.
+type customOnlyPlugin struct {
+	conformanceMockPlugin
+}
+
+func customOnlyCheck(resource *pbc.ResourceDescriptor) error {
+	if resource.GetProvider() != "custom" {
+		return status.Errorf(codes.InvalidArgument, "unsupported provider: %s", resource.GetProvider())
+	}
+	return nil
+}
+
+func (p *customOnlyPlugin) GetProjectedCost(
+	ctx context.Context,
+	req *pbc.GetProjectedCostRequest,
+) (*pbc.GetProjectedCostResponse, error) {
+	if err := customOnlyCheck(req.GetResource()); err != nil {
+		return nil, err
+	}
+	return p.conformanceMockPlugin.GetProjectedCost(ctx, req)
+}
+
+func (p *customOnlyPlugin) GetActualCost(
+	ctx context.Context,
+	req *pbc.GetActualCostRequest,
+) (*pbc.GetActualCostResponse, error) {
+	if !req.GetEnd().AsTime().After(req.GetStart().AsTime()) {
+		return nil, status.Error(codes.InvalidArgument, "end must be after start")
+	}
+	if err := customOnlyCheck(req.GetResource()); err != nil {
+		return nil, err
+	}
+	return p.conformanceMockPlugin.GetActualCost(ctx, req)
+}
+
+func (p *customOnlyPlugin) GetPricingSpec(
+	ctx context.Context,
+	req *pbc.GetPricingSpecRequest,
+) (*pbc.GetPricingSpecResponse, error) {
+	if err := customOnlyCheck(req.GetResource()); err != nil {
+		return nil, err
+	}
+	resp, err := p.conformanceMockPlugin.GetPricingSpec(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	resp.Spec.Provider = req.GetResource().GetProvider()
+	resp.Spec.ResourceType = req.GetResource().GetResourceType()
+	return resp, nil
+}
+
+// TestRunConformanceSampleResource verifies that a sample resource passed to
+// RunConformance reaches the checks, and that the default is unchanged.
+func TestRunConformanceSampleResource(t *testing.T) {
+	plugin := &customOnlyPlugin{conformanceMockPlugin{name: "custom-only"}}
+	sample := &pbc.ResourceDescriptor{
+		Provider:     "custom",
+		ResourceType: "instance",
+		Sku:          "standard",
+		Region:       "region-1",
+	}
+
+	result, err := RunConformance(plugin, ConformanceLevelBasic, WithSampleResource(sample))
+	require.NoError(t, err)
+	assert.Zero(t, result.Summary.Failed)
+
+	result, err = RunBasicConformance(plugin)
+	require.NoError(t, err)
+	assert.Positive(t, result.Summary.Failed, "the default sample resource is not custom")
+
+	result, err = RunConformance(nil, ConformanceLevelBasic, WithSampleResource(sample))
+	require.ErrorIs(t, err, ErrNilPlugin)
+	assert.Nil(t, result)
+}
+
+// TestConformanceRunnersStoreAsFuncValues guards source compatibility of the level runners.
+func TestConformanceRunnersStoreAsFuncValues(t *testing.T) {
+	runners := []func(Plugin) (*ConformanceResult, error){
+		RunBasicConformance,
+		RunStandardConformance,
+		RunAdvancedConformance,
+	}
+	assert.Len(t, runners, 3)
 }
 
 // BenchmarkIsValidCapability benchmarks the capability validation function.

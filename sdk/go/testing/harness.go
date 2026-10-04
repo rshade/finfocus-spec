@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/rshade/finfocus-spec/sdk/go/internal/semver"
@@ -96,11 +97,13 @@ const (
 // TestHarness provides a testing framework for CostSource plugin implementations.
 type TestHarness struct {
 	bufconnHarness[pbc.CostSourceServiceClient]
+
+	sampleResource *pbc.ResourceDescriptor
 }
 
 // NewTestHarness creates a new test harness for the given CostSource implementation.
 func NewTestHarness(impl pbc.CostSourceServiceServer) *TestHarness {
-	return &TestHarness{newBufconnHarness(func(s *grpc.Server) {
+	return &TestHarness{bufconnHarness: newBufconnHarness(func(s *grpc.Server) {
 		pbc.RegisterCostSourceServiceServer(s, impl)
 	}, pbc.NewCostSourceServiceClient)}
 }
@@ -108,6 +111,16 @@ func NewTestHarness(impl pbc.CostSourceServiceServer) *TestHarness {
 // Client returns the gRPC client for making requests.
 func (h *TestHarness) Client() pbc.CostSourceServiceClient {
 	return h.client
+}
+
+// SampleResource returns a copy of the resource descriptor conformance checks send:
+// the suite's configured sample resource, or DefaultSampleResource() for a harness
+// not created by a ConformanceSuite. Callers may modify the copy.
+func (h *TestHarness) SampleResource() *pbc.ResourceDescriptor {
+	if h.sampleResource == nil {
+		return DefaultSampleResource()
+	}
+	return proto.CloneOf(h.sampleResource)
 }
 
 // TestResult represents the result of a single test operation.

@@ -114,6 +114,44 @@ func TestPluginConformanceSimple(t *testing.T) {
 }
 ```
 
+### Sample Resource
+
+Every check that sends a resource descriptor sends one sample resource. The default is
+`plugintesting.DefaultSampleResource()` (provider `aws`, resource type `ec2`, SKU `t3.micro`,
+region `us-east-1`), kept for compatibility. A plugin that does not price that resource fails
+those checks however it behaves, so supply one your plugin prices:
+
+```go
+func TestPluginConformanceWithSample(t *testing.T) {
+    plugin := &MyPluginImpl{}
+
+    sample := plugintesting.CreateResourceDescriptor("custom", "instance", "standard", "region-1")
+    result, err := plugintesting.RunConformance(plugin, plugintesting.ConformanceLevelStandard,
+        plugintesting.WithSampleResource(sample))
+    if err != nil {
+        t.Fatalf("conformance tests failed to run: %v", err)
+    }
+    if !result.Passed() {
+        t.Errorf("Plugin failed conformance: %d/%d tests failed",
+            result.Summary.Failed, result.Summary.Total)
+    }
+}
+```
+
+- The sample must pass `ValidateResourceDescriptor`; otherwise `RunConformance` returns an error
+  before any check runs. An unknown level is also an error.
+- The suite copies the sample when the option is built and again for every check, so neither
+  your later edits nor one check's edits change what another check sends.
+- The `GetActualCost` checks send the sample in `GetActualCostRequest.resource`, together with
+  `resource_id` and the time window. No check sends an actual-cost request without a resource:
+  such a request has no pricing inputs, so it has no correct answer for a list-price plugin.
+- `SuiteConfig.SampleResource` sets the same thing for suites built with
+  `NewConformanceSuiteWithConfig`. Custom checks read it with `harness.SampleResource()`, which
+  returns a copy they may change.
+- `RunBasicConformance`, `RunStandardConformance`, and `RunAdvancedConformance` are
+  `RunConformance` with no options. The standalone runners (`RunSpecValidation`,
+  `RunRPCCorrectness`, `RunPerformanceBenchmarks`, `RunConcurrencyTests`) use the default.
+
 ### Performance Testing
 
 ```go
@@ -175,10 +213,16 @@ result := suite.Run(plugin, plugintesting.ConformanceLevelStandard)
 result, err := plugintesting.RunBasicConformance(plugin)
 result, err := plugintesting.RunStandardConformance(plugin)
 result, err := plugintesting.RunAdvancedConformance(plugin)
+
+// Any level, with options such as a sample resource
+result, err := plugintesting.RunConformance(plugin, plugintesting.ConformanceLevelBasic,
+    plugintesting.WithSampleResource(sample))
 if err != nil {
     t.Fatalf("conformance tests failed to run: %v", err)
 }
 ```
+
+See [Sample Resource](#sample-resource) for which resource the checks send.
 
 ### Test Harness
 
@@ -193,6 +237,7 @@ so `Start`, `Stop`, and `Client` behave the same on every harness.
 - `Start(t)`: Initialize client connection
 - `Stop()`: Clean up resources
 - `Client()`: Get gRPC client for testing
+- `SampleResource()`: Get a copy of the resource descriptor conformance checks send
 
 ### Mock Plugin
 

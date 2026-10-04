@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"time"
 
+	"google.golang.org/protobuf/proto"
+
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
 
@@ -96,6 +98,35 @@ type SuiteConfig struct {
 	// BenchmarkDuration is how long to run each benchmark.
 	// Default: 5 * time.Second
 	BenchmarkDuration time.Duration
+
+	// SampleResource is the resource descriptor every check that sends a resource
+	// sends. Set it to a resource the plugin prices. It must pass
+	// ValidateResourceDescriptor; the suite uses its own copy.
+	// Default: nil, meaning DefaultSampleResource().
+	SampleResource *pbc.ResourceDescriptor
+}
+
+// DefaultSampleResource returns a new copy of the descriptor the suite sends when
+// SuiteConfig.SampleResource is nil: provider "aws", resource type "ec2",
+// SKU "t3.micro", region "us-east-1". It is kept for compatibility; a plugin that
+// does not price it supplies its own with WithSampleResource.
+func DefaultSampleResource() *pbc.ResourceDescriptor {
+	return CreateResourceDescriptor(providerAWS, ec2ResourceType, "t3.micro", "us-east-1")
+}
+
+// ConformanceOption adjusts the configuration RunConformance uses for a level.
+type ConformanceOption func(*SuiteConfig)
+
+// WithSampleResource makes every check that sends a resource descriptor send a copy
+// of r. The copy is taken when the option is created. A nil r restores the default.
+func WithSampleResource(r *pbc.ResourceDescriptor) ConformanceOption {
+	var sample *pbc.ResourceDescriptor
+	if r != nil {
+		sample = proto.CloneOf(r)
+	}
+	return func(c *SuiteConfig) {
+		c.SampleResource = sample
+	}
 }
 
 // DefaultSuiteConfig returns the default suite configuration.
@@ -259,6 +290,18 @@ func (s *ConformanceSuite) GetConfig() SuiteConfig {
 	return s.config
 }
 
+// sampleResource returns a validated copy of the configured sample resource, or
+// the default when none is configured.
+func (s *ConformanceSuite) sampleResource() (*pbc.ResourceDescriptor, error) {
+	if s.config.SampleResource == nil {
+		return DefaultSampleResource(), nil
+	}
+	if err := ValidateResourceDescriptor(s.config.SampleResource); err != nil {
+		return nil, fmt.Errorf("invalid sample resource: %w", err)
+	}
+	return proto.CloneOf(s.config.SampleResource), nil
+}
+
 // AddTest adds a conformance test to the suite.
 func (s *ConformanceSuite) AddTest(test ConformanceSuiteTest) {
 	idx := len(s.tests)
@@ -268,7 +311,13 @@ func (s *ConformanceSuite) AddTest(test ConformanceSuiteTest) {
 
 // Run executes all conformance tests against the plugin implementation.
 func (s *ConformanceSuite) Run(impl pbc.CostSourceServiceServer) (*ConformanceResult, error) {
+	sample, err := s.sampleResource()
+	if err != nil {
+		return nil, err
+	}
+
 	harness := NewTestHarness(impl)
+	harness.sampleResource = sample
 	defer harness.Stop()
 
 	conn, err := harness.createClientConnection()
@@ -348,7 +397,13 @@ func (s *ConformanceSuite) RunCategory(
 	impl pbc.CostSourceServiceServer,
 	category TestCategory,
 ) (*CategoryResult, error) {
+	sample, err := s.sampleResource()
+	if err != nil {
+		return nil, err
+	}
+
 	harness := NewTestHarness(impl)
+	harness.sampleResource = sample
 	defer harness.Stop()
 
 	conn, err := harness.createClientConnection()
@@ -425,55 +480,74 @@ func AggregateResults(results map[TestCategory]*CategoryResult) ResultSummary {
 	return summary
 }
 
-// RunBasicConformance runs basic conformance tests and returns the result.
-func RunBasicConformance(impl pbc.CostSourceServiceServer) (*ConformanceResult, error) {
-	suite := NewConformanceSuiteWithConfig(SuiteConfig{
-		TargetLevel:      ConformanceLevelBasic,
-		Timeout:          DefaultTestTimeoutSeconds * time.Second,
-		ParallelRequests: StandardParallelRequests,
-		EnableBenchmarks: false,
-	})
+// RunConformance runs the checks for level against impl, using that level's preset
+// configuration adjusted by opts. It returns an error for an unknown level or an
+// invalid sample resource.
+func RunConformance(
+	impl pbc.CostSourceServiceServer,
+	level ConformanceLevel,
+	opts ...ConformanceOption,
+) (*ConformanceResult, error) {
+	config, err := levelSuiteConfig(level)
+	if err != nil {
+		return nil, err
+	}
+	for _, opt := range opts {
+		opt(&config)
+	}
 
-	// Register all test categories
+	suite := NewConformanceSuiteWithConfig(config)
 	RegisterSpecValidationTests(suite)
 	RegisterRPCCorrectnessTests(suite)
+	if level >= ConformanceLevelStandard {
+		RegisterPerformanceTests(suite)
+		RegisterConcurrencyTests(suite)
+	}
 
 	return suite.Run(impl)
+}
+
+// levelSuiteConfig returns the preset configuration for a conformance level.
+func levelSuiteConfig(level ConformanceLevel) (SuiteConfig, error) {
+	switch level {
+	case ConformanceLevelBasic:
+		return SuiteConfig{
+			TargetLevel:      ConformanceLevelBasic,
+			Timeout:          DefaultTestTimeoutSeconds * time.Second,
+			ParallelRequests: StandardParallelRequests,
+			EnableBenchmarks: false,
+		}, nil
+	case ConformanceLevelStandard:
+		return SuiteConfig{
+			TargetLevel:      ConformanceLevelStandard,
+			Timeout:          DefaultTestTimeoutSeconds * time.Second,
+			ParallelRequests: StandardParallelRequests,
+			EnableBenchmarks: true,
+		}, nil
+	case ConformanceLevelAdvanced:
+		return SuiteConfig{
+			TargetLevel:       ConformanceLevelAdvanced,
+			Timeout:           AdvancedTestTimeoutSeconds * time.Second,
+			ParallelRequests:  AdvancedParallelRequests,
+			EnableBenchmarks:  true,
+			BenchmarkDuration: AdvancedBenchmarkDurationSeconds * time.Second,
+		}, nil
+	default:
+		return SuiteConfig{}, fmt.Errorf("unknown conformance level %d", int(level))
+	}
+}
+
+// RunBasicConformance runs basic conformance tests and returns the result.
+func RunBasicConformance(impl pbc.CostSourceServiceServer) (*ConformanceResult, error) {
+	return RunConformance(impl, ConformanceLevelBasic)
 }
 
 // RunStandardConformance runs standard conformance tests and returns the result.
 func RunStandardConformance(impl pbc.CostSourceServiceServer) (*ConformanceResult, error) {
-	suite := NewConformanceSuiteWithConfig(SuiteConfig{
-		TargetLevel:      ConformanceLevelStandard,
-		Timeout:          DefaultTestTimeoutSeconds * time.Second,
-		ParallelRequests: StandardParallelRequests,
-		EnableBenchmarks: true,
-	})
-
-	// Register all test categories
-	RegisterSpecValidationTests(suite)
-	RegisterRPCCorrectnessTests(suite)
-	RegisterPerformanceTests(suite)
-	RegisterConcurrencyTests(suite)
-
-	return suite.Run(impl)
+	return RunConformance(impl, ConformanceLevelStandard)
 }
 
 // RunAdvancedConformance runs advanced conformance tests and returns the result.
 func RunAdvancedConformance(impl pbc.CostSourceServiceServer) (*ConformanceResult, error) {
-	suite := NewConformanceSuiteWithConfig(SuiteConfig{
-		TargetLevel:       ConformanceLevelAdvanced,
-		Timeout:           AdvancedTestTimeoutSeconds * time.Second,
-		ParallelRequests:  AdvancedParallelRequests,
-		EnableBenchmarks:  true,
-		BenchmarkDuration: AdvancedBenchmarkDurationSeconds * time.Second,
-	})
-
-	// Register all test categories
-	RegisterSpecValidationTests(suite)
-	RegisterRPCCorrectnessTests(suite)
-	RegisterPerformanceTests(suite)
-	RegisterConcurrencyTests(suite)
-
-	return suite.Run(impl)
+	return RunConformance(impl, ConformanceLevelAdvanced)
 }

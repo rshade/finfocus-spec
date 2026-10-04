@@ -1217,7 +1217,31 @@ parallel subtests complete.
   `@bufbuild/protobuf` (`test/index-exports.test.ts`); README examples take timestamps from
   `@bufbuild/protobuf/wkt` (`timestampFromDate`).
 
+### Conformance Sample Resource Pattern (598-conformance-sample-resource)
+
+- Every registered check that sends a descriptor reads `harness.SampleResource()` (a `proto.CloneOf` copy);
+  `ConformanceSuite.Run`/`RunCategory` validate `SuiteConfig.SampleResource` with
+  `ValidateResourceDescriptor` first. Nil means `DefaultSampleResource()` (`aws/ec2/t3.micro/us-east-1`),
+  kept for compatibility only. New checks must use `harness.SampleResource()`, never a literal descriptor.
+- `RunConformance(impl, level, opts...)` (both `plugintesting` and `pluginsdk`) holds the level presets;
+  the three `Run*Conformance` runners delegate to it with unchanged signatures (a variadic parameter on them
+  would break callers that store them as typed func values).
+- No conformance check sends a bare `GetActualCostRequest`: plain, billing-account, and invalid-time-range
+  checks all set `resource`. Accepted error codes did not change.
+- `MockPlugin` never rejects an unknown provider on the cost RPCs, so it cannot show provider bias. The
+  neutral tests wrap it (`strictCustomPlugin` in `testing/sample_resource_test.go`, `customOnlyPlugin` in
+  `pluginsdk/conformance_test.go`) and use the `custom` provider. Keep new tests and docs provider-neutral:
+  no vendor resource types, SKUs, or regions beyond the kept default.
+- The mock's `GetPricingSpec` answers `billing_mode: not_implemented` for resource types it does not know;
+  a test plugin with its own resource type answers `GetPricingSpec` itself.
+- `TestAllocatorServe_NotRegisteredWithoutProvider/connect` ("server did not shut down in time") flakes on
+  `main` too (about 1 in 20 in isolation).
+
 ## Active Technologies
+
+- Go 1.27.1 (per go.mod) + google.golang.org/protobuf (`proto.CloneOf`), google.golang.org/grpc;
+  no new dependencies (598-conformance-sample-resource)
+- N/A (conformance test tooling; no proto change) (598-conformance-sample-resource)
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf,
   buf v1.32.1; no new dependencies (597-actual-cost-resource-descriptor)
@@ -1415,6 +1439,11 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+
+- 598-conformance-sample-resource: Added SuiteConfig.SampleResource, DefaultSampleResource,
+  ConformanceOption, WithSampleResource, RunConformance (plugintesting and pluginsdk), and
+  TestHarness.SampleResource; every conformance check that sends a descriptor uses the sample, and the
+  actual-cost checks send it in GetActualCostRequest.resource (issue 625)
 
 - 597-actual-cost-resource-descriptor: Added GetActualCostRequest.resource (field 11, a
   ResourceDescriptor) with the fallback and tags-precedence rules, descriptor validation in

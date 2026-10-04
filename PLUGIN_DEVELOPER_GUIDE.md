@@ -2374,6 +2374,45 @@ func TestBillingModeValidation(t *testing.T) {
 }
 ```
 
+### Conformance Testing
+
+The conformance suite certifies a plugin at three levels: Basic, Standard, and Advanced. Run it
+from a test with `pluginsdk.RunConformance`, or with `pluginsdk.RunBasicConformance` and its
+siblings.
+
+The checks that send a resource descriptor all send one **sample resource**. The default is
+`aws`/`ec2`/`t3.micro`/`us-east-1`, kept so existing callers see no change. It is not a statement
+that conformance targets one provider: a plugin that does not price the default should supply a
+resource it does price, or every check that sends one fails on the plugin's (correct) rejection:
+
+```go
+func TestConformance(t *testing.T) {
+    sample := &pbc.ResourceDescriptor{
+        Provider:     "custom",
+        ResourceType: "instance",
+        Sku:          "standard",
+        Region:       "region-1",
+    }
+    result, err := pluginsdk.RunConformance(NewMyPlugin(), pluginsdk.ConformanceLevelStandard,
+        pluginsdk.WithSampleResource(sample))
+    if err != nil {
+        t.Fatalf("conformance did not run: %v", err)
+    }
+    pluginsdk.PrintConformanceReport(t, result)
+    if !result.Passed() {
+        t.Fail()
+    }
+}
+```
+
+Replace the values with a resource your plugin prices. The suite validates the sample with the
+resource descriptor contract rules first, and copies it for every check.
+
+The `GetActualCost` checks send the sample in `GetActualCostRequest.resource`, together with
+`resource_id` and the time window, so a plugin that prices actual cost from list price receives
+its pricing inputs. No check sends an actual-cost request without a resource. See
+[sdk/go/testing/README.md](sdk/go/testing/README.md#sample-resource) for the full rules.
+
 ### Load Testing
 
 Test your plugin under realistic load conditions.
