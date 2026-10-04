@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.3](https://github.com/rshade/finfocus-spec/compare/v0.7.2...v0.7.3) (2026-10-04)
+
+
+### Added
+
+* **proto:** add ResourceDescriptor attributes and raise tag limit ([7843e7d](https://github.com/rshade/finfocus-spec/commit/7843e7dc831e0e4f10f4809039c55dd0aca42648)), closes [#617](https://github.com/rshade/finfocus-spec/issues/617)
+
+
+### Fixed
+
+* address PR 618 review and contract suite allocation ([fa0f5e3](https://github.com/rshade/finfocus-spec/commit/fa0f5e39af16875ec3dee41c8d4ee69420944637))
+
 ## [0.7.2](https://github.com/rshade/finfocus-spec/compare/v0.7.1...v0.7.2) (2026-10-03)
 
 
