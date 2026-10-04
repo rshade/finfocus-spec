@@ -1776,6 +1776,11 @@ plugin cannot price or `NotFound` so the host can try another plugin. Plain erro
 server-side and never reach the host, so their text cannot leak. A wrapped status sends only its
 own code and message, never the wrapping text.
 
+Do not return a status from an upstream call (a pricing API or another gRPC service) as is. Its
+code, message, and details reach the host unchanged and can expose upstream internals. Log the
+upstream error and return your own status, for example
+`status.Error(codes.Unavailable, "pricing source unavailable")`.
+
 `Unimplemented` means "use the SDK default", not "refuse". For `BatchCost` the default runs your
 `GetProjectedCost` or `GetActualCost` once per resource. To refuse a request, return another code,
 such as `FailedPrecondition` or `PermissionDenied`.
