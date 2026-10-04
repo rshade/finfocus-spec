@@ -1,6 +1,6 @@
 # Feature Specification: Keep Handler Status Codes in the Plugin SDK Server
 
-**Feature Branch**: `599-handler-status-codes`
+**Feature Branch**: `600-handler-status-codes`
 
 **Created**: 2026-10-04
 

@@ -1237,7 +1237,7 @@ parallel subtests complete.
 - `TestAllocatorServe_NotRegisteredWithoutProvider/connect` ("server did not shut down in time") flakes on
   `main` too (about 1 in 20 in isolation).
 
-### Handler Status Pattern (599-handler-status-codes)
+### Handler Status Pattern (600-handler-status-codes)
 
 - `handlerStatus(err, internalMsg)` (`pluginsdk/sdk.go`) classifies provider-handler errors for the eight
   wrapped RPCs (DryRun, Supports, GetRecommendations, GetBudgets, DismissRecommendation, custom BatchCost,
@@ -1256,8 +1256,8 @@ parallel subtests complete.
 ## Active Technologies
 
 - Go 1.27.1 (per go.mod) + google.golang.org/grpc (`status`), connectrpc.com/connect; no new dependencies
-  (599-handler-status-codes)
-- N/A (server-side error classification; no proto change) (599-handler-status-codes)
+  (600-handler-status-codes)
+- N/A (server-side error classification; no proto change) (600-handler-status-codes)
 
 - Go 1.27.1 (per go.mod) + google.golang.org/protobuf (`proto.CloneOf`), google.golang.org/grpc;
   no new dependencies (598-conformance-sample-resource)
@@ -1460,7 +1460,7 @@ See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable doc
 
 ## Recent Changes
 
-- 599-handler-status-codes: pluginsdk.Server keeps a handler's gRPC status for the eight wrapped RPCs,
+- 600-handler-status-codes: pluginsdk.Server keeps a handler's gRPC status for the eight wrapped RPCs,
   answers a handler's Unimplemented with the SDK default (so embedding the generated stub is safe), and
   keeps Internal with the generic message for plain errors (issue 626)
 

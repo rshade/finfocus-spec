@@ -1,8 +1,8 @@
 # Implementation Plan: Keep Handler Status Codes in the Plugin SDK Server
 
-**Branch**: `599-handler-status-codes` | **Date**: 2026-10-04 | **Spec**: [spec.md](spec.md)
+**Branch**: `600-handler-status-codes` | **Date**: 2026-10-04 | **Spec**: [spec.md](spec.md)
 
-**Input**: Feature specification from `specs/599-handler-status-codes/spec.md`
+**Input**: Feature specification from `specs/600-handler-status-codes/spec.md`
 
 ## Summary
 
@@ -56,7 +56,7 @@ Post-design re-check: no violations.
 ## Project Structure
 
 ```text
-specs/599-handler-status-codes/          spec, plan, research, contracts/server-errors.md, quickstart, tasks
+specs/600-handler-status-codes/          spec, plan, research, contracts/server-errors.md, quickstart, tasks
 sdk/go/pluginsdk/sdk.go                  handlerStatus helper; default-path methods; eight wrappers
 sdk/go/pluginsdk/handler_status_test.go  new: pass-through, internal, fallback, stub parity, Connect
 sdk/go/pluginsdk/README.md               "Handler errors" section
