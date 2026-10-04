@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.5](https://github.com/rshade/finfocus-spec/compare/v0.7.4...v0.7.5) (2026-10-04)
+
+
+### Added
+
+* **proto:** add include_dismissed to recommendations ([db4624a](https://github.com/rshade/finfocus-spec/commit/db4624a3bcbf92b77f897d08cbf8b9dc6569f63d))
+* **testing:** let plugins supply their own conformance sample resource ([#627](https://github.com/rshade/finfocus-spec/issues/627)) ([7735d38](https://github.com/rshade/finfocus-spec/commit/7735d385c7c66f0b9ce1eeec90f6d8409701b23e))
+
+
+### Fixed
+
+* **pluginsdk:** keep handler gRPC status codes instead of Internal ([1f10a3d](https://github.com/rshade/finfocus-spec/commit/1f10a3d6e5f10b16e613e69fc50f25e588461e92)), closes [#626](https://github.com/rshade/finfocus-spec/issues/626)
+* **pluginsdk:** send only a wrapped status's own message ([c737c41](https://github.com/rshade/finfocus-spec/commit/c737c41b3f43bce0e77da8332ce049567704e99f))
+
+
+### Documentation
+
+* **pluginsdk:** tell handlers not to return upstream statuses as is ([5aed411](https://github.com/rshade/finfocus-spec/commit/5aed41113bba3c5f34e068b05f3f9fecb1c64dbc))
+* **sdk:** make every README example compile ([#623](https://github.com/rshade/finfocus-spec/issues/623)) ([d819094](https://github.com/rshade/finfocus-spec/commit/d819094ef2540963ca5c3ee6df06de5e42cf8b30))
+
 ## [0.7.4](https://github.com/rshade/finfocus-spec/compare/v0.7.3...v0.7.4) (2026-10-04)
 
 
