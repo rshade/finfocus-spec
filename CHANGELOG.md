@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.4](https://github.com/rshade/finfocus-spec/compare/v0.7.3...v0.7.4) (2026-10-04)
+
+
+### Added
+
+* **proto:** add a ResourceDescriptor to GetActualCostRequest ([#621](https://github.com/rshade/finfocus-spec/issues/621)) ([24cec1e](https://github.com/rshade/finfocus-spec/commit/24cec1e90f13c52eac6629a97bb4e807f7f89cd9))
+
 ## [0.7.3](https://github.com/rshade/finfocus-spec/compare/v0.7.2...v0.7.3) (2026-10-04)
 
 
