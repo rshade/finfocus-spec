@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.3](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.7.2...finfocus-client-v0.7.3) (2026-10-04)
+
+
+### Features
+
+* **proto:** add a ResourceDescriptor to GetActualCostRequest ([#621](https://github.com/rshade/finfocus-spec/issues/621)) ([24cec1e](https://github.com/rshade/finfocus-spec/commit/24cec1e90f13c52eac6629a97bb4e807f7f89cd9))
+
 ## [0.7.2](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.7.1...finfocus-client-v0.7.2) (2026-10-04)
 
 
