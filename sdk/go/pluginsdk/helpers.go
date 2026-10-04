@@ -657,6 +657,61 @@ func ValidateRecommendationSummary(summary *pbc.RecommendationSummary) error {
 // GetRecommendations Filter Helpers
 // =============================================================================
 
+// RecommendationVisibility is how a plugin applies its own dismissal store and
+// the host's exclusion list to GetRecommendations results.
+type RecommendationVisibility struct {
+	// DismissedIDs are recommendations this plugin has dismissed or snoozed.
+	DismissedIDs []string
+	// IncludeDismissed is GetRecommendationsRequest.include_dismissed.
+	// When false, DismissedIDs are omitted.
+	IncludeDismissed bool
+	// ExcludedIDs is GetRecommendationsRequest.excluded_recommendation_ids.
+	// These IDs are omitted even when IncludeDismissed is true.
+	ExcludedIDs []string
+}
+
+// ApplyRecommendationVisibility drops dismissed recommendations unless
+// IncludeDismissed is set, then drops ExcludedIDs. An empty dismissal list and
+// an empty exclusion list return the input slice unchanged. Nil entries are kept.
+// An empty string in either ID list does not match a recommendation with an empty ID.
+func ApplyRecommendationVisibility(
+	recommendations []*pbc.Recommendation,
+	visibility RecommendationVisibility,
+) []*pbc.Recommendation {
+	if !visibility.IncludeDismissed {
+		recommendations = omitRecommendationIDs(recommendations, visibility.DismissedIDs)
+	}
+	return omitRecommendationIDs(recommendations, visibility.ExcludedIDs)
+}
+
+// omitRecommendationIDs returns recommendations whose IDs are not in ids.
+// Empty ids, or ids that contain only empty strings, return the input slice.
+func omitRecommendationIDs(recommendations []*pbc.Recommendation, ids []string) []*pbc.Recommendation {
+	if len(recommendations) == 0 || len(ids) == 0 {
+		return recommendations
+	}
+	skip := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		if id == "" {
+			continue
+		}
+		skip[id] = struct{}{}
+	}
+	if len(skip) == 0 {
+		return recommendations
+	}
+	filtered := make([]*pbc.Recommendation, 0, len(recommendations))
+	for _, rec := range recommendations {
+		if rec != nil {
+			if _, found := skip[rec.GetId()]; found {
+				continue
+			}
+		}
+		filtered = append(filtered, rec)
+	}
+	return filtered
+}
+
 // ApplyRecommendationFilter filters recommendations based on the provided filter criteria.
 // ApplyRecommendationFilter returns recommendations that match ALL specified filter criteria.
 // Empty filter values are ignored (match all).

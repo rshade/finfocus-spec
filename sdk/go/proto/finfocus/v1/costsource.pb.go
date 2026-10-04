@@ -4383,9 +4383,19 @@ type GetRecommendationsRequest struct {
 	//
 	// When UNSPECIFIED (default), plugins use their standard prioritization.
 	// Unknown values are treated as UNSPECIFIED for forward compatibility.
-	UsageProfile  UsageProfile `protobuf:"varint,7,opt,name=usage_profile,json=usageProfile,proto3,enum=finfocus.v1.UsageProfile" json:"usage_profile,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	UsageProfile UsageProfile `protobuf:"varint,7,opt,name=usage_profile,json=usageProfile,proto3,enum=finfocus.v1.UsageProfile" json:"usage_profile,omitempty"`
+	// include_dismissed tells a plugin that stores dismissals whether to return them.
+	//
+	// When false (the default), the plugin MUST omit recommendations it has dismissed
+	// or snoozed. When true, the plugin MUST include those recommendations.
+	//
+	// excluded_recommendation_ids still applies in both cases. An ID in that list is
+	// omitted even when include_dismissed is true.
+	//
+	// A plugin that does not store dismissal state ignores this field.
+	IncludeDismissed bool `protobuf:"varint,8,opt,name=include_dismissed,json=includeDismissed,proto3" json:"include_dismissed,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *GetRecommendationsRequest) Reset() {
@@ -4465,6 +4475,13 @@ func (x *GetRecommendationsRequest) GetUsageProfile() UsageProfile {
 		return x.UsageProfile
 	}
 	return UsageProfile_USAGE_PROFILE_UNSPECIFIED
+}
+
+func (x *GetRecommendationsRequest) GetIncludeDismissed() bool {
+	if x != nil {
+		return x.IncludeDismissed
+	}
+	return false
 }
 
 // GetRecommendationsResponse contains the recommendations and summary.
@@ -7439,7 +7456,7 @@ const file_finfocus_v1_costsource_proto_rawDesc = "" +
 	"\n" +
 	"expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12=\n" +
 	"\rprice_options\x18\x06 \x03(\v2\x18.finfocus.v1.PriceOptionR\fpriceOptions\x12=\n" +
-	"\rregion_prices\x18\a \x03(\v2\x18.finfocus.v1.RegionPriceR\fregionPrices\"\x8b\x03\n" +
+	"\rregion_prices\x18\a \x03(\v2\x18.finfocus.v1.RegionPriceR\fregionPrices\"\xb8\x03\n" +
 	"\x19GetRecommendationsRequest\x129\n" +
 	"\x06filter\x18\x01 \x01(\v2!.finfocus.v1.RecommendationFilterR\x06filter\x12+\n" +
 	"\x11projection_period\x18\x02 \x01(\tR\x10projectionPeriod\x12\x1b\n" +
@@ -7448,7 +7465,8 @@ const file_finfocus_v1_costsource_proto_rawDesc = "" +
 	"page_token\x18\x04 \x01(\tR\tpageToken\x12>\n" +
 	"\x1bexcluded_recommendation_ids\x18\x05 \x03(\tR\x19excludedRecommendationIds\x12J\n" +
 	"\x10target_resources\x18\x06 \x03(\v2\x1f.finfocus.v1.ResourceDescriptorR\x0ftargetResources\x12>\n" +
-	"\rusage_profile\x18\a \x01(\x0e2\x19.finfocus.v1.UsageProfileR\fusageProfile\"\xc9\x01\n" +
+	"\rusage_profile\x18\a \x01(\x0e2\x19.finfocus.v1.UsageProfileR\fusageProfile\x12+\n" +
+	"\x11include_dismissed\x18\b \x01(\bR\x10includeDismissed\"\xc9\x01\n" +
 	"\x1aGetRecommendationsResponse\x12E\n" +
 	"\x0frecommendations\x18\x01 \x03(\v2\x1b.finfocus.v1.RecommendationR\x0frecommendations\x12<\n" +
 	"\asummary\x18\x02 \x01(\v2\".finfocus.v1.RecommendationSummaryR\asummary\x12&\n" +
