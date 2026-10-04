@@ -330,6 +330,7 @@ err := plugintesting.ValidateActualCostResult(result)
 // Validate request inputs against the contract limits
 err := plugintesting.ValidateResourceDescriptor(resource)
 err := plugintesting.ValidateTags(resource.GetTags())
+err := plugintesting.ValidateGetActualCostRequest(actualCostReq) // checks req.Resource when set
 ```
 
 `ValidateResourceDescriptor` applies the contract limits: at most `MaxTagCount` (50) tags, keys of at
@@ -349,6 +350,11 @@ error wraps `ErrBillingAccountIDMismatch` and names the field, for example
 `results[1].focus_record.billing_account_id`. Results without a FOCUS record pass, and an empty request
 id places no constraint on the records. `MockPlugin` attaches a FOCUS record to each actual cost
 result only when the request carries an id.
+
+`ValidateGetActualCostRequest` checks `GetActualCostRequest.resource` last, with
+`ValidateResourceDescriptor`, when it is set; an unset descriptor is not an error. When the request
+carries a descriptor, `MockPlugin` copies its `resource_type`, `region`, and `sku` into the FOCUS
+record's `resource_type`, `region_id`, and `sku_id`. Costs never depend on it.
 
 ### Usage Source Testing
 
@@ -785,9 +791,12 @@ The conformance suite provides multi-level validation across four test categorie
 - `RPCCorrectness_TimeRangeValidation` - Time range validation
 - `RPCCorrectness_ConsistentResponses` - Response consistency
 - `RPCCorrectness_GetActualCostBillingAccount` - FOCUS records echo the request `billing_account_id`
+  (Standard level; plugins without FOCUS records or with no data pass)
+- `RPCCorrectness_GetActualCostWithResource` - GetActualCost accepts a request carrying `resource`, a
+  descriptor with tags and nested `attributes` (Standard; a plugin that ignores the field or has no data
+  passes, a plugin that rejects it fails)
 - `RPCCorrectness_GetProjectedCostWithAttributes` - GetProjectedCost accepts a descriptor carrying nested
   `attributes` (Basic; a plugin that ignores the field passes)
-  (Standard level; plugins without FOCUS records or with no data pass)
 - `RPCCorrectness_GetRecommendations_Pagination` - Pagination token handling
 - `RPCCorrectness_GetRecommendations_Filtering` - Filter criteria validation
 - `RPCCorrectness_GetRecommendations_ActionDetails` - Action type details

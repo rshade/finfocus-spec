@@ -162,6 +162,55 @@ An explicit JSON `null` is found and returned as a `NullValue`. A key that itsel
 addressed by path; read it from `attrs.GetFields()` directly. The accessor works on any `Struct`, including
 `EstimateCostRequest.attributes`.
 
+## What Reaches GetActualCost
+
+`GetActualCostRequest` predates `ResourceDescriptor` on the actual path, so it has carried a resource as
+`resource_id`, `arn`, and a flat `tags` map. Field 11, `resource`, adds the same descriptor that
+`GetProjectedCostRequest` carries.
+
+### Without `resource` (every host today)
+
+| Field | What the reference host sends |
+|-------|-------------------------------|
+| `resource_id` | The resource's id |
+| `arn` | The canonical cloud id, when known |
+| `tags` | The resource's cloud tags (`tagsAll`, then `tags`), plus injected `sku`, `region`, `provider`, and `resource_type` keys |
+
+The injected keys never overwrite an existing tag. A resource its owner tagged `region=prod-eu` keeps that
+value, so a plugin reading `tags["region"]` reads a cost-allocation label as a pricing dimension. Declared
+inputs such as disk size, instance count, or `sku.capacity` are not sent at all, so a plugin that derives
+actual cost from list price prices a three-instance scale set as one instance.
+
+### With `resource`
+
+When a host sets `resource`, it is built the same way as the projected descriptor: `provider`,
+`resource_type`, `sku`, `region`, flattened `tags`, and `attributes`, with the same host redaction rules
+([Structured Attributes](#structured-attributes)).
+
+- **Plugins read pricing dimensions from `resource`, not from `tags`.** A cloud tag named `region`, `sku`, or
+  `provider` is a label.
+- **Unset `resource` means the host sent none.** Fall back to `tags`, `resource_id`, and `arn`.
+- **`tags` keeps its meaning**: the resource's cloud tags, usable as billing filters. Hosts keep sending them
+  so plugins that predate the field are unaffected.
+- **`resource_id` stays the request's required identifier.** The SDK does not compare it with `resource.id`.
+- **One query, one descriptor.** A host sends the same `resource` on every page of a paginated query.
+
+Both SDK validators check `resource` when it is set, with the descriptor rules every other path uses:
+`pluginsdk.ValidateActualCostRequest` checks lengths, tag limits, and `MaxAttributesBytes`, and
+`plugintesting.ValidateGetActualCostRequest` also requires `provider` and `resource_type`.
+
+```go
+func (p *MyPlugin) GetActualCost(
+    ctx context.Context,
+    req *pbc.GetActualCostRequest,
+) (*pbc.GetActualCostResponse, error) {
+    if resource := req.GetResource(); resource != nil {
+        return p.priceFromDescriptor(ctx, req, resource)
+    }
+    return p.priceFromTags(ctx, req, req.GetTags())
+}
+```
+
 ## AWS Property Mappings
 
 ### SKU Extraction

@@ -161,6 +161,8 @@ func ValidateSupportsRequest(req *pbc.SupportsRequest) error {
 
 // ValidateGetActualCostRequest validates a GetActualCostRequest message.
 // This validates the contract between Core and Plugin for the GetActualCost RPC.
+// When the request carries a resource descriptor, it is checked last with
+// ValidateResourceDescriptor, the same rules every other descriptor gets.
 func ValidateGetActualCostRequest(req *pbc.GetActualCostRequest) error {
 	if req == nil {
 		return ErrNilRequest
@@ -182,6 +184,10 @@ func ValidateGetActualCostRequest(req *pbc.GetActualCostRequest) error {
 	// Validate tags if present
 	if err := ValidateTags(req.GetTags()); err != nil {
 		return err
+	}
+
+	if resource := req.GetResource(); resource != nil {
+		return ValidateResourceDescriptor(resource)
 	}
 
 	return nil
@@ -710,6 +716,42 @@ func registerRequestTests(suite *ContractTestSuite) {
 				Start:      timestamppb.New(now.Add(-hoursPerDay * time.Hour)),
 				End:        timestamppb.New(now),
 			})
+		},
+	})
+
+	suite.AddTest(ContractTestCase{
+		Name:        "GetActualCostRequest_WithResourceAccepted",
+		Description: "GetActualCostRequest with a valid resource descriptor should be accepted",
+		TestFunc: func() error {
+			now := time.Now()
+			return ValidateGetActualCostRequest(&pbc.GetActualCostRequest{
+				ResourceId: testResourceID,
+				Start:      timestamppb.New(now.Add(-hoursPerDay * time.Hour)),
+				End:        timestamppb.New(now),
+				Resource:   CreateResourceDescriptor(providerAWS, ec2ResourceType, "t3.micro", ""),
+			})
+		},
+	})
+
+	suite.AddTest(ContractTestCase{
+		Name:        "GetActualCostRequest_OversizedAttributesRejected",
+		Description: "GetActualCostRequest resource attributes above MaxAttributesBytes should be rejected",
+		TestFunc: func() error {
+			now := time.Now()
+			err := ValidateGetActualCostRequest(&pbc.GetActualCostRequest{
+				ResourceId: testResourceID,
+				Start:      timestamppb.New(now.Add(-hoursPerDay * time.Hour)),
+				End:        timestamppb.New(now),
+				Resource: &pbc.ResourceDescriptor{
+					Provider:     providerAWS,
+					ResourceType: ec2ResourceType,
+					Attributes:   attributesOverLimit(),
+				},
+			})
+			if !errors.Is(err, ErrAttributesTooLarge) {
+				return fmt.Errorf("expected ErrAttributesTooLarge, got %w", err)
+			}
+			return nil
 		},
 	})
 

@@ -236,6 +236,7 @@ message GetActualCostRequest {
   int32 page_size = 7;            // results per page (see pagination)
   string page_token = 8;          // opaque continuation token
   string billing_account_id = 9;  // caller-supplied FOCUS billing account id; empty = not supplied
+  ResourceDescriptor resource = 11; // same descriptor as GetProjectedCost; unset = host sent none
 }
 ```
 
@@ -273,6 +274,16 @@ message ActualCostResult {
   - It is not a filter, it never changes `cost`, and it is never carried in `tags`. The SDK does not
     trim or reformat it
   - The conformance test `RPCCorrectness_GetActualCostBillingAccount` checks the echo rule
+- `resource` describes the resource the same way `GetProjectedCostRequest.resource` does, including
+  `attributes` and its host redaction rules
+  - Prefer it for pricing dimensions (`provider`, `resource_type`, `sku`, `region`, `attributes`). When it
+    is set, do not read those from `tags`: a cloud tag named `region` or `sku` is a label
+  - When it is unset, the host sent none. Fall back to `tags`, `resource_id`, and `arn` as before
+  - `tags` stay the resource's cloud tags, usable as billing filters, and hosts keep sending them
+  - The host sends the same `resource` on every page of one query. `resource_id` stays required
+  - `pluginsdk.ValidateActualCostRequest` validates it when set. The conformance test
+    `RPCCorrectness_GetActualCostWithResource` (Standard) passes plugins that ignore it
+  - See [What Reaches GetActualCost](docs/PROPERTY_MAPPING.md#what-reaches-getactualcost)
 
 **Using the ARN Field**:
 

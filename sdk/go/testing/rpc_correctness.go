@@ -112,7 +112,7 @@ func testGetActualCostRPC(harness *TestHarness) TestResult {
 				Category: CategoryRPCCorrectness,
 				Success:  true,
 				Duration: duration,
-				Details:  "Correctly indicated no data available",
+				Details:  detailsNoDataAvailable,
 			}
 		}
 
@@ -146,6 +146,15 @@ func testGetActualCostRPC(harness *TestHarness) TestResult {
 	}
 }
 
+// detailsNoDataAvailable is the result detail for a plugin that reports no data.
+const detailsNoDataAvailable = "Correctly indicated no data available"
+
+// conformanceTeamTagKey and conformanceTeamTag are the tag the descriptor conformance tests send.
+const (
+	conformanceTeamTagKey = "team"
+	conformanceTeamTag    = "platform"
+)
+
 // testBillingAccountID is the id the billing account conformance test sends on GetActualCost.
 const testBillingAccountID = "conformance-billing-account"
 
@@ -170,7 +179,7 @@ func testGetActualCostBillingAccountRPC(harness *TestHarness) TestResult {
 				Category: CategoryRPCCorrectness,
 				Success:  true,
 				Duration: duration,
-				Details:  "Correctly indicated no data available",
+				Details:  detailsNoDataAvailable,
 			}
 		}
 
@@ -201,6 +210,76 @@ func testGetActualCostBillingAccountRPC(harness *TestHarness) TestResult {
 		Success:  true,
 		Duration: duration,
 		Details:  fmt.Sprintf("Checked %d cost data points", len(resp.GetResults())),
+	}
+}
+
+// testGetActualCostWithResourceRPC checks that GetActualCost accepts a request carrying a
+// ResourceDescriptor with tags and nested attributes. It never checks whether the plugin
+// used the descriptor, so a plugin that ignores it passes.
+func testGetActualCostWithResourceRPC(harness *TestHarness) TestResult {
+	attrs, err := conformanceAttributes()
+	if err != nil {
+		return TestResult{
+			Method:   MethodGetActualCost,
+			Category: CategoryRPCCorrectness,
+			Success:  false,
+			Error:    err,
+			Details:  "failed to build attributes fixture",
+		}
+	}
+	resource := CreateResourceDescriptor(providerAWS, ec2ResourceType, "t3.micro", "us-east-1")
+	resource.Tags = map[string]string{conformanceTeamTagKey: conformanceTeamTag}
+	resource.Attributes = attrs
+
+	start := time.Now()
+	timeStart, timeEnd := CreateTimeRange(HoursPerDay)
+	resp, err := harness.Client().GetActualCost(context.Background(), &pbc.GetActualCostRequest{
+		ResourceId: testResourceID,
+		Start:      timeStart,
+		End:        timeEnd,
+		Resource:   resource,
+	})
+	duration := time.Since(start)
+
+	if err != nil {
+		st, ok := status.FromError(err)
+		if ok && (st.Code() == codes.NotFound || st.Code() == codes.Unavailable) {
+			return TestResult{
+				Method:   MethodGetActualCost,
+				Category: CategoryRPCCorrectness,
+				Success:  true,
+				Duration: duration,
+				Details:  detailsNoDataAvailable,
+			}
+		}
+
+		return TestResult{
+			Method:   MethodGetActualCost,
+			Category: CategoryRPCCorrectness,
+			Success:  false,
+			Error:    err,
+			Duration: duration,
+			Details:  MethodGetActualCost + " RPC failed with a resource descriptor",
+		}
+	}
+
+	if valErr := ValidateActualCostResponse(resp); valErr != nil {
+		return TestResult{
+			Method:   MethodGetActualCost,
+			Category: CategoryRPCCorrectness,
+			Success:  false,
+			Error:    valErr,
+			Duration: duration,
+			Details:  "Response validation failed",
+		}
+	}
+
+	return TestResult{
+		Method:   MethodGetActualCost,
+		Category: CategoryRPCCorrectness,
+		Success:  true,
+		Duration: duration,
+		Details:  fmt.Sprintf("Accepted a resource descriptor; returned %d cost data points", len(resp.GetResults())),
 	}
 }
 
@@ -255,7 +334,7 @@ func conformanceAttributes() (*structpb.Struct, error) {
 				map[string]any{"resources": map[string]any{"requests": map[string]any{"cpu": "250m"}}},
 			}}},
 		}}},
-		"tags": map[string]any{"team": "platform"},
+		"tags": map[string]any{conformanceTeamTagKey: conformanceTeamTag},
 	})
 }
 
@@ -274,7 +353,7 @@ func testGetProjectedCostWithAttributesRPC(harness *TestHarness) TestResult {
 		}
 	}
 	resource := CreateResourceDescriptor(providerAWS, ec2ResourceType, "t3.micro", "us-east-1")
-	resource.Tags = map[string]string{"team": "platform"}
+	resource.Tags = map[string]string{conformanceTeamTagKey: conformanceTeamTag}
 	resource.Attributes = attrs
 
 	start := time.Now()
@@ -551,6 +630,13 @@ func RPCCorrectnessTests() []ConformanceSuiteTest {
 			TestFunc:    createGetActualCostBillingAccountRPCTest(),
 		},
 		{
+			Name:        "RPCCorrectness_GetActualCostWithResource",
+			Description: "Validates GetActualCost accepts a resource descriptor with nested attributes",
+			Category:    CategoryRPCCorrectness,
+			MinLevel:    ConformanceLevelStandard,
+			TestFunc:    createGetActualCostWithResourceRPCTest(),
+		},
+		{
 			Name:        "RPCCorrectness_GetProjectedCostRPC",
 			Description: "Validates GetProjectedCost RPC returns valid response",
 			Category:    CategoryRPCCorrectness,
@@ -603,6 +689,10 @@ func createGetActualCostRPCTest() func(*TestHarness) TestResult {
 
 func createGetActualCostBillingAccountRPCTest() func(*TestHarness) TestResult {
 	return testGetActualCostBillingAccountRPC
+}
+
+func createGetActualCostWithResourceRPCTest() func(*TestHarness) TestResult {
+	return testGetActualCostWithResourceRPC
 }
 
 func createGetProjectedCostRPCTest() func(*TestHarness) TestResult {

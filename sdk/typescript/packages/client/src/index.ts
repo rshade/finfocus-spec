@@ -1,3 +1,6 @@
+// Message construction helper, re-exported so callers need no direct @bufbuild/protobuf import
+export { create } from "@bufbuild/protobuf";
+
 // Generated proto types and services
 // In Connect-ES v2, services are generated directly in *_pb.ts files
 export * from "./generated/finfocus/v1/enums_pb.js";
@@ -42,7 +45,7 @@ export {
 export { BillingPeriodBuilder, InvoiceDetailBuilder } from "./builders/invoice-datasets.js";
 
 // Utilities
-export { recommendationsIterator } from "./utils/pagination.js";
+export { actualCostIterator, recommendationsIterator } from "./utils/pagination.js";
 export {
   DEFAULT_MAX_BATCH_SIZE,
   MAX_BATCH_SIZE,

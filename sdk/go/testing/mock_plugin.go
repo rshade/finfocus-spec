@@ -1051,9 +1051,8 @@ func (m *MockPlugin) GetActualCost(
 	}
 
 	// T045: Check dry_run flag - return DryRunResponse if true
-	// Note: GetActualCostRequest uses resource_id instead of ResourceDescriptor.
-	// For dry-run mode, we return default field mappings since we can't determine
-	// resource type from resource_id (format is plugin-specific).
+	// A plugin may read resource.resource_type here when the host sends a descriptor;
+	// the mock returns its default field mappings either way.
 	if req.GetDryRun() {
 		fieldMappings := m.DryRunFieldMappings
 		if len(fieldMappings) == 0 {
@@ -1137,7 +1136,8 @@ func (m *MockPlugin) GetActualCost(
 }
 
 // mockActualCostFocusRecord builds the FOCUS record for one hourly mock result, using the
-// caller-supplied billing account id. The billing period is the UTC calendar month that
+// caller-supplied billing account id. When the request carries a resource descriptor, the
+// record's resource type, region, and SKU come from it; cost never does. The billing period is the UTC calendar month that
 // contains the result.
 func (m *MockPlugin) mockActualCostFocusRecord(
 	req *pbc.GetActualCostRequest,
@@ -1146,11 +1146,15 @@ func (m *MockPlugin) mockActualCostFocusRecord(
 ) *pbc.FocusCostRecord {
 	utc := timestamp.UTC()
 	monthStart := time.Date(utc.Year(), utc.Month(), 1, 0, 0, 0, 0, time.UTC)
+	resource := req.GetResource()
 
 	return &pbc.FocusCostRecord{
 		ServiceProviderName: m.PluginName,
 		BillingAccountId:    req.GetBillingAccountId(),
 		ResourceId:          req.GetResourceId(),
+		ResourceType:        resource.GetResourceType(),
+		RegionId:            resource.GetRegion(),
+		SkuId:               resource.GetSku(),
 		BillingPeriodStart:  timestamppb.New(monthStart),
 		BillingPeriodEnd:    timestamppb.New(monthStart.AddDate(0, 1, 0)),
 		BillingCurrency:     mockFocusBillingCurrency,
