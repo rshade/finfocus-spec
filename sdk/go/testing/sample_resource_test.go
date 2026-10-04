@@ -31,8 +31,9 @@ import (
 const customProvider = "custom"
 
 // strictCustomPlugin prices only the custom provider. Like a real plugin, it answers
-// InvalidArgument for any other provider and for an actual-cost request that carries
-// no resource descriptor, which the plain MockPlugin never does.
+// InvalidArgument for an invalid descriptor, for any other provider, and for an
+// actual-cost request that carries no resource descriptor, which the plain MockPlugin
+// never does.
 type strictCustomPlugin struct {
 	*plugintesting.MockPlugin
 }
@@ -44,7 +45,13 @@ func newStrictCustomPlugin() strictCustomPlugin {
 }
 
 func rejectOtherProviders(resource *pbc.ResourceDescriptor) error {
-	if resource != nil && resource.GetProvider() != customProvider {
+	if resource == nil {
+		return nil
+	}
+	if err := plugintesting.ValidateResourceDescriptor(resource); err != nil {
+		return status.Error(codes.InvalidArgument, err.Error())
+	}
+	if resource.GetProvider() != customProvider {
 		return status.Errorf(codes.InvalidArgument, "unsupported provider: %s", resource.GetProvider())
 	}
 	return nil
@@ -183,6 +190,7 @@ func TestSampleResourceInvalid(t *testing.T) {
 func TestHarnessSampleResourceCopies(t *testing.T) {
 	t.Run("default harness", func(t *testing.T) {
 		harness := plugintesting.NewTestHarness(plugintesting.NewMockPlugin())
+		defer harness.Stop()
 		got := harness.SampleResource()
 		assert.Equal(t, "aws", got.GetProvider())
 
@@ -264,4 +272,28 @@ func TestActualCostChecksSendResource(t *testing.T) {
 	for _, r := range actual {
 		assert.True(t, r.Success, "%s: %v", r.Details, r.Error)
 	}
+}
+
+func TestSampleResourceAtTagLimit(t *testing.T) {
+	sample := customSample()
+	sample.Tags = map[string]string{}
+	for i := range plugintesting.MaxTagCount {
+		sample.Tags[fmt.Sprintf("key-%02d", i)] = "value"
+	}
+
+	result, err := plugintesting.RunConformance(
+		newStrictCustomPlugin(), plugintesting.ConformanceLevelStandard, plugintesting.WithSampleResource(sample))
+	require.NoError(t, err)
+	assert.Zero(t, result.Summary.Failed, "failed checks: %v", failedChecks(result))
+}
+
+func TestRunConformanceOptionCannotRaiseLevel(t *testing.T) {
+	raise := func(c *plugintesting.SuiteConfig) { c.TargetLevel = plugintesting.ConformanceLevelAdvanced }
+
+	result, err := plugintesting.RunConformance(newStrictCustomPlugin(), plugintesting.ConformanceLevelBasic,
+		plugintesting.WithSampleResource(customSample()), raise)
+	require.NoError(t, err)
+	assert.Equal(t, plugintesting.ConformanceLevelBasic, result.LevelAchieved)
+	assert.NotContains(t, result.Categories, plugintesting.CategoryPerformance)
+	assert.NotContains(t, result.Categories, plugintesting.CategoryConcurrency)
 }

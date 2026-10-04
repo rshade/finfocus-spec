@@ -230,10 +230,7 @@ func testGetActualCostWithResourceRPC(harness *TestHarness) TestResult {
 		}
 	}
 	resource := harness.SampleResource()
-	if resource.Tags == nil {
-		resource.Tags = map[string]string{}
-	}
-	resource.Tags[conformanceTeamTagKey] = conformanceTeamTag
+	addConformanceTag(resource)
 	resource.Attributes = attrs
 
 	start := time.Now()
@@ -328,6 +325,22 @@ func testGetProjectedCostRPC(harness *TestHarness) TestResult {
 	}
 }
 
+// addConformanceTag adds the team tag to a copy of the sample resource without
+// overwriting the caller's tags or exceeding MaxTagCount, so the descriptor stays as
+// valid as the configured sample.
+func addConformanceTag(resource *pbc.ResourceDescriptor) {
+	if _, exists := resource.GetTags()[conformanceTeamTagKey]; exists {
+		return
+	}
+	if len(resource.GetTags()) >= MaxTagCount {
+		return
+	}
+	if resource.Tags == nil {
+		resource.Tags = map[string]string{}
+	}
+	resource.Tags[conformanceTeamTagKey] = conformanceTeamTag
+}
+
 // conformanceAttributes is a nested attributes value ten segments deep, the depth
 // of a Kubernetes CronJob container's CPU request. Plugins are not expected to
 // read it; the test proves a descriptor carrying it is accepted.
@@ -358,10 +371,7 @@ func testGetProjectedCostWithAttributesRPC(harness *TestHarness) TestResult {
 		}
 	}
 	resource := harness.SampleResource()
-	if resource.Tags == nil {
-		resource.Tags = map[string]string{}
-	}
-	resource.Tags[conformanceTeamTagKey] = conformanceTeamTag
+	addConformanceTag(resource)
 	resource.Attributes = attrs
 
 	start := time.Now()

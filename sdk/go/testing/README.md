@@ -139,7 +139,7 @@ func TestPluginConformanceWithSample(t *testing.T) {
 ```
 
 - The sample must pass `ValidateResourceDescriptor`; otherwise `RunConformance` returns an error
-  before any check runs. An unknown level is also an error.
+  before any check runs. An unknown level is also an error, and options cannot change the level.
 - The suite copies the sample when the option is built and again for every check, so neither
   your later edits nor one check's edits change what another check sends.
 - The `GetActualCost` checks send the sample in `GetActualCostRequest.resource`, together with
@@ -214,7 +214,8 @@ result, err := plugintesting.RunBasicConformance(plugin)
 result, err := plugintesting.RunStandardConformance(plugin)
 result, err := plugintesting.RunAdvancedConformance(plugin)
 
-// Any level, with options such as a sample resource
+// Any level, with options such as a sample resource your plugin prices
+sample := plugintesting.CreateResourceDescriptor("custom", "instance", "standard", "region-1")
 result, err := plugintesting.RunConformance(plugin, plugintesting.ConformanceLevelBasic,
     plugintesting.WithSampleResource(sample))
 if err != nil {

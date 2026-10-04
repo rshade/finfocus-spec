@@ -152,6 +152,11 @@ example compiles.
   change what another sends.
 - **Sample resource with attributes**: the checks that add their own attributes replace them on
   their copy; the other checks send the author's attributes unchanged.
+- **Sample resource at the tag limit**: the attribute checks add their own tag only when the key is
+  absent and the sample has fewer than `MaxTagCount` tags, so they never send a descriptor less
+  valid than the configured one (found in review).
+- **An option that changes the target level**: ignored; the level argument decides which checks
+  run, so a run cannot report a level whose checks it skipped (found in review).
 - **Plugin rejects a request with no resource descriptor**: no conformance check sends such an
   actual-cost request any more (FR-006). The nil-resource check, which deliberately sends no
   descriptor to `Supports`/projected cost, is unchanged.

@@ -481,8 +481,8 @@ func AggregateResults(results map[TestCategory]*CategoryResult) ResultSummary {
 }
 
 // RunConformance runs the checks for level against impl, using that level's preset
-// configuration adjusted by opts. It returns an error for an unknown level or an
-// invalid sample resource.
+// configuration adjusted by opts. Options cannot change the target level. It returns
+// an error for an unknown level or an invalid sample resource.
 func RunConformance(
 	impl pbc.CostSourceServiceServer,
 	level ConformanceLevel,
@@ -495,6 +495,8 @@ func RunConformance(
 	for _, opt := range opts {
 		opt(&config)
 	}
+	// level decides which checks run, so an option cannot claim a higher level.
+	config.TargetLevel = level
 
 	suite := NewConformanceSuiteWithConfig(config)
 	RegisterSpecValidationTests(suite)
