@@ -59,7 +59,8 @@ npm install @rshade/finfocus-client finfocus-framework-plugins express
 ### Browser Usage
 
 ```typescript
-import { CostSourceClient, create } from "@rshade/finfocus-client";
+import { timestampFromDate } from "@bufbuild/protobuf/wkt";
+import { actualCostIterator, CostSourceClient, create } from "@rshade/finfocus-client";
 import { GetActualCostRequestSchema } from "@rshade/finfocus-client";
 
 // Create client with default browser transport
@@ -73,15 +74,18 @@ const client = new CostSourceClient({
   const nameResp = await client.name();
   console.log(`Plugin: ${nameResp.name}`);
 
-  // Fetch actual costs
+  // Fetch actual costs for January 2024, following every page
   const request = create(GetActualCostRequestSchema, {
     resourceId: "i-1234567890abcdef0",
-    startDate: { year: 2024, month: 1, day: 1 },
-    endDate: { year: 2024, month: 1, day: 31 }
+    start: timestampFromDate(new Date("2024-01-01T00:00:00Z")),
+    end: timestampFromDate(new Date("2024-02-01T00:00:00Z"))
   });
 
-  const response = await client.getActualCost(request);
-  console.log(`Total cost: ${response.totalCost}`);
+  let total = 0;
+  for await (const result of actualCostIterator(client, request)) {
+    total += result.cost;
+  }
+  console.log(`Total cost: ${total}`);
 })();
 ```
 
@@ -363,6 +367,31 @@ for await (const rec of recommendationsIterator(client, resumeRequest)) {
 }
 ```
 
+**Actual cost results** page the same way with `actualCostIterator`. It clones the request, so every
+field (including `billingAccountId` and `resource`) reaches every page. It sets `pageSize` to 50 when
+the request leaves it at zero or below, because a request with neither a page size nor a token asks
+older plugins for all results at once. It throws after 10 consecutive empty pages that still carry a
+token:
+
+```typescript
+import { timestampFromDate } from "@bufbuild/protobuf/wkt";
+import { actualCostIterator, CostSourceClient, create, GetActualCostRequestSchema } from "@rshade/finfocus-client";
+
+async function monthlyCost(client: CostSourceClient): Promise<number> {
+  const request = create(GetActualCostRequestSchema, {
+    resourceId: "i-1234567890abcdef0",
+    start: timestampFromDate(new Date("2024-01-01T00:00:00Z")),
+    end: timestampFromDate(new Date("2024-02-01T00:00:00Z")),
+  });
+
+  let total = 0;
+  for await (const result of actualCostIterator(client, request)) {
+    total += result.cost;
+  }
+  return total;
+}
+```
+
 **When to use pagination:**
 
 - Fetching large recommendation lists (100+ items)
@@ -568,29 +597,35 @@ const hasRecommendations = info.capabilities.includes(
 Let TypeScript infer types from the `create` helper:
 
 ```typescript
+import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { create } from "@rshade/finfocus-client";
 import { GetActualCostRequestSchema } from "@rshade/finfocus-client";
 
 // Type is inferred as GetActualCostRequest
 const request = create(GetActualCostRequestSchema, {
   resourceId: "i-1234567890abcdef0",
-  startDate: { year: 2024, month: 1, day: 1 },
-  endDate: { year: 2024, month: 1, day: 31 }
+  start: timestampFromDate(new Date("2024-01-01T00:00:00Z")),
+  end: timestampFromDate(new Date("2024-02-01T00:00:00Z"))
 });
 ```
 
 ### Null Safety
 
-Protobuf optional fields are represented as TypeScript optional properties:
+Message fields and `optional` scalars are TypeScript optional properties; they are `undefined` when the
+plugin did not set them:
 
 ```typescript
-// Check optional fields
-if (response.totalCost !== undefined) {
-  console.log(`Cost: $${response.totalCost}`);
-}
+import { timestampDate } from "@bufbuild/protobuf/wkt";
 
-// Use optional chaining
-console.log(`Cost: $${response.totalCost ?? 0}`);
+for (const result of response.results) {
+  // Check optional fields
+  if (result.expiresAt !== undefined) {
+    console.log(`Cache until: ${timestampDate(result.expiresAt).toISOString()}`);
+  }
+
+  // Use optional chaining
+  console.log(`Billing account: ${result.focusRecord?.billingAccountId ?? "not supplied"}`);
+}
 ```
 
 ## Transport Configuration
@@ -657,6 +692,7 @@ const client = new CostSourceClient({ transport: customTransport });
 
 ```typescript
 import { describe, it, expect } from "vitest";
+import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { CostSourceClient, ValidationError, create } from "@rshade/finfocus-client";
 import { GetActualCostRequestSchema } from "@rshade/finfocus-client";
 
@@ -671,14 +707,15 @@ describe("CostSourceClient", () => {
   });
 
   it("creates valid requests with create helper", () => {
+    const start = new Date("2024-01-01T00:00:00Z");
     const request = create(GetActualCostRequestSchema, {
       resourceId: "i-1234567890abcdef0",
-      startDate: { year: 2024, month: 1, day: 1 },
-      endDate: { year: 2024, month: 1, day: 31 }
+      start: timestampFromDate(start),
+      end: timestampFromDate(new Date("2024-02-01T00:00:00Z"))
     });
 
     expect(request.resourceId).toBe("i-1234567890abcdef0");
-    expect(request.startDate).toEqual({ year: 2024, month: 1, day: 1 });
+    expect(request.start && timestampDate(request.start)).toEqual(start);
   });
 });
 ```
@@ -689,15 +726,15 @@ describe("CostSourceClient", () => {
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
-import { CostSourceClient } from "@rshade/finfocus-client";
+import { timestampFromDate } from "@bufbuild/protobuf/wkt";
+import { CostSourceClient, create, GetActualCostRequestSchema } from "@rshade/finfocus-client";
 
 // Mock server
 const server = setupServer(
   http.post("https://plugin.example.com/finfocus.v1.CostSourceService/GetActualCost", () => {
     return HttpResponse.json({
-      totalCost: 150.25,
-      currency: "USD",
-      records: []
+      results: [{ cost: 150.25, usageAmount: 1, usageUnit: "hour", source: "mock" }],
+      totalCount: 1
     });
   })
 );
@@ -712,14 +749,14 @@ describe("CostSourceClient Integration", () => {
       baseUrl: "https://plugin.example.com"
     });
 
-    const response = await client.getActualCost({
+    const response = await client.getActualCost(create(GetActualCostRequestSchema, {
       resourceId: "i-1234567890abcdef0",
-      startDate: { year: 2024, month: 1, day: 1 },
-      endDate: { year: 2024, month: 1, day: 31 }
-    });
+      start: timestampFromDate(new Date("2024-01-01T00:00:00Z")),
+      end: timestampFromDate(new Date("2024-02-01T00:00:00Z"))
+    }));
 
-    expect(response.totalCost).toBe(150.25);
-    expect(response.currency).toBe("USD");
+    expect(response.results[0]?.cost).toBe(150.25);
+    expect(response.totalCount).toBe(1);
   });
 });
 ```
@@ -830,6 +867,43 @@ Check if a resource type is supported.
 Fetch actual historical costs for a resource.
 
 **Validation**: Requires `resourceId` or `arn`.
+
+**Resource descriptor**: set `resource` (field 11) to send the same `ResourceDescriptor` that
+`getProjectedCost` takes, including `attributes`, so a list-price plugin prices actual cost from the
+same inputs. Unset means none was sent, and plugins fall back to `tags`, `resourceId`, and `arn`.
+`tags` stay the resource's cloud tags; plugins read pricing dimensions from `resource`, not from
+`tags`. Send the same `resource` on every page of one query.
+
+```typescript
+import { create } from "@bufbuild/protobuf";
+import { timestampFromDate } from "@bufbuild/protobuf/wkt";
+import {
+  CostSourceClient,
+  GetActualCostRequestSchema,
+  ResourceDescriptorBuilder,
+} from "@rshade/finfocus-client";
+
+async function actualCostWithResource(client: CostSourceClient) {
+  const resource = new ResourceDescriptorBuilder()
+    .withProvider("azure")
+    .withResourceType("azure-native:compute:VirtualMachineScaleSet")
+    .withSku("Standard_D2s_v3")
+    .withRegion("eastus")
+    .withAttributes({ sku: { capacity: 3 } })
+    .build();
+
+  const request = create(GetActualCostRequestSchema, {
+    resourceId: "vmss-1",
+    start: timestampFromDate(new Date("2026-09-01T00:00:00Z")),
+    end: timestampFromDate(new Date("2026-10-01T00:00:00Z")),
+    tags: { team: "platform" },
+    resource,
+  });
+
+  const response = await client.getActualCost(request);
+  return response.results;
+}
+```
 
 #### `getProjectedCost(req: GetProjectedCostRequest): Promise<GetProjectedCostResponse>`
 

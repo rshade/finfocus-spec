@@ -5,6 +5,10 @@ import (
 	"errors"
 	"testing"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
+
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 	plugintesting "github.com/rshade/finfocus-spec/sdk/go/testing"
 )
@@ -239,5 +243,88 @@ func TestRPCCorrectnessGetProjectedCostWithAttributes(t *testing.T) {
 	}
 	if !found {
 		t.Fatal("RPCCorrectness_GetProjectedCostWithAttributes not registered")
+	}
+}
+
+// resourceIgnoringPlugin is a plugin built before GetActualCostRequest.resource existed:
+// it never sees the descriptor.
+type resourceIgnoringPlugin struct {
+	*plugintesting.MockPlugin
+}
+
+func (p *resourceIgnoringPlugin) GetActualCost(
+	ctx context.Context,
+	req *pbc.GetActualCostRequest,
+) (*pbc.GetActualCostResponse, error) {
+	stripped := proto.CloneOf(req)
+	stripped.Resource = nil
+	return p.MockPlugin.GetActualCost(ctx, stripped)
+}
+
+// resourceRejectingPlugin wrongly rejects any request that carries a descriptor.
+type resourceRejectingPlugin struct {
+	*plugintesting.MockPlugin
+}
+
+func (p *resourceRejectingPlugin) GetActualCost(
+	ctx context.Context,
+	req *pbc.GetActualCostRequest,
+) (*pbc.GetActualCostResponse, error) {
+	if req.GetResource() != nil {
+		return nil, status.Error(codes.InvalidArgument, "resource is not supported")
+	}
+	return p.MockPlugin.GetActualCost(ctx, req)
+}
+
+// TestRPCCorrectnessGetActualCostWithResource checks that a descriptor on GetActualCost is
+// additive: plugins that read it or ignore it pass, and only rejecting it fails.
+func TestRPCCorrectnessGetActualCostWithResource(t *testing.T) {
+	var test plugintesting.ConformanceSuiteTest
+	for _, candidate := range plugintesting.RPCCorrectnessTests() {
+		if candidate.Name == "RPCCorrectness_GetActualCostWithResource" {
+			test = candidate
+		}
+	}
+	if test.TestFunc == nil {
+		t.Fatal("RPCCorrectness_GetActualCostWithResource is not registered")
+	}
+	if test.MinLevel != plugintesting.ConformanceLevelStandard {
+		t.Errorf("MinLevel = %v, want Standard", test.MinLevel)
+	}
+
+	erroring := plugintesting.NewMockPlugin()
+	erroring.ShouldErrorOnActualCost = true
+
+	cases := []struct {
+		name        string
+		plugin      pbc.CostSourceServiceServer
+		wantSuccess bool
+	}{
+		{name: "plugin reading the descriptor passes", plugin: plugintesting.NewMockPlugin(), wantSuccess: true},
+		{
+			name:        "plugin ignoring the descriptor passes",
+			plugin:      &resourceIgnoringPlugin{MockPlugin: plugintesting.NewMockPlugin()},
+			wantSuccess: true,
+		},
+		{name: "plugin with no data passes", plugin: erroring, wantSuccess: true},
+		{
+			name:        "plugin rejecting the descriptor fails",
+			plugin:      &resourceRejectingPlugin{MockPlugin: plugintesting.NewMockPlugin()},
+			wantSuccess: false,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			harness := plugintesting.NewTestHarness(tc.plugin)
+			harness.Start(t)
+			defer harness.Stop()
+
+			result := test.TestFunc(harness)
+			if result.Success != tc.wantSuccess {
+				t.Fatalf("Success = %v, want %v (error: %v, details: %s)",
+					result.Success, tc.wantSuccess, result.Error, result.Details)
+			}
+		})
 	}
 }

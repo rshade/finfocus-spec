@@ -1008,7 +1008,8 @@ type BatchCostHandler interface {
 ### Resource Descriptor Limits and Attributes
 
 `ValidateResourceDescriptor` is the SDK's denial-of-service guard for a `ResourceDescriptor`.
-`ValidateBatchCostRequest` applies it to every resource, and plugins can call it directly. Lengths
+`ValidateBatchCostRequest` applies it to every resource, `ValidateActualCostRequest` applies it to
+`GetActualCostRequest.resource` when that is set, and plugins can call it directly. Lengths
 are in bytes, and a violation returns `codes.InvalidArgument`:
 
 | Field | Constant | Limit |
@@ -1925,6 +1926,41 @@ func attachFocusRecord(req *pbc.GetActualCostRequest, result *pbc.ActualCostResu
 
 `plugintesting.ValidateActualCostBillingAccount` checks the echo rule for one response, and the
 conformance test `RPCCorrectness_GetActualCostBillingAccount` runs it against your plugin.
+
+### Resource Descriptor on GetActualCost
+
+`GetActualCostRequest.resource` (field 11) is the same `ResourceDescriptor` that `GetProjectedCost`
+receives, including `attributes`. A plugin that derives actual cost from list price reads the same
+inputs on both paths, so the two agree.
+
+- **Set**: read pricing dimensions (`provider`, `resource_type`, `sku`, `region`, `attributes`) from
+  it, not from `Tags`. A cloud tag named `region` or `sku` is a label.
+- **Unset**: the host sent none. Fall back to `Tags`, `ResourceId`, and `Arn`, as before.
+- `Tags` keep their meaning (cloud tags, usable as billing filters), and `ResourceId` stays required.
+- The host sends the same `resource` on every page of one query.
+
+```go
+func (p *MyPlugin) GetActualCost(
+    ctx context.Context,
+    req *pbc.GetActualCostRequest,
+) (*pbc.GetActualCostResponse, error) {
+    if err := pluginsdk.ValidateActualCostRequest(req); err != nil {
+        return nil, err
+    }
+    sku, region := req.GetTags()["sku"], req.GetTags()["region"]
+    if resource := req.GetResource(); resource != nil {
+        sku, region = resource.GetSku(), resource.GetRegion()
+    }
+    _, _ = sku, region // price the period from sku and region
+    return &pbc.GetActualCostResponse{}, nil
+}
+```
+
+`ValidateActualCostRequest` checks the descriptor last, after the resource id and time range, with
+`ValidateResourceDescriptor`. A request without one, or with one that has no `attributes`, validates
+with zero allocations. The conformance test `RPCCorrectness_GetActualCostWithResource` (Standard) sends
+a descriptor and passes plugins that ignore it. See
+[What Reaches GetActualCost](../../../docs/PROPERTY_MAPPING.md#what-reaches-getactualcost).
 
 ### FallbackHint Enum
 

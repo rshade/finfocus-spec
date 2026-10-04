@@ -1195,7 +1195,28 @@ parallel subtests complete.
 - protobuf-es maps `Struct` to `JsonObject`; the TS builder's `withAttributes` copies with
   `structuredClone` so later caller edits do not leak into built descriptors.
 
+### Actual Cost Resource Pattern (597-actual-cost-resource-descriptor)
+
+- `GetActualCostRequest.resource` (11) is the projected-path descriptor on the actual path; field 10 stays
+  held by comment for a billing account name. Unset means the host sent none (fall back to `tags`,
+  `resource_id`, `arn`); when set, pricing dimensions come from it, never from `tags`.
+- Both validators check it last, behind a call-site nil guard: `pluginsdk` with the length-only
+  descriptor rules (0 allocs/op with or without a descriptor lacking `attributes`), `plugintesting` with
+  the contract rules (provider and type required). `resource.id` is never compared with `resource_id`.
+- The mock copies `resource_type`, `region`, `sku` into the FOCUS record it attaches (only when
+  `billing_account_id` is set); cost never depends on the descriptor.
+- `RPCCorrectness_GetActualCostWithResource` (Standard) passes plugins that ignore the field; only a
+  plugin that rejects a valid descriptor fails.
+- The TS `actualCostIterator` clones the whole request, so new request fields reach every page with no
+  iterator change. The client index exports `actualCostIterator` and re-exports `create` from
+  `@bufbuild/protobuf` (`test/index-exports.test.ts`); README examples take timestamps from
+  `@bufbuild/protobuf/wkt` (`timestampFromDate`).
+
 ## Active Technologies
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf,
+  buf v1.32.1; no new dependencies (597-actual-cost-resource-descriptor)
+- N/A (one optional ResourceDescriptor on GetActualCostRequest) (597-actual-cost-resource-descriptor)
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf
   (`proto.Size`, `structpb`), buf v1.32.1; no new dependencies (596-resource-descriptor-attributes)
@@ -1389,6 +1410,12 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+
+- 597-actual-cost-resource-descriptor: Added GetActualCostRequest.resource (field 11, a
+  ResourceDescriptor) with the fallback and tags-precedence rules, descriptor validation in
+  pluginsdk.ValidateActualCostRequest and plugintesting.ValidateGetActualCostRequest, mock FOCUS
+  records that read type, region, and SKU from it, and the Standard conformance test
+  RPCCorrectness_GetActualCostWithResource (issue 620)
 
 - 596-resource-descriptor-attributes: Added ResourceDescriptor.attributes (field 12, a
   google.protobuf.Struct) with the host redaction rule and the tags fallback, MaxAttributesBytes

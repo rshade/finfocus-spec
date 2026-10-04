@@ -6,7 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
@@ -737,5 +740,136 @@ func BenchmarkValidateProjectedCostRequestLenient(b *testing.B) {
 	b.ResetTimer()
 	for range b.N {
 		_ = pluginsdk.ValidateProjectedCostRequestLenient(req)
+	}
+}
+
+func newActualCostRequestWithResource(resource *pbc.ResourceDescriptor) *pbc.GetActualCostRequest {
+	now := time.Now()
+	return &pbc.GetActualCostRequest{
+		ResourceId: "i-abc123",
+		Start:      timestamppb.New(now.Add(-time.Hour)),
+		End:        timestamppb.New(now),
+		Resource:   resource,
+	}
+}
+
+func TestValidateActualCostRequestResource(t *testing.T) {
+	smallAttrs, attrErr := structpb.NewStruct(map[string]any{"sku": map[string]any{"capacity": 3}})
+	if attrErr != nil {
+		t.Fatal(attrErr)
+	}
+	oversizedAttrs := &structpb.Struct{Fields: map[string]*structpb.Value{
+		"p": structpb.NewStringValue(strings.Repeat("x", pluginsdk.MaxAttributesBytes)),
+	}}
+
+	valid := []struct {
+		name     string
+		resource *pbc.ResourceDescriptor
+	}{
+		{name: "nil resource is skipped", resource: nil},
+		{name: "empty resource passes length checks", resource: &pbc.ResourceDescriptor{}},
+		{
+			name: "full resource with attributes",
+			resource: &pbc.ResourceDescriptor{
+				Provider:     "azure",
+				ResourceType: "azure-native:compute:VirtualMachineScaleSet",
+				Sku:          "Standard_D2s_v3",
+				Region:       "eastus",
+				Tags:         map[string]string{"team": "platform"},
+				Attributes:   smallAttrs,
+			},
+		},
+	}
+	for _, tt := range valid {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := pluginsdk.ValidateActualCostRequest(newActualCostRequestWithResource(tt.resource)); err != nil {
+				t.Errorf("ValidateActualCostRequest() error = %v, want nil", err)
+			}
+		})
+	}
+
+	invalid := []struct {
+		name        string
+		resource    *pbc.ResourceDescriptor
+		errContains string
+	}{
+		{
+			name:        "oversized attributes",
+			resource:    &pbc.ResourceDescriptor{Provider: "aws", ResourceType: "ec2", Attributes: oversizedAttrs},
+			errContains: "attributes",
+		},
+		{
+			name: "tag value too long",
+			resource: &pbc.ResourceDescriptor{
+				Provider:     "aws",
+				ResourceType: "ec2",
+				Tags:         map[string]string{"k": strings.Repeat("v", pluginsdk.MaxTagValueLength+1)},
+			},
+			errContains: "tag value",
+		},
+		{
+			name: "resource_type too long",
+			resource: &pbc.ResourceDescriptor{
+				Provider:     "aws",
+				ResourceType: strings.Repeat("t", pluginsdk.MaxResourceTypeLength+1),
+			},
+			errContains: "resource_type",
+		},
+	}
+	for _, tt := range invalid {
+		t.Run(tt.name, func(t *testing.T) {
+			err := pluginsdk.ValidateActualCostRequest(newActualCostRequestWithResource(tt.resource))
+			if status.Code(err) != codes.InvalidArgument {
+				t.Fatalf("ValidateActualCostRequest() code = %v, want InvalidArgument (err %v)", status.Code(err), err)
+			}
+			if !strings.Contains(err.Error(), tt.errContains) {
+				t.Errorf("error %q should contain %q", err.Error(), tt.errContains)
+			}
+		})
+	}
+
+	t.Run("existing checks run before the descriptor", func(t *testing.T) {
+		req := newActualCostRequestWithResource(&pbc.ResourceDescriptor{Attributes: oversizedAttrs})
+		req.ResourceId = ""
+		if err := pluginsdk.ValidateActualCostRequest(req); !errors.Is(err, pluginsdk.ErrActualCostResourceIDEmpty) {
+			t.Errorf("ValidateActualCostRequest() error = %v, want %v", err, pluginsdk.ErrActualCostResourceIDEmpty)
+		}
+	})
+}
+
+func TestValidateActualCostRequestResourceAllocations(t *testing.T) {
+	shapes := map[string]*pbc.GetActualCostRequest{
+		"nil resource": newActualCostRequestWithResource(nil),
+		"resource without attributes": newActualCostRequestWithResource(&pbc.ResourceDescriptor{
+			Provider:     "aws",
+			ResourceType: "ec2",
+			Sku:          "t3.micro",
+			Region:       "us-east-1",
+			Tags:         map[string]string{"team": "platform"},
+		}),
+	}
+	for name, req := range shapes {
+		t.Run(name, func(t *testing.T) {
+			allocs := testing.AllocsPerRun(100, func() {
+				_ = pluginsdk.ValidateActualCostRequest(req)
+			})
+			if allocs != 0 {
+				t.Errorf("ValidateActualCostRequest() allocs = %v, want 0", allocs)
+			}
+		})
+	}
+}
+
+func BenchmarkValidateActualCostRequest_WithResource(b *testing.B) {
+	req := newActualCostRequestWithResource(&pbc.ResourceDescriptor{
+		Provider:     "aws",
+		ResourceType: "ec2",
+		Sku:          "t3.micro",
+		Region:       "us-east-1",
+		Tags:         map[string]string{"team": "platform"},
+	})
+	b.ReportAllocs()
+	for range b.N {
+		_ = pluginsdk.ValidateActualCostRequest(req)
 	}
 }

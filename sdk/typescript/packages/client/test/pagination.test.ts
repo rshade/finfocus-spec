@@ -145,6 +145,57 @@ describe('actualCostIterator', () => {
     expect(seenBillingAccountIds).toEqual(['ba-123', 'ba-123', 'ba-123']);
   });
 
+  it('sends resource on every page request', async () => {
+    const seenResources: unknown[] = [];
+    server.use(
+      http.post(
+        'https://plugin-test.example.com/finfocus.v1.CostSourceService/GetActualCost',
+        async ({ request }) => {
+          const body = await request.json() as Record<string, unknown>;
+          seenResources.push(body.resource);
+          const offset = body.pageToken
+            ? parseInt(Buffer.from(body.pageToken as string, 'base64').toString(), 10)
+            : 0;
+          const end = Math.min(offset + 50, 120);
+          return HttpResponse.json({
+            results: createMockResults(end - offset, offset),
+            nextPageToken: end < 120 ? Buffer.from(end.toString()).toString('base64') : "",
+            totalCount: 120,
+          });
+        }
+      )
+    );
+
+    const request = create(GetActualCostRequestSchema, {
+      resourceId: 'vmss-1',
+      pageSize: 50,
+      resource: {
+        provider: 'azure',
+        resourceType: 'azure-native:compute:VirtualMachineScaleSet',
+        sku: 'Standard_D2s_v3',
+        region: 'eastus',
+        attributes: { sku: { capacity: 3 } },
+      },
+    });
+
+    let count = 0;
+    for await (const _ of actualCostIterator(client, request)) {
+      count++;
+    }
+
+    expect(count).toBe(120);
+    expect(seenResources).toHaveLength(3);
+    expect(seenResources[0]).toMatchObject({
+      provider: 'azure',
+      resourceType: 'azure-native:compute:VirtualMachineScaleSet',
+      sku: 'Standard_D2s_v3',
+      region: 'eastus',
+      attributes: { sku: { capacity: 3 } },
+    });
+    expect(seenResources[1]).toEqual(seenResources[0]);
+    expect(seenResources[2]).toEqual(seenResources[0]);
+  });
+
   it('handles single-page results', async () => {
     server.use(paginatedActualCostHandler(10, 50));
 

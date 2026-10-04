@@ -366,9 +366,12 @@ func IsValidMetricKind(kind pbc.MetricKind) bool {
 //  3. StartTime nil check
 //  4. EndTime nil check
 //  5. TimeRange validation (EndTime must be after StartTime)
+//  6. Resource descriptor, only when set: ValidateResourceDescriptor (lengths, tag
+//     limits, MaxAttributesBytes). Its gRPC InvalidArgument error is returned as is.
 //
-// Performance: Zero allocations on the happy path (valid request returns nil).
-// Error paths allocate for the error message.
+// Performance: Zero allocations on the happy path (valid request returns nil),
+// including a descriptor without attributes. Attributes add the one proto.Size
+// allocation. Error paths allocate for the error message.
 //
 // Returns nil if the request is valid, or an error describing the first validation failure.
 func ValidateActualCostRequest(req *pbc.GetActualCostRequest) error {
@@ -394,6 +397,10 @@ func ValidateActualCostRequest(req *pbc.GetActualCostRequest) error {
 	// Using AsTime() for accurate comparison including nanoseconds
 	if !endTime.AsTime().After(startTime.AsTime()) {
 		return ErrActualCostTimeRangeInvalid
+	}
+
+	if resource := req.GetResource(); resource != nil {
+		return ValidateResourceDescriptor(resource)
 	}
 
 	return nil

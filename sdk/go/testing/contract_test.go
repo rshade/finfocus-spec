@@ -295,6 +295,67 @@ func TestValidateGetActualCostRequest(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "nil resource is skipped",
+			req: &pbc.GetActualCostRequest{
+				ResourceId: "i-abc123",
+				Start:      validStart,
+				End:        validEnd,
+				Resource:   nil,
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid request with resource",
+			req: &pbc.GetActualCostRequest{
+				ResourceId: "i-abc123",
+				Start:      validStart,
+				End:        validEnd,
+				Tags:       map[string]string{"env": "prod"},
+				Resource: &pbc.ResourceDescriptor{
+					Provider:     "aws",
+					ResourceType: "ec2",
+					Sku:          "t3.micro",
+					Region:       "us-east-1",
+					Tags:         map[string]string{"team": "platform"},
+					Attributes:   attributesOfSize(t, 64),
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "resource with empty provider",
+			req: &pbc.GetActualCostRequest{
+				ResourceId: "i-abc123",
+				Start:      validStart,
+				End:        validEnd,
+				Resource:   &pbc.ResourceDescriptor{ResourceType: "ec2"},
+			},
+			wantErr:     true,
+			errContains: "provider",
+		},
+		{
+			name: "resource with empty resource_type",
+			req: &pbc.GetActualCostRequest{
+				ResourceId: "i-abc123",
+				Start:      validStart,
+				End:        validEnd,
+				Resource:   &pbc.ResourceDescriptor{Provider: "aws"},
+			},
+			wantErr:     true,
+			errContains: "resource_type",
+		},
+		{
+			name: "empty resource_id is reported before an invalid resource",
+			req: &pbc.GetActualCostRequest{
+				ResourceId: "",
+				Start:      validStart,
+				End:        validEnd,
+				Resource:   &pbc.ResourceDescriptor{},
+			},
+			wantErr:     true,
+			errContains: "resource_id",
+		},
 	}
 
 	for _, tt := range tests {
@@ -1014,6 +1075,60 @@ func attributesOfSize(t testing.TB, n int) *structpb.Struct {
 	}
 	t.Fatalf("no single-key Struct encodes to exactly %d bytes", n)
 	return nil
+}
+
+// TestValidateGetActualCostRequestResourceErrors checks the sentinels a descriptor on the
+// actual cost path reports, which match the ones every other descriptor path reports.
+func TestValidateGetActualCostRequestResourceErrors(t *testing.T) {
+	now := time.Now()
+	base := func(resource *pbc.ResourceDescriptor) *pbc.GetActualCostRequest {
+		return &pbc.GetActualCostRequest{
+			ResourceId: "i-abc123",
+			Start:      timestamppb.New(now.Add(-24 * time.Hour)),
+			End:        timestamppb.New(now),
+			Resource:   resource,
+		}
+	}
+
+	tests := []struct {
+		name     string
+		resource *pbc.ResourceDescriptor
+		want     error
+	}{
+		{
+			name: "oversized attributes",
+			resource: &pbc.ResourceDescriptor{
+				Provider:     "aws",
+				ResourceType: "ec2",
+				Attributes:   attributesOfSize(t, plugintesting.MaxAttributesBytes+1),
+			},
+			want: plugintesting.ErrAttributesTooLarge,
+		},
+		{
+			name:     "empty provider",
+			resource: &pbc.ResourceDescriptor{ResourceType: "ec2"},
+			want:     plugintesting.ErrEmptyProvider,
+		},
+		{
+			name:     "empty resource_type",
+			resource: &pbc.ResourceDescriptor{Provider: "aws"},
+			want:     plugintesting.ErrEmptyResourceType,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := plugintesting.ValidateGetActualCostRequest(base(tt.resource))
+			require.ErrorIs(t, err, tt.want)
+			require.ErrorIs(t, plugintesting.ValidateResourceDescriptor(tt.resource), tt.want)
+		})
+	}
+
+	at := &pbc.ResourceDescriptor{
+		Provider:     "aws",
+		ResourceType: "ec2",
+		Attributes:   attributesOfSize(t, plugintesting.MaxAttributesBytes),
+	}
+	require.NoError(t, plugintesting.ValidateGetActualCostRequest(base(at)))
 }
 
 // TestContractDescriptorLimitValues pins the published limits so a change is deliberate.

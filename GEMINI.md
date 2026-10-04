@@ -53,6 +53,10 @@ tools to create a robust ecosystem of cost-estimation plugins.
 
 ## Active Technologies
 
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf,
+  buf v1.32.1; no new dependencies (597-actual-cost-resource-descriptor)
+- N/A (one optional ResourceDescriptor on GetActualCostRequest) (597-actual-cost-resource-descriptor)
+
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf
   (`proto.Size`, `structpb`), buf v1.32.1; no new dependencies (596-resource-descriptor-attributes)
 - N/A (one optional Struct on ResourceDescriptor, two size limits, one read helper)
@@ -91,6 +95,12 @@ tools to create a robust ecosystem of cost-estimation plugins.
 - JSON Schema (Draft 2020-12) for PricingSpec and BudgetSpec validation (001-get-budgets-rpc)
 
 ## Recent Changes
+
+- 597-actual-cost-resource-descriptor: Added GetActualCostRequest.resource (field 11, a
+  ResourceDescriptor) with the fallback and tags-precedence rules, descriptor validation in
+  pluginsdk.ValidateActualCostRequest and plugintesting.ValidateGetActualCostRequest, mock FOCUS
+  records that read type, region, and SKU from it, and the Standard conformance test
+  RPCCorrectness_GetActualCostWithResource (issue 620)
 
 - 596-resource-descriptor-attributes: Added ResourceDescriptor.attributes (field 12, a
   google.protobuf.Struct) with the host redaction rule and the tags fallback, MaxAttributesBytes
