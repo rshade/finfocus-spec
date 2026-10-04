@@ -286,7 +286,7 @@ func createNameLatencyTest() func(*TestHarness) TestResult {
 func createSupportsLatencyTest() func(*TestHarness) TestResult {
 	return func(harness *TestHarness) TestResult {
 		baseline := GetBaseline(MethodSupports)
-		resource := CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1")
+		resource := harness.SampleResource()
 		result := measureLatency(MethodSupports, LatencyTestIterations, func() error {
 			_, callErr := harness.Client().Supports(context.Background(), &pbc.SupportsRequest{Resource: resource})
 			return callErr
@@ -310,7 +310,7 @@ func createGetPluginInfoLatencyTest() func(*TestHarness) TestResult {
 func createGetProjectedCostLatencyTest() func(*TestHarness) TestResult {
 	return func(harness *TestHarness) TestResult {
 		baseline := GetBaseline(MethodGetProjectedCost)
-		resource := CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1")
+		resource := harness.SampleResource()
 		result := measureLatency(MethodGetProjectedCost, LatencyTestIterations, func() error {
 			_, callErr := harness.Client().GetProjectedCost(context.Background(),
 				&pbc.GetProjectedCostRequest{Resource: resource})
@@ -324,7 +324,7 @@ func createGetProjectedCostLatencyTest() func(*TestHarness) TestResult {
 func createGetPricingSpecLatencyTest() func(*TestHarness) TestResult {
 	return func(harness *TestHarness) TestResult {
 		baseline := GetBaseline(MethodGetPricingSpec)
-		resource := CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1")
+		resource := harness.SampleResource()
 		result := measureLatency(MethodGetPricingSpec, LatencyTestIterations, func() error {
 			_, callErr := harness.Client().GetPricingSpec(context.Background(),
 				&pbc.GetPricingSpecRequest{Resource: resource})
@@ -422,7 +422,7 @@ func RunPerformanceBenchmarks(impl pbc.CostSourceServiceServer) ([]PerformanceRe
 	results = append(results, *nameResult)
 
 	// Benchmark Supports
-	resource := CreateResourceDescriptor("aws", "ec2", "t3.micro", "us-east-1")
+	resource := harness.SampleResource()
 	supportsResult := measureLatency("Supports", NumPerformanceIterations, func() error {
 		_, callErr := harness.Client().Supports(context.Background(), &pbc.SupportsRequest{Resource: resource})
 		return callErr

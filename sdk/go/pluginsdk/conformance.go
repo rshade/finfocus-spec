@@ -8,6 +8,7 @@ import (
 	"io"
 	"testing"
 
+	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 	plugintesting "github.com/rshade/finfocus-spec/sdk/go/testing"
 )
 
@@ -25,6 +26,9 @@ type (
 
 	// ResultSummary contains aggregate test counts.
 	ResultSummary = plugintesting.ResultSummary
+
+	// ConformanceOption adjusts the configuration RunConformance uses for a level.
+	ConformanceOption = plugintesting.ConformanceOption
 )
 
 // Conformance level constants for convenient access.
@@ -49,6 +53,24 @@ func validatePlugin(plugin Plugin) error {
 		return ErrNilPlugin
 	}
 	return nil
+}
+
+// WithSampleResource makes every check that sends a resource descriptor send a copy
+// of r. Supply a resource your plugin prices; the default is
+// plugintesting.DefaultSampleResource(). A nil r restores the default.
+func WithSampleResource(r *pbc.ResourceDescriptor) ConformanceOption {
+	return plugintesting.WithSampleResource(r)
+}
+
+// RunConformance runs the checks for level against a Plugin implementation, adjusted
+// by opts. It returns ErrNilPlugin for a nil plugin, and an error for an unknown level
+// or an invalid sample resource.
+func RunConformance(plugin Plugin, level ConformanceLevel, opts ...ConformanceOption) (*ConformanceResult, error) {
+	if err := validatePlugin(plugin); err != nil {
+		return nil, err
+	}
+
+	return plugintesting.RunConformance(NewServer(plugin), level, opts...)
 }
 
 // RunBasicConformance runs basic conformance tests against a Plugin implementation.
