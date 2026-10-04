@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.7.2](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.7.1...finfocus-client-v0.7.2) (2026-10-04)
+
+
+### Features
+
+* **proto:** add ResourceDescriptor attributes and raise tag limit ([7843e7d](https://github.com/rshade/finfocus-spec/commit/7843e7dc831e0e4f10f4809039c55dd0aca42648)), closes [#617](https://github.com/rshade/finfocus-spec/issues/617)
+
+
+### Bug Fixes
+
+* address PR 618 review and contract suite allocation ([fa0f5e3](https://github.com/rshade/finfocus-spec/commit/fa0f5e39af16875ec3dee41c8d4ee69420944637))
+
 ## [0.7.1](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.7.0...finfocus-client-v0.7.1) (2026-10-02)
 
 
