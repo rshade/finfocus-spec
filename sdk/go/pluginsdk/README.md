@@ -1773,7 +1773,12 @@ turns their errors into what the host sees, over gRPC and Connect alike:
 
 Return a status when the code matters to the host, for example `InvalidArgument` for a request your
 plugin cannot price or `NotFound` so the host can try another plugin. Plain errors are logged
-server-side and never reach the host, so their text cannot leak.
+server-side and never reach the host, so their text cannot leak. A wrapped status sends only its
+own code and message, never the wrapping text.
+
+`Unimplemented` means "use the SDK default", not "refuse". For `BatchCost` the default runs your
+`GetProjectedCost` or `GetActualCost` once per resource. To refuse a request, return another code,
+such as `FailedPrecondition` or `PermissionDenied`.
 
 ```go
 func (p *MyPlugin) Supports(_ context.Context, req *pbc.SupportsRequest) (*pbc.SupportsResponse, error) {

@@ -6,7 +6,7 @@ Applies to `DryRun`, `Supports`, `GetRecommendations`, `GetBudgets`, `DismissRec
 
 | Handler returns | Client receives |
 | --- | --- |
-| gRPC status, code not `OK`/`Unknown`/`Unimplemented` (incl. wrapped, or a `GRPCStatus()` type) | that code and message |
+| gRPC status, code not `OK`/`Unknown`/`Unimplemented` (incl. wrapped, or a `GRPCStatus()` type) | that code and the status's own message (never wrapping text) |
 | `Unimplemented` status | the RPC's not-a-provider answer (below) |
 | plain error, context error, `Unknown` status | `Internal` with today's generic message |
 

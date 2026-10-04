@@ -526,13 +526,20 @@ func (s *Server) pluginInfoDefault() (*pbc.GetPluginInfoResponse, error) {
 
 // handlerStatus classifies an error returned by a plugin's provider handler and returns
 // whether to use the RPC's not-a-provider answer, or else the error for the client. A
-// gRPC status the handler chose (wrapped or not) reaches the client unchanged.
+// gRPC status the handler chose reaches the client unchanged; when it is wrapped, only
+// the status's own code and message are sent, never the wrapping text.
 // Unimplemented selects the default, so a plugin that embeds the generated stub behaves
 // like one that does not implement the interface. Anything else, including plain and
 // Unknown errors, becomes Internal with internalMsg so the error's detail is not exposed.
 func handlerStatus(err error, internalMsg string) (bool, error) {
-	st, ok := status.FromError(err)
-	if !ok || st.Code() == codes.OK || st.Code() == codes.Unknown {
+	// errors.As finds the status itself; status.FromError on a wrapped error would
+	// put the wrapping text (which may hold internal detail) into the message.
+	var withStatus interface{ GRPCStatus() *status.Status }
+	if !errors.As(err, &withStatus) {
+		return false, status.Error(codes.Internal, internalMsg)
+	}
+	st := withStatus.GRPCStatus()
+	if st.Code() == codes.OK || st.Code() == codes.Unknown {
 		return false, status.Error(codes.Internal, internalMsg)
 	}
 	if st.Code() == codes.Unimplemented {
