@@ -1759,6 +1759,37 @@ resource := pluginsdk.CreateTestResource(
 )
 ```
 
+### Handler Errors
+
+`Server` calls your optional handlers (`HandleDryRun`, `Supports`, `GetRecommendations`,
+`GetBudgets`, `DismissRecommendation`, `BatchCost`, `ResolveResourceTypes`, `GetPluginInfo`) and
+turns their errors into what the host sees, over gRPC and Connect alike:
+
+| Your handler returns | The host receives |
+| --- | --- |
+| A gRPC status (`status.Error`, a `%w`-wrapped one, or a type with `GRPCStatus()`) | That code and message |
+| `codes.Unimplemented` | The SDK default, as if you did not implement the interface |
+| Any other error (plain, context, `codes.Unknown`) | `codes.Internal` with a generic message |
+
+Return a status when the code matters to the host, for example `InvalidArgument` for a request your
+plugin cannot price or `NotFound` so the host can try another plugin. Plain errors are logged
+server-side and never reach the host, so their text cannot leak.
+
+```go
+func (p *MyPlugin) Supports(_ context.Context, req *pbc.SupportsRequest) (*pbc.SupportsResponse, error) {
+    if req.GetResource().GetSku() == "" {
+        return nil, status.Error(codes.InvalidArgument, "sku is required")
+    }
+    return &pbc.SupportsResponse{Supported: true}, nil
+}
+```
+
+Embedding `pbc.UnimplementedCostSourceServiceServer` is safe. Its methods satisfy several of these
+interfaces and return `Unimplemented`, so the SDK answers with its defaults: the default `Supports`
+response, an empty recommendation list, its own per-resource `BatchCost`, the `TypeRegistry` or an
+empty `ResolveResourceTypes` response, your configured `PluginInfo`, and `Unimplemented` for
+`GetBudgets` and `DismissRecommendation`.
+
 ### Conformance Testing
 
 The pluginsdk package provides adapter functions for running conformance tests directly on your

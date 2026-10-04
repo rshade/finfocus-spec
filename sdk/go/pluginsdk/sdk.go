@@ -504,6 +504,12 @@ func (s *Server) GetPluginInfo(
 		return s.handleProviderPluginInfo(ctx, req, provider)
 	}
 
+	return s.pluginInfoDefault()
+}
+
+// pluginInfoDefault answers GetPluginInfo for a plugin without a PluginInfoProvider:
+// the configured PluginInfo when set, otherwise Unimplemented.
+func (s *Server) pluginInfoDefault() (*pbc.GetPluginInfoResponse, error) {
 	// Use configured PluginInfo if available
 	if s.pluginInfo != nil {
 		return s.handleConfiguredPluginInfo()
@@ -518,6 +524,29 @@ func (s *Server) GetPluginInfo(
 	return nil, status.Error(codes.Unimplemented, "GetPluginInfo not implemented")
 }
 
+// handlerStatus classifies an error returned by a plugin's provider handler and returns
+// whether to use the RPC's not-a-provider answer, or else the error for the client. A
+// gRPC status the handler chose (wrapped or not) reaches the client unchanged.
+// Unimplemented selects the default, so a plugin that embeds the generated stub behaves
+// like one that does not implement the interface. Anything else, including plain and
+// Unknown errors, becomes Internal with internalMsg so the error's detail is not exposed.
+func handlerStatus(err error, internalMsg string) (bool, error) {
+	st, ok := status.FromError(err)
+	if !ok || st.Code() == codes.OK || st.Code() == codes.Unknown {
+		return false, status.Error(codes.Internal, internalMsg)
+	}
+	if st.Code() == codes.Unimplemented {
+		return true, nil
+	}
+	return false, st.Err()
+}
+
+// logHandlerFallback records that a handler returned Unimplemented and the SDK default
+// answered instead.
+func (s *Server) logHandlerFallback(rpc string) {
+	s.logger.Debug().Str("rpc", rpc).Msg("handler returned Unimplemented; using the SDK default")
+}
+
 // handleProviderPluginInfo handles GetPluginInfo for plugins implementing PluginInfoProvider.
 func (s *Server) handleProviderPluginInfo(
 	ctx context.Context,
@@ -526,8 +555,13 @@ func (s *Server) handleProviderPluginInfo(
 ) (*pbc.GetPluginInfoResponse, error) {
 	resp, err := provider.GetPluginInfo(ctx, req)
 	if err != nil {
+		useDefault, clientErr := handlerStatus(err, "plugin failed to retrieve metadata")
+		if useDefault {
+			s.logHandlerFallback("GetPluginInfo")
+			return s.pluginInfoDefault()
+		}
 		s.logger.Error().Err(err).Msg("GetPluginInfo handler error")
-		return nil, status.Error(codes.Internal, "plugin failed to retrieve metadata")
+		return nil, clientErr
 	}
 
 	if resp == nil {
@@ -699,22 +733,32 @@ func (s *Server) DryRun(ctx context.Context, req *pbc.DryRunRequest) (*pbc.DryRu
 	handler, ok := s.plugin.(DryRunHandler)
 	if !ok {
 		s.logger.Debug().Msg("DryRun returning Unimplemented (not supported by plugin)")
-		return nil, status.Error(codes.Unimplemented, "plugin does not support DryRun")
+		return nil, dryRunUnsupported()
 	}
 
 	resp, err := handler.HandleDryRun(ctx, req)
 	if err != nil {
+		useDefault, clientErr := handlerStatus(err, "plugin failed to execute DryRun")
+		if useDefault {
+			s.logHandlerFallback("DryRun")
+			return nil, dryRunUnsupported()
+		}
 		s.logger.Error().
 			Err(err).
 			Str(FieldResourceType, req.GetResource().GetResourceType()).
 			Msg("DryRun handler error")
-		return nil, status.Error(codes.Internal, "plugin failed to execute DryRun")
+		return nil, clientErr
 	}
 	if resp == nil {
 		s.logger.Error().Msg("DryRun handler returned a nil response")
 		return nil, status.Error(codes.Internal, "plugin returned a nil response")
 	}
 	return resp, nil
+}
+
+// dryRunUnsupported is the DryRun answer for a plugin without a DryRunHandler.
+func dryRunUnsupported() error {
+	return status.Error(codes.Unimplemented, "plugin does not support DryRun")
 }
 
 // hasRegistry reports whether a real RegistryLookup was configured, as opposed to
@@ -793,23 +837,25 @@ func (s *Server) Supports(ctx context.Context, req *pbc.SupportsRequest) (*pbc.S
 
 	if !ok {
 		// Plugin does not implement SupportsProvider - return default response
-		resp = &pbc.SupportsResponse{
-			Supported: false,
-			Reason:    DefaultSupportsNotImplementedReason,
-		}
+		resp = supportsDefault()
 	} else {
 		// Delegate to plugin's Supports method
 		resp, err = supportsProvider.Supports(ctx, req)
 		if err != nil {
-			// Log the detailed error server-side for debugging
-			s.logger.Error().
-				Str(FieldResourceType, resource.GetResourceType()).
-				Str(FieldProvider, provider).
-				Str(FieldRegion, region).
-				Err(err).
-				Msg("Supports handler error")
-			// Return generic message to client (internal error details not exposed)
-			return nil, status.Error(codes.Internal, "plugin failed to execute")
+			useDefault, clientErr := handlerStatus(err, "plugin failed to execute")
+			if !useDefault {
+				// Log the detailed error server-side for debugging
+				s.logger.Error().
+					Str(FieldResourceType, resource.GetResourceType()).
+					Str(FieldProvider, provider).
+					Str(FieldRegion, region).
+					Err(err).
+					Msg("Supports handler error")
+				// Internal errors carry a generic message (details not exposed)
+				return nil, clientErr
+			}
+			s.logHandlerFallback("Supports")
+			resp = supportsDefault()
 		}
 	}
 
@@ -847,6 +893,14 @@ func (s *Server) Supports(ctx context.Context, req *pbc.SupportsRequest) (*pbc.S
 	return resp, nil
 }
 
+// supportsDefault is the Supports answer for a plugin without a SupportsProvider.
+func supportsDefault() *pbc.SupportsResponse {
+	return &pbc.SupportsResponse{
+		Supported: false,
+		Reason:    DefaultSupportsNotImplementedReason,
+	}
+}
+
 // GetRecommendations implements the gRPC GetRecommendations method.
 // GetRecommendations handles GetRecommendations RPC requests.
 // If the plugin implements RecommendationsProvider, delegates to it.
@@ -866,30 +920,23 @@ func (s *Server) GetRecommendations(
 	// Check if plugin implements RecommendationsProvider
 	recProvider, ok := s.plugin.(RecommendationsProvider)
 	if !ok {
-		// Plugin does not implement recommendations - return empty list per FR-012
-		// Include projection_period from request for client consistency
-		s.logger.Debug().
-			Int(FieldRecommendationCount, 0).
-			Msg("GetRecommendations returning empty response (not implemented)")
-		return &pbc.GetRecommendationsResponse{
-			Recommendations: []*pbc.Recommendation{},
-			Summary: &pbc.RecommendationSummary{
-				TotalRecommendations: 0,
-				ProjectionPeriod:     req.GetProjectionPeriod(),
-			},
-			NextPageToken: "",
-		}, nil
+		return s.recommendationsDefault(req), nil
 	}
 
 	// Delegate to plugin's GetRecommendations method
 	resp, err := recProvider.GetRecommendations(ctx, req)
 	if err != nil {
+		useDefault, clientErr := handlerStatus(err, "plugin failed to execute GetRecommendations")
+		if useDefault {
+			s.logHandlerFallback("GetRecommendations")
+			return s.recommendationsDefault(req), nil
+		}
 		s.logger.Error().
 			Str(FieldFilterCategory, filter.GetCategory().String()).
 			Str(FieldFilterActionType, filter.GetActionType().String()).
 			Err(err).
 			Msg("GetRecommendations handler error")
-		return nil, status.Error(codes.Internal, "plugin failed to execute GetRecommendations")
+		return nil, clientErr
 	}
 
 	// Guard against nil response from plugin.
@@ -918,6 +965,22 @@ func (s *Server) GetRecommendations(
 	return resp, nil
 }
 
+// recommendationsDefault answers GetRecommendations for a plugin without a
+// RecommendationsProvider: an empty list per FR-012, echoing the projection period.
+func (s *Server) recommendationsDefault(req *pbc.GetRecommendationsRequest) *pbc.GetRecommendationsResponse {
+	s.logger.Debug().
+		Int(FieldRecommendationCount, 0).
+		Msg("GetRecommendations returning empty response (not implemented)")
+	return &pbc.GetRecommendationsResponse{
+		Recommendations: []*pbc.Recommendation{},
+		Summary: &pbc.RecommendationSummary{
+			TotalRecommendations: 0,
+			ProjectionPeriod:     req.GetProjectionPeriod(),
+		},
+		NextPageToken: "",
+	}
+}
+
 // GetBudgets implements the gRPC GetBudgets method.
 // GetBudgets handles GetBudgets RPC requests.
 // If the plugin implements BudgetsProvider, delegates to it.
@@ -936,16 +999,21 @@ func (s *Server) GetBudgets(
 	if !ok {
 		// Plugin does not implement budgets - return Unimplemented per spec
 		s.logger.Debug().Msg("GetBudgets returning Unimplemented (not supported by plugin)")
-		return nil, status.Error(codes.Unimplemented, "plugin does not support GetBudgets")
+		return nil, budgetsUnsupported()
 	}
 
 	// Delegate to plugin's GetBudgets method
 	resp, err := budgetsProvider.GetBudgets(ctx, req)
 	if err != nil {
+		useDefault, clientErr := handlerStatus(err, "plugin failed to execute GetBudgets")
+		if useDefault {
+			s.logHandlerFallback("GetBudgets")
+			return nil, budgetsUnsupported()
+		}
 		s.logger.Error().
 			Err(err).
 			Msg("GetBudgets handler error")
-		return nil, status.Error(codes.Internal, "plugin failed to execute GetBudgets")
+		return nil, clientErr
 	}
 
 	// Guard against nil response from plugin
@@ -969,6 +1037,11 @@ func (s *Server) GetBudgets(
 	return resp, nil
 }
 
+// budgetsUnsupported is the GetBudgets answer for a plugin without a BudgetsProvider.
+func budgetsUnsupported() error {
+	return status.Error(codes.Unimplemented, "plugin does not support GetBudgets")
+}
+
 // DismissRecommendation implements the gRPC DismissRecommendation method.
 // If the plugin implements DismissProvider, delegates to it.
 // Otherwise returns Unimplemented error per specification.
@@ -986,17 +1059,22 @@ func (s *Server) DismissRecommendation(
 	if !ok {
 		// Plugin does not implement dismiss - return Unimplemented per spec
 		s.logger.Debug().Msg("DismissRecommendation returning Unimplemented (not supported by plugin)")
-		return nil, status.Error(codes.Unimplemented, "plugin does not support DismissRecommendation")
+		return nil, dismissUnsupported()
 	}
 
 	// Delegate to plugin's DismissRecommendation method
 	resp, err := dismissProvider.DismissRecommendation(ctx, req)
 	if err != nil {
+		useDefault, clientErr := handlerStatus(err, "plugin failed to execute DismissRecommendation")
+		if useDefault {
+			s.logHandlerFallback("DismissRecommendation")
+			return nil, dismissUnsupported()
+		}
 		s.logger.Error().
 			Str("recommendation_id", req.GetRecommendationId()).
 			Err(err).
 			Msg("DismissRecommendation handler error")
-		return nil, status.Error(codes.Internal, "plugin failed to execute DismissRecommendation")
+		return nil, clientErr
 	}
 
 	// Guard against nil response from plugin
@@ -1011,6 +1089,29 @@ func (s *Server) DismissRecommendation(
 		Bool("success", resp.GetSuccess()).
 		Msg("DismissRecommendation completed")
 
+	return resp, nil
+}
+
+// dismissUnsupported is the DismissRecommendation answer for a plugin without a
+// DismissProvider.
+func dismissUnsupported() error {
+	return status.Error(codes.Unimplemented, "plugin does not support DismissRecommendation")
+}
+
+// finishCustomBatchCost checks and logs a response from a plugin's BatchCostHandler.
+func (s *Server) finishCustomBatchCost(
+	startedAt time.Time,
+	resp *pbc.BatchCostResponse,
+) (*pbc.BatchCostResponse, error) {
+	if resp == nil {
+		return nil, status.Error(codes.Internal, "plugin returned nil BatchCost response")
+	}
+	if resp.GetMaxBatchSize() <= 0 {
+		resp.MaxBatchSize = s.maxBatchSize
+	}
+
+	errorCount := logBatchCostResourceErrors(s.logger, resp.GetResults())
+	logBatchCostCompletion(s.logger, startedAt, resp, errorCount)
 	return resp, nil
 }
 
@@ -1036,20 +1137,15 @@ func (s *Server) BatchCost(
 	if handler, hasCustomHandler := s.plugin.(BatchCostHandler); hasCustomHandler {
 		req.QueryType = NormalizeCostQueryType(req.GetQueryType())
 		resp, batchErr := handler.BatchCost(ctx, req)
-		if batchErr != nil {
+		if batchErr == nil {
+			return s.finishCustomBatchCost(startedAt, resp)
+		}
+		useDefault, clientErr := handlerStatus(batchErr, "plugin failed to execute BatchCost")
+		if !useDefault {
 			s.logger.Error().Err(batchErr).Msg("BatchCost handler error")
-			return nil, status.Error(codes.Internal, "plugin failed to execute BatchCost")
+			return nil, clientErr
 		}
-		if resp == nil {
-			return nil, status.Error(codes.Internal, "plugin returned nil BatchCost response")
-		}
-		if resp.GetMaxBatchSize() <= 0 {
-			resp.MaxBatchSize = s.maxBatchSize
-		}
-
-		errorCount := logBatchCostResourceErrors(s.logger, resp.GetResults())
-		logBatchCostCompletion(s.logger, startedAt, resp, errorCount)
-		return resp, nil
+		s.logHandlerFallback("BatchCost")
 	}
 
 	// Fallback path: skip proto.Clone because batchCostFallback is read-only on req.
@@ -1058,6 +1154,22 @@ func (s *Server) BatchCost(
 	errorCount := logBatchCostResourceErrors(s.logger, resp.GetResults())
 	logBatchCostCompletion(s.logger, startedAt, resp, errorCount)
 	return resp, nil
+}
+
+// resolveDefault answers ResolveResourceTypes for a plugin without a
+// ResolveResourceTypesProvider: the TypeRegistry when configured, else an empty response.
+func (s *Server) resolveDefault(req *pbc.ResolveResourceTypesRequest) *pbc.ResolveResourceTypesResponse {
+	if s.typeRegistry != nil {
+		resp := s.typeRegistry.Resolve(req)
+		s.logger.Debug().
+			Int("resolved_count", len(resp.GetMappings())).
+			Msg("ResolveResourceTypes served from TypeRegistry")
+		return resp
+	}
+	s.logger.Debug().
+		Int("resolved_count", 0).
+		Msg("ResolveResourceTypes returning empty response (not implemented)")
+	return &pbc.ResolveResourceTypesResponse{}
 }
 
 // ResolveResourceTypes handles ResolveResourceTypes RPC requests.
@@ -1079,29 +1191,22 @@ func (s *Server) ResolveResourceTypes(
 	// Check if plugin implements ResolveResourceTypesProvider
 	provider, ok := s.plugin.(ResolveResourceTypesProvider)
 	if !ok {
-		// Fallback: check if TypeRegistry is configured
-		if s.typeRegistry != nil {
-			resp := s.typeRegistry.Resolve(req)
-			resolved := len(resp.GetMappings())
-			s.logger.Debug().
-				Int("resolved_count", resolved).
-				Msg("ResolveResourceTypes served from TypeRegistry")
-			return resp, nil
-		}
-		s.logger.Debug().
-			Int("resolved_count", 0).
-			Msg("ResolveResourceTypes returning empty response (not implemented)")
-		return &pbc.ResolveResourceTypesResponse{}, nil
+		return s.resolveDefault(req), nil
 	}
 
 	// Delegate to plugin's ResolveResourceTypes method
 	resp, err := provider.ResolveResourceTypes(ctx, req)
 	if err != nil {
+		useDefault, clientErr := handlerStatus(err, "plugin failed to execute ResolveResourceTypes")
+		if useDefault {
+			s.logHandlerFallback("ResolveResourceTypes")
+			return s.resolveDefault(req), nil
+		}
 		s.logger.Error().
 			Err(err).
 			Str("source_format", req.GetSourceFormat().String()).
 			Msg("ResolveResourceTypes handler error")
-		return nil, status.Error(codes.Internal, "plugin failed to execute ResolveResourceTypes")
+		return nil, clientErr
 	}
 
 	// Guard against nil response from plugin

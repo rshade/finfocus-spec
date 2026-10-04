@@ -1237,7 +1237,27 @@ parallel subtests complete.
 - `TestAllocatorServe_NotRegisteredWithoutProvider/connect` ("server did not shut down in time") flakes on
   `main` too (about 1 in 20 in isolation).
 
+### Handler Status Pattern (599-handler-status-codes)
+
+- `handlerStatus(err, internalMsg)` (`pluginsdk/sdk.go`) classifies provider-handler errors for the eight
+  wrapped RPCs (DryRun, Supports, GetRecommendations, GetBudgets, DismissRecommendation, custom BatchCost,
+  ResolveResourceTypes, provider GetPluginInfo): a real status passes through (`st.Err()`), `Unimplemented`
+  takes the RPC's not-a-provider path, plain/`Unknown`/`OK` errors stay `Internal` with the old message.
+  A new wrapped RPC must use it and share its default path with the `!ok` branch.
+- The generated stub's methods satisfy most provider interfaces, so a plugin embedding
+  `UnimplementedCostSourceServiceServer` reaches the handler path; the `Unimplemented` fallback is what makes
+  it behave like a plain plugin. Capability inference still over-advertises for stub embedders (follow-up).
+- A stub-embedding test plugin must define `Name`, `GetProjectedCost`, `GetActualCost`, `GetPricingSpec`, and
+  `EstimateCost` itself: those collide at the same depth with the stub's RPC methods and drop out of the
+  method set (`stubEmbeddingPlugin` in `handler_status_test.go`).
+- `testing.ConformanceResult` category maps are keyed by raw `TestCategory` values (`rpc_correctness`), not
+  the display names; compare with `plugintesting.CategoryRPCCorrectness`.
+
 ## Active Technologies
+
+- Go 1.27.1 (per go.mod) + google.golang.org/grpc (`status`), connectrpc.com/connect; no new dependencies
+  (599-handler-status-codes)
+- N/A (server-side error classification; no proto change) (599-handler-status-codes)
 
 - Go 1.27.1 (per go.mod) + google.golang.org/protobuf (`proto.CloneOf`), google.golang.org/grpc;
   no new dependencies (598-conformance-sample-resource)
@@ -1439,6 +1459,10 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+
+- 599-handler-status-codes: pluginsdk.Server keeps a handler's gRPC status for the eight wrapped RPCs,
+  answers a handler's Unimplemented with the SDK default (so embedding the generated stub is safe), and
+  keeps Internal with the generic message for plain errors (issue 626)
 
 - 598-conformance-sample-resource: Added SuiteConfig.SampleResource, DefaultSampleResource,
   ConformanceOption, WithSampleResource, RunConformance (plugintesting and pluginsdk), and
