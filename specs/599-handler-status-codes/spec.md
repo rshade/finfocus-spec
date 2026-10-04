@@ -107,7 +107,11 @@ A plugin author reads the plugin SDK README and learns which errors pass through
 ### Edge Cases
 
 - A status error wrapped with `fmt.Errorf("...: %w", err)` is still a real status; it passes
-  through with the code the status carries.
+  through with the code and message the status carries. The wrapping text is never sent, since it
+  may hold internal detail (found by the post-commit security review).
+- A handler that returns `Unimplemented` to refuse a request still gets the SDK default; for
+  `BatchCost` that runs the plugin's own per-resource cost calls, crossing no new boundary. Authors
+  refuse with another code; the README says so.
 - A custom error type that implements `GRPCStatus()` (as the SDK's own `InvalidArgument` errors do)
   passes through.
 - A custom error whose `GRPCStatus()` reports `OK` (`status.Error(codes.OK, ...)` itself is nil) has

@@ -253,8 +253,12 @@ func TestHandlerStatusPassThrough(t *testing.T) {
 		},
 		{
 			"wrapped status",
-			fmt.Errorf("lookup: %w", status.Error(codes.InvalidArgument, "bad region")),
-			codes.InvalidArgument, "bad region",
+			fmt.Errorf(
+				"query postgres://admin:s3cret@db/prices: %w",
+				status.Error(codes.InvalidArgument, "bad region"),
+			),
+			codes.InvalidArgument,
+			"bad region",
 		},
 		{"GRPCStatus type", grpcStatusError{msg: "not configured"}, codes.FailedPrecondition, "not configured"},
 	}
@@ -267,7 +271,7 @@ func TestHandlerStatusPassThrough(t *testing.T) {
 				st, ok := status.FromError(err)
 				require.True(t, ok)
 				assert.Equal(t, he.wantCode, st.Code())
-				assert.Contains(t, st.Message(), he.wantMsg)
+				assert.Equal(t, he.wantMsg, st.Message(), "only the status's own message is sent")
 			})
 		}
 	}
