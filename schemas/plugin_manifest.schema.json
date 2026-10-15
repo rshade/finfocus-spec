@@ -350,6 +350,7 @@
     },
     
     "configuration": {
+      "description": "Not the host delivery channel. Hosts read plugin settings from GetPluginInfoResponse.settings and inject each value under the advertised environment variable. The SDK does not read this object.",
       "type": "object",
       "properties": {
         "schema": {

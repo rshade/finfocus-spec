@@ -795,6 +795,75 @@ func (DismissalReason) EnumDescriptor() ([]byte, []int) {
 	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{11}
 }
 
+// PluginSettingType is the kind of value a plugin setting accepts.
+type PluginSettingType int32
+
+const (
+	// PLUGIN_SETTING_TYPE_UNSPECIFIED is the zero value and is not a setting type.
+	PluginSettingType_PLUGIN_SETTING_TYPE_UNSPECIFIED PluginSettingType = 0
+	// PLUGIN_SETTING_TYPE_STRING is free-form text.
+	PluginSettingType_PLUGIN_SETTING_TYPE_STRING PluginSettingType = 1
+	// PLUGIN_SETTING_TYPE_INT is a signed 64-bit integer, written as decimal text.
+	PluginSettingType_PLUGIN_SETTING_TYPE_INT PluginSettingType = 2
+	// PLUGIN_SETTING_TYPE_BOOL is the lowercase word true or false.
+	PluginSettingType_PLUGIN_SETTING_TYPE_BOOL PluginSettingType = 3
+	// PLUGIN_SETTING_TYPE_ENUM is one of PluginSetting.enum_values.
+	PluginSettingType_PLUGIN_SETTING_TYPE_ENUM PluginSettingType = 4
+	// PLUGIN_SETTING_TYPE_URL is an absolute URL with a scheme and a host.
+	PluginSettingType_PLUGIN_SETTING_TYPE_URL PluginSettingType = 5
+	// PLUGIN_SETTING_TYPE_DURATION is a Go duration (for example 30s or 1h30m).
+	PluginSettingType_PLUGIN_SETTING_TYPE_DURATION PluginSettingType = 6
+)
+
+// Enum value maps for PluginSettingType.
+var (
+	PluginSettingType_name = map[int32]string{
+		0: "PLUGIN_SETTING_TYPE_UNSPECIFIED",
+		1: "PLUGIN_SETTING_TYPE_STRING",
+		2: "PLUGIN_SETTING_TYPE_INT",
+		3: "PLUGIN_SETTING_TYPE_BOOL",
+		4: "PLUGIN_SETTING_TYPE_ENUM",
+		5: "PLUGIN_SETTING_TYPE_URL",
+		6: "PLUGIN_SETTING_TYPE_DURATION",
+	}
+	PluginSettingType_value = map[string]int32{
+		"PLUGIN_SETTING_TYPE_UNSPECIFIED": 0,
+		"PLUGIN_SETTING_TYPE_STRING":      1,
+		"PLUGIN_SETTING_TYPE_INT":         2,
+		"PLUGIN_SETTING_TYPE_BOOL":        3,
+		"PLUGIN_SETTING_TYPE_ENUM":        4,
+		"PLUGIN_SETTING_TYPE_URL":         5,
+		"PLUGIN_SETTING_TYPE_DURATION":    6,
+	}
+)
+
+func (x PluginSettingType) Enum() *PluginSettingType {
+	p := new(PluginSettingType)
+	*p = x
+	return p
+}
+
+func (x PluginSettingType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (PluginSettingType) Descriptor() protoreflect.EnumDescriptor {
+	return file_finfocus_v1_costsource_proto_enumTypes[12].Descriptor()
+}
+
+func (PluginSettingType) Type() protoreflect.EnumType {
+	return &file_finfocus_v1_costsource_proto_enumTypes[12]
+}
+
+func (x PluginSettingType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use PluginSettingType.Descriptor instead.
+func (PluginSettingType) EnumDescriptor() ([]byte, []int) {
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{12}
+}
+
 // Status represents the health check status
 type HealthCheckResponse_Status int32
 
@@ -832,11 +901,11 @@ func (x HealthCheckResponse_Status) String() string {
 }
 
 func (HealthCheckResponse_Status) Descriptor() protoreflect.EnumDescriptor {
-	return file_finfocus_v1_costsource_proto_enumTypes[12].Descriptor()
+	return file_finfocus_v1_costsource_proto_enumTypes[13].Descriptor()
 }
 
 func (HealthCheckResponse_Status) Type() protoreflect.EnumType {
-	return &file_finfocus_v1_costsource_proto_enumTypes[12]
+	return &file_finfocus_v1_costsource_proto_enumTypes[13]
 }
 
 func (x HealthCheckResponse_Status) Number() protoreflect.EnumNumber {
@@ -6109,6 +6178,124 @@ func (*GetPluginInfoRequest) Descriptor() ([]byte, []int) {
 	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{51}
 }
 
+// PluginSetting describes one value a plugin reads from its process environment.
+type PluginSetting struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// key is the stable identifier for this setting.
+	// 1-64 bytes matching [a-z][a-z0-9_]*. Unique within the list.
+	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	// type is the kind of value. UNSPECIFIED is rejected.
+	Type PluginSettingType `protobuf:"varint,2,opt,name=type,proto3,enum=finfocus.v1.PluginSettingType" json:"type,omitempty"`
+	// required means the plugin does not operate correctly without a value.
+	// A non-empty default satisfies required when the host injects nothing.
+	Required bool `protobuf:"varint,3,opt,name=required,proto3" json:"required,omitempty"`
+	// secret is advisory. Hosts must not display, log, or echo the value.
+	// Hosts still apply their own credential rules.
+	Secret bool `protobuf:"varint,4,opt,name=secret,proto3" json:"secret,omitempty"`
+	// default_value is the value the plugin uses when the variable is unset.
+	// Empty means no default, for every type, including string.
+	DefaultValue string `protobuf:"bytes,5,opt,name=default_value,json=defaultValue,proto3" json:"default_value,omitempty"`
+	// description is shown to the person configuring the plugin.
+	// At most 1024 bytes. May be empty.
+	Description string `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
+	// env is the delivery contract. The host injects the value into the plugin
+	// process environment under this name.
+	// 1-128 bytes matching [A-Za-z_][A-Za-z0-9_]*. Unique within the list.
+	Env string `protobuf:"bytes,7,opt,name=env,proto3" json:"env,omitempty"`
+	// enum_values lists the allowed values when type is ENUM.
+	// An enum has 1-32 unique values, each 1-128 bytes.
+	// Other types must leave this empty.
+	EnumValues    []string `protobuf:"bytes,8,rep,name=enum_values,json=enumValues,proto3" json:"enum_values,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PluginSetting) Reset() {
+	*x = PluginSetting{}
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[52]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PluginSetting) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PluginSetting) ProtoMessage() {}
+
+func (x *PluginSetting) ProtoReflect() protoreflect.Message {
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[52]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PluginSetting.ProtoReflect.Descriptor instead.
+func (*PluginSetting) Descriptor() ([]byte, []int) {
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{52}
+}
+
+func (x *PluginSetting) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *PluginSetting) GetType() PluginSettingType {
+	if x != nil {
+		return x.Type
+	}
+	return PluginSettingType_PLUGIN_SETTING_TYPE_UNSPECIFIED
+}
+
+func (x *PluginSetting) GetRequired() bool {
+	if x != nil {
+		return x.Required
+	}
+	return false
+}
+
+func (x *PluginSetting) GetSecret() bool {
+	if x != nil {
+		return x.Secret
+	}
+	return false
+}
+
+func (x *PluginSetting) GetDefaultValue() string {
+	if x != nil {
+		return x.DefaultValue
+	}
+	return ""
+}
+
+func (x *PluginSetting) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *PluginSetting) GetEnv() string {
+	if x != nil {
+		return x.Env
+	}
+	return ""
+}
+
+func (x *PluginSetting) GetEnumValues() []string {
+	if x != nil {
+		return x.EnumValues
+	}
+	return nil
+}
+
 // GetPluginInfoResponse contains metadata about the plugin for compatibility
 // verification, diagnostics, and graceful degradation handling.
 type GetPluginInfoResponse struct {
@@ -6139,14 +6326,18 @@ type GetPluginInfoResponse struct {
 	// Modern capability format using strongly-typed enums.
 	// Prefer this field for capability queries on newer clients.
 	// SDK auto-populates this based on implemented interfaces.
-	Capabilities  []PluginCapability `protobuf:"varint,6,rep,packed,name=capabilities,proto3,enum=finfocus.v1.PluginCapability" json:"capabilities,omitempty"`
+	Capabilities []PluginCapability `protobuf:"varint,6,rep,packed,name=capabilities,proto3,enum=finfocus.v1.PluginCapability" json:"capabilities,omitempty"`
+	// settings lists the values this plugin reads from its process environment.
+	// An empty list means the plugin advertises no settings.
+	// Entries are not copied into metadata. Secret values do not belong in metadata.
+	Settings      []*PluginSetting `protobuf:"bytes,7,rep,name=settings,proto3" json:"settings,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetPluginInfoResponse) Reset() {
 	*x = GetPluginInfoResponse{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[52]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6158,7 +6349,7 @@ func (x *GetPluginInfoResponse) String() string {
 func (*GetPluginInfoResponse) ProtoMessage() {}
 
 func (x *GetPluginInfoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[52]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6171,7 +6362,7 @@ func (x *GetPluginInfoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPluginInfoResponse.ProtoReflect.Descriptor instead.
 func (*GetPluginInfoResponse) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{52}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *GetPluginInfoResponse) GetName() string {
@@ -6216,6 +6407,13 @@ func (x *GetPluginInfoResponse) GetCapabilities() []PluginCapability {
 	return nil
 }
 
+func (x *GetPluginInfoResponse) GetSettings() []*PluginSetting {
+	if x != nil {
+		return x.Settings
+	}
+	return nil
+}
+
 // FieldMapping represents the support status for a single FOCUS field.
 // Used in DryRunResponse to report which fields a plugin would populate
 // for a given resource type.
@@ -6244,7 +6442,7 @@ type FieldMapping struct {
 
 func (x *FieldMapping) Reset() {
 	*x = FieldMapping{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[53]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6256,7 +6454,7 @@ func (x *FieldMapping) String() string {
 func (*FieldMapping) ProtoMessage() {}
 
 func (x *FieldMapping) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[53]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6269,7 +6467,7 @@ func (x *FieldMapping) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FieldMapping.ProtoReflect.Descriptor instead.
 func (*FieldMapping) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{53}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *FieldMapping) GetFieldName() string {
@@ -6319,7 +6517,7 @@ type DryRunRequest struct {
 
 func (x *DryRunRequest) Reset() {
 	*x = DryRunRequest{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[54]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6331,7 +6529,7 @@ func (x *DryRunRequest) String() string {
 func (*DryRunRequest) ProtoMessage() {}
 
 func (x *DryRunRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[54]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6344,7 +6542,7 @@ func (x *DryRunRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DryRunRequest.ProtoReflect.Descriptor instead.
 func (*DryRunRequest) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{54}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *DryRunRequest) GetResource() *ResourceDescriptor {
@@ -6390,7 +6588,7 @@ type DryRunResponse struct {
 
 func (x *DryRunResponse) Reset() {
 	*x = DryRunResponse{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[55]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6402,7 +6600,7 @@ func (x *DryRunResponse) String() string {
 func (*DryRunResponse) ProtoMessage() {}
 
 func (x *DryRunResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[55]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6415,7 +6613,7 @@ func (x *DryRunResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DryRunResponse.ProtoReflect.Descriptor instead.
 func (*DryRunResponse) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{55}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *DryRunResponse) GetFieldMappings() []*FieldMapping {
@@ -6474,7 +6672,7 @@ type BatchCostRequest struct {
 
 func (x *BatchCostRequest) Reset() {
 	*x = BatchCostRequest{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[56]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6486,7 +6684,7 @@ func (x *BatchCostRequest) String() string {
 func (*BatchCostRequest) ProtoMessage() {}
 
 func (x *BatchCostRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[56]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6499,7 +6697,7 @@ func (x *BatchCostRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchCostRequest.ProtoReflect.Descriptor instead.
 func (*BatchCostRequest) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{56}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *BatchCostRequest) GetResources() []*ResourceDescriptor {
@@ -6551,7 +6749,7 @@ type BatchCostResponse struct {
 
 func (x *BatchCostResponse) Reset() {
 	*x = BatchCostResponse{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[57]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6563,7 +6761,7 @@ func (x *BatchCostResponse) String() string {
 func (*BatchCostResponse) ProtoMessage() {}
 
 func (x *BatchCostResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[57]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6576,7 +6774,7 @@ func (x *BatchCostResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchCostResponse.ProtoReflect.Descriptor instead.
 func (*BatchCostResponse) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{57}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *BatchCostResponse) GetResults() []*ResourceCostResult {
@@ -6612,7 +6810,7 @@ type ResourceCostResult struct {
 
 func (x *ResourceCostResult) Reset() {
 	*x = ResourceCostResult{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[58]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6624,7 +6822,7 @@ func (x *ResourceCostResult) String() string {
 func (*ResourceCostResult) ProtoMessage() {}
 
 func (x *ResourceCostResult) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[58]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6637,7 +6835,7 @@ func (x *ResourceCostResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourceCostResult.ProtoReflect.Descriptor instead.
 func (*ResourceCostResult) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{58}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *ResourceCostResult) GetResource() *ResourceDescriptor {
@@ -6707,7 +6905,7 @@ type CostData struct {
 
 func (x *CostData) Reset() {
 	*x = CostData{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[59]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6719,7 +6917,7 @@ func (x *CostData) String() string {
 func (*CostData) ProtoMessage() {}
 
 func (x *CostData) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[59]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6732,7 +6930,7 @@ func (x *CostData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CostData.ProtoReflect.Descriptor instead.
 func (*CostData) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{59}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *CostData) GetData() isCostData_Data {
@@ -6849,7 +7047,7 @@ type ActualCostData struct {
 
 func (x *ActualCostData) Reset() {
 	*x = ActualCostData{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[60]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6861,7 +7059,7 @@ func (x *ActualCostData) String() string {
 func (*ActualCostData) ProtoMessage() {}
 
 func (x *ActualCostData) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[60]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6874,7 +7072,7 @@ func (x *ActualCostData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActualCostData.ProtoReflect.Descriptor instead.
 func (*ActualCostData) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{60}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *ActualCostData) GetResults() []*ActualCostResult {
@@ -6924,7 +7122,7 @@ type ResourceError struct {
 
 func (x *ResourceError) Reset() {
 	*x = ResourceError{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[61]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6936,7 +7134,7 @@ func (x *ResourceError) String() string {
 func (*ResourceError) ProtoMessage() {}
 
 func (x *ResourceError) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[61]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6949,7 +7147,7 @@ func (x *ResourceError) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourceError.ProtoReflect.Descriptor instead.
 func (*ResourceError) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{61}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *ResourceError) GetCode() int32 {
@@ -6989,7 +7187,7 @@ type ResolveResourceTypesRequest struct {
 
 func (x *ResolveResourceTypesRequest) Reset() {
 	*x = ResolveResourceTypesRequest{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[62]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7001,7 +7199,7 @@ func (x *ResolveResourceTypesRequest) String() string {
 func (*ResolveResourceTypesRequest) ProtoMessage() {}
 
 func (x *ResolveResourceTypesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[62]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7014,7 +7212,7 @@ func (x *ResolveResourceTypesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveResourceTypesRequest.ProtoReflect.Descriptor instead.
 func (*ResolveResourceTypesRequest) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{62}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *ResolveResourceTypesRequest) GetSourceFormat() SourceFormat {
@@ -7061,7 +7259,7 @@ type ResolveResourceTypesResponse struct {
 
 func (x *ResolveResourceTypesResponse) Reset() {
 	*x = ResolveResourceTypesResponse{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[63]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7073,7 +7271,7 @@ func (x *ResolveResourceTypesResponse) String() string {
 func (*ResolveResourceTypesResponse) ProtoMessage() {}
 
 func (x *ResolveResourceTypesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[63]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7086,7 +7284,7 @@ func (x *ResolveResourceTypesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveResourceTypesResponse.ProtoReflect.Descriptor instead.
 func (*ResolveResourceTypesResponse) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{63}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *ResolveResourceTypesResponse) GetMappings() map[string]*ResourceTypeMapping {
@@ -7129,7 +7327,7 @@ type ResourceTypeMapping struct {
 
 func (x *ResourceTypeMapping) Reset() {
 	*x = ResourceTypeMapping{}
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[64]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7141,7 +7339,7 @@ func (x *ResourceTypeMapping) String() string {
 func (*ResourceTypeMapping) ProtoMessage() {}
 
 func (x *ResourceTypeMapping) ProtoReflect() protoreflect.Message {
-	mi := &file_finfocus_v1_costsource_proto_msgTypes[64]
+	mi := &file_finfocus_v1_costsource_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7154,7 +7352,7 @@ func (x *ResourceTypeMapping) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourceTypeMapping.ProtoReflect.Descriptor instead.
 func (*ResourceTypeMapping) Descriptor() ([]byte, []int) {
-	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{64}
+	return file_finfocus_v1_costsource_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *ResourceTypeMapping) GetPulumiToken() string {
@@ -7643,14 +7841,25 @@ const file_finfocus_v1_costsource_proto_rawDesc = "" +
 	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\texpiresAt\x88\x01\x01\x12+\n" +
 	"\x11recommendation_id\x18\x05 \x01(\tR\x10recommendationIdB\r\n" +
 	"\v_expires_at\"\x16\n" +
-	"\x14GetPluginInfoRequest\"\xd4\x02\n" +
+	"\x14GetPluginInfoRequest\"\x83\x02\n" +
+	"\rPluginSetting\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x122\n" +
+	"\x04type\x18\x02 \x01(\x0e2\x1e.finfocus.v1.PluginSettingTypeR\x04type\x12\x1a\n" +
+	"\brequired\x18\x03 \x01(\bR\brequired\x12\x16\n" +
+	"\x06secret\x18\x04 \x01(\bR\x06secret\x12#\n" +
+	"\rdefault_value\x18\x05 \x01(\tR\fdefaultValue\x12 \n" +
+	"\vdescription\x18\x06 \x01(\tR\vdescription\x12\x10\n" +
+	"\x03env\x18\a \x01(\tR\x03env\x12\x1f\n" +
+	"\venum_values\x18\b \x03(\tR\n" +
+	"enumValues\"\x8c\x03\n" +
 	"\x15GetPluginInfoResponse\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\tR\aversion\x12!\n" +
 	"\fspec_version\x18\x03 \x01(\tR\vspecVersion\x12\x1c\n" +
 	"\tproviders\x18\x04 \x03(\tR\tproviders\x12L\n" +
 	"\bmetadata\x18\x05 \x03(\v20.finfocus.v1.GetPluginInfoResponse.MetadataEntryR\bmetadata\x12A\n" +
-	"\fcapabilities\x18\x06 \x03(\x0e2\x1d.finfocus.v1.PluginCapabilityR\fcapabilities\x1a;\n" +
+	"\fcapabilities\x18\x06 \x03(\x0e2\x1d.finfocus.v1.PluginCapabilityR\fcapabilities\x126\n" +
+	"\bsettings\x18\a \x03(\v2\x1a.finfocus.v1.PluginSettingR\bsettings\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xcf\x01\n" +
@@ -7813,7 +8022,15 @@ const file_finfocus_v1_costsource_proto_rawDesc = "" +
 	"%DISMISSAL_REASON_TECHNICAL_CONSTRAINT\x10\x04\x12\x1d\n" +
 	"\x19DISMISSAL_REASON_DEFERRED\x10\x05\x12\x1f\n" +
 	"\x1bDISMISSAL_REASON_INACCURATE\x10\x06\x12\x1a\n" +
-	"\x16DISMISSAL_REASON_OTHER\x10\a2\xfc\b\n" +
+	"\x16DISMISSAL_REASON_OTHER\x10\a*\xf0\x01\n" +
+	"\x11PluginSettingType\x12#\n" +
+	"\x1fPLUGIN_SETTING_TYPE_UNSPECIFIED\x10\x00\x12\x1e\n" +
+	"\x1aPLUGIN_SETTING_TYPE_STRING\x10\x01\x12\x1b\n" +
+	"\x17PLUGIN_SETTING_TYPE_INT\x10\x02\x12\x1c\n" +
+	"\x18PLUGIN_SETTING_TYPE_BOOL\x10\x03\x12\x1c\n" +
+	"\x18PLUGIN_SETTING_TYPE_ENUM\x10\x04\x12\x1b\n" +
+	"\x17PLUGIN_SETTING_TYPE_URL\x10\x05\x12 \n" +
+	"\x1cPLUGIN_SETTING_TYPE_DURATION\x10\x062\xfc\b\n" +
 	"\x11CostSourceService\x12;\n" +
 	"\x04Name\x12\x18.finfocus.v1.NameRequest\x1a\x19.finfocus.v1.NameResponse\x12G\n" +
 	"\bSupports\x12\x1c.finfocus.v1.SupportsRequest\x1a\x1d.finfocus.v1.SupportsResponse\x12V\n" +
@@ -7848,8 +8065,8 @@ func file_finfocus_v1_costsource_proto_rawDescGZIP() []byte {
 	return file_finfocus_v1_costsource_proto_rawDescData
 }
 
-var file_finfocus_v1_costsource_proto_enumTypes = make([]protoimpl.EnumInfo, 13)
-var file_finfocus_v1_costsource_proto_msgTypes = make([]protoimpl.MessageInfo, 89)
+var file_finfocus_v1_costsource_proto_enumTypes = make([]protoimpl.EnumInfo, 14)
+var file_finfocus_v1_costsource_proto_msgTypes = make([]protoimpl.MessageInfo, 90)
 var file_finfocus_v1_costsource_proto_goTypes = []any{
 	(MetricKind)(0),                           // 0: finfocus.v1.MetricKind
 	(FallbackHint)(0),                         // 1: finfocus.v1.FallbackHint
@@ -7863,285 +8080,289 @@ var file_finfocus_v1_costsource_proto_goTypes = []any{
 	(RecommendationSortBy)(0),                 // 9: finfocus.v1.RecommendationSortBy
 	(SortOrder)(0),                            // 10: finfocus.v1.SortOrder
 	(DismissalReason)(0),                      // 11: finfocus.v1.DismissalReason
-	(HealthCheckResponse_Status)(0),           // 12: finfocus.v1.HealthCheckResponse.Status
-	(*NameRequest)(nil),                       // 13: finfocus.v1.NameRequest
-	(*NameResponse)(nil),                      // 14: finfocus.v1.NameResponse
-	(*ImpactMetric)(nil),                      // 15: finfocus.v1.ImpactMetric
-	(*SupportsRequest)(nil),                   // 16: finfocus.v1.SupportsRequest
-	(*SupportsResponse)(nil),                  // 17: finfocus.v1.SupportsResponse
-	(*GetActualCostRequest)(nil),              // 18: finfocus.v1.GetActualCostRequest
-	(*GetActualCostResponse)(nil),             // 19: finfocus.v1.GetActualCostResponse
-	(*GetProjectedCostRequest)(nil),           // 20: finfocus.v1.GetProjectedCostRequest
-	(*GetProjectedCostResponse)(nil),          // 21: finfocus.v1.GetProjectedCostResponse
-	(*PriceOption)(nil),                       // 22: finfocus.v1.PriceOption
-	(*RegionPrice)(nil),                       // 23: finfocus.v1.RegionPrice
-	(*GetPricingSpecRequest)(nil),             // 24: finfocus.v1.GetPricingSpecRequest
-	(*GetPricingSpecResponse)(nil),            // 25: finfocus.v1.GetPricingSpecResponse
-	(*LineageNode)(nil),                       // 26: finfocus.v1.LineageNode
-	(*ResourceDescriptor)(nil),                // 27: finfocus.v1.ResourceDescriptor
-	(*ActualCostResult)(nil),                  // 28: finfocus.v1.ActualCostResult
-	(*UsageMetricHint)(nil),                   // 29: finfocus.v1.UsageMetricHint
-	(*PricingSpec)(nil),                       // 30: finfocus.v1.PricingSpec
-	(*PricingTier)(nil),                       // 31: finfocus.v1.PricingTier
-	(*ErrorDetail)(nil),                       // 32: finfocus.v1.ErrorDetail
-	(*HealthCheckRequest)(nil),                // 33: finfocus.v1.HealthCheckRequest
-	(*HealthCheckResponse)(nil),               // 34: finfocus.v1.HealthCheckResponse
-	(*GetMetricsRequest)(nil),                 // 35: finfocus.v1.GetMetricsRequest
-	(*GetMetricsResponse)(nil),                // 36: finfocus.v1.GetMetricsResponse
-	(*Metric)(nil),                            // 37: finfocus.v1.Metric
-	(*MetricSample)(nil),                      // 38: finfocus.v1.MetricSample
-	(*GetServiceLevelIndicatorsRequest)(nil),  // 39: finfocus.v1.GetServiceLevelIndicatorsRequest
-	(*GetServiceLevelIndicatorsResponse)(nil), // 40: finfocus.v1.GetServiceLevelIndicatorsResponse
-	(*ServiceLevelIndicator)(nil),             // 41: finfocus.v1.ServiceLevelIndicator
-	(*TimeRange)(nil),                         // 42: finfocus.v1.TimeRange
-	(*TelemetryMetadata)(nil),                 // 43: finfocus.v1.TelemetryMetadata
-	(*LogEntry)(nil),                          // 44: finfocus.v1.LogEntry
-	(*ErrorDetails)(nil),                      // 45: finfocus.v1.ErrorDetails
-	(*EstimateCostRequest)(nil),               // 46: finfocus.v1.EstimateCostRequest
-	(*EstimateCostResponse)(nil),              // 47: finfocus.v1.EstimateCostResponse
-	(*GetRecommendationsRequest)(nil),         // 48: finfocus.v1.GetRecommendationsRequest
-	(*GetRecommendationsResponse)(nil),        // 49: finfocus.v1.GetRecommendationsResponse
-	(*RecommendationFilter)(nil),              // 50: finfocus.v1.RecommendationFilter
-	(*Recommendation)(nil),                    // 51: finfocus.v1.Recommendation
-	(*ResourceRecommendationInfo)(nil),        // 52: finfocus.v1.ResourceRecommendationInfo
-	(*ResourceUtilization)(nil),               // 53: finfocus.v1.ResourceUtilization
-	(*RightsizeAction)(nil),                   // 54: finfocus.v1.RightsizeAction
-	(*TerminateAction)(nil),                   // 55: finfocus.v1.TerminateAction
-	(*CommitmentAction)(nil),                  // 56: finfocus.v1.CommitmentAction
-	(*KubernetesAction)(nil),                  // 57: finfocus.v1.KubernetesAction
-	(*KubernetesResources)(nil),               // 58: finfocus.v1.KubernetesResources
-	(*ModifyAction)(nil),                      // 59: finfocus.v1.ModifyAction
-	(*RecommendationImpact)(nil),              // 60: finfocus.v1.RecommendationImpact
-	(*RecommendationSummary)(nil),             // 61: finfocus.v1.RecommendationSummary
-	(*DismissRecommendationRequest)(nil),      // 62: finfocus.v1.DismissRecommendationRequest
-	(*DismissRecommendationResponse)(nil),     // 63: finfocus.v1.DismissRecommendationResponse
-	(*GetPluginInfoRequest)(nil),              // 64: finfocus.v1.GetPluginInfoRequest
-	(*GetPluginInfoResponse)(nil),             // 65: finfocus.v1.GetPluginInfoResponse
-	(*FieldMapping)(nil),                      // 66: finfocus.v1.FieldMapping
-	(*DryRunRequest)(nil),                     // 67: finfocus.v1.DryRunRequest
-	(*DryRunResponse)(nil),                    // 68: finfocus.v1.DryRunResponse
-	(*BatchCostRequest)(nil),                  // 69: finfocus.v1.BatchCostRequest
-	(*BatchCostResponse)(nil),                 // 70: finfocus.v1.BatchCostResponse
-	(*ResourceCostResult)(nil),                // 71: finfocus.v1.ResourceCostResult
-	(*CostData)(nil),                          // 72: finfocus.v1.CostData
-	(*ActualCostData)(nil),                    // 73: finfocus.v1.ActualCostData
-	(*ResourceError)(nil),                     // 74: finfocus.v1.ResourceError
-	(*ResolveResourceTypesRequest)(nil),       // 75: finfocus.v1.ResolveResourceTypesRequest
-	(*ResolveResourceTypesResponse)(nil),      // 76: finfocus.v1.ResolveResourceTypesResponse
-	(*ResourceTypeMapping)(nil),               // 77: finfocus.v1.ResourceTypeMapping
-	nil,                                       // 78: finfocus.v1.SupportsResponse.CapabilitiesEntry
-	nil,                                       // 79: finfocus.v1.GetActualCostRequest.TagsEntry
-	nil,                                       // 80: finfocus.v1.GetProjectedCostResponse.MetadataEntry
-	nil,                                       // 81: finfocus.v1.GetProjectedCostResponse.CostBreakdownEntry
-	nil,                                       // 82: finfocus.v1.LineageNode.MetadataEntry
-	nil,                                       // 83: finfocus.v1.ResourceDescriptor.TagsEntry
-	nil,                                       // 84: finfocus.v1.PricingSpec.PluginMetadataEntry
-	nil,                                       // 85: finfocus.v1.ErrorDetail.DetailsEntry
-	nil,                                       // 86: finfocus.v1.MetricSample.LabelsEntry
-	nil,                                       // 87: finfocus.v1.LogEntry.FieldsEntry
-	nil,                                       // 88: finfocus.v1.RecommendationFilter.TagsEntry
-	nil,                                       // 89: finfocus.v1.Recommendation.MetadataEntry
-	nil,                                       // 90: finfocus.v1.ResourceRecommendationInfo.TagsEntry
-	nil,                                       // 91: finfocus.v1.ResourceUtilization.CustomMetricsEntry
-	nil,                                       // 92: finfocus.v1.ModifyAction.CurrentConfigEntry
-	nil,                                       // 93: finfocus.v1.ModifyAction.RecommendedConfigEntry
-	nil,                                       // 94: finfocus.v1.RecommendationSummary.CountByCategoryEntry
-	nil,                                       // 95: finfocus.v1.RecommendationSummary.SavingsByCategoryEntry
-	nil,                                       // 96: finfocus.v1.RecommendationSummary.CountByActionTypeEntry
-	nil,                                       // 97: finfocus.v1.RecommendationSummary.SavingsByActionTypeEntry
-	nil,                                       // 98: finfocus.v1.GetPluginInfoResponse.MetadataEntry
-	nil,                                       // 99: finfocus.v1.DryRunRequest.SimulationParametersEntry
-	nil,                                       // 100: finfocus.v1.ResolveResourceTypesResponse.MappingsEntry
-	nil,                                       // 101: finfocus.v1.ResourceTypeMapping.PropertyMappingsEntry
-	(PluginCapability)(0),                     // 102: finfocus.v1.PluginCapability
-	(*timestamppb.Timestamp)(nil),             // 103: google.protobuf.Timestamp
-	(GrowthType)(0),                           // 104: finfocus.v1.GrowthType
-	(UsageProfile)(0),                         // 105: finfocus.v1.UsageProfile
-	(FocusPricingCategory)(0),                 // 106: finfocus.v1.FocusPricingCategory
-	(LineageNodeType)(0),                      // 107: finfocus.v1.LineageNodeType
-	(*structpb.Struct)(nil),                   // 108: google.protobuf.Struct
-	(*FocusCostRecord)(nil),                   // 109: finfocus.v1.FocusCostRecord
-	(RecommendationReason)(0),                 // 110: finfocus.v1.RecommendationReason
-	(FieldSupportStatus)(0),                   // 111: finfocus.v1.FieldSupportStatus
-	(CostQueryType)(0),                        // 112: finfocus.v1.CostQueryType
-	(SourceFormat)(0),                         // 113: finfocus.v1.SourceFormat
-	(*GetBudgetsRequest)(nil),                 // 114: finfocus.v1.GetBudgetsRequest
-	(*GetBudgetsResponse)(nil),                // 115: finfocus.v1.GetBudgetsResponse
+	(PluginSettingType)(0),                    // 12: finfocus.v1.PluginSettingType
+	(HealthCheckResponse_Status)(0),           // 13: finfocus.v1.HealthCheckResponse.Status
+	(*NameRequest)(nil),                       // 14: finfocus.v1.NameRequest
+	(*NameResponse)(nil),                      // 15: finfocus.v1.NameResponse
+	(*ImpactMetric)(nil),                      // 16: finfocus.v1.ImpactMetric
+	(*SupportsRequest)(nil),                   // 17: finfocus.v1.SupportsRequest
+	(*SupportsResponse)(nil),                  // 18: finfocus.v1.SupportsResponse
+	(*GetActualCostRequest)(nil),              // 19: finfocus.v1.GetActualCostRequest
+	(*GetActualCostResponse)(nil),             // 20: finfocus.v1.GetActualCostResponse
+	(*GetProjectedCostRequest)(nil),           // 21: finfocus.v1.GetProjectedCostRequest
+	(*GetProjectedCostResponse)(nil),          // 22: finfocus.v1.GetProjectedCostResponse
+	(*PriceOption)(nil),                       // 23: finfocus.v1.PriceOption
+	(*RegionPrice)(nil),                       // 24: finfocus.v1.RegionPrice
+	(*GetPricingSpecRequest)(nil),             // 25: finfocus.v1.GetPricingSpecRequest
+	(*GetPricingSpecResponse)(nil),            // 26: finfocus.v1.GetPricingSpecResponse
+	(*LineageNode)(nil),                       // 27: finfocus.v1.LineageNode
+	(*ResourceDescriptor)(nil),                // 28: finfocus.v1.ResourceDescriptor
+	(*ActualCostResult)(nil),                  // 29: finfocus.v1.ActualCostResult
+	(*UsageMetricHint)(nil),                   // 30: finfocus.v1.UsageMetricHint
+	(*PricingSpec)(nil),                       // 31: finfocus.v1.PricingSpec
+	(*PricingTier)(nil),                       // 32: finfocus.v1.PricingTier
+	(*ErrorDetail)(nil),                       // 33: finfocus.v1.ErrorDetail
+	(*HealthCheckRequest)(nil),                // 34: finfocus.v1.HealthCheckRequest
+	(*HealthCheckResponse)(nil),               // 35: finfocus.v1.HealthCheckResponse
+	(*GetMetricsRequest)(nil),                 // 36: finfocus.v1.GetMetricsRequest
+	(*GetMetricsResponse)(nil),                // 37: finfocus.v1.GetMetricsResponse
+	(*Metric)(nil),                            // 38: finfocus.v1.Metric
+	(*MetricSample)(nil),                      // 39: finfocus.v1.MetricSample
+	(*GetServiceLevelIndicatorsRequest)(nil),  // 40: finfocus.v1.GetServiceLevelIndicatorsRequest
+	(*GetServiceLevelIndicatorsResponse)(nil), // 41: finfocus.v1.GetServiceLevelIndicatorsResponse
+	(*ServiceLevelIndicator)(nil),             // 42: finfocus.v1.ServiceLevelIndicator
+	(*TimeRange)(nil),                         // 43: finfocus.v1.TimeRange
+	(*TelemetryMetadata)(nil),                 // 44: finfocus.v1.TelemetryMetadata
+	(*LogEntry)(nil),                          // 45: finfocus.v1.LogEntry
+	(*ErrorDetails)(nil),                      // 46: finfocus.v1.ErrorDetails
+	(*EstimateCostRequest)(nil),               // 47: finfocus.v1.EstimateCostRequest
+	(*EstimateCostResponse)(nil),              // 48: finfocus.v1.EstimateCostResponse
+	(*GetRecommendationsRequest)(nil),         // 49: finfocus.v1.GetRecommendationsRequest
+	(*GetRecommendationsResponse)(nil),        // 50: finfocus.v1.GetRecommendationsResponse
+	(*RecommendationFilter)(nil),              // 51: finfocus.v1.RecommendationFilter
+	(*Recommendation)(nil),                    // 52: finfocus.v1.Recommendation
+	(*ResourceRecommendationInfo)(nil),        // 53: finfocus.v1.ResourceRecommendationInfo
+	(*ResourceUtilization)(nil),               // 54: finfocus.v1.ResourceUtilization
+	(*RightsizeAction)(nil),                   // 55: finfocus.v1.RightsizeAction
+	(*TerminateAction)(nil),                   // 56: finfocus.v1.TerminateAction
+	(*CommitmentAction)(nil),                  // 57: finfocus.v1.CommitmentAction
+	(*KubernetesAction)(nil),                  // 58: finfocus.v1.KubernetesAction
+	(*KubernetesResources)(nil),               // 59: finfocus.v1.KubernetesResources
+	(*ModifyAction)(nil),                      // 60: finfocus.v1.ModifyAction
+	(*RecommendationImpact)(nil),              // 61: finfocus.v1.RecommendationImpact
+	(*RecommendationSummary)(nil),             // 62: finfocus.v1.RecommendationSummary
+	(*DismissRecommendationRequest)(nil),      // 63: finfocus.v1.DismissRecommendationRequest
+	(*DismissRecommendationResponse)(nil),     // 64: finfocus.v1.DismissRecommendationResponse
+	(*GetPluginInfoRequest)(nil),              // 65: finfocus.v1.GetPluginInfoRequest
+	(*PluginSetting)(nil),                     // 66: finfocus.v1.PluginSetting
+	(*GetPluginInfoResponse)(nil),             // 67: finfocus.v1.GetPluginInfoResponse
+	(*FieldMapping)(nil),                      // 68: finfocus.v1.FieldMapping
+	(*DryRunRequest)(nil),                     // 69: finfocus.v1.DryRunRequest
+	(*DryRunResponse)(nil),                    // 70: finfocus.v1.DryRunResponse
+	(*BatchCostRequest)(nil),                  // 71: finfocus.v1.BatchCostRequest
+	(*BatchCostResponse)(nil),                 // 72: finfocus.v1.BatchCostResponse
+	(*ResourceCostResult)(nil),                // 73: finfocus.v1.ResourceCostResult
+	(*CostData)(nil),                          // 74: finfocus.v1.CostData
+	(*ActualCostData)(nil),                    // 75: finfocus.v1.ActualCostData
+	(*ResourceError)(nil),                     // 76: finfocus.v1.ResourceError
+	(*ResolveResourceTypesRequest)(nil),       // 77: finfocus.v1.ResolveResourceTypesRequest
+	(*ResolveResourceTypesResponse)(nil),      // 78: finfocus.v1.ResolveResourceTypesResponse
+	(*ResourceTypeMapping)(nil),               // 79: finfocus.v1.ResourceTypeMapping
+	nil,                                       // 80: finfocus.v1.SupportsResponse.CapabilitiesEntry
+	nil,                                       // 81: finfocus.v1.GetActualCostRequest.TagsEntry
+	nil,                                       // 82: finfocus.v1.GetProjectedCostResponse.MetadataEntry
+	nil,                                       // 83: finfocus.v1.GetProjectedCostResponse.CostBreakdownEntry
+	nil,                                       // 84: finfocus.v1.LineageNode.MetadataEntry
+	nil,                                       // 85: finfocus.v1.ResourceDescriptor.TagsEntry
+	nil,                                       // 86: finfocus.v1.PricingSpec.PluginMetadataEntry
+	nil,                                       // 87: finfocus.v1.ErrorDetail.DetailsEntry
+	nil,                                       // 88: finfocus.v1.MetricSample.LabelsEntry
+	nil,                                       // 89: finfocus.v1.LogEntry.FieldsEntry
+	nil,                                       // 90: finfocus.v1.RecommendationFilter.TagsEntry
+	nil,                                       // 91: finfocus.v1.Recommendation.MetadataEntry
+	nil,                                       // 92: finfocus.v1.ResourceRecommendationInfo.TagsEntry
+	nil,                                       // 93: finfocus.v1.ResourceUtilization.CustomMetricsEntry
+	nil,                                       // 94: finfocus.v1.ModifyAction.CurrentConfigEntry
+	nil,                                       // 95: finfocus.v1.ModifyAction.RecommendedConfigEntry
+	nil,                                       // 96: finfocus.v1.RecommendationSummary.CountByCategoryEntry
+	nil,                                       // 97: finfocus.v1.RecommendationSummary.SavingsByCategoryEntry
+	nil,                                       // 98: finfocus.v1.RecommendationSummary.CountByActionTypeEntry
+	nil,                                       // 99: finfocus.v1.RecommendationSummary.SavingsByActionTypeEntry
+	nil,                                       // 100: finfocus.v1.GetPluginInfoResponse.MetadataEntry
+	nil,                                       // 101: finfocus.v1.DryRunRequest.SimulationParametersEntry
+	nil,                                       // 102: finfocus.v1.ResolveResourceTypesResponse.MappingsEntry
+	nil,                                       // 103: finfocus.v1.ResourceTypeMapping.PropertyMappingsEntry
+	(PluginCapability)(0),                     // 104: finfocus.v1.PluginCapability
+	(*timestamppb.Timestamp)(nil),             // 105: google.protobuf.Timestamp
+	(GrowthType)(0),                           // 106: finfocus.v1.GrowthType
+	(UsageProfile)(0),                         // 107: finfocus.v1.UsageProfile
+	(FocusPricingCategory)(0),                 // 108: finfocus.v1.FocusPricingCategory
+	(LineageNodeType)(0),                      // 109: finfocus.v1.LineageNodeType
+	(*structpb.Struct)(nil),                   // 110: google.protobuf.Struct
+	(*FocusCostRecord)(nil),                   // 111: finfocus.v1.FocusCostRecord
+	(RecommendationReason)(0),                 // 112: finfocus.v1.RecommendationReason
+	(FieldSupportStatus)(0),                   // 113: finfocus.v1.FieldSupportStatus
+	(CostQueryType)(0),                        // 114: finfocus.v1.CostQueryType
+	(SourceFormat)(0),                         // 115: finfocus.v1.SourceFormat
+	(*GetBudgetsRequest)(nil),                 // 116: finfocus.v1.GetBudgetsRequest
+	(*GetBudgetsResponse)(nil),                // 117: finfocus.v1.GetBudgetsResponse
 }
 var file_finfocus_v1_costsource_proto_depIdxs = []int32{
 	0,   // 0: finfocus.v1.ImpactMetric.kind:type_name -> finfocus.v1.MetricKind
-	27,  // 1: finfocus.v1.SupportsRequest.resource:type_name -> finfocus.v1.ResourceDescriptor
-	78,  // 2: finfocus.v1.SupportsResponse.capabilities:type_name -> finfocus.v1.SupportsResponse.CapabilitiesEntry
+	28,  // 1: finfocus.v1.SupportsRequest.resource:type_name -> finfocus.v1.ResourceDescriptor
+	80,  // 2: finfocus.v1.SupportsResponse.capabilities:type_name -> finfocus.v1.SupportsResponse.CapabilitiesEntry
 	0,   // 3: finfocus.v1.SupportsResponse.supported_metrics:type_name -> finfocus.v1.MetricKind
-	102, // 4: finfocus.v1.SupportsResponse.capabilities_enum:type_name -> finfocus.v1.PluginCapability
-	103, // 5: finfocus.v1.GetActualCostRequest.start:type_name -> google.protobuf.Timestamp
-	103, // 6: finfocus.v1.GetActualCostRequest.end:type_name -> google.protobuf.Timestamp
-	79,  // 7: finfocus.v1.GetActualCostRequest.tags:type_name -> finfocus.v1.GetActualCostRequest.TagsEntry
-	27,  // 8: finfocus.v1.GetActualCostRequest.resource:type_name -> finfocus.v1.ResourceDescriptor
-	28,  // 9: finfocus.v1.GetActualCostResponse.results:type_name -> finfocus.v1.ActualCostResult
+	104, // 4: finfocus.v1.SupportsResponse.capabilities_enum:type_name -> finfocus.v1.PluginCapability
+	105, // 5: finfocus.v1.GetActualCostRequest.start:type_name -> google.protobuf.Timestamp
+	105, // 6: finfocus.v1.GetActualCostRequest.end:type_name -> google.protobuf.Timestamp
+	81,  // 7: finfocus.v1.GetActualCostRequest.tags:type_name -> finfocus.v1.GetActualCostRequest.TagsEntry
+	28,  // 8: finfocus.v1.GetActualCostRequest.resource:type_name -> finfocus.v1.ResourceDescriptor
+	29,  // 9: finfocus.v1.GetActualCostResponse.results:type_name -> finfocus.v1.ActualCostResult
 	1,   // 10: finfocus.v1.GetActualCostResponse.fallback_hint:type_name -> finfocus.v1.FallbackHint
-	68,  // 11: finfocus.v1.GetActualCostResponse.dry_run_result:type_name -> finfocus.v1.DryRunResponse
-	27,  // 12: finfocus.v1.GetProjectedCostRequest.resource:type_name -> finfocus.v1.ResourceDescriptor
-	104, // 13: finfocus.v1.GetProjectedCostRequest.growth_type:type_name -> finfocus.v1.GrowthType
-	105, // 14: finfocus.v1.GetProjectedCostRequest.usage_profile:type_name -> finfocus.v1.UsageProfile
-	15,  // 15: finfocus.v1.GetProjectedCostResponse.impact_metrics:type_name -> finfocus.v1.ImpactMetric
-	104, // 16: finfocus.v1.GetProjectedCostResponse.growth_type:type_name -> finfocus.v1.GrowthType
-	68,  // 17: finfocus.v1.GetProjectedCostResponse.dry_run_result:type_name -> finfocus.v1.DryRunResponse
-	106, // 18: finfocus.v1.GetProjectedCostResponse.pricing_category:type_name -> finfocus.v1.FocusPricingCategory
-	103, // 19: finfocus.v1.GetProjectedCostResponse.expires_at:type_name -> google.protobuf.Timestamp
-	80,  // 20: finfocus.v1.GetProjectedCostResponse.metadata:type_name -> finfocus.v1.GetProjectedCostResponse.MetadataEntry
-	81,  // 21: finfocus.v1.GetProjectedCostResponse.cost_breakdown:type_name -> finfocus.v1.GetProjectedCostResponse.CostBreakdownEntry
-	22,  // 22: finfocus.v1.GetProjectedCostResponse.price_options:type_name -> finfocus.v1.PriceOption
-	23,  // 23: finfocus.v1.GetProjectedCostResponse.region_prices:type_name -> finfocus.v1.RegionPrice
-	106, // 24: finfocus.v1.PriceOption.category:type_name -> finfocus.v1.FocusPricingCategory
-	27,  // 25: finfocus.v1.GetPricingSpecRequest.resource:type_name -> finfocus.v1.ResourceDescriptor
-	30,  // 26: finfocus.v1.GetPricingSpecResponse.spec:type_name -> finfocus.v1.PricingSpec
-	107, // 27: finfocus.v1.LineageNode.type:type_name -> finfocus.v1.LineageNodeType
-	26,  // 28: finfocus.v1.LineageNode.parent:type_name -> finfocus.v1.LineageNode
-	82,  // 29: finfocus.v1.LineageNode.metadata:type_name -> finfocus.v1.LineageNode.MetadataEntry
-	83,  // 30: finfocus.v1.ResourceDescriptor.tags:type_name -> finfocus.v1.ResourceDescriptor.TagsEntry
-	104, // 31: finfocus.v1.ResourceDescriptor.growth_type:type_name -> finfocus.v1.GrowthType
-	26,  // 32: finfocus.v1.ResourceDescriptor.lineage:type_name -> finfocus.v1.LineageNode
-	108, // 33: finfocus.v1.ResourceDescriptor.attributes:type_name -> google.protobuf.Struct
-	103, // 34: finfocus.v1.ActualCostResult.timestamp:type_name -> google.protobuf.Timestamp
-	109, // 35: finfocus.v1.ActualCostResult.focus_record:type_name -> finfocus.v1.FocusCostRecord
-	15,  // 36: finfocus.v1.ActualCostResult.impact_metrics:type_name -> finfocus.v1.ImpactMetric
-	103, // 37: finfocus.v1.ActualCostResult.expires_at:type_name -> google.protobuf.Timestamp
-	26,  // 38: finfocus.v1.ActualCostResult.lineage:type_name -> finfocus.v1.LineageNode
-	29,  // 39: finfocus.v1.PricingSpec.metric_hints:type_name -> finfocus.v1.UsageMetricHint
-	84,  // 40: finfocus.v1.PricingSpec.plugin_metadata:type_name -> finfocus.v1.PricingSpec.PluginMetadataEntry
-	31,  // 41: finfocus.v1.PricingSpec.pricing_tiers:type_name -> finfocus.v1.PricingTier
+	70,  // 11: finfocus.v1.GetActualCostResponse.dry_run_result:type_name -> finfocus.v1.DryRunResponse
+	28,  // 12: finfocus.v1.GetProjectedCostRequest.resource:type_name -> finfocus.v1.ResourceDescriptor
+	106, // 13: finfocus.v1.GetProjectedCostRequest.growth_type:type_name -> finfocus.v1.GrowthType
+	107, // 14: finfocus.v1.GetProjectedCostRequest.usage_profile:type_name -> finfocus.v1.UsageProfile
+	16,  // 15: finfocus.v1.GetProjectedCostResponse.impact_metrics:type_name -> finfocus.v1.ImpactMetric
+	106, // 16: finfocus.v1.GetProjectedCostResponse.growth_type:type_name -> finfocus.v1.GrowthType
+	70,  // 17: finfocus.v1.GetProjectedCostResponse.dry_run_result:type_name -> finfocus.v1.DryRunResponse
+	108, // 18: finfocus.v1.GetProjectedCostResponse.pricing_category:type_name -> finfocus.v1.FocusPricingCategory
+	105, // 19: finfocus.v1.GetProjectedCostResponse.expires_at:type_name -> google.protobuf.Timestamp
+	82,  // 20: finfocus.v1.GetProjectedCostResponse.metadata:type_name -> finfocus.v1.GetProjectedCostResponse.MetadataEntry
+	83,  // 21: finfocus.v1.GetProjectedCostResponse.cost_breakdown:type_name -> finfocus.v1.GetProjectedCostResponse.CostBreakdownEntry
+	23,  // 22: finfocus.v1.GetProjectedCostResponse.price_options:type_name -> finfocus.v1.PriceOption
+	24,  // 23: finfocus.v1.GetProjectedCostResponse.region_prices:type_name -> finfocus.v1.RegionPrice
+	108, // 24: finfocus.v1.PriceOption.category:type_name -> finfocus.v1.FocusPricingCategory
+	28,  // 25: finfocus.v1.GetPricingSpecRequest.resource:type_name -> finfocus.v1.ResourceDescriptor
+	31,  // 26: finfocus.v1.GetPricingSpecResponse.spec:type_name -> finfocus.v1.PricingSpec
+	109, // 27: finfocus.v1.LineageNode.type:type_name -> finfocus.v1.LineageNodeType
+	27,  // 28: finfocus.v1.LineageNode.parent:type_name -> finfocus.v1.LineageNode
+	84,  // 29: finfocus.v1.LineageNode.metadata:type_name -> finfocus.v1.LineageNode.MetadataEntry
+	85,  // 30: finfocus.v1.ResourceDescriptor.tags:type_name -> finfocus.v1.ResourceDescriptor.TagsEntry
+	106, // 31: finfocus.v1.ResourceDescriptor.growth_type:type_name -> finfocus.v1.GrowthType
+	27,  // 32: finfocus.v1.ResourceDescriptor.lineage:type_name -> finfocus.v1.LineageNode
+	110, // 33: finfocus.v1.ResourceDescriptor.attributes:type_name -> google.protobuf.Struct
+	105, // 34: finfocus.v1.ActualCostResult.timestamp:type_name -> google.protobuf.Timestamp
+	111, // 35: finfocus.v1.ActualCostResult.focus_record:type_name -> finfocus.v1.FocusCostRecord
+	16,  // 36: finfocus.v1.ActualCostResult.impact_metrics:type_name -> finfocus.v1.ImpactMetric
+	105, // 37: finfocus.v1.ActualCostResult.expires_at:type_name -> google.protobuf.Timestamp
+	27,  // 38: finfocus.v1.ActualCostResult.lineage:type_name -> finfocus.v1.LineageNode
+	30,  // 39: finfocus.v1.PricingSpec.metric_hints:type_name -> finfocus.v1.UsageMetricHint
+	86,  // 40: finfocus.v1.PricingSpec.plugin_metadata:type_name -> finfocus.v1.PricingSpec.PluginMetadataEntry
+	32,  // 41: finfocus.v1.PricingSpec.pricing_tiers:type_name -> finfocus.v1.PricingTier
 	3,   // 42: finfocus.v1.ErrorDetail.code:type_name -> finfocus.v1.ErrorCode
 	2,   // 43: finfocus.v1.ErrorDetail.category:type_name -> finfocus.v1.ErrorCategory
-	85,  // 44: finfocus.v1.ErrorDetail.details:type_name -> finfocus.v1.ErrorDetail.DetailsEntry
-	103, // 45: finfocus.v1.ErrorDetail.timestamp:type_name -> google.protobuf.Timestamp
-	12,  // 46: finfocus.v1.HealthCheckResponse.status:type_name -> finfocus.v1.HealthCheckResponse.Status
-	103, // 47: finfocus.v1.HealthCheckResponse.last_check_time:type_name -> google.protobuf.Timestamp
-	37,  // 48: finfocus.v1.GetMetricsResponse.metrics:type_name -> finfocus.v1.Metric
-	103, // 49: finfocus.v1.GetMetricsResponse.timestamp:type_name -> google.protobuf.Timestamp
+	87,  // 44: finfocus.v1.ErrorDetail.details:type_name -> finfocus.v1.ErrorDetail.DetailsEntry
+	105, // 45: finfocus.v1.ErrorDetail.timestamp:type_name -> google.protobuf.Timestamp
+	13,  // 46: finfocus.v1.HealthCheckResponse.status:type_name -> finfocus.v1.HealthCheckResponse.Status
+	105, // 47: finfocus.v1.HealthCheckResponse.last_check_time:type_name -> google.protobuf.Timestamp
+	38,  // 48: finfocus.v1.GetMetricsResponse.metrics:type_name -> finfocus.v1.Metric
+	105, // 49: finfocus.v1.GetMetricsResponse.timestamp:type_name -> google.protobuf.Timestamp
 	4,   // 50: finfocus.v1.Metric.type:type_name -> finfocus.v1.MetricType
-	38,  // 51: finfocus.v1.Metric.samples:type_name -> finfocus.v1.MetricSample
-	86,  // 52: finfocus.v1.MetricSample.labels:type_name -> finfocus.v1.MetricSample.LabelsEntry
-	103, // 53: finfocus.v1.MetricSample.timestamp:type_name -> google.protobuf.Timestamp
-	42,  // 54: finfocus.v1.GetServiceLevelIndicatorsRequest.time_range:type_name -> finfocus.v1.TimeRange
-	41,  // 55: finfocus.v1.GetServiceLevelIndicatorsResponse.slis:type_name -> finfocus.v1.ServiceLevelIndicator
-	103, // 56: finfocus.v1.GetServiceLevelIndicatorsResponse.measurement_time:type_name -> google.protobuf.Timestamp
+	39,  // 51: finfocus.v1.Metric.samples:type_name -> finfocus.v1.MetricSample
+	88,  // 52: finfocus.v1.MetricSample.labels:type_name -> finfocus.v1.MetricSample.LabelsEntry
+	105, // 53: finfocus.v1.MetricSample.timestamp:type_name -> google.protobuf.Timestamp
+	43,  // 54: finfocus.v1.GetServiceLevelIndicatorsRequest.time_range:type_name -> finfocus.v1.TimeRange
+	42,  // 55: finfocus.v1.GetServiceLevelIndicatorsResponse.slis:type_name -> finfocus.v1.ServiceLevelIndicator
+	105, // 56: finfocus.v1.GetServiceLevelIndicatorsResponse.measurement_time:type_name -> google.protobuf.Timestamp
 	5,   // 57: finfocus.v1.ServiceLevelIndicator.status:type_name -> finfocus.v1.SLIStatus
-	103, // 58: finfocus.v1.TimeRange.start:type_name -> google.protobuf.Timestamp
-	103, // 59: finfocus.v1.TimeRange.end:type_name -> google.protobuf.Timestamp
-	103, // 60: finfocus.v1.LogEntry.timestamp:type_name -> google.protobuf.Timestamp
-	87,  // 61: finfocus.v1.LogEntry.fields:type_name -> finfocus.v1.LogEntry.FieldsEntry
-	45,  // 62: finfocus.v1.LogEntry.error_details:type_name -> finfocus.v1.ErrorDetails
-	108, // 63: finfocus.v1.EstimateCostRequest.attributes:type_name -> google.protobuf.Struct
-	106, // 64: finfocus.v1.EstimateCostResponse.pricing_category:type_name -> finfocus.v1.FocusPricingCategory
-	103, // 65: finfocus.v1.EstimateCostResponse.expires_at:type_name -> google.protobuf.Timestamp
-	22,  // 66: finfocus.v1.EstimateCostResponse.price_options:type_name -> finfocus.v1.PriceOption
-	23,  // 67: finfocus.v1.EstimateCostResponse.region_prices:type_name -> finfocus.v1.RegionPrice
-	50,  // 68: finfocus.v1.GetRecommendationsRequest.filter:type_name -> finfocus.v1.RecommendationFilter
-	27,  // 69: finfocus.v1.GetRecommendationsRequest.target_resources:type_name -> finfocus.v1.ResourceDescriptor
-	105, // 70: finfocus.v1.GetRecommendationsRequest.usage_profile:type_name -> finfocus.v1.UsageProfile
-	51,  // 71: finfocus.v1.GetRecommendationsResponse.recommendations:type_name -> finfocus.v1.Recommendation
-	61,  // 72: finfocus.v1.GetRecommendationsResponse.summary:type_name -> finfocus.v1.RecommendationSummary
+	105, // 58: finfocus.v1.TimeRange.start:type_name -> google.protobuf.Timestamp
+	105, // 59: finfocus.v1.TimeRange.end:type_name -> google.protobuf.Timestamp
+	105, // 60: finfocus.v1.LogEntry.timestamp:type_name -> google.protobuf.Timestamp
+	89,  // 61: finfocus.v1.LogEntry.fields:type_name -> finfocus.v1.LogEntry.FieldsEntry
+	46,  // 62: finfocus.v1.LogEntry.error_details:type_name -> finfocus.v1.ErrorDetails
+	110, // 63: finfocus.v1.EstimateCostRequest.attributes:type_name -> google.protobuf.Struct
+	108, // 64: finfocus.v1.EstimateCostResponse.pricing_category:type_name -> finfocus.v1.FocusPricingCategory
+	105, // 65: finfocus.v1.EstimateCostResponse.expires_at:type_name -> google.protobuf.Timestamp
+	23,  // 66: finfocus.v1.EstimateCostResponse.price_options:type_name -> finfocus.v1.PriceOption
+	24,  // 67: finfocus.v1.EstimateCostResponse.region_prices:type_name -> finfocus.v1.RegionPrice
+	51,  // 68: finfocus.v1.GetRecommendationsRequest.filter:type_name -> finfocus.v1.RecommendationFilter
+	28,  // 69: finfocus.v1.GetRecommendationsRequest.target_resources:type_name -> finfocus.v1.ResourceDescriptor
+	107, // 70: finfocus.v1.GetRecommendationsRequest.usage_profile:type_name -> finfocus.v1.UsageProfile
+	52,  // 71: finfocus.v1.GetRecommendationsResponse.recommendations:type_name -> finfocus.v1.Recommendation
+	62,  // 72: finfocus.v1.GetRecommendationsResponse.summary:type_name -> finfocus.v1.RecommendationSummary
 	6,   // 73: finfocus.v1.RecommendationFilter.category:type_name -> finfocus.v1.RecommendationCategory
 	7,   // 74: finfocus.v1.RecommendationFilter.action_type:type_name -> finfocus.v1.RecommendationActionType
-	88,  // 75: finfocus.v1.RecommendationFilter.tags:type_name -> finfocus.v1.RecommendationFilter.TagsEntry
+	90,  // 75: finfocus.v1.RecommendationFilter.tags:type_name -> finfocus.v1.RecommendationFilter.TagsEntry
 	8,   // 76: finfocus.v1.RecommendationFilter.priority:type_name -> finfocus.v1.RecommendationPriority
 	9,   // 77: finfocus.v1.RecommendationFilter.sort_by:type_name -> finfocus.v1.RecommendationSortBy
 	10,  // 78: finfocus.v1.RecommendationFilter.sort_order:type_name -> finfocus.v1.SortOrder
 	6,   // 79: finfocus.v1.Recommendation.category:type_name -> finfocus.v1.RecommendationCategory
 	7,   // 80: finfocus.v1.Recommendation.action_type:type_name -> finfocus.v1.RecommendationActionType
-	52,  // 81: finfocus.v1.Recommendation.resource:type_name -> finfocus.v1.ResourceRecommendationInfo
-	54,  // 82: finfocus.v1.Recommendation.rightsize:type_name -> finfocus.v1.RightsizeAction
-	55,  // 83: finfocus.v1.Recommendation.terminate:type_name -> finfocus.v1.TerminateAction
-	56,  // 84: finfocus.v1.Recommendation.commitment:type_name -> finfocus.v1.CommitmentAction
-	57,  // 85: finfocus.v1.Recommendation.kubernetes:type_name -> finfocus.v1.KubernetesAction
-	59,  // 86: finfocus.v1.Recommendation.modify:type_name -> finfocus.v1.ModifyAction
-	60,  // 87: finfocus.v1.Recommendation.impact:type_name -> finfocus.v1.RecommendationImpact
+	53,  // 81: finfocus.v1.Recommendation.resource:type_name -> finfocus.v1.ResourceRecommendationInfo
+	55,  // 82: finfocus.v1.Recommendation.rightsize:type_name -> finfocus.v1.RightsizeAction
+	56,  // 83: finfocus.v1.Recommendation.terminate:type_name -> finfocus.v1.TerminateAction
+	57,  // 84: finfocus.v1.Recommendation.commitment:type_name -> finfocus.v1.CommitmentAction
+	58,  // 85: finfocus.v1.Recommendation.kubernetes:type_name -> finfocus.v1.KubernetesAction
+	60,  // 86: finfocus.v1.Recommendation.modify:type_name -> finfocus.v1.ModifyAction
+	61,  // 87: finfocus.v1.Recommendation.impact:type_name -> finfocus.v1.RecommendationImpact
 	8,   // 88: finfocus.v1.Recommendation.priority:type_name -> finfocus.v1.RecommendationPriority
-	103, // 89: finfocus.v1.Recommendation.created_at:type_name -> google.protobuf.Timestamp
-	89,  // 90: finfocus.v1.Recommendation.metadata:type_name -> finfocus.v1.Recommendation.MetadataEntry
-	110, // 91: finfocus.v1.Recommendation.primary_reason:type_name -> finfocus.v1.RecommendationReason
-	110, // 92: finfocus.v1.Recommendation.secondary_reasons:type_name -> finfocus.v1.RecommendationReason
-	90,  // 93: finfocus.v1.ResourceRecommendationInfo.tags:type_name -> finfocus.v1.ResourceRecommendationInfo.TagsEntry
-	53,  // 94: finfocus.v1.ResourceRecommendationInfo.utilization:type_name -> finfocus.v1.ResourceUtilization
-	91,  // 95: finfocus.v1.ResourceUtilization.custom_metrics:type_name -> finfocus.v1.ResourceUtilization.CustomMetricsEntry
-	53,  // 96: finfocus.v1.RightsizeAction.projected_utilization:type_name -> finfocus.v1.ResourceUtilization
-	58,  // 97: finfocus.v1.KubernetesAction.current_requests:type_name -> finfocus.v1.KubernetesResources
-	58,  // 98: finfocus.v1.KubernetesAction.recommended_requests:type_name -> finfocus.v1.KubernetesResources
-	58,  // 99: finfocus.v1.KubernetesAction.current_limits:type_name -> finfocus.v1.KubernetesResources
-	58,  // 100: finfocus.v1.KubernetesAction.recommended_limits:type_name -> finfocus.v1.KubernetesResources
-	92,  // 101: finfocus.v1.ModifyAction.current_config:type_name -> finfocus.v1.ModifyAction.CurrentConfigEntry
-	93,  // 102: finfocus.v1.ModifyAction.recommended_config:type_name -> finfocus.v1.ModifyAction.RecommendedConfigEntry
-	94,  // 103: finfocus.v1.RecommendationSummary.count_by_category:type_name -> finfocus.v1.RecommendationSummary.CountByCategoryEntry
-	95,  // 104: finfocus.v1.RecommendationSummary.savings_by_category:type_name -> finfocus.v1.RecommendationSummary.SavingsByCategoryEntry
-	96,  // 105: finfocus.v1.RecommendationSummary.count_by_action_type:type_name -> finfocus.v1.RecommendationSummary.CountByActionTypeEntry
-	97,  // 106: finfocus.v1.RecommendationSummary.savings_by_action_type:type_name -> finfocus.v1.RecommendationSummary.SavingsByActionTypeEntry
+	105, // 89: finfocus.v1.Recommendation.created_at:type_name -> google.protobuf.Timestamp
+	91,  // 90: finfocus.v1.Recommendation.metadata:type_name -> finfocus.v1.Recommendation.MetadataEntry
+	112, // 91: finfocus.v1.Recommendation.primary_reason:type_name -> finfocus.v1.RecommendationReason
+	112, // 92: finfocus.v1.Recommendation.secondary_reasons:type_name -> finfocus.v1.RecommendationReason
+	92,  // 93: finfocus.v1.ResourceRecommendationInfo.tags:type_name -> finfocus.v1.ResourceRecommendationInfo.TagsEntry
+	54,  // 94: finfocus.v1.ResourceRecommendationInfo.utilization:type_name -> finfocus.v1.ResourceUtilization
+	93,  // 95: finfocus.v1.ResourceUtilization.custom_metrics:type_name -> finfocus.v1.ResourceUtilization.CustomMetricsEntry
+	54,  // 96: finfocus.v1.RightsizeAction.projected_utilization:type_name -> finfocus.v1.ResourceUtilization
+	59,  // 97: finfocus.v1.KubernetesAction.current_requests:type_name -> finfocus.v1.KubernetesResources
+	59,  // 98: finfocus.v1.KubernetesAction.recommended_requests:type_name -> finfocus.v1.KubernetesResources
+	59,  // 99: finfocus.v1.KubernetesAction.current_limits:type_name -> finfocus.v1.KubernetesResources
+	59,  // 100: finfocus.v1.KubernetesAction.recommended_limits:type_name -> finfocus.v1.KubernetesResources
+	94,  // 101: finfocus.v1.ModifyAction.current_config:type_name -> finfocus.v1.ModifyAction.CurrentConfigEntry
+	95,  // 102: finfocus.v1.ModifyAction.recommended_config:type_name -> finfocus.v1.ModifyAction.RecommendedConfigEntry
+	96,  // 103: finfocus.v1.RecommendationSummary.count_by_category:type_name -> finfocus.v1.RecommendationSummary.CountByCategoryEntry
+	97,  // 104: finfocus.v1.RecommendationSummary.savings_by_category:type_name -> finfocus.v1.RecommendationSummary.SavingsByCategoryEntry
+	98,  // 105: finfocus.v1.RecommendationSummary.count_by_action_type:type_name -> finfocus.v1.RecommendationSummary.CountByActionTypeEntry
+	99,  // 106: finfocus.v1.RecommendationSummary.savings_by_action_type:type_name -> finfocus.v1.RecommendationSummary.SavingsByActionTypeEntry
 	11,  // 107: finfocus.v1.DismissRecommendationRequest.reason:type_name -> finfocus.v1.DismissalReason
-	103, // 108: finfocus.v1.DismissRecommendationRequest.expires_at:type_name -> google.protobuf.Timestamp
-	103, // 109: finfocus.v1.DismissRecommendationResponse.dismissed_at:type_name -> google.protobuf.Timestamp
-	103, // 110: finfocus.v1.DismissRecommendationResponse.expires_at:type_name -> google.protobuf.Timestamp
-	98,  // 111: finfocus.v1.GetPluginInfoResponse.metadata:type_name -> finfocus.v1.GetPluginInfoResponse.MetadataEntry
-	102, // 112: finfocus.v1.GetPluginInfoResponse.capabilities:type_name -> finfocus.v1.PluginCapability
-	111, // 113: finfocus.v1.FieldMapping.support_status:type_name -> finfocus.v1.FieldSupportStatus
-	27,  // 114: finfocus.v1.DryRunRequest.resource:type_name -> finfocus.v1.ResourceDescriptor
-	99,  // 115: finfocus.v1.DryRunRequest.simulation_parameters:type_name -> finfocus.v1.DryRunRequest.SimulationParametersEntry
-	66,  // 116: finfocus.v1.DryRunResponse.field_mappings:type_name -> finfocus.v1.FieldMapping
-	27,  // 117: finfocus.v1.BatchCostRequest.resources:type_name -> finfocus.v1.ResourceDescriptor
-	112, // 118: finfocus.v1.BatchCostRequest.query_type:type_name -> finfocus.v1.CostQueryType
-	103, // 119: finfocus.v1.BatchCostRequest.start:type_name -> google.protobuf.Timestamp
-	103, // 120: finfocus.v1.BatchCostRequest.end:type_name -> google.protobuf.Timestamp
-	71,  // 121: finfocus.v1.BatchCostResponse.results:type_name -> finfocus.v1.ResourceCostResult
-	27,  // 122: finfocus.v1.ResourceCostResult.resource:type_name -> finfocus.v1.ResourceDescriptor
-	72,  // 123: finfocus.v1.ResourceCostResult.cost_data:type_name -> finfocus.v1.CostData
-	74,  // 124: finfocus.v1.ResourceCostResult.error:type_name -> finfocus.v1.ResourceError
-	73,  // 125: finfocus.v1.CostData.actual_cost:type_name -> finfocus.v1.ActualCostData
-	21,  // 126: finfocus.v1.CostData.projected_cost:type_name -> finfocus.v1.GetProjectedCostResponse
-	47,  // 127: finfocus.v1.CostData.estimate:type_name -> finfocus.v1.EstimateCostResponse
-	68,  // 128: finfocus.v1.CostData.dry_run_result:type_name -> finfocus.v1.DryRunResponse
-	28,  // 129: finfocus.v1.ActualCostData.results:type_name -> finfocus.v1.ActualCostResult
-	1,   // 130: finfocus.v1.ActualCostData.fallback_hint:type_name -> finfocus.v1.FallbackHint
-	113, // 131: finfocus.v1.ResolveResourceTypesRequest.source_format:type_name -> finfocus.v1.SourceFormat
-	100, // 132: finfocus.v1.ResolveResourceTypesResponse.mappings:type_name -> finfocus.v1.ResolveResourceTypesResponse.MappingsEntry
-	103, // 133: finfocus.v1.ResolveResourceTypesResponse.expires_at:type_name -> google.protobuf.Timestamp
-	101, // 134: finfocus.v1.ResourceTypeMapping.property_mappings:type_name -> finfocus.v1.ResourceTypeMapping.PropertyMappingsEntry
-	77,  // 135: finfocus.v1.ResolveResourceTypesResponse.MappingsEntry.value:type_name -> finfocus.v1.ResourceTypeMapping
-	13,  // 136: finfocus.v1.CostSourceService.Name:input_type -> finfocus.v1.NameRequest
-	16,  // 137: finfocus.v1.CostSourceService.Supports:input_type -> finfocus.v1.SupportsRequest
-	18,  // 138: finfocus.v1.CostSourceService.GetActualCost:input_type -> finfocus.v1.GetActualCostRequest
-	20,  // 139: finfocus.v1.CostSourceService.GetProjectedCost:input_type -> finfocus.v1.GetProjectedCostRequest
-	24,  // 140: finfocus.v1.CostSourceService.GetPricingSpec:input_type -> finfocus.v1.GetPricingSpecRequest
-	46,  // 141: finfocus.v1.CostSourceService.EstimateCost:input_type -> finfocus.v1.EstimateCostRequest
-	48,  // 142: finfocus.v1.CostSourceService.GetRecommendations:input_type -> finfocus.v1.GetRecommendationsRequest
-	62,  // 143: finfocus.v1.CostSourceService.DismissRecommendation:input_type -> finfocus.v1.DismissRecommendationRequest
-	114, // 144: finfocus.v1.CostSourceService.GetBudgets:input_type -> finfocus.v1.GetBudgetsRequest
-	64,  // 145: finfocus.v1.CostSourceService.GetPluginInfo:input_type -> finfocus.v1.GetPluginInfoRequest
-	67,  // 146: finfocus.v1.CostSourceService.DryRun:input_type -> finfocus.v1.DryRunRequest
-	69,  // 147: finfocus.v1.CostSourceService.BatchCost:input_type -> finfocus.v1.BatchCostRequest
-	75,  // 148: finfocus.v1.CostSourceService.ResolveResourceTypes:input_type -> finfocus.v1.ResolveResourceTypesRequest
-	33,  // 149: finfocus.v1.ObservabilityService.HealthCheck:input_type -> finfocus.v1.HealthCheckRequest
-	35,  // 150: finfocus.v1.ObservabilityService.GetMetrics:input_type -> finfocus.v1.GetMetricsRequest
-	39,  // 151: finfocus.v1.ObservabilityService.GetServiceLevelIndicators:input_type -> finfocus.v1.GetServiceLevelIndicatorsRequest
-	14,  // 152: finfocus.v1.CostSourceService.Name:output_type -> finfocus.v1.NameResponse
-	17,  // 153: finfocus.v1.CostSourceService.Supports:output_type -> finfocus.v1.SupportsResponse
-	19,  // 154: finfocus.v1.CostSourceService.GetActualCost:output_type -> finfocus.v1.GetActualCostResponse
-	21,  // 155: finfocus.v1.CostSourceService.GetProjectedCost:output_type -> finfocus.v1.GetProjectedCostResponse
-	25,  // 156: finfocus.v1.CostSourceService.GetPricingSpec:output_type -> finfocus.v1.GetPricingSpecResponse
-	47,  // 157: finfocus.v1.CostSourceService.EstimateCost:output_type -> finfocus.v1.EstimateCostResponse
-	49,  // 158: finfocus.v1.CostSourceService.GetRecommendations:output_type -> finfocus.v1.GetRecommendationsResponse
-	63,  // 159: finfocus.v1.CostSourceService.DismissRecommendation:output_type -> finfocus.v1.DismissRecommendationResponse
-	115, // 160: finfocus.v1.CostSourceService.GetBudgets:output_type -> finfocus.v1.GetBudgetsResponse
-	65,  // 161: finfocus.v1.CostSourceService.GetPluginInfo:output_type -> finfocus.v1.GetPluginInfoResponse
-	68,  // 162: finfocus.v1.CostSourceService.DryRun:output_type -> finfocus.v1.DryRunResponse
-	70,  // 163: finfocus.v1.CostSourceService.BatchCost:output_type -> finfocus.v1.BatchCostResponse
-	76,  // 164: finfocus.v1.CostSourceService.ResolveResourceTypes:output_type -> finfocus.v1.ResolveResourceTypesResponse
-	34,  // 165: finfocus.v1.ObservabilityService.HealthCheck:output_type -> finfocus.v1.HealthCheckResponse
-	36,  // 166: finfocus.v1.ObservabilityService.GetMetrics:output_type -> finfocus.v1.GetMetricsResponse
-	40,  // 167: finfocus.v1.ObservabilityService.GetServiceLevelIndicators:output_type -> finfocus.v1.GetServiceLevelIndicatorsResponse
-	152, // [152:168] is the sub-list for method output_type
-	136, // [136:152] is the sub-list for method input_type
-	136, // [136:136] is the sub-list for extension type_name
-	136, // [136:136] is the sub-list for extension extendee
-	0,   // [0:136] is the sub-list for field type_name
+	105, // 108: finfocus.v1.DismissRecommendationRequest.expires_at:type_name -> google.protobuf.Timestamp
+	105, // 109: finfocus.v1.DismissRecommendationResponse.dismissed_at:type_name -> google.protobuf.Timestamp
+	105, // 110: finfocus.v1.DismissRecommendationResponse.expires_at:type_name -> google.protobuf.Timestamp
+	12,  // 111: finfocus.v1.PluginSetting.type:type_name -> finfocus.v1.PluginSettingType
+	100, // 112: finfocus.v1.GetPluginInfoResponse.metadata:type_name -> finfocus.v1.GetPluginInfoResponse.MetadataEntry
+	104, // 113: finfocus.v1.GetPluginInfoResponse.capabilities:type_name -> finfocus.v1.PluginCapability
+	66,  // 114: finfocus.v1.GetPluginInfoResponse.settings:type_name -> finfocus.v1.PluginSetting
+	113, // 115: finfocus.v1.FieldMapping.support_status:type_name -> finfocus.v1.FieldSupportStatus
+	28,  // 116: finfocus.v1.DryRunRequest.resource:type_name -> finfocus.v1.ResourceDescriptor
+	101, // 117: finfocus.v1.DryRunRequest.simulation_parameters:type_name -> finfocus.v1.DryRunRequest.SimulationParametersEntry
+	68,  // 118: finfocus.v1.DryRunResponse.field_mappings:type_name -> finfocus.v1.FieldMapping
+	28,  // 119: finfocus.v1.BatchCostRequest.resources:type_name -> finfocus.v1.ResourceDescriptor
+	114, // 120: finfocus.v1.BatchCostRequest.query_type:type_name -> finfocus.v1.CostQueryType
+	105, // 121: finfocus.v1.BatchCostRequest.start:type_name -> google.protobuf.Timestamp
+	105, // 122: finfocus.v1.BatchCostRequest.end:type_name -> google.protobuf.Timestamp
+	73,  // 123: finfocus.v1.BatchCostResponse.results:type_name -> finfocus.v1.ResourceCostResult
+	28,  // 124: finfocus.v1.ResourceCostResult.resource:type_name -> finfocus.v1.ResourceDescriptor
+	74,  // 125: finfocus.v1.ResourceCostResult.cost_data:type_name -> finfocus.v1.CostData
+	76,  // 126: finfocus.v1.ResourceCostResult.error:type_name -> finfocus.v1.ResourceError
+	75,  // 127: finfocus.v1.CostData.actual_cost:type_name -> finfocus.v1.ActualCostData
+	22,  // 128: finfocus.v1.CostData.projected_cost:type_name -> finfocus.v1.GetProjectedCostResponse
+	48,  // 129: finfocus.v1.CostData.estimate:type_name -> finfocus.v1.EstimateCostResponse
+	70,  // 130: finfocus.v1.CostData.dry_run_result:type_name -> finfocus.v1.DryRunResponse
+	29,  // 131: finfocus.v1.ActualCostData.results:type_name -> finfocus.v1.ActualCostResult
+	1,   // 132: finfocus.v1.ActualCostData.fallback_hint:type_name -> finfocus.v1.FallbackHint
+	115, // 133: finfocus.v1.ResolveResourceTypesRequest.source_format:type_name -> finfocus.v1.SourceFormat
+	102, // 134: finfocus.v1.ResolveResourceTypesResponse.mappings:type_name -> finfocus.v1.ResolveResourceTypesResponse.MappingsEntry
+	105, // 135: finfocus.v1.ResolveResourceTypesResponse.expires_at:type_name -> google.protobuf.Timestamp
+	103, // 136: finfocus.v1.ResourceTypeMapping.property_mappings:type_name -> finfocus.v1.ResourceTypeMapping.PropertyMappingsEntry
+	79,  // 137: finfocus.v1.ResolveResourceTypesResponse.MappingsEntry.value:type_name -> finfocus.v1.ResourceTypeMapping
+	14,  // 138: finfocus.v1.CostSourceService.Name:input_type -> finfocus.v1.NameRequest
+	17,  // 139: finfocus.v1.CostSourceService.Supports:input_type -> finfocus.v1.SupportsRequest
+	19,  // 140: finfocus.v1.CostSourceService.GetActualCost:input_type -> finfocus.v1.GetActualCostRequest
+	21,  // 141: finfocus.v1.CostSourceService.GetProjectedCost:input_type -> finfocus.v1.GetProjectedCostRequest
+	25,  // 142: finfocus.v1.CostSourceService.GetPricingSpec:input_type -> finfocus.v1.GetPricingSpecRequest
+	47,  // 143: finfocus.v1.CostSourceService.EstimateCost:input_type -> finfocus.v1.EstimateCostRequest
+	49,  // 144: finfocus.v1.CostSourceService.GetRecommendations:input_type -> finfocus.v1.GetRecommendationsRequest
+	63,  // 145: finfocus.v1.CostSourceService.DismissRecommendation:input_type -> finfocus.v1.DismissRecommendationRequest
+	116, // 146: finfocus.v1.CostSourceService.GetBudgets:input_type -> finfocus.v1.GetBudgetsRequest
+	65,  // 147: finfocus.v1.CostSourceService.GetPluginInfo:input_type -> finfocus.v1.GetPluginInfoRequest
+	69,  // 148: finfocus.v1.CostSourceService.DryRun:input_type -> finfocus.v1.DryRunRequest
+	71,  // 149: finfocus.v1.CostSourceService.BatchCost:input_type -> finfocus.v1.BatchCostRequest
+	77,  // 150: finfocus.v1.CostSourceService.ResolveResourceTypes:input_type -> finfocus.v1.ResolveResourceTypesRequest
+	34,  // 151: finfocus.v1.ObservabilityService.HealthCheck:input_type -> finfocus.v1.HealthCheckRequest
+	36,  // 152: finfocus.v1.ObservabilityService.GetMetrics:input_type -> finfocus.v1.GetMetricsRequest
+	40,  // 153: finfocus.v1.ObservabilityService.GetServiceLevelIndicators:input_type -> finfocus.v1.GetServiceLevelIndicatorsRequest
+	15,  // 154: finfocus.v1.CostSourceService.Name:output_type -> finfocus.v1.NameResponse
+	18,  // 155: finfocus.v1.CostSourceService.Supports:output_type -> finfocus.v1.SupportsResponse
+	20,  // 156: finfocus.v1.CostSourceService.GetActualCost:output_type -> finfocus.v1.GetActualCostResponse
+	22,  // 157: finfocus.v1.CostSourceService.GetProjectedCost:output_type -> finfocus.v1.GetProjectedCostResponse
+	26,  // 158: finfocus.v1.CostSourceService.GetPricingSpec:output_type -> finfocus.v1.GetPricingSpecResponse
+	48,  // 159: finfocus.v1.CostSourceService.EstimateCost:output_type -> finfocus.v1.EstimateCostResponse
+	50,  // 160: finfocus.v1.CostSourceService.GetRecommendations:output_type -> finfocus.v1.GetRecommendationsResponse
+	64,  // 161: finfocus.v1.CostSourceService.DismissRecommendation:output_type -> finfocus.v1.DismissRecommendationResponse
+	117, // 162: finfocus.v1.CostSourceService.GetBudgets:output_type -> finfocus.v1.GetBudgetsResponse
+	67,  // 163: finfocus.v1.CostSourceService.GetPluginInfo:output_type -> finfocus.v1.GetPluginInfoResponse
+	70,  // 164: finfocus.v1.CostSourceService.DryRun:output_type -> finfocus.v1.DryRunResponse
+	72,  // 165: finfocus.v1.CostSourceService.BatchCost:output_type -> finfocus.v1.BatchCostResponse
+	78,  // 166: finfocus.v1.CostSourceService.ResolveResourceTypes:output_type -> finfocus.v1.ResolveResourceTypesResponse
+	35,  // 167: finfocus.v1.ObservabilityService.HealthCheck:output_type -> finfocus.v1.HealthCheckResponse
+	37,  // 168: finfocus.v1.ObservabilityService.GetMetrics:output_type -> finfocus.v1.GetMetricsResponse
+	41,  // 169: finfocus.v1.ObservabilityService.GetServiceLevelIndicators:output_type -> finfocus.v1.GetServiceLevelIndicatorsResponse
+	154, // [154:170] is the sub-list for method output_type
+	138, // [138:154] is the sub-list for method input_type
+	138, // [138:138] is the sub-list for extension type_name
+	138, // [138:138] is the sub-list for extension extendee
+	0,   // [0:138] is the sub-list for field type_name
 }
 
 func init() { file_finfocus_v1_costsource_proto_init() }
@@ -8166,11 +8387,11 @@ func file_finfocus_v1_costsource_proto_init() {
 	file_finfocus_v1_costsource_proto_msgTypes[47].OneofWrappers = []any{}
 	file_finfocus_v1_costsource_proto_msgTypes[49].OneofWrappers = []any{}
 	file_finfocus_v1_costsource_proto_msgTypes[50].OneofWrappers = []any{}
-	file_finfocus_v1_costsource_proto_msgTypes[58].OneofWrappers = []any{
+	file_finfocus_v1_costsource_proto_msgTypes[59].OneofWrappers = []any{
 		(*ResourceCostResult_CostData)(nil),
 		(*ResourceCostResult_Error)(nil),
 	}
-	file_finfocus_v1_costsource_proto_msgTypes[59].OneofWrappers = []any{
+	file_finfocus_v1_costsource_proto_msgTypes[60].OneofWrappers = []any{
 		(*CostData_ActualCost)(nil),
 		(*CostData_ProjectedCost)(nil),
 		(*CostData_Estimate)(nil),
@@ -8181,8 +8402,8 @@ func file_finfocus_v1_costsource_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_finfocus_v1_costsource_proto_rawDesc), len(file_finfocus_v1_costsource_proto_rawDesc)),
-			NumEnums:      13,
-			NumMessages:   89,
+			NumEnums:      14,
+			NumMessages:   90,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

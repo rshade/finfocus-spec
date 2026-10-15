@@ -7,6 +7,7 @@ import (
 	"maps"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
+	plugintesting "github.com/rshade/finfocus-spec/sdk/go/testing"
 )
 
 // PluginInfo holds metadata about a plugin that can be reported via GetPluginInfo RPC.
@@ -39,6 +40,11 @@ type PluginInfo struct {
 	// When nil or empty, capabilities are auto-discovered from implemented interfaces.
 	// This allows plugins to override auto-discovery if needed.
 	Capabilities []pbc.PluginCapability
+
+	// Settings lists the values this plugin reads from its process environment.
+	// Empty means the plugin advertises no settings. Entries are not copied
+	// into Metadata. Secret values do not belong in Metadata.
+	Settings []*pbc.PluginSetting
 }
 
 // PluginInfoOption is a functional option for configuring PluginInfo.
@@ -145,6 +151,15 @@ func WithCapabilities(capabilities ...pbc.PluginCapability) PluginInfoOption {
 	}
 }
 
+// WithSettings sets the settings list returned by GetPluginInfo.
+// Each entry is cloned, nils are kept, and declaration order is preserved.
+// Secret values stay on the list and are not copied into metadata.
+func WithSettings(settings ...*pbc.PluginSetting) PluginInfoOption {
+	return func(info *PluginInfo) {
+		info.Settings = clonePluginSettings(settings)
+	}
+}
+
 // Validate checks that the PluginInfo has all required fields and they are valid.
 // Returns an error if validation fails. Returns an error if info is nil.
 //
@@ -181,6 +196,12 @@ func (info *PluginInfo) Validate() error {
 
 	if _, err := ParseScorerLimits(info.Metadata); err != nil {
 		return fmt.Errorf("plugin info validation failed for plugin %q: %w", info.Name, err)
+	}
+
+	if len(info.Settings) > 0 {
+		if err := plugintesting.ValidatePluginSettings(info.Settings); err != nil {
+			return fmt.Errorf("plugin info validation failed for plugin %q: %w", info.Name, err)
+		}
 	}
 
 	return nil

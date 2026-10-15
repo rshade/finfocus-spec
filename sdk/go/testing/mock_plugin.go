@@ -224,6 +224,9 @@ type MockPlugin struct {
 	PluginVersion string            // Plugin version (e.g., "v1.0.0")
 	SpecVersion   string            // Spec version this plugin implements (e.g., "v0.4.11")
 	Metadata      map[string]string // Optional key-value metadata
+	// Settings is copied onto GetPluginInfo when non-nil, in order.
+	// The mock does not validate the list. Nil leaves the list empty.
+	Settings []*pbc.PluginSetting
 
 	// Behavior configuration for GetPluginInfo
 	ShouldErrorOnGetPluginInfo bool
@@ -446,13 +449,22 @@ func (m *MockPlugin) GetPluginInfo(
 		return nil, status.Error(codes.Internal, "mock error: get plugin info operation failed")
 	}
 
-	return &pbc.GetPluginInfoResponse{
+	resp := &pbc.GetPluginInfoResponse{
 		Name:        m.PluginName,
 		Version:     m.PluginVersion,
 		SpecVersion: m.SpecVersion,
 		Providers:   m.SupportedProviders,
 		Metadata:    m.Metadata,
-	}, nil
+	}
+	if m.Settings != nil {
+		resp.Settings = make([]*pbc.PluginSetting, len(m.Settings))
+		for i, setting := range m.Settings {
+			if setting != nil {
+				resp.Settings[i] = proto.CloneOf(setting)
+			}
+		}
+	}
+	return resp, nil
 }
 
 // DryRun returns field mapping information for introspection without actual cost retrieval.

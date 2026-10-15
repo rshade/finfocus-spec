@@ -555,6 +555,36 @@ config := pluginsdk.ServeConfig{
 }
 ```
 
+### Settings
+
+`WithSettings` clones each entry. Declaration order is the response order. The host reads
+`GetPluginInfoResponse.settings` and injects each value under `env`. An empty `default_value`
+means no default. `secret` tells the host to keep the value off screens and logs. Put neither
+setting keys nor secret values in `Metadata`. An empty list means no settings. `PluginInfo.Validate`
+rejects a malformed list, and `Serve` returns that error before it listens. A `PluginInfoProvider`
+that returns a malformed list fails the RPC with `codes.Internal` and the message
+`plugin settings are invalid`.
+
+```go
+info := pluginsdk.NewPluginInfo("jev", "v1.0.0",
+    pluginsdk.WithSettings(
+        &pbc.PluginSetting{
+            Key:      "api_key",
+            Type:     pbc.PluginSettingType_PLUGIN_SETTING_TYPE_STRING,
+            Required: true,
+            Secret:   true,
+            Env:      "TYPESAFE_API_KEY",
+        },
+        &pbc.PluginSetting{
+            Key:          "timeout",
+            Type:         pbc.PluginSettingType_PLUGIN_SETTING_TYPE_DURATION,
+            DefaultValue: "30s",
+            Env:          "JEV_TIMEOUT",
+        },
+    ),
+)
+```
+
 ### Dynamic Metadata (Advanced)
 
 If your plugin needs to determine metadata at runtime (e.g., list of providers depends on

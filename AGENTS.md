@@ -31,6 +31,11 @@
 ## Active Technologies
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf,
+  google.golang.org/grpc, connectrpc.com/connect, buf v1.32.1; no new dependencies
+  (601-plugin-info-settings)
+- N/A (one repeated PluginSetting list on GetPluginInfoResponse) (601-plugin-info-settings)
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf,
   buf v1.32.1; no new dependencies (597-actual-cost-resource-descriptor)
 - N/A (one optional ResourceDescriptor on GetActualCostRequest) (597-actual-cost-resource-descriptor)
 
@@ -73,6 +78,11 @@
 
 ## Recent Changes
 
+- 601-plugin-info-settings: Added PluginSetting and GetPluginInfoResponse.settings (field 7)
+  so a plugin can advertise the settings it reads and the environment variable a host injects.
+  pluginsdk.WithSettings and ValidatePluginSettings gate the list; the manifest configuration
+  object stays and is not the delivery channel (issue 635)
+
 - 597-actual-cost-resource-descriptor: Added GetActualCostRequest.resource (field 11, a
   ResourceDescriptor) with the fallback and tags-precedence rules, descriptor validation in
   pluginsdk.ValidateActualCostRequest and plugintesting.ValidateGetActualCostRequest, mock FOCUS
@@ -104,6 +114,9 @@
 
 - Issue: `make lint` and `make validate` may time out on this project.
   Solution: Run `golangci-lint run` directly for faster Go linting results, or `make test` for unit tests.
+- Issue: `.specify/scripts/bash/update-agent-context.sh` strips the leading dash and space from
+  wrapped Recent Changes bullets and can truncate Active Technologies lines.
+  Solution: Edit CLAUDE.md, AGENTS.md, and GEMINI.md by hand. Leave that script unrun.
 
 ## Workflow Optimizations
 

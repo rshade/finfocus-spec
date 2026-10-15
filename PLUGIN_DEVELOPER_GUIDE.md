@@ -116,6 +116,34 @@ func (p *MyPlugin) GetRecommendations(ctx context.Context, req *pbc.GetRecommend
 }
 ```
 
+**Settings**. Advertise the values the plugin reads with `pluginsdk.WithSettings`, or return
+`settings` from `PluginInfoProvider`. The host injects each value into the environment variable
+named by `env`. An empty `default_value` means the setting has no default. `secret` is a display
+hint. Setting keys, defaults, and secret values stay out of the legacy metadata map. An empty
+list means the plugin advertises no settings. A malformed list fails `Serve` before listen. A
+provider that returns a malformed list gets `codes.Internal` and the message
+`plugin settings are invalid`.
+
+```go
+info := pluginsdk.NewPluginInfo("typesafe", "v1.2.0",
+    pluginsdk.WithSettings(
+        &pbc.PluginSetting{
+            Key:      "api_key",
+            Type:     pbc.PluginSettingType_PLUGIN_SETTING_TYPE_STRING,
+            Required: true,
+            Secret:   true,
+            Env:      "TYPESAFE_API_KEY",
+        },
+        &pbc.PluginSetting{
+            Key:          "timeout",
+            Type:         pbc.PluginSettingType_PLUGIN_SETTING_TYPE_DURATION,
+            DefaultValue: "30s",
+            Env:          "JEV_TIMEOUT",
+        },
+    ),
+)
+```
+
 #### 2. Granular Capability Discovery (`Supports`)
 
 Even if a plugin supports a feature globally (e.g., Recommendations), it may only support
