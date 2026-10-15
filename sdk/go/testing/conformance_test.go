@@ -2557,6 +2557,8 @@ func createGetPluginInfoValidResponseTest() func(*plugintesting.TestHarness) plu
 			}
 		}
 
+		issues = appendSettingsIssue(issues, resp.GetSettings())
+
 		if len(issues) > 0 {
 			return plugintesting.TestResult{
 				Method:   "GetPluginInfo",
@@ -2580,6 +2582,13 @@ func createGetPluginInfoValidResponseTest() func(*plugintesting.TestHarness) plu
 			),
 		}
 	}
+}
+
+func appendSettingsIssue(issues []string, settings []*pbc.PluginSetting) []string {
+	if err := plugintesting.ValidatePluginSettings(settings); err != nil {
+		return append(issues, err.Error())
+	}
+	return issues
 }
 
 func createGetPluginInfoPerformanceTest() func(*plugintesting.TestHarness) plugintesting.TestResult {

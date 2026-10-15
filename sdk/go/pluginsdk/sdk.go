@@ -604,6 +604,9 @@ func (s *Server) handleProviderPluginInfo(
 	out.Metadata = s.withLegacyCapabilityMetadata(out.GetCapabilities(), out.GetMetadata(), false)
 	out.Metadata = s.applyPerRequestCredentialMetadata(out.GetMetadata())
 
+	if settingsErr := s.rejectBadSettings(out.GetSettings()); settingsErr != nil {
+		return nil, settingsErr
+	}
 	return out, nil
 }
 
@@ -631,6 +634,14 @@ func (s *Server) handleConfiguredPluginInfo() (*pbc.GetPluginInfoResponse, error
 	metadata = s.withLegacyCapabilityMetadata(capabilities, metadata, true)
 	metadata = s.applyPerRequestCredentialMetadata(metadata)
 
+	var settings []*pbc.PluginSetting
+	if len(s.pluginInfo.Settings) > 0 {
+		if err := s.rejectBadSettings(s.pluginInfo.Settings); err != nil {
+			return nil, err
+		}
+		settings = clonePluginSettings(s.pluginInfo.Settings)
+	}
+
 	return &pbc.GetPluginInfoResponse{
 		Name:         s.pluginInfo.Name,
 		Version:      s.pluginInfo.Version,
@@ -638,6 +649,7 @@ func (s *Server) handleConfiguredPluginInfo() (*pbc.GetPluginInfoResponse, error
 		Providers:    providers,
 		Metadata:     metadata,
 		Capabilities: capabilities,
+		Settings:     settings,
 	}, nil
 }
 

@@ -54,6 +54,11 @@ tools to create a robust ecosystem of cost-estimation plugins.
 ## Active Technologies
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf,
+  google.golang.org/grpc, connectrpc.com/connect, buf v1.32.1; no new dependencies
+  (601-plugin-info-settings)
+- N/A (one repeated PluginSetting list on GetPluginInfoResponse) (601-plugin-info-settings)
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf,
   buf v1.32.1; no new dependencies (597-actual-cost-resource-descriptor)
 - N/A (one optional ResourceDescriptor on GetActualCostRequest) (597-actual-cost-resource-descriptor)
 

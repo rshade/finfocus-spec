@@ -785,6 +785,9 @@ cd schemas && /init            # JSON Schema validation
 
 - Issue: `make lint` and `make validate` may time out on this project.
   Solution: Run `golangci-lint run` directly for faster Go linting results, or `make test` for unit tests.
+- Issue: `.specify/scripts/bash/update-agent-context.sh` strips the leading dash and space from
+  wrapped Recent Changes bullets and can truncate Active Technologies lines.
+  Solution: Edit CLAUDE.md, AGENTS.md, and GEMINI.md by hand. Leave that script unrun.
 
 ### Workflow Optimizations (Updated)
 
@@ -1253,7 +1256,30 @@ parallel subtests complete.
 - `testing.ConformanceResult` category maps are keyed by raw `TestCategory` values (`rpc_correctness`), not
   the display names; compare with `plugintesting.CategoryRPCCorrectness`.
 
+### Plugin Settings Pattern (601-plugin-info-settings)
+
+- `GetPluginInfoResponse.settings` is field 7. `PluginSettingType` is UNSPECIFIED, STRING, INT, BOOL,
+  ENUM, URL, DURATION. `PluginSetting` fields are key=1, type=2, required=3, secret=4, default_value=5,
+  description=6, env=7, enum_values=8.
+- Hosts read the list and inject each value under `env`. The SDK does not read the environment and does
+  not read the manifest `configuration` object. Settings are never copied into legacy metadata.
+- Rules live in `sdk/go/testing/plugin_settings.go` (`ValidatePluginSettings`). `pluginsdk` aliases
+  `ErrInvalidPluginSettings` and calls it. `PluginInfo.Validate` runs it only when `len(Settings) > 0`.
+  An empty or nil list is valid and stays at 0 allocs/op.
+- A bad list fails `Serve` before listen (`errors.Is` `ErrInvalidPluginSettings`). A bad provider list
+  returns `codes.Internal` with the message `plugin settings are invalid`. The log holds the rule text.
+- `WithSettings` clones with `proto.CloneOf`. `secret` is advisory. Validation text may quote `key` and
+  `env`. It never quotes `default_value`, `description`, or an enum value.
+- `make generate` can reformat comments in untouched `*.connect.go` files. Restore those with
+  `git checkout`. In a worktree, `buf breaking --against '.git#branch=main'` can fail to read the git
+  object; archive `origin/main` and run `buf breaking` against that directory.
+
 ## Active Technologies
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf,
+  google.golang.org/grpc, connectrpc.com/connect, buf v1.32.1; no new dependencies
+  (601-plugin-info-settings)
+- N/A (one repeated PluginSetting list on GetPluginInfoResponse) (601-plugin-info-settings)
 
 - Go 1.27.1 (per go.mod) + google.golang.org/grpc (`status`), connectrpc.com/connect; no new dependencies
   (600-handler-status-codes)
@@ -1459,6 +1485,11 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+
+- 601-plugin-info-settings: Added PluginSetting and GetPluginInfoResponse.settings (field 7)
+  so a plugin can advertise the settings it reads and the environment variable a host injects.
+  pluginsdk.WithSettings and ValidatePluginSettings gate the list; the manifest configuration
+  object stays and is not the delivery channel (issue 635)
 
 - 600-handler-status-codes: pluginsdk.Server keeps a handler's gRPC status for the eight wrapped RPCs,
   answers a handler's Unimplemented with the SDK default (so embedding the generated stub is safe), and

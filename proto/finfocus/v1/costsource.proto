@@ -1981,6 +1981,53 @@ message DismissRecommendationResponse {
 // Currently empty but may be extended in the future.
 message GetPluginInfoRequest {}
 
+// PluginSettingType is the kind of value a plugin setting accepts.
+enum PluginSettingType {
+  // PLUGIN_SETTING_TYPE_UNSPECIFIED is the zero value and is not a setting type.
+  PLUGIN_SETTING_TYPE_UNSPECIFIED = 0;
+  // PLUGIN_SETTING_TYPE_STRING is free-form text.
+  PLUGIN_SETTING_TYPE_STRING = 1;
+  // PLUGIN_SETTING_TYPE_INT is a signed 64-bit integer, written as decimal text.
+  PLUGIN_SETTING_TYPE_INT = 2;
+  // PLUGIN_SETTING_TYPE_BOOL is the lowercase word true or false.
+  PLUGIN_SETTING_TYPE_BOOL = 3;
+  // PLUGIN_SETTING_TYPE_ENUM is one of PluginSetting.enum_values.
+  PLUGIN_SETTING_TYPE_ENUM = 4;
+  // PLUGIN_SETTING_TYPE_URL is an absolute URL with a scheme and a host.
+  PLUGIN_SETTING_TYPE_URL = 5;
+  // PLUGIN_SETTING_TYPE_DURATION is a Go duration (for example 30s or 1h30m).
+  PLUGIN_SETTING_TYPE_DURATION = 6;
+}
+
+// PluginSetting describes one value a plugin reads from its process environment.
+message PluginSetting {
+  // key is the stable identifier for this setting.
+  // 1-64 bytes matching [a-z][a-z0-9_]*. Unique within the list.
+  string key = 1;
+  // type is the kind of value. UNSPECIFIED is rejected.
+  PluginSettingType type = 2;
+  // required means the plugin does not operate correctly without a value.
+  // A non-empty default satisfies required when the host injects nothing.
+  bool required = 3;
+  // secret is advisory. Hosts must not display, log, or echo the value.
+  // Hosts still apply their own credential rules.
+  bool secret = 4;
+  // default_value is the value the plugin uses when the variable is unset.
+  // Empty means no default, for every type, including string.
+  string default_value = 5;
+  // description is shown to the person configuring the plugin.
+  // At most 1024 bytes. May be empty.
+  string description = 6;
+  // env is the delivery contract. The host injects the value into the plugin
+  // process environment under this name.
+  // 1-128 bytes matching [A-Za-z_][A-Za-z0-9_]*. Unique within the list.
+  string env = 7;
+  // enum_values lists the allowed values when type is ENUM.
+  // An enum has 1-32 unique values, each 1-128 bytes.
+  // Other types must leave this empty.
+  repeated string enum_values = 8;
+}
+
 // GetPluginInfoResponse contains metadata about the plugin for compatibility
 // verification, diagnostics, and graceful degradation handling.
 message GetPluginInfoResponse {
@@ -2011,6 +2058,10 @@ message GetPluginInfoResponse {
   // Prefer this field for capability queries on newer clients.
   // SDK auto-populates this based on implemented interfaces.
   repeated PluginCapability capabilities = 6;
+  // settings lists the values this plugin reads from its process environment.
+  // An empty list means the plugin advertises no settings.
+  // Entries are not copied into metadata. Secret values do not belong in metadata.
+  repeated PluginSetting settings = 7;
 }
 
 // =============================================================================
