@@ -788,6 +788,9 @@ cd schemas && /init            # JSON Schema validation
 - Issue: `.specify/scripts/bash/update-agent-context.sh` strips the leading dash and space from
   wrapped Recent Changes bullets and can truncate Active Technologies lines.
   Solution: Edit CLAUDE.md, AGENTS.md, and GEMINI.md by hand. Leave that script unrun.
+- Issue: An unpinned `buf.build/connectrpc/go` plugin emits `connectrpc.com/connect/v2` and rewrites
+  every `*.connect.go` file. Generate, lint, and the benchmark checkout then fail.
+  Solution: Keep `buf.build/connectrpc/go:v1.21.0` in `buf.gen.yaml`. Do not commit the v2 rewrite.
 
 ### Workflow Optimizations (Updated)
 
@@ -842,8 +845,8 @@ parallel subtests complete.
   `ConnectHandler` (all cost RPCs) do; new Connect handler methods must too.
 - `ConnectHandler` implements every `CostSourceService` RPC, including `DryRun` and
   `ResolveResourceTypes`; a new RPC needs its own method there or Connect returns `Unimplemented`.
-- `make generate` uses unpinned remote Go plugins; regenerating can reformat doc comments in
-  untouched `*.connect.go` files. Restore unrelated generated files with `git checkout`.
+- `buf.gen.yaml` pins `buf.build/connectrpc/go:v1.21.0`. The unpinned plugin emits
+  `connectrpc.com/connect/v2` and rewrites every `*.connect.go` file. Do not commit that rewrite.
 - `npm run build` in `sdk/typescript/packages/client` builds cleanly, DTS included
   (`tsconfig.base.json` sets `ignoreDeprecations: "6.0"`).
 
@@ -1270,9 +1273,10 @@ parallel subtests complete.
   returns `codes.Internal` with the message `plugin settings are invalid`. The log holds the rule text.
 - `WithSettings` clones with `proto.CloneOf`. `secret` is advisory. Validation text may quote `key` and
   `env`. It never quotes `default_value`, `description`, or an enum value.
-- `make generate` can reformat comments in untouched `*.connect.go` files. Restore those with
-  `git checkout`. In a worktree, `buf breaking --against '.git#branch=main'` can fail to read the git
-  object; archive `origin/main` and run `buf breaking` against that directory.
+- `buf.gen.yaml` pins `buf.build/connectrpc/go:v1.21.0`. The unpinned plugin emits
+  `connectrpc.com/connect/v2` and rewrites every `*.connect.go` file. Do not commit that rewrite.
+  In a worktree, `buf breaking --against '.git#branch=main'` can fail to read the git object;
+  archive `origin/main` and run `buf breaking` against that directory.
 
 ## Active Technologies
 

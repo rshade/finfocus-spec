@@ -11,7 +11,9 @@ plugins:
     out: sdk/go/proto
     opt:
       - paths=source_relative
-  - remote: buf.build/connectrpc/go
+  # Pin the v1 generator. The unpinned plugin emits connectrpc.com/connect/v2 and
+  # rewrites every *.connect.go file. That fails generate, lint, and benchmarks.
+  - remote: buf.build/connectrpc/go:v1.21.0
     out: sdk/go/proto
     opt:
       - paths=source_relative
