@@ -23,21 +23,30 @@ import (
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
 
-func TestPluginSettingsConformance(t *testing.T) {
-	t.Run("empty", func(t *testing.T) {
-		assertPluginInfoCheck(t, plugintesting.NewMockPlugin(), true)
-	})
-	t.Run("valid", func(t *testing.T) {
-		plugin := plugintesting.NewMockPlugin()
-		plugin.Settings = []*pbc.PluginSetting{{
-			Key: "api_key", Type: pbc.PluginSettingType_PLUGIN_SETTING_TYPE_STRING,
-			Secret: true, Env: "TYPESAFE_API_KEY",
-		}}
-		assertPluginInfoCheck(t, plugin, true)
-	})
-	t.Run("duplicate key", func(t *testing.T) {
-		assertPluginInfoCheck(t, &duplicateSettingsPlugin{MockPlugin: plugintesting.NewMockPlugin()}, false)
-	})
+func TestPluginSettingsConformance_settings(t *testing.T) {
+	valid := plugintesting.NewMockPlugin()
+	valid.Settings = []*pbc.PluginSetting{{
+		Key: "api_key", Type: pbc.PluginSettingType_PLUGIN_SETTING_TYPE_STRING,
+		Secret: true, Env: "TYPESAFE_API_KEY",
+	}}
+	tests := []struct {
+		name   string
+		plugin pbc.CostSourceServiceServer
+		want   bool
+	}{
+		{name: "empty", plugin: plugintesting.NewMockPlugin(), want: true},
+		{name: "valid", plugin: valid, want: true},
+		{
+			name:   "duplicate key",
+			plugin: &duplicateSettingsPlugin{MockPlugin: plugintesting.NewMockPlugin()},
+			want:   false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assertPluginInfoCheck(t, tt.plugin, tt.want)
+		})
+	}
 }
 
 type duplicateSettingsPlugin struct {

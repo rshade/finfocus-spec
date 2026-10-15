@@ -117,6 +117,9 @@
 - Issue: `.specify/scripts/bash/update-agent-context.sh` strips the leading dash and space from
   wrapped Recent Changes bullets and can truncate Active Technologies lines.
   Solution: Edit CLAUDE.md, AGENTS.md, and GEMINI.md by hand. Leave that script unrun.
+- Issue: An unpinned `buf.build/connectrpc/go` plugin emits `connectrpc.com/connect/v2` and rewrites
+  every `*.connect.go` file. Generate, lint, and the benchmark checkout then fail.
+  Solution: Keep `buf.build/connectrpc/go:v1.21.0` in `buf.gen.yaml`. Do not commit the v2 rewrite.
 
 ## Workflow Optimizations
 
