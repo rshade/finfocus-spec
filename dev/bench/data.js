@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792117187896,
+  "lastUpdate": 1792117768549,
   "repoUrl": "https://github.com/rshade/finfocus-spec",
   "entries": {
     "Go Benchmark": [
@@ -1521932,6 +1521932,8862 @@ window.BENCHMARK_DATA = {
             "value": 747,
             "unit": "allocs/op",
             "extra": "12010 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "29139614+renovate[bot]@users.noreply.github.com",
+            "name": "renovate[bot]",
+            "username": "renovate[bot]"
+          },
+          "committer": {
+            "email": "131337+rshade@users.noreply.github.com",
+            "name": "Richard Shade",
+            "username": "rshade"
+          },
+          "distinct": true,
+          "id": "381d27255b165d4dd291a8f498c2f39db275174c",
+          "message": "chore(deps): Update NPM dev dependencies",
+          "timestamp": "2026-10-15T21:18:54-05:00",
+          "tree_id": "52885458ce48514abbbf85f02efb35b34f7577d5",
+          "url": "https://github.com/rshade/finfocus-spec/commit/381d27255b165d4dd291a8f498c2f39db275174c"
+        },
+        "date": 1792117751691,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkGetProjectedCostResponse_Construction (github.com/rshade/finfocus-spec/sdk/go)",
+            "value": 71.53,
+            "unit": "ns/op\t     240 B/op\t       1 allocs/op",
+            "extra": "16896764 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetProjectedCostResponse_Construction (github.com/rshade/finfocus-spec/sdk/go) - ns/op",
+            "value": 71.53,
+            "unit": "ns/op",
+            "extra": "16896764 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetProjectedCostResponse_Construction (github.com/rshade/finfocus-spec/sdk/go) - B/op",
+            "value": 240,
+            "unit": "B/op",
+            "extra": "16896764 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetProjectedCostResponse_Construction (github.com/rshade/finfocus-spec/sdk/go) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "16896764 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValid/USD (github.com/rshade/finfocus-spec/sdk/go/currency)",
+            "value": 9.821,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "122154349 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValid/USD (github.com/rshade/finfocus-spec/sdk/go/currency) - ns/op",
+            "value": 9.821,
+            "unit": "ns/op",
+            "extra": "122154349 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValid/USD (github.com/rshade/finfocus-spec/sdk/go/currency) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "122154349 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValid/USD (github.com/rshade/finfocus-spec/sdk/go/currency) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "122154349 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValid/MXN (github.com/rshade/finfocus-spec/sdk/go/currency)",
+            "value": 9.837,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "122104771 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValid/MXN (github.com/rshade/finfocus-spec/sdk/go/currency) - ns/op",
+            "value": 9.837,
+            "unit": "ns/op",
+            "extra": "122104771 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValid/MXN (github.com/rshade/finfocus-spec/sdk/go/currency) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "122104771 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValid/MXN (github.com/rshade/finfocus-spec/sdk/go/currency) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "122104771 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValid/ZWL (github.com/rshade/finfocus-spec/sdk/go/currency)",
+            "value": 10.04,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "121292241 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValid/ZWL (github.com/rshade/finfocus-spec/sdk/go/currency) - ns/op",
+            "value": 10.04,
+            "unit": "ns/op",
+            "extra": "121292241 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValid/ZWL (github.com/rshade/finfocus-spec/sdk/go/currency) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "121292241 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValid/ZWL (github.com/rshade/finfocus-spec/sdk/go/currency) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "121292241 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValid/Invalid (github.com/rshade/finfocus-spec/sdk/go/currency)",
+            "value": 7.612,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "157582892 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValid/Invalid (github.com/rshade/finfocus-spec/sdk/go/currency) - ns/op",
+            "value": 7.612,
+            "unit": "ns/op",
+            "extra": "157582892 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValid/Invalid (github.com/rshade/finfocus-spec/sdk/go/currency) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "157582892 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValid/Invalid (github.com/rshade/finfocus-spec/sdk/go/currency) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "157582892 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetCurrency/USD (github.com/rshade/finfocus-spec/sdk/go/currency)",
+            "value": 10.16,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetCurrency/USD (github.com/rshade/finfocus-spec/sdk/go/currency) - ns/op",
+            "value": 10.16,
+            "unit": "ns/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetCurrency/USD (github.com/rshade/finfocus-spec/sdk/go/currency) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetCurrency/USD (github.com/rshade/finfocus-spec/sdk/go/currency) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetCurrency/JPY (github.com/rshade/finfocus-spec/sdk/go/currency)",
+            "value": 10.2,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetCurrency/JPY (github.com/rshade/finfocus-spec/sdk/go/currency) - ns/op",
+            "value": 10.2,
+            "unit": "ns/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetCurrency/JPY (github.com/rshade/finfocus-spec/sdk/go/currency) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetCurrency/JPY (github.com/rshade/finfocus-spec/sdk/go/currency) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetCurrency/Invalid (github.com/rshade/finfocus-spec/sdk/go/currency)",
+            "value": 7.654,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "159846699 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetCurrency/Invalid (github.com/rshade/finfocus-spec/sdk/go/currency) - ns/op",
+            "value": 7.654,
+            "unit": "ns/op",
+            "extra": "159846699 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetCurrency/Invalid (github.com/rshade/finfocus-spec/sdk/go/currency) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "159846699 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetCurrency/Invalid (github.com/rshade/finfocus-spec/sdk/go/currency) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "159846699 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAllCurrencies (github.com/rshade/finfocus-spec/sdk/go/currency)",
+            "value": 0.3169,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAllCurrencies (github.com/rshade/finfocus-spec/sdk/go/currency) - ns/op",
+            "value": 0.3169,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAllCurrencies (github.com/rshade/finfocus-spec/sdk/go/currency) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAllCurrencies (github.com/rshade/finfocus-spec/sdk/go/currency) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCurrency_String (github.com/rshade/finfocus-spec/sdk/go/currency)",
+            "value": 0.3123,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCurrency_String (github.com/rshade/finfocus-spec/sdk/go/currency) - ns/op",
+            "value": 0.3123,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCurrency_String (github.com/rshade/finfocus-spec/sdk/go/currency) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCurrency_String (github.com/rshade/finfocus-spec/sdk/go/currency) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetSymbol/USD (github.com/rshade/finfocus-spec/sdk/go/currency)",
+            "value": 10.17,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetSymbol/USD (github.com/rshade/finfocus-spec/sdk/go/currency) - ns/op",
+            "value": 10.17,
+            "unit": "ns/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetSymbol/USD (github.com/rshade/finfocus-spec/sdk/go/currency) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetSymbol/USD (github.com/rshade/finfocus-spec/sdk/go/currency) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetSymbol/EUR (github.com/rshade/finfocus-spec/sdk/go/currency)",
+            "value": 10.18,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetSymbol/EUR (github.com/rshade/finfocus-spec/sdk/go/currency) - ns/op",
+            "value": 10.18,
+            "unit": "ns/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetSymbol/EUR (github.com/rshade/finfocus-spec/sdk/go/currency) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetSymbol/EUR (github.com/rshade/finfocus-spec/sdk/go/currency) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetSymbol/CHF_NoSymbol (github.com/rshade/finfocus-spec/sdk/go/currency)",
+            "value": 10.2,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetSymbol/CHF_NoSymbol (github.com/rshade/finfocus-spec/sdk/go/currency) - ns/op",
+            "value": 10.2,
+            "unit": "ns/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetSymbol/CHF_NoSymbol (github.com/rshade/finfocus-spec/sdk/go/currency) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetSymbol/CHF_NoSymbol (github.com/rshade/finfocus-spec/sdk/go/currency) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetSymbol/Invalid (github.com/rshade/finfocus-spec/sdk/go/currency)",
+            "value": 7.523,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "156159385 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetSymbol/Invalid (github.com/rshade/finfocus-spec/sdk/go/currency) - ns/op",
+            "value": 7.523,
+            "unit": "ns/op",
+            "extra": "156159385 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetSymbol/Invalid (github.com/rshade/finfocus-spec/sdk/go/currency) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "156159385 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetSymbol/Invalid (github.com/rshade/finfocus-spec/sdk/go/currency) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "156159385 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFormatAmount/USD_Simple (github.com/rshade/finfocus-spec/sdk/go/currency)",
+            "value": 216.1,
+            "unit": "ns/op\t      64 B/op\t       5 allocs/op",
+            "extra": "5624953 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFormatAmount/USD_Simple (github.com/rshade/finfocus-spec/sdk/go/currency) - ns/op",
+            "value": 216.1,
+            "unit": "ns/op",
+            "extra": "5624953 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFormatAmount/USD_Simple (github.com/rshade/finfocus-spec/sdk/go/currency) - B/op",
+            "value": 64,
+            "unit": "B/op",
+            "extra": "5624953 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFormatAmount/USD_Simple (github.com/rshade/finfocus-spec/sdk/go/currency) - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "5624953 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFormatAmount/USD_Large (github.com/rshade/finfocus-spec/sdk/go/currency)",
+            "value": 260.4,
+            "unit": "ns/op\t     104 B/op\t       5 allocs/op",
+            "extra": "4640199 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFormatAmount/USD_Large (github.com/rshade/finfocus-spec/sdk/go/currency) - ns/op",
+            "value": 260.4,
+            "unit": "ns/op",
+            "extra": "4640199 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFormatAmount/USD_Large (github.com/rshade/finfocus-spec/sdk/go/currency) - B/op",
+            "value": 104,
+            "unit": "B/op",
+            "extra": "4640199 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFormatAmount/USD_Large (github.com/rshade/finfocus-spec/sdk/go/currency) - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "4640199 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFormatAmount/JPY_NoDecimals (github.com/rshade/finfocus-spec/sdk/go/currency)",
+            "value": 197.4,
+            "unit": "ns/op\t      64 B/op\t       4 allocs/op",
+            "extra": "6089608 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFormatAmount/JPY_NoDecimals (github.com/rshade/finfocus-spec/sdk/go/currency) - ns/op",
+            "value": 197.4,
+            "unit": "ns/op",
+            "extra": "6089608 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFormatAmount/JPY_NoDecimals (github.com/rshade/finfocus-spec/sdk/go/currency) - B/op",
+            "value": 64,
+            "unit": "B/op",
+            "extra": "6089608 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFormatAmount/JPY_NoDecimals (github.com/rshade/finfocus-spec/sdk/go/currency) - allocs/op",
+            "value": 4,
+            "unit": "allocs/op",
+            "extra": "6089608 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFormatAmount/KWD_ThreeDecimals (github.com/rshade/finfocus-spec/sdk/go/currency)",
+            "value": 224.6,
+            "unit": "ns/op\t      80 B/op\t       5 allocs/op",
+            "extra": "5316453 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFormatAmount/KWD_ThreeDecimals (github.com/rshade/finfocus-spec/sdk/go/currency) - ns/op",
+            "value": 224.6,
+            "unit": "ns/op",
+            "extra": "5316453 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFormatAmount/KWD_ThreeDecimals (github.com/rshade/finfocus-spec/sdk/go/currency) - B/op",
+            "value": 80,
+            "unit": "B/op",
+            "extra": "5316453 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFormatAmount/KWD_ThreeDecimals (github.com/rshade/finfocus-spec/sdk/go/currency) - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "5316453 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFormatAmountNoSymbol/USD_Simple (github.com/rshade/finfocus-spec/sdk/go/currency)",
+            "value": 178.2,
+            "unit": "ns/op\t      56 B/op\t       4 allocs/op",
+            "extra": "6648376 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFormatAmountNoSymbol/USD_Simple (github.com/rshade/finfocus-spec/sdk/go/currency) - ns/op",
+            "value": 178.2,
+            "unit": "ns/op",
+            "extra": "6648376 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFormatAmountNoSymbol/USD_Simple (github.com/rshade/finfocus-spec/sdk/go/currency) - B/op",
+            "value": 56,
+            "unit": "B/op",
+            "extra": "6648376 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFormatAmountNoSymbol/USD_Simple (github.com/rshade/finfocus-spec/sdk/go/currency) - allocs/op",
+            "value": 4,
+            "unit": "allocs/op",
+            "extra": "6648376 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFormatAmountNoSymbol/USD_Large (github.com/rshade/finfocus-spec/sdk/go/currency)",
+            "value": 215.4,
+            "unit": "ns/op\t      80 B/op\t       4 allocs/op",
+            "extra": "5582622 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFormatAmountNoSymbol/USD_Large (github.com/rshade/finfocus-spec/sdk/go/currency) - ns/op",
+            "value": 215.4,
+            "unit": "ns/op",
+            "extra": "5582622 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFormatAmountNoSymbol/USD_Large (github.com/rshade/finfocus-spec/sdk/go/currency) - B/op",
+            "value": 80,
+            "unit": "B/op",
+            "extra": "5582622 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFormatAmountNoSymbol/USD_Large (github.com/rshade/finfocus-spec/sdk/go/currency) - allocs/op",
+            "value": 4,
+            "unit": "allocs/op",
+            "extra": "5582622 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCodeToInt32 (github.com/rshade/finfocus-spec/sdk/go/internal/grpcconv)",
+            "value": 0.3118,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCodeToInt32 (github.com/rshade/finfocus-spec/sdk/go/internal/grpcconv) - ns/op",
+            "value": 0.3118,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCodeToInt32 (github.com/rshade/finfocus-spec/sdk/go/internal/grpcconv) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCodeToInt32 (github.com/rshade/finfocus-spec/sdk/go/internal/grpcconv) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValid (github.com/rshade/finfocus-spec/sdk/go/internal/semver)",
+            "value": 153.6,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "8021702 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValid (github.com/rshade/finfocus-spec/sdk/go/internal/semver) - ns/op",
+            "value": 153.6,
+            "unit": "ns/op",
+            "extra": "8021702 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValid (github.com/rshade/finfocus-spec/sdk/go/internal/semver) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "8021702 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValid (github.com/rshade/finfocus-spec/sdk/go/internal/semver) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "8021702 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRegexMatch (github.com/rshade/finfocus-spec/sdk/go/internal/semver)",
+            "value": 150.8,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "8091771 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRegexMatch (github.com/rshade/finfocus-spec/sdk/go/internal/semver) - ns/op",
+            "value": 150.8,
+            "unit": "ns/op",
+            "extra": "8091771 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRegexMatch (github.com/rshade/finfocus-spec/sdk/go/internal/semver) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "8091771 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRegexMatch (github.com/rshade/finfocus-spec/sdk/go/internal/semver) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "8091771 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidate (github.com/rshade/finfocus-spec/sdk/go/internal/semver)",
+            "value": 154.7,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "7959300 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidate (github.com/rshade/finfocus-spec/sdk/go/internal/semver) - ns/op",
+            "value": 154.7,
+            "unit": "ns/op",
+            "extra": "7959300 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidate (github.com/rshade/finfocus-spec/sdk/go/internal/semver) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "7959300 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidate (github.com/rshade/finfocus-spec/sdk/go/internal/semver) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "7959300 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidate_Invalid (github.com/rshade/finfocus-spec/sdk/go/internal/semver)",
+            "value": 221.5,
+            "unit": "ns/op\t      96 B/op\t       3 allocs/op",
+            "extra": "5380761 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidate_Invalid (github.com/rshade/finfocus-spec/sdk/go/internal/semver) - ns/op",
+            "value": 221.5,
+            "unit": "ns/op",
+            "extra": "5380761 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidate_Invalid (github.com/rshade/finfocus-spec/sdk/go/internal/semver) - B/op",
+            "value": 96,
+            "unit": "B/op",
+            "extra": "5380761 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidate_Invalid (github.com/rshade/finfocus-spec/sdk/go/internal/semver) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "5380761 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGet_WithResourceOverride (github.com/rshade/finfocus-spec/sdk/go/internal/utilization)",
+            "value": 2.51,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "481062127 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGet_WithResourceOverride (github.com/rshade/finfocus-spec/sdk/go/internal/utilization) - ns/op",
+            "value": 2.51,
+            "unit": "ns/op",
+            "extra": "481062127 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGet_WithResourceOverride (github.com/rshade/finfocus-spec/sdk/go/internal/utilization) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "481062127 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGet_WithResourceOverride (github.com/rshade/finfocus-spec/sdk/go/internal/utilization) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "481062127 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGet_GlobalOnly (github.com/rshade/finfocus-spec/sdk/go/internal/utilization)",
+            "value": 2.186,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "549238046 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGet_GlobalOnly (github.com/rshade/finfocus-spec/sdk/go/internal/utilization) - ns/op",
+            "value": 2.186,
+            "unit": "ns/op",
+            "extra": "549238046 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGet_GlobalOnly (github.com/rshade/finfocus-spec/sdk/go/internal/utilization) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "549238046 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGet_GlobalOnly (github.com/rshade/finfocus-spec/sdk/go/internal/utilization) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "549238046 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValid (github.com/rshade/finfocus-spec/sdk/go/internal/utilization)",
+            "value": 0.3118,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValid (github.com/rshade/finfocus-spec/sdk/go/internal/utilization) - ns/op",
+            "value": 0.3118,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValid (github.com/rshade/finfocus-spec/sdk/go/internal/utilization) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValid (github.com/rshade/finfocus-spec/sdk/go/internal/utilization) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerialize_SingleRecord (github.com/rshade/finfocus-spec/sdk/go/jsonld)",
+            "value": 16015,
+            "unit": "ns/op\t    6608 B/op\t     107 allocs/op",
+            "extra": "73930 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerialize_SingleRecord (github.com/rshade/finfocus-spec/sdk/go/jsonld) - ns/op",
+            "value": 16015,
+            "unit": "ns/op",
+            "extra": "73930 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerialize_SingleRecord (github.com/rshade/finfocus-spec/sdk/go/jsonld) - B/op",
+            "value": 6608,
+            "unit": "B/op",
+            "extra": "73930 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerialize_SingleRecord (github.com/rshade/finfocus-spec/sdk/go/jsonld) - allocs/op",
+            "value": 107,
+            "unit": "allocs/op",
+            "extra": "73930 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerialize_SingleRecord_PrettyPrint (github.com/rshade/finfocus-spec/sdk/go/jsonld)",
+            "value": 18733,
+            "unit": "ns/op\t    7890 B/op\t     108 allocs/op",
+            "extra": "63288 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerialize_SingleRecord_PrettyPrint (github.com/rshade/finfocus-spec/sdk/go/jsonld) - ns/op",
+            "value": 18733,
+            "unit": "ns/op",
+            "extra": "63288 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerialize_SingleRecord_PrettyPrint (github.com/rshade/finfocus-spec/sdk/go/jsonld) - B/op",
+            "value": 7890,
+            "unit": "B/op",
+            "extra": "63288 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerialize_SingleRecord_PrettyPrint (github.com/rshade/finfocus-spec/sdk/go/jsonld) - allocs/op",
+            "value": 108,
+            "unit": "allocs/op",
+            "extra": "63288 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerializeBatch_100 (github.com/rshade/finfocus-spec/sdk/go/jsonld)",
+            "value": 1779413,
+            "unit": "ns/op\t  988449 B/op\t   10724 allocs/op",
+            "extra": "673 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerializeBatch_100 (github.com/rshade/finfocus-spec/sdk/go/jsonld) - ns/op",
+            "value": 1779413,
+            "unit": "ns/op",
+            "extra": "673 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerializeBatch_100 (github.com/rshade/finfocus-spec/sdk/go/jsonld) - B/op",
+            "value": 988449,
+            "unit": "B/op",
+            "extra": "673 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerializeBatch_100 (github.com/rshade/finfocus-spec/sdk/go/jsonld) - allocs/op",
+            "value": 10724,
+            "unit": "allocs/op",
+            "extra": "673 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerializeBatch_1000 (github.com/rshade/finfocus-spec/sdk/go/jsonld)",
+            "value": 19022008,
+            "unit": "ns/op\t 9241740 B/op\t  107084 allocs/op",
+            "extra": "57 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerializeBatch_1000 (github.com/rshade/finfocus-spec/sdk/go/jsonld) - ns/op",
+            "value": 19022008,
+            "unit": "ns/op",
+            "extra": "57 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerializeBatch_1000 (github.com/rshade/finfocus-spec/sdk/go/jsonld) - B/op",
+            "value": 9241740,
+            "unit": "B/op",
+            "extra": "57 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerializeBatch_1000 (github.com/rshade/finfocus-spec/sdk/go/jsonld) - allocs/op",
+            "value": 107084,
+            "unit": "allocs/op",
+            "extra": "57 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerializeBatch_10000 (github.com/rshade/finfocus-spec/sdk/go/jsonld)",
+            "value": 175684534,
+            "unit": "ns/op\t108049012 B/op\t 1070136 allocs/op",
+            "extra": "6 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerializeBatch_10000 (github.com/rshade/finfocus-spec/sdk/go/jsonld) - ns/op",
+            "value": 175684534,
+            "unit": "ns/op",
+            "extra": "6 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerializeBatch_10000 (github.com/rshade/finfocus-spec/sdk/go/jsonld) - B/op",
+            "value": 108049012,
+            "unit": "B/op",
+            "extra": "6 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerializeBatch_10000 (github.com/rshade/finfocus-spec/sdk/go/jsonld) - allocs/op",
+            "value": 1070136,
+            "unit": "allocs/op",
+            "extra": "6 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerializeStream_10000 (github.com/rshade/finfocus-spec/sdk/go/jsonld)",
+            "value": 179514213,
+            "unit": "ns/op\t108050245 B/op\t 1070143 allocs/op",
+            "extra": "6 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerializeStream_10000 (github.com/rshade/finfocus-spec/sdk/go/jsonld) - ns/op",
+            "value": 179514213,
+            "unit": "ns/op",
+            "extra": "6 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerializeStream_10000 (github.com/rshade/finfocus-spec/sdk/go/jsonld) - B/op",
+            "value": 108050245,
+            "unit": "B/op",
+            "extra": "6 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerializeStream_10000 (github.com/rshade/finfocus-spec/sdk/go/jsonld) - allocs/op",
+            "value": 1070143,
+            "unit": "allocs/op",
+            "extra": "6 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerializeStream_Memory (github.com/rshade/finfocus-spec/sdk/go/jsonld)",
+            "value": 172653959,
+            "unit": "ns/op\t98611660 B/op\t 1070110 allocs/op",
+            "extra": "6 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerializeStream_Memory (github.com/rshade/finfocus-spec/sdk/go/jsonld) - ns/op",
+            "value": 172653959,
+            "unit": "ns/op",
+            "extra": "6 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerializeStream_Memory (github.com/rshade/finfocus-spec/sdk/go/jsonld) - B/op",
+            "value": 98611660,
+            "unit": "B/op",
+            "extra": "6 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSerializeStream_Memory (github.com/rshade/finfocus-spec/sdk/go/jsonld) - allocs/op",
+            "value": 1070110,
+            "unit": "allocs/op",
+            "extra": "6 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIDGenerator (github.com/rshade/finfocus-spec/sdk/go/jsonld)",
+            "value": 586,
+            "unit": "ns/op\t     440 B/op\t      11 allocs/op",
+            "extra": "2051992 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIDGenerator (github.com/rshade/finfocus-spec/sdk/go/jsonld) - ns/op",
+            "value": 586,
+            "unit": "ns/op",
+            "extra": "2051992 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIDGenerator (github.com/rshade/finfocus-spec/sdk/go/jsonld) - B/op",
+            "value": 440,
+            "unit": "B/op",
+            "extra": "2051992 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIDGenerator (github.com/rshade/finfocus-spec/sdk/go/jsonld) - allocs/op",
+            "value": 11,
+            "unit": "allocs/op",
+            "extra": "2051992 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContextBuild (github.com/rshade/finfocus-spec/sdk/go/jsonld)",
+            "value": 192.1,
+            "unit": "ns/op\t     352 B/op\t       3 allocs/op",
+            "extra": "6387796 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContextBuild (github.com/rshade/finfocus-spec/sdk/go/jsonld) - ns/op",
+            "value": 192.1,
+            "unit": "ns/op",
+            "extra": "6387796 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContextBuild (github.com/rshade/finfocus-spec/sdk/go/jsonld) - B/op",
+            "value": 352,
+            "unit": "B/op",
+            "extra": "6387796 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContextBuild (github.com/rshade/finfocus-spec/sdk/go/jsonld) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "6387796 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDescriptorClone/ProtoClone/N=1 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 701.4,
+            "unit": "ns/op\t     608 B/op\t       9 allocs/op",
+            "extra": "1759452 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDescriptorClone/ProtoClone/N=1 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 701.4,
+            "unit": "ns/op",
+            "extra": "1759452 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDescriptorClone/ProtoClone/N=1 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 608,
+            "unit": "B/op",
+            "extra": "1759452 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDescriptorClone/ProtoClone/N=1 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 9,
+            "unit": "allocs/op",
+            "extra": "1759452 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDescriptorClone/DescriptorClone/N=1 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 358.6,
+            "unit": "ns/op\t     544 B/op\t       5 allocs/op",
+            "extra": "3392964 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDescriptorClone/DescriptorClone/N=1 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 358.6,
+            "unit": "ns/op",
+            "extra": "3392964 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDescriptorClone/DescriptorClone/N=1 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 544,
+            "unit": "B/op",
+            "extra": "3392964 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDescriptorClone/DescriptorClone/N=1 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "3392964 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDescriptorClone/ProtoClone/N=1000 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 741342,
+            "unit": "ns/op\t  608000 B/op\t    9000 allocs/op",
+            "extra": "1616 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDescriptorClone/ProtoClone/N=1000 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 741342,
+            "unit": "ns/op",
+            "extra": "1616 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDescriptorClone/ProtoClone/N=1000 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 608000,
+            "unit": "B/op",
+            "extra": "1616 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDescriptorClone/ProtoClone/N=1000 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 9000,
+            "unit": "allocs/op",
+            "extra": "1616 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDescriptorClone/DescriptorClone/N=1000 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 364299,
+            "unit": "ns/op\t  544000 B/op\t    5000 allocs/op",
+            "extra": "3160 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDescriptorClone/DescriptorClone/N=1000 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 364299,
+            "unit": "ns/op",
+            "extra": "3160 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDescriptorClone/DescriptorClone/N=1000 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 544000,
+            "unit": "B/op",
+            "extra": "3160 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDescriptorClone/DescriptorClone/N=1000 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 5000,
+            "unit": "allocs/op",
+            "extra": "3160 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchResultConstruction_1000 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 423326,
+            "unit": "ns/op\t  616001 B/op\t    7000 allocs/op",
+            "extra": "2695 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchResultConstruction_1000 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 423326,
+            "unit": "ns/op",
+            "extra": "2695 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchResultConstruction_1000 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 616001,
+            "unit": "B/op",
+            "extra": "2695 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchResultConstruction_1000 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 7000,
+            "unit": "allocs/op",
+            "extra": "2695 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidCostQueryType_ZeroAllocs (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 2.058,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "587209010 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidCostQueryType_ZeroAllocs (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 2.058,
+            "unit": "ns/op",
+            "extra": "587209010 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidCostQueryType_ZeroAllocs (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "587209010 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidCostQueryType_ZeroAllocs (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "587209010 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateResourceDescriptor_ZeroAllocs (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 62.66,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "19270399 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateResourceDescriptor_ZeroAllocs (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 62.66,
+            "unit": "ns/op",
+            "extra": "19270399 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateResourceDescriptor_ZeroAllocs (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "19270399 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateResourceDescriptor_ZeroAllocs (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "19270399 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateResourceDescriptor_WithAttributes (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 288.1,
+            "unit": "ns/op\t      16 B/op\t       1 allocs/op",
+            "extra": "4142264 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateResourceDescriptor_WithAttributes (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 288.1,
+            "unit": "ns/op",
+            "extra": "4142264 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateResourceDescriptor_WithAttributes (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 16,
+            "unit": "B/op",
+            "extra": "4142264 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateResourceDescriptor_WithAttributes (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "4142264 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsCLIInvocation/NoArgs (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 4.994,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "240494910 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsCLIInvocation/NoArgs (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 4.994,
+            "unit": "ns/op",
+            "extra": "240494910 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsCLIInvocation/NoArgs (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "240494910 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsCLIInvocation/NoArgs (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "240494910 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsCLIInvocation/PortOption (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 57.15,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "20931910 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsCLIInvocation/PortOption (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 57.15,
+            "unit": "ns/op",
+            "extra": "20931910 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsCLIInvocation/PortOption (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "20931910 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsCLIInvocation/PortOption (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "20931910 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsCLIInvocation/DryRunCommand (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 5.298,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "226491618 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsCLIInvocation/DryRunCommand (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 5.298,
+            "unit": "ns/op",
+            "extra": "226491618 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsCLIInvocation/DryRunCommand (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "226491618 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsCLIInvocation/DryRunCommand (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "226491618 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFirstPositional/NoArgs (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 2.804,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "427205631 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFirstPositional/NoArgs (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 2.804,
+            "unit": "ns/op",
+            "extra": "427205631 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFirstPositional/NoArgs (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "427205631 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFirstPositional/NoArgs (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "427205631 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFirstPositional/PortOption (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 21.18,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "56835721 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFirstPositional/PortOption (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 21.18,
+            "unit": "ns/op",
+            "extra": "56835721 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFirstPositional/PortOption (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "56835721 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFirstPositional/PortOption (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "56835721 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFirstPositional/DryRunCommand (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 3.427,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "349930088 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFirstPositional/DryRunCommand (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 3.427,
+            "unit": "ns/op",
+            "extra": "349930088 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFirstPositional/DryRunCommand (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "349930088 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFirstPositional/DryRunCommand (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "349930088 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInferCapabilitiesDirect (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 55.75,
+            "unit": "ns/op\t      64 B/op\t       1 allocs/op",
+            "extra": "21574855 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInferCapabilitiesDirect (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 55.75,
+            "unit": "ns/op",
+            "extra": "21574855 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInferCapabilitiesDirect (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 64,
+            "unit": "B/op",
+            "extra": "21574855 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInferCapabilitiesDirect (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "21574855 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInferCapabilitiesMinimal (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 54.85,
+            "unit": "ns/op\t      64 B/op\t       1 allocs/op",
+            "extra": "21400695 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInferCapabilitiesMinimal (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 54.85,
+            "unit": "ns/op",
+            "extra": "21400695 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInferCapabilitiesMinimal (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 64,
+            "unit": "B/op",
+            "extra": "21400695 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInferCapabilitiesMinimal (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "21400695 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidCapability (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 1.558,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "769071043 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidCapability (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 1.558,
+            "unit": "ns/op",
+            "extra": "769071043 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidCapability (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "769071043 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidCapability (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "769071043 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCapabilitiesToLegacyMetadataWithWarnings (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 281.2,
+            "unit": "ns/op\t     360 B/op\t       3 allocs/op",
+            "extra": "4247235 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCapabilitiesToLegacyMetadataWithWarnings (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 281.2,
+            "unit": "ns/op",
+            "extra": "4247235 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCapabilitiesToLegacyMetadataWithWarnings (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 360,
+            "unit": "B/op",
+            "extra": "4247235 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCapabilitiesToLegacyMetadataWithWarnings (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "4247235 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkToConnectError (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 347.9,
+            "unit": "ns/op\t     184 B/op\t       4 allocs/op",
+            "extra": "3444858 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkToConnectError (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 347.9,
+            "unit": "ns/op",
+            "extra": "3444858 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkToConnectError (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 184,
+            "unit": "B/op",
+            "extra": "3444858 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkToConnectError (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 4,
+            "unit": "allocs/op",
+            "extra": "3444858 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkToConnectErrorWithDetails (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 609.4,
+            "unit": "ns/op\t     392 B/op\t       9 allocs/op",
+            "extra": "1963364 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkToConnectErrorWithDetails (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 609.4,
+            "unit": "ns/op",
+            "extra": "1963364 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkToConnectErrorWithDetails (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 392,
+            "unit": "B/op",
+            "extra": "1963364 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkToConnectErrorWithDetails (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 9,
+            "unit": "allocs/op",
+            "extra": "1963364 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCredentialAbsent (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 46.65,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "25708653 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCredentialAbsent (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 46.65,
+            "unit": "ns/op",
+            "extra": "25708653 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCredentialAbsent (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "25708653 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCredentialAbsent (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "25708653 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewCredentialsOneEntry (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 327.5,
+            "unit": "ns/op\t     341 B/op\t       3 allocs/op",
+            "extra": "3359682 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewCredentialsOneEntry (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 327.5,
+            "unit": "ns/op",
+            "extra": "3359682 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewCredentialsOneEntry (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 341,
+            "unit": "B/op",
+            "extra": "3359682 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewCredentialsOneEntry (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "3359682 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_ValidRecord (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 42.48,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "28023877 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_ValidRecord (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 42.48,
+            "unit": "ns/op",
+            "extra": "28023877 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_ValidRecord (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "28023877 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_ValidRecord (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "28023877 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_AllFields (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 42.49,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "28084501 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_AllFields (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 42.49,
+            "unit": "ns/op",
+            "extra": "28084501 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_AllFields (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "28084501 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_AllFields (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "28084501 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_NaNDetection (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 85.42,
+            "unit": "ns/op\t     112 B/op\t       2 allocs/op",
+            "extra": "13885046 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_NaNDetection (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 85.42,
+            "unit": "ns/op",
+            "extra": "13885046 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_NaNDetection (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 112,
+            "unit": "B/op",
+            "extra": "13885046 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_NaNDetection (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 2,
+            "unit": "allocs/op",
+            "extra": "13885046 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_InfDetection (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 84.95,
+            "unit": "ns/op\t     112 B/op\t       2 allocs/op",
+            "extra": "13951904 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_InfDetection (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 84.95,
+            "unit": "ns/op",
+            "extra": "13951904 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_InfDetection (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 112,
+            "unit": "B/op",
+            "extra": "13951904 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_InfDetection (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 2,
+            "unit": "allocs/op",
+            "extra": "13951904 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_NegativeInfDetection (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 89.48,
+            "unit": "ns/op\t     112 B/op\t       2 allocs/op",
+            "extra": "13220239 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_NegativeInfDetection (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 89.48,
+            "unit": "ns/op",
+            "extra": "13220239 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_NegativeInfDetection (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 112,
+            "unit": "B/op",
+            "extra": "13220239 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_NegativeInfDetection (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 2,
+            "unit": "allocs/op",
+            "extra": "13220239 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_AggregateMultipleErrors (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 255.5,
+            "unit": "ns/op\t     352 B/op\t       4 allocs/op",
+            "extra": "4689446 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_AggregateMultipleErrors (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 255.5,
+            "unit": "ns/op",
+            "extra": "4689446 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_AggregateMultipleErrors (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 352,
+            "unit": "B/op",
+            "extra": "4689446 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_AggregateMultipleErrors (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 4,
+            "unit": "allocs/op",
+            "extra": "4689446 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_ZeroValues (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 42.57,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "28197110 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_ZeroValues (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 42.57,
+            "unit": "ns/op",
+            "extra": "28197110 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_ZeroValues (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "28197110 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateCostValues_ZeroValues (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "28197110 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckCostValue_ValidValue (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 2.811,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "426281629 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckCostValue_ValidValue (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 2.811,
+            "unit": "ns/op",
+            "extra": "426281629 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckCostValue_ValidValue (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "426281629 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckCostValue_ValidValue (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "426281629 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckCostValue_NaN (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 51.96,
+            "unit": "ns/op\t      96 B/op\t       1 allocs/op",
+            "extra": "22110799 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckCostValue_NaN (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 51.96,
+            "unit": "ns/op",
+            "extra": "22110799 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckCostValue_NaN (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 96,
+            "unit": "B/op",
+            "extra": "22110799 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckCostValue_NaN (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "22110799 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckCostValue_Inf (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 52.29,
+            "unit": "ns/op\t      96 B/op\t       1 allocs/op",
+            "extra": "22377892 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckCostValue_Inf (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 52.29,
+            "unit": "ns/op",
+            "extra": "22377892 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckCostValue_Inf (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 96,
+            "unit": "B/op",
+            "extra": "22377892 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckCostValue_Inf (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "22377892 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateConfidenceLevel_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 3.127,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "381465601 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateConfidenceLevel_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 3.127,
+            "unit": "ns/op",
+            "extra": "381465601 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateConfidenceLevel_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "381465601 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateConfidenceLevel_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "381465601 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateConfidenceLevel_Nil (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 1.906,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "641049834 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateConfidenceLevel_Nil (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 1.906,
+            "unit": "ns/op",
+            "extra": "641049834 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateConfidenceLevel_Nil (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "641049834 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateConfidenceLevel_Nil (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "641049834 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateConfidenceLevel_Invalid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 249.2,
+            "unit": "ns/op\t     120 B/op\t       3 allocs/op",
+            "extra": "4610318 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateConfidenceLevel_Invalid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 249.2,
+            "unit": "ns/op",
+            "extra": "4610318 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateConfidenceLevel_Invalid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 120,
+            "unit": "B/op",
+            "extra": "4610318 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateConfidenceLevel_Invalid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "4610318 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateConfidenceLevel_NaN (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 169,
+            "unit": "ns/op\t      88 B/op\t       3 allocs/op",
+            "extra": "7122916 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateConfidenceLevel_NaN (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 169,
+            "unit": "ns/op",
+            "extra": "7122916 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateConfidenceLevel_NaN (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 88,
+            "unit": "B/op",
+            "extra": "7122916 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateConfidenceLevel_NaN (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "7122916 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidatePredictionInterval_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 5.32,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "225429493 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidatePredictionInterval_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 5.32,
+            "unit": "ns/op",
+            "extra": "225429493 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidatePredictionInterval_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "225429493 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidatePredictionInterval_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "225429493 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidatePredictionInterval_Nil (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 2.853,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "422665203 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidatePredictionInterval_Nil (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 2.853,
+            "unit": "ns/op",
+            "extra": "422665203 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidatePredictionInterval_Nil (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "422665203 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidatePredictionInterval_Nil (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "422665203 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidatePredictionInterval_ZeroWidth (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 5.629,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "213432428 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidatePredictionInterval_ZeroWidth (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 5.629,
+            "unit": "ns/op",
+            "extra": "213432428 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidatePredictionInterval_ZeroWidth (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "213432428 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidatePredictionInterval_ZeroWidth (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "213432428 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidatePredictionInterval_Invalid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 336.9,
+            "unit": "ns/op\t     128 B/op\t       4 allocs/op",
+            "extra": "3586006 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidatePredictionInterval_Invalid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 336.9,
+            "unit": "ns/op",
+            "extra": "3586006 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidatePredictionInterval_Invalid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 128,
+            "unit": "B/op",
+            "extra": "3586006 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidatePredictionInterval_Invalid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 4,
+            "unit": "allocs/op",
+            "extra": "3586006 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidatePredictionInterval_NaN (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 187,
+            "unit": "ns/op\t     104 B/op\t       3 allocs/op",
+            "extra": "6429843 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidatePredictionInterval_NaN (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 187,
+            "unit": "ns/op",
+            "extra": "6429843 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidatePredictionInterval_NaN (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 104,
+            "unit": "B/op",
+            "extra": "6429843 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidatePredictionInterval_NaN (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "6429843 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginsdkValidateContractCommitment (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 161.4,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "7463140 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginsdkValidateContractCommitment (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 161.4,
+            "unit": "ns/op",
+            "extra": "7463140 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginsdkValidateContractCommitment (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "7463140 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginsdkValidateContractCommitment (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "7463140 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginsdkValidateGetContractCommitmentsRequest (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 5.014,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "238625308 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginsdkValidateGetContractCommitmentsRequest (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 5.014,
+            "unit": "ns/op",
+            "extra": "238625308 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginsdkValidateGetContractCommitmentsRequest (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "238625308 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginsdkValidateGetContractCommitmentsRequest (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "238625308 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginsdkValidateGetContractCommitmentsResponse (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 970.5,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1237052 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginsdkValidateGetContractCommitmentsResponse (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 970.5,
+            "unit": "ns/op",
+            "extra": "1237052 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginsdkValidateGetContractCommitmentsResponse (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1237052 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginsdkValidateGetContractCommitmentsResponse (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1237052 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginsdkContractCommitmentMatchesWindow (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 19.66,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "61108940 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginsdkContractCommitmentMatchesWindow (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 19.66,
+            "unit": "ns/op",
+            "extra": "61108940 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginsdkContractCommitmentMatchesWindow (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "61108940 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginsdkContractCommitmentMatchesWindow (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "61108940 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginsdkPaginateContractCommitments (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 27.96,
+            "unit": "ns/op\t       4 B/op\t       1 allocs/op",
+            "extra": "41447293 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginsdkPaginateContractCommitments (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 27.96,
+            "unit": "ns/op",
+            "extra": "41447293 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginsdkPaginateContractCommitments (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 4,
+            "unit": "B/op",
+            "extra": "41447293 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginsdkPaginateContractCommitments (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "41447293 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTypeRegistry_Resolve/single_lookup (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 197.1,
+            "unit": "ns/op\t     320 B/op\t       3 allocs/op",
+            "extra": "6077060 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTypeRegistry_Resolve/single_lookup (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 197.1,
+            "unit": "ns/op",
+            "extra": "6077060 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTypeRegistry_Resolve/single_lookup (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 320,
+            "unit": "B/op",
+            "extra": "6077060 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTypeRegistry_Resolve/single_lookup (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "6077060 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTypeRegistry_Resolve/batch_10 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 628.1,
+            "unit": "ns/op\t     568 B/op\t       5 allocs/op",
+            "extra": "1909557 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTypeRegistry_Resolve/batch_10 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 628.1,
+            "unit": "ns/op",
+            "extra": "1909557 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTypeRegistry_Resolve/batch_10 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 568,
+            "unit": "B/op",
+            "extra": "1909557 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTypeRegistry_Resolve/batch_10 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "1909557 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTypeRegistry_Resolve/batch_1000 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 50153,
+            "unit": "ns/op\t   54720 B/op\t       7 allocs/op",
+            "extra": "24038 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTypeRegistry_Resolve/batch_1000 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 50153,
+            "unit": "ns/op",
+            "extra": "24038 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTypeRegistry_Resolve/batch_1000 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 54720,
+            "unit": "B/op",
+            "extra": "24038 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTypeRegistry_Resolve/batch_1000 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 7,
+            "unit": "allocs/op",
+            "extra": "24038 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostIterator_Next (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 7655,
+            "unit": "ns/op\t    1356 B/op\t      38 allocs/op",
+            "extra": "154306 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostIterator_Next (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 7655,
+            "unit": "ns/op",
+            "extra": "154306 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostIterator_Next (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 1356,
+            "unit": "B/op",
+            "extra": "154306 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostIterator_Next (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 38,
+            "unit": "allocs/op",
+            "extra": "154306 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidProvider (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 0.9472,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidProvider (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 0.9472,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidProvider (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidProvider (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAttributeValue (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 208.6,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "5784016 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAttributeValue (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 208.6,
+            "unit": "ns/op",
+            "extra": "5784016 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAttributeValue (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "5784016 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAttributeValue (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "5784016 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidCostQueryType (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 1.249,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "962059970 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidCostQueryType (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 1.249,
+            "unit": "ns/op",
+            "extra": "962059970 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidCostQueryType (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "962059970 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidCostQueryType (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "962059970 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNormalizeCostQueryType (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 0.3124,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNormalizeCostQueryType (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 0.3124,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNormalizeCostQueryType (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNormalizeCostQueryType (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateBatchCostRequest_Empty (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 42.71,
+            "unit": "ns/op\t      80 B/op\t       1 allocs/op",
+            "extra": "26759518 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateBatchCostRequest_Empty (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 42.71,
+            "unit": "ns/op",
+            "extra": "26759518 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateBatchCostRequest_Empty (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 80,
+            "unit": "B/op",
+            "extra": "26759518 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateBatchCostRequest_Empty (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "26759518 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateBatchCostRequest_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 39.59,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "30687464 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateBatchCostRequest_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 39.59,
+            "unit": "ns/op",
+            "extra": "30687464 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateBatchCostRequest_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "30687464 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateBatchCostRequest_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "30687464 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateBatchCostRequest_Actual (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 24.8,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "49072642 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateBatchCostRequest_Actual (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 24.8,
+            "unit": "ns/op",
+            "extra": "49072642 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateBatchCostRequest_Actual (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "49072642 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateBatchCostRequest_Actual (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "49072642 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewResourceError (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 40.55,
+            "unit": "ns/op\t      80 B/op\t       1 allocs/op",
+            "extra": "29301892 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewResourceError (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 40.55,
+            "unit": "ns/op",
+            "extra": "29301892 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewResourceError (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 80,
+            "unit": "B/op",
+            "extra": "29301892 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewResourceError (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "29301892 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewBatchCostResponse (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 41.89,
+            "unit": "ns/op\t      80 B/op\t       1 allocs/op",
+            "extra": "28922721 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewBatchCostResponse (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 41.89,
+            "unit": "ns/op",
+            "extra": "28922721 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewBatchCostResponse (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 80,
+            "unit": "B/op",
+            "extra": "28922721 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewBatchCostResponse (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "28922721 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCORSMiddleware/preflight_request (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 108759,
+            "unit": "ns/op\t    7044 B/op\t      87 allocs/op",
+            "extra": "10000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCORSMiddleware/preflight_request (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 108759,
+            "unit": "ns/op",
+            "extra": "10000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCORSMiddleware/preflight_request (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 7044,
+            "unit": "B/op",
+            "extra": "10000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCORSMiddleware/preflight_request (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 87,
+            "unit": "allocs/op",
+            "extra": "10000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCORSMiddleware/cors_request (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 141545,
+            "unit": "ns/op\t   11854 B/op\t     150 allocs/op",
+            "extra": "7266 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCORSMiddleware/cors_request (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 141545,
+            "unit": "ns/op",
+            "extra": "7266 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCORSMiddleware/cors_request (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 11854,
+            "unit": "B/op",
+            "extra": "7266 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCORSMiddleware/cors_request (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 150,
+            "unit": "allocs/op",
+            "extra": "7266 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContractCommitmentBuilder_Build (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 106.9,
+            "unit": "ns/op\t     128 B/op\t       2 allocs/op",
+            "extra": "11094416 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContractCommitmentBuilder_Build (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 106.9,
+            "unit": "ns/op",
+            "extra": "11094416 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContractCommitmentBuilder_Build (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 128,
+            "unit": "B/op",
+            "extra": "11094416 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContractCommitmentBuilder_Build (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 2,
+            "unit": "allocs/op",
+            "extra": "11094416 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContractCommitmentBuilder_WithIdentity (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 1.096,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContractCommitmentBuilder_WithIdentity (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 1.096,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContractCommitmentBuilder_WithIdentity (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContractCommitmentBuilder_WithIdentity (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContractCommitmentBuilder_WithFinancials (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 1.253,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "957597846 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContractCommitmentBuilder_WithFinancials (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 1.253,
+            "unit": "ns/op",
+            "extra": "957597846 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContractCommitmentBuilder_WithFinancials (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "957597846 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContractCommitmentBuilder_WithFinancials (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "957597846 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/benefit (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 1.562,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "767336548 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/benefit (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 1.562,
+            "unit": "ns/op",
+            "extra": "767336548 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/benefit (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "767336548 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/benefit (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "767336548 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/fulfillment (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 2.495,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "480275689 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/fulfillment (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 2.495,
+            "unit": "ns/op",
+            "extra": "480275689 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/fulfillment (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "480275689 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/fulfillment (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "480275689 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/lifecycle (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 2.464,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "523807513 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/lifecycle (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 2.464,
+            "unit": "ns/op",
+            "extra": "523807513 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/lifecycle (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "523807513 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/lifecycle (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "523807513 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/model (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 1.559,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "769359458 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/model (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 1.559,
+            "unit": "ns/op",
+            "extra": "769359458 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/model (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "769359458 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/model (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "769359458 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/offer (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 1.56,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "768235003 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/offer (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 1.56,
+            "unit": "ns/op",
+            "extra": "768235003 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/offer (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "768235003 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/offer (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "768235003 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/payment-interval (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 2.473,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "458252275 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/payment-interval (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 2.473,
+            "unit": "ns/op",
+            "extra": "458252275 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/payment-interval (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "458252275 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/payment-interval (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "458252275 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/payment-model (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 1.562,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "766662978 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/payment-model (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 1.562,
+            "unit": "ns/op",
+            "extra": "766662978 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/payment-model (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "766662978 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidContractCommitmentEnums/payment-model (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "766662978 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusFieldNames (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 0.3117,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusFieldNames (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 0.3117,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusFieldNames (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusFieldNames (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewFieldMapping (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 46.17,
+            "unit": "ns/op\t      96 B/op\t       1 allocs/op",
+            "extra": "24684872 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewFieldMapping (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 46.17,
+            "unit": "ns/op",
+            "extra": "24684872 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewFieldMapping (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 96,
+            "unit": "B/op",
+            "extra": "24684872 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewFieldMapping (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "24684872 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAllFieldsWithStatus (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 3698,
+            "unit": "ns/op\t    7104 B/op\t      69 allocs/op",
+            "extra": "308988 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAllFieldsWithStatus (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 3698,
+            "unit": "ns/op",
+            "extra": "308988 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAllFieldsWithStatus (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 7104,
+            "unit": "B/op",
+            "extra": "308988 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAllFieldsWithStatus (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 69,
+            "unit": "allocs/op",
+            "extra": "308988 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSetFieldStatus (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 47.21,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "25007979 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSetFieldStatus (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 47.21,
+            "unit": "ns/op",
+            "extra": "25007979 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSetFieldStatus (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "25007979 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSetFieldStatus (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "25007979 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSetFieldStatusWithOptions (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 52.4,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "23004297 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSetFieldStatusWithOptions (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 52.4,
+            "unit": "ns/op",
+            "extra": "23004297 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSetFieldStatusWithOptions (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "23004297 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSetFieldStatusWithOptions (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "23004297 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSetFieldStatusNotFound (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 85.83,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "13771458 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSetFieldStatusNotFound (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 85.83,
+            "unit": "ns/op",
+            "extra": "13771458 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSetFieldStatusNotFound (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "13771458 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSetFieldStatusNotFound (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "13771458 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 413.4,
+            "unit": "ns/op\t     624 B/op\t       7 allocs/op",
+            "extra": "2933725 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 413.4,
+            "unit": "ns/op",
+            "extra": "2933725 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 624,
+            "unit": "B/op",
+            "extra": "2933725 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 7,
+            "unit": "allocs/op",
+            "extra": "2933725 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_ValidRecord (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 98.19,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "12266587 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_ValidRecord (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 98.19,
+            "unit": "ns/op",
+            "extra": "12266587 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_ValidRecord (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "12266587 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_ValidRecord (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "12266587 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecordWithOptions_FailFast (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 93.79,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "12793458 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecordWithOptions_FailFast (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 93.79,
+            "unit": "ns/op",
+            "extra": "12793458 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecordWithOptions_FailFast (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "12793458 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecordWithOptions_FailFast (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "12793458 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecordWithOptions_Aggregate (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 93.85,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "12823556 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecordWithOptions_Aggregate (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 93.85,
+            "unit": "ns/op",
+            "extra": "12823556 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecordWithOptions_Aggregate (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "12823556 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecordWithOptions_Aggregate (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "12823556 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_CostHierarchyValid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 93.7,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "12812179 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_CostHierarchyValid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 93.7,
+            "unit": "ns/op",
+            "extra": "12812179 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_CostHierarchyValid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "12812179 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_CostHierarchyValid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "12812179 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_WithCommitmentDiscount (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 93.64,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "12757305 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_WithCommitmentDiscount (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 93.64,
+            "unit": "ns/op",
+            "extra": "12757305 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_WithCommitmentDiscount (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "12757305 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_WithCommitmentDiscount (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "12757305 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_WithCapacityReservation (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 98.06,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "12207127 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_WithCapacityReservation (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 98.06,
+            "unit": "ns/op",
+            "extra": "12207127 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_WithCapacityReservation (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "12207127 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_WithCapacityReservation (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "12207127 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_WithPricing (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 93.93,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "12764061 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_WithPricing (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 93.93,
+            "unit": "ns/op",
+            "extra": "12764061 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_WithPricing (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "12764061 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_WithPricing (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "12764061 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_FullRecord (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 94.19,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "12642927 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_FullRecord (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 94.19,
+            "unit": "ns/op",
+            "extra": "12642927 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_FullRecord (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "12642927 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_FullRecord (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "12642927 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_ErrorPath (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 497.9,
+            "unit": "ns/op\t     176 B/op\t       8 allocs/op",
+            "extra": "2399476 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_ErrorPath (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 497.9,
+            "unit": "ns/op",
+            "extra": "2399476 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_ErrorPath (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 176,
+            "unit": "B/op",
+            "extra": "2399476 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_ErrorPath (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 8,
+            "unit": "allocs/op",
+            "extra": "2399476 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_Focus14Fields (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 365.8,
+            "unit": "ns/op\t      96 B/op\t       1 allocs/op",
+            "extra": "3263264 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_Focus14Fields (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 365.8,
+            "unit": "ns/op",
+            "extra": "3263264 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_Focus14Fields (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 96,
+            "unit": "B/op",
+            "extra": "3263264 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateFocusRecord_Focus14Fields (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "3263264 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewFocusRecordBuilder (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 36.97,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "32441169 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewFocusRecordBuilder (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 36.97,
+            "unit": "ns/op",
+            "extra": "32441169 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewFocusRecordBuilder (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "32441169 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewFocusRecordBuilder (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "32441169 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_Build (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 789.2,
+            "unit": "ns/op\t    1384 B/op\t       8 allocs/op",
+            "extra": "1485943 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_Build (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 789.2,
+            "unit": "ns/op",
+            "extra": "1485943 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_Build (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 1384,
+            "unit": "B/op",
+            "extra": "1485943 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_Build (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 8,
+            "unit": "allocs/op",
+            "extra": "1485943 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_ChainedBuild (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 360,
+            "unit": "ns/op\t     352 B/op\t       6 allocs/op",
+            "extra": "3330524 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_ChainedBuild (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 360,
+            "unit": "ns/op",
+            "extra": "3330524 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_ChainedBuild (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 352,
+            "unit": "B/op",
+            "extra": "3330524 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_ChainedBuild (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 6,
+            "unit": "allocs/op",
+            "extra": "3330524 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_FullRecord (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 851.3,
+            "unit": "ns/op\t     928 B/op\t       8 allocs/op",
+            "extra": "1419916 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_FullRecord (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 851.3,
+            "unit": "ns/op",
+            "extra": "1419916 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_FullRecord (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 928,
+            "unit": "B/op",
+            "extra": "1419916 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_FullRecord (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 8,
+            "unit": "allocs/op",
+            "extra": "1419916 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithAllocation (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 0.9518,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithAllocation (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 0.9518,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithAllocation (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithAllocation (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithAllocatedResource (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 1.247,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "957837478 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithAllocatedResource (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 1.247,
+            "unit": "ns/op",
+            "extra": "957837478 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithAllocatedResource (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "957837478 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithAllocatedResource (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "957837478 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithAllocatedTags (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 85.29,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "14109027 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithAllocatedTags (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 85.29,
+            "unit": "ns/op",
+            "extra": "14109027 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithAllocatedTags (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "14109027 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithAllocatedTags (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "14109027 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithServiceProvider (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 0.6239,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithServiceProvider (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 0.6239,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithServiceProvider (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithServiceProvider (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithHostProvider (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 0.623,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithHostProvider (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 0.623,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithHostProvider (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithHostProvider (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithContractApplied (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 0.623,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithContractApplied (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 0.623,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithContractApplied (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithContractApplied (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithInvoiceDetailID (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 0.6238,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithInvoiceDetailID (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 0.6238,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithInvoiceDetailID (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithInvoiceDetailID (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithCommitmentProgramEligibilityDetails (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 0.6235,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithCommitmentProgramEligibilityDetails (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 0.6235,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithCommitmentProgramEligibilityDetails (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFocusRecordBuilder_WithCommitmentProgramEligibilityDetails (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPaginateActualCosts (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 44.17,
+            "unit": "ns/op\t       8 B/op\t       2 allocs/op",
+            "extra": "26534245 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPaginateActualCosts (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 44.17,
+            "unit": "ns/op",
+            "extra": "26534245 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPaginateActualCosts (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 8,
+            "unit": "B/op",
+            "extra": "26534245 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPaginateActualCosts (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 2,
+            "unit": "allocs/op",
+            "extra": "26534245 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkWithProjectedCostBreakdown/empty (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 87.03,
+            "unit": "ns/op\t     240 B/op\t       1 allocs/op",
+            "extra": "12869402 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkWithProjectedCostBreakdown/empty (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 87.03,
+            "unit": "ns/op",
+            "extra": "12869402 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkWithProjectedCostBreakdown/empty (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 240,
+            "unit": "B/op",
+            "extra": "12869402 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkWithProjectedCostBreakdown/empty (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "12869402 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkWithProjectedCostBreakdown/ec2_2_entries (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 238.7,
+            "unit": "ns/op\t     496 B/op\t       3 allocs/op",
+            "extra": "4844050 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkWithProjectedCostBreakdown/ec2_2_entries (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 238.7,
+            "unit": "ns/op",
+            "extra": "4844050 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkWithProjectedCostBreakdown/ec2_2_entries (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 496,
+            "unit": "B/op",
+            "extra": "4844050 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkWithProjectedCostBreakdown/ec2_2_entries (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "4844050 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkWithProjectedCostBreakdown/32_entries (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 876.1,
+            "unit": "ns/op\t    2120 B/op\t       5 allocs/op",
+            "extra": "1374403 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkWithProjectedCostBreakdown/32_entries (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 876.1,
+            "unit": "ns/op",
+            "extra": "1374403 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkWithProjectedCostBreakdown/32_entries (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 2120,
+            "unit": "B/op",
+            "extra": "1374403 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkWithProjectedCostBreakdown/32_entries (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "1374403 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkWithProjectedCostPriceOptions/empty (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 87.97,
+            "unit": "ns/op\t     240 B/op\t       1 allocs/op",
+            "extra": "13452216 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkWithProjectedCostPriceOptions/empty (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 87.97,
+            "unit": "ns/op",
+            "extra": "13452216 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkWithProjectedCostPriceOptions/empty (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 240,
+            "unit": "B/op",
+            "extra": "13452216 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkWithProjectedCostPriceOptions/empty (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "13452216 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkWithProjectedCostPriceOptions/2_options (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 467.8,
+            "unit": "ns/op\t     480 B/op\t       4 allocs/op",
+            "extra": "2565028 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkWithProjectedCostPriceOptions/2_options (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 467.8,
+            "unit": "ns/op",
+            "extra": "2565028 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkWithProjectedCostPriceOptions/2_options (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 480,
+            "unit": "B/op",
+            "extra": "2565028 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkWithProjectedCostPriceOptions/2_options (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 4,
+            "unit": "allocs/op",
+            "extra": "2565028 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBillingPeriodBuilder_WithInvoiceIssuerName (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 0.6235,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBillingPeriodBuilder_WithInvoiceIssuerName (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 0.6235,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBillingPeriodBuilder_WithInvoiceIssuerName (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBillingPeriodBuilder_WithInvoiceIssuerName (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInvoiceDetailBuilder_WithBilledCost (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 0.6245,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInvoiceDetailBuilder_WithBilledCost (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 0.6245,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInvoiceDetailBuilder_WithBilledCost (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInvoiceDetailBuilder_WithBilledCost (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInvoiceDetailBuilder_WithChargeCategory (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 0.3119,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInvoiceDetailBuilder_WithChargeCategory (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 0.3119,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInvoiceDetailBuilder_WithChargeCategory (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInvoiceDetailBuilder_WithChargeCategory (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidInvoiceEnums (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 2.63,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "457175037 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidInvoiceEnums (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 2.63,
+            "unit": "ns/op",
+            "extra": "457175037 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidInvoiceEnums (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "457175037 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidInvoiceEnums (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "457175037 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewPluginLogger (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 289.6,
+            "unit": "ns/op\t     544 B/op\t       3 allocs/op",
+            "extra": "4189515 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewPluginLogger (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 289.6,
+            "unit": "ns/op",
+            "extra": "4189515 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewPluginLogger (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 544,
+            "unit": "B/op",
+            "extra": "4189515 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewPluginLogger (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "4189515 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLogCall (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 257.2,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "4690651 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLogCall (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 257.2,
+            "unit": "ns/op",
+            "extra": "4690651 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLogCall (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "4690651 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLogCall (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "4690651 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInterceptor (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 865.3,
+            "unit": "ns/op\t     608 B/op\t       9 allocs/op",
+            "extra": "1381627 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInterceptor (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 865.3,
+            "unit": "ns/op",
+            "extra": "1381627 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInterceptor (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 608,
+            "unit": "B/op",
+            "extra": "1381627 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInterceptor (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 9,
+            "unit": "allocs/op",
+            "extra": "1381627 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInterceptorValidation (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 870.6,
+            "unit": "ns/op\t     608 B/op\t       9 allocs/op",
+            "extra": "1383084 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInterceptorValidation (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 870.6,
+            "unit": "ns/op",
+            "extra": "1383084 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInterceptorValidation (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 608,
+            "unit": "B/op",
+            "extra": "1383084 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInterceptorValidation (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 9,
+            "unit": "allocs/op",
+            "extra": "1383084 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInterceptorGeneration (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 204.3,
+            "unit": "ns/op\t      96 B/op\t       3 allocs/op",
+            "extra": "5811182 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInterceptorGeneration (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 204.3,
+            "unit": "ns/op",
+            "extra": "5811182 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInterceptorGeneration (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 96,
+            "unit": "B/op",
+            "extra": "5811182 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInterceptorGeneration (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "5811182 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewLogWriter_File (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 1.873,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "641324452 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewLogWriter_File (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 1.873,
+            "unit": "ns/op",
+            "extra": "641324452 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewLogWriter_File (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "641324452 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewLogWriter_File (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "641324452 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewLogWriter_Stderr (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 1.877,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "642446524 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewLogWriter_Stderr (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 1.877,
+            "unit": "ns/op",
+            "extra": "642446524 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewLogWriter_Stderr (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "642446524 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewLogWriter_Stderr (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "642446524 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetLogFilePermissions_Default (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 86.55,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "13901541 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetLogFilePermissions_Default (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 86.55,
+            "unit": "ns/op",
+            "extra": "13901541 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetLogFilePermissions_Default (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "13901541 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetLogFilePermissions_Default (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "13901541 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetLogFilePermissions_Configured (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 58.53,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "20506326 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetLogFilePermissions_Configured (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 58.53,
+            "unit": "ns/op",
+            "extra": "20506326 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetLogFilePermissions_Configured (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "20506326 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetLogFilePermissions_Configured (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "20506326 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMarshalManifestJSON (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 89431,
+            "unit": "ns/op\t   30621 B/op\t     447 allocs/op",
+            "extra": "13447 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMarshalManifestJSON (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 89431,
+            "unit": "ns/op",
+            "extra": "13447 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMarshalManifestJSON (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 30621,
+            "unit": "B/op",
+            "extra": "13447 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMarshalManifestJSON (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 447,
+            "unit": "allocs/op",
+            "extra": "13447 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMarshalManifestYAML (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 835224,
+            "unit": "ns/op\t  960865 B/op\t    2965 allocs/op",
+            "extra": "1348 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMarshalManifestYAML (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 835224,
+            "unit": "ns/op",
+            "extra": "1348 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMarshalManifestYAML (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 960865,
+            "unit": "B/op",
+            "extra": "1348 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMarshalManifestYAML (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 2965,
+            "unit": "allocs/op",
+            "extra": "1348 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLoadManifest/.json (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 140660,
+            "unit": "ns/op\t   39733 B/op\t     782 allocs/op",
+            "extra": "8035 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLoadManifest/.json (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 140660,
+            "unit": "ns/op",
+            "extra": "8035 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLoadManifest/.json (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 39733,
+            "unit": "B/op",
+            "extra": "8035 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLoadManifest/.json (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 782,
+            "unit": "allocs/op",
+            "extra": "8035 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLoadManifest/.yaml (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 259714,
+            "unit": "ns/op\t   72940 B/op\t    1517 allocs/op",
+            "extra": "4358 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLoadManifest/.yaml (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 259714,
+            "unit": "ns/op",
+            "extra": "4358 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLoadManifest/.yaml (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 72940,
+            "unit": "B/op",
+            "extra": "4358 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLoadManifest/.yaml (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 1517,
+            "unit": "allocs/op",
+            "extra": "4358 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMetricsInterceptor_Overhead (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 365.5,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "3305218 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMetricsInterceptor_Overhead (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 365.5,
+            "unit": "ns/op",
+            "extra": "3305218 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMetricsInterceptor_Overhead (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "3305218 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMetricsInterceptor_Overhead (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "3305218 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMetricsInterceptor_NoMetrics (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 0.3114,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMetricsInterceptor_NoMetrics (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 0.3114,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMetricsInterceptor_NoMetrics (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMetricsInterceptor_NoMetrics (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMetricsInterceptor_WithError (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 559.4,
+            "unit": "ns/op\t     120 B/op\t       3 allocs/op",
+            "extra": "2111352 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMetricsInterceptor_WithError (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 559.4,
+            "unit": "ns/op",
+            "extra": "2111352 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMetricsInterceptor_WithError (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 120,
+            "unit": "B/op",
+            "extra": "2111352 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMetricsInterceptor_WithError (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "2111352 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewPluginMetrics (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 98684,
+            "unit": "ns/op\t   32212 B/op\t     334 allocs/op",
+            "extra": "12140 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewPluginMetrics (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 98684,
+            "unit": "ns/op",
+            "extra": "12140 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewPluginMetrics (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 32212,
+            "unit": "B/op",
+            "extra": "12140 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewPluginMetrics (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 334,
+            "unit": "allocs/op",
+            "extra": "12140 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInferCapabilitiesRPC (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 944.3,
+            "unit": "ns/op\t     872 B/op\t       6 allocs/op",
+            "extra": "1270455 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInferCapabilitiesRPC (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 944.3,
+            "unit": "ns/op",
+            "extra": "1270455 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInferCapabilitiesRPC (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 872,
+            "unit": "B/op",
+            "extra": "1270455 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInferCapabilitiesRPC (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 6,
+            "unit": "allocs/op",
+            "extra": "1270455 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInferCapabilitiesExplicit (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 803.4,
+            "unit": "ns/op\t     864 B/op\t       6 allocs/op",
+            "extra": "1490046 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInferCapabilitiesExplicit (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 803.4,
+            "unit": "ns/op",
+            "extra": "1490046 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInferCapabilitiesExplicit (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 864,
+            "unit": "B/op",
+            "extra": "1490046 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkInferCapabilitiesExplicit (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 6,
+            "unit": "allocs/op",
+            "extra": "1490046 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewPluginInfo (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 277.5,
+            "unit": "ns/op\t     512 B/op\t       4 allocs/op",
+            "extra": "4267515 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewPluginInfo (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 277.5,
+            "unit": "ns/op",
+            "extra": "4267515 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewPluginInfo (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 512,
+            "unit": "B/op",
+            "extra": "4267515 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewPluginInfo (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 4,
+            "unit": "allocs/op",
+            "extra": "4267515 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginInfoValidate (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 177.1,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "6781246 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginInfoValidate (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 177.1,
+            "unit": "ns/op",
+            "extra": "6781246 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginInfoValidate (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "6781246 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginInfoValidate (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "6781246 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginInfoValidateScorerLimits (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 572.6,
+            "unit": "ns/op\t      96 B/op\t       5 allocs/op",
+            "extra": "2102319 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginInfoValidateScorerLimits (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 572.6,
+            "unit": "ns/op",
+            "extra": "2102319 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginInfoValidateScorerLimits (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 96,
+            "unit": "B/op",
+            "extra": "2102319 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPluginInfoValidateScorerLimits (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "2102319 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkWithScorerLimits (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 931.9,
+            "unit": "ns/op\t     912 B/op\t      10 allocs/op",
+            "extra": "1299439 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkWithScorerLimits (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 931.9,
+            "unit": "ns/op",
+            "extra": "1299439 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkWithScorerLimits (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 912,
+            "unit": "B/op",
+            "extra": "1299439 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkWithScorerLimits (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 10,
+            "unit": "allocs/op",
+            "extra": "1299439 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDecodePolicy (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 9577,
+            "unit": "ns/op\t    4072 B/op\t      54 allocs/op",
+            "extra": "124053 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDecodePolicy (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 9577,
+            "unit": "ns/op",
+            "extra": "124053 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDecodePolicy (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 4072,
+            "unit": "B/op",
+            "extra": "124053 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDecodePolicy (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 54,
+            "unit": "allocs/op",
+            "extra": "124053 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithRegionPrices (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 66.99,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "17906554 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithRegionPrices (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 66.99,
+            "unit": "ns/op",
+            "extra": "17906554 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithRegionPrices (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "17906554 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithRegionPrices (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "17906554 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateEstimateCostResponse_WithRegionPrices (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 59.92,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "19009393 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateEstimateCostResponse_WithRegionPrices (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 59.92,
+            "unit": "ns/op",
+            "extra": "19009393 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateEstimateCostResponse_WithRegionPrices (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "19009393 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateEstimateCostResponse_WithRegionPrices (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "19009393 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSliceCopyPatterns/Providers_MakeCopy (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 5.306,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "225662640 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSliceCopyPatterns/Providers_MakeCopy (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 5.306,
+            "unit": "ns/op",
+            "extra": "225662640 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSliceCopyPatterns/Providers_MakeCopy (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "225662640 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSliceCopyPatterns/Providers_MakeCopy (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "225662640 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSliceCopyPatterns/Providers_Append (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 53.37,
+            "unit": "ns/op\t      64 B/op\t       1 allocs/op",
+            "extra": "22141896 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSliceCopyPatterns/Providers_Append (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 53.37,
+            "unit": "ns/op",
+            "extra": "22141896 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSliceCopyPatterns/Providers_Append (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 64,
+            "unit": "B/op",
+            "extra": "22141896 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSliceCopyPatterns/Providers_Append (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "22141896 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSliceCopyPatterns/Capabilities_MakeCopy (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 2.496,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "479936098 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSliceCopyPatterns/Capabilities_MakeCopy (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 2.496,
+            "unit": "ns/op",
+            "extra": "479936098 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSliceCopyPatterns/Capabilities_MakeCopy (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "479936098 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSliceCopyPatterns/Capabilities_MakeCopy (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "479936098 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSliceCopyPatterns/Capabilities_Append (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 31.44,
+            "unit": "ns/op\t      32 B/op\t       1 allocs/op",
+            "extra": "36840675 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSliceCopyPatterns/Capabilities_Append (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 31.44,
+            "unit": "ns/op",
+            "extra": "36840675 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSliceCopyPatterns/Capabilities_Append (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 32,
+            "unit": "B/op",
+            "extra": "36840675 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSliceCopyPatterns/Capabilities_Append (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "36840675 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidUsageProfile_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 1.249,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "957525958 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidUsageProfile_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 1.249,
+            "unit": "ns/op",
+            "extra": "957525958 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidUsageProfile_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "957525958 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidUsageProfile_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "957525958 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidUsageProfile_Invalid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 2.609,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "466545424 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidUsageProfile_Invalid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 2.609,
+            "unit": "ns/op",
+            "extra": "466545424 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidUsageProfile_Invalid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "466545424 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidUsageProfile_Invalid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "466545424 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkParseUsageProfile (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 15.66,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "76881712 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkParseUsageProfile (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 15.66,
+            "unit": "ns/op",
+            "extra": "76881712 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkParseUsageProfile (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "76881712 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkParseUsageProfile (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "76881712 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkUsageProfileString (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 3.435,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "349127461 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkUsageProfileString (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 3.435,
+            "unit": "ns/op",
+            "extra": "349127461 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkUsageProfileString (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "349127461 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkUsageProfileString (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "349127461 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNormalizeUsageProfile_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 2.796,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "481348878 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNormalizeUsageProfile_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 2.796,
+            "unit": "ns/op",
+            "extra": "481348878 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNormalizeUsageProfile_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "481348878 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNormalizeUsageProfile_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "481348878 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDefaultMonthlyHours (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 1.872,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "641747901 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDefaultMonthlyHours (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 1.872,
+            "unit": "ns/op",
+            "extra": "641747901 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDefaultMonthlyHours (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "641747901 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDefaultMonthlyHours (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "641747901 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAllUsageProfiles (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 0.3119,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAllUsageProfiles (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 0.3119,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAllUsageProfiles (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAllUsageProfiles (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewValidationError (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 47.43,
+            "unit": "ns/op\t      96 B/op\t       1 allocs/op",
+            "extra": "24163741 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewValidationError (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 47.43,
+            "unit": "ns/op",
+            "extra": "24163741 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewValidationError (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 96,
+            "unit": "B/op",
+            "extra": "24163741 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewValidationError (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "24163741 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewValidationErrorWithCause (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 50.16,
+            "unit": "ns/op\t      96 B/op\t       1 allocs/op",
+            "extra": "22769346 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewValidationErrorWithCause (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 50.16,
+            "unit": "ns/op",
+            "extra": "22769346 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewValidationErrorWithCause (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 96,
+            "unit": "B/op",
+            "extra": "22769346 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkNewValidationErrorWithCause (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "22769346 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidationError_Unwrap (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 0.9368,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidationError_Unwrap (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 0.9368,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidationError_Unwrap (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidationError_Unwrap (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateEstimateCostResponse_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 5.938,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "199977057 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateEstimateCostResponse_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 5.938,
+            "unit": "ns/op",
+            "extra": "199977057 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateEstimateCostResponse_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "199977057 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateEstimateCostResponse_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "199977057 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 14.04,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "85545814 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 14.04,
+            "unit": "ns/op",
+            "extra": "85545814 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "85545814 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "85545814 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithPredictionInterval (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 16.24,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "73957585 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithPredictionInterval (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 16.24,
+            "unit": "ns/op",
+            "extra": "73957585 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithPredictionInterval (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "73957585 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithPredictionInterval (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "73957585 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithMetadata32 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 936.9,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1266285 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithMetadata32 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 936.9,
+            "unit": "ns/op",
+            "extra": "1266285 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithMetadata32 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1266285 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithMetadata32 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1266285 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithMetadata32_LongKeys (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 3624,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "329017 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithMetadata32_LongKeys (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 3624,
+            "unit": "ns/op",
+            "extra": "329017 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithMetadata32_LongKeys (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "329017 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithMetadata32_LongKeys (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "329017 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_Invalid_NaN (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 164.8,
+            "unit": "ns/op\t      88 B/op\t       3 allocs/op",
+            "extra": "7233280 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_Invalid_NaN (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 164.8,
+            "unit": "ns/op",
+            "extra": "7233280 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_Invalid_NaN (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 88,
+            "unit": "B/op",
+            "extra": "7233280 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_Invalid_NaN (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "7233280 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithCostBreakdown (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 82.77,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "14586802 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithCostBreakdown (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 82.77,
+            "unit": "ns/op",
+            "extra": "14586802 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithCostBreakdown (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "14586802 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithCostBreakdown (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "14586802 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithCostBreakdown32 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 1523,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "793663 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithCostBreakdown32 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 1523,
+            "unit": "ns/op",
+            "extra": "793663 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithCostBreakdown32 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "793663 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithCostBreakdown32 (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "793663 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_Invalid_CostBreakdownSum (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 822.7,
+            "unit": "ns/op\t     312 B/op\t       7 allocs/op",
+            "extra": "1461036 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_Invalid_CostBreakdownSum (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 822.7,
+            "unit": "ns/op",
+            "extra": "1461036 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_Invalid_CostBreakdownSum (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 312,
+            "unit": "B/op",
+            "extra": "1461036 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_Invalid_CostBreakdownSum (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 7,
+            "unit": "allocs/op",
+            "extra": "1461036 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithPriceOptions (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 52.18,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "23138228 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithPriceOptions (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 52.18,
+            "unit": "ns/op",
+            "extra": "23138228 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithPriceOptions (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "23138228 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetProjectedCostResponse_WithPriceOptions (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "23138228 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateEstimateCostResponse_WithPriceOptions (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 44.01,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "27240297 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateEstimateCostResponse_WithPriceOptions (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 44.01,
+            "unit": "ns/op",
+            "extra": "27240297 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateEstimateCostResponse_WithPriceOptions (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "27240297 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateEstimateCostResponse_WithPriceOptions (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "27240297 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateProjectedCostRequest_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 2.491,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "480642760 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateProjectedCostRequest_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 2.491,
+            "unit": "ns/op",
+            "extra": "480642760 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateProjectedCostRequest_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "480642760 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateProjectedCostRequest_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "480642760 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateProjectedCostRequest_Invalid_EmptyProvider (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 2.187,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "549204780 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateProjectedCostRequest_Invalid_EmptyProvider (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 2.187,
+            "unit": "ns/op",
+            "extra": "549204780 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateProjectedCostRequest_Invalid_EmptyProvider (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "549204780 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateProjectedCostRequest_Invalid_EmptyProvider (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "549204780 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostRequest_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 10.63,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostRequest_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 10.63,
+            "unit": "ns/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostRequest_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostRequest_Valid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostRequest_Invalid_EmptyResourceID (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 2.189,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "550314222 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostRequest_Invalid_EmptyResourceID (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 2.189,
+            "unit": "ns/op",
+            "extra": "550314222 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostRequest_Invalid_EmptyResourceID (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "550314222 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostRequest_Invalid_EmptyResourceID (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "550314222 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidMetricKind (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 0.6262,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidMetricKind (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 0.6262,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidMetricKind (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidMetricKind (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidMetricKind_Invalid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 1.655,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "724472583 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidMetricKind_Invalid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 1.655,
+            "unit": "ns/op",
+            "extra": "724472583 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidMetricKind_Invalid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "724472583 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidMetricKind_Invalid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "724472583 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsUtilizationValid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 0.3121,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsUtilizationValid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 0.3121,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsUtilizationValid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsUtilizationValid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsUtilizationValid_Invalid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 0.3118,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsUtilizationValid_Invalid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 0.3118,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsUtilizationValid_Invalid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsUtilizationValid_Invalid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateProjectedCostRequestLenient (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 3.123,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "382052155 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateProjectedCostRequestLenient (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 3.123,
+            "unit": "ns/op",
+            "extra": "382052155 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateProjectedCostRequestLenient (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "382052155 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateProjectedCostRequestLenient (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "382052155 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostRequest_WithResource (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 59.41,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "20246437 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostRequest_WithResource (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 59.41,
+            "unit": "ns/op",
+            "extra": "20246437 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostRequest_WithResource (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "20246437 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostRequest_WithResource (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "20246437 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateSpecVersion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 156.4,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "7516105 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateSpecVersion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 156.4,
+            "unit": "ns/op",
+            "extra": "7516105 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateSpecVersion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "7516105 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateSpecVersion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "7516105 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidSpecVersion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk)",
+            "value": 156.2,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "7709959 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidSpecVersion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - ns/op",
+            "value": 156.2,
+            "unit": "ns/op",
+            "extra": "7709959 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidSpecVersion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "7709959 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidSpecVersion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "7709959 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAWSSKU (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping)",
+            "value": 12.77,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "91043959 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAWSSKU (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - ns/op",
+            "value": 12.77,
+            "unit": "ns/op",
+            "extra": "91043959 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAWSSKU (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "91043959 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAWSSKU (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "91043959 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAWSRegion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping)",
+            "value": 11.16,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAWSRegion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - ns/op",
+            "value": 11.16,
+            "unit": "ns/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAWSRegion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAWSRegion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAWSRegionFromAZ (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping)",
+            "value": 0.7157,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAWSRegionFromAZ (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - ns/op",
+            "value": 0.7157,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAWSRegionFromAZ (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAWSRegionFromAZ (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAWSSKU_NilMap (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping)",
+            "value": 0.624,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAWSSKU_NilMap (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - ns/op",
+            "value": 0.624,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAWSSKU_NilMap (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAWSSKU_NilMap (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAWSRegion_NilMap (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping)",
+            "value": 0.6245,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAWSRegion_NilMap (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - ns/op",
+            "value": 0.6245,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAWSRegion_NilMap (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAWSRegion_NilMap (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAzureSKU (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping)",
+            "value": 12.6,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "96094364 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAzureSKU (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - ns/op",
+            "value": 12.6,
+            "unit": "ns/op",
+            "extra": "96094364 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAzureSKU (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "96094364 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAzureSKU (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "96094364 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAzureRegion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping)",
+            "value": 12.32,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "94071244 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAzureRegion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - ns/op",
+            "value": 12.32,
+            "unit": "ns/op",
+            "extra": "94071244 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAzureRegion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "94071244 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractAzureRegion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "94071244 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractGCPSKU (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping)",
+            "value": 12.62,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "80288002 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractGCPSKU (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - ns/op",
+            "value": 12.62,
+            "unit": "ns/op",
+            "extra": "80288002 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractGCPSKU (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "80288002 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractGCPSKU (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "80288002 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractGCPRegion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping)",
+            "value": 12.15,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "98282239 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractGCPRegion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - ns/op",
+            "value": 12.15,
+            "unit": "ns/op",
+            "extra": "98282239 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractGCPRegion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "98282239 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractGCPRegion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "98282239 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractGCPRegionFromZone (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping)",
+            "value": 39.85,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "31700557 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractGCPRegionFromZone (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - ns/op",
+            "value": 39.85,
+            "unit": "ns/op",
+            "extra": "31700557 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractGCPRegionFromZone (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "31700557 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractGCPRegionFromZone (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "31700557 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidGCPRegion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping)",
+            "value": 24.68,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "51889012 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidGCPRegion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - ns/op",
+            "value": 24.68,
+            "unit": "ns/op",
+            "extra": "51889012 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidGCPRegion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "51889012 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidGCPRegion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "51889012 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidGCPRegion_Invalid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping)",
+            "value": 18.61,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "62342979 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidGCPRegion_Invalid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - ns/op",
+            "value": 18.61,
+            "unit": "ns/op",
+            "extra": "62342979 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidGCPRegion_Invalid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "62342979 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidGCPRegion_Invalid (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "62342979 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidGCPRegion_LastRegion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping)",
+            "value": 19.4,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "59852349 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidGCPRegion_LastRegion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - ns/op",
+            "value": 19.4,
+            "unit": "ns/op",
+            "extra": "59852349 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidGCPRegion_LastRegion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "59852349 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidGCPRegion_LastRegion (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "59852349 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractSKU_DefaultKeys (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping)",
+            "value": 11.81,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "99501068 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractSKU_DefaultKeys (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - ns/op",
+            "value": 11.81,
+            "unit": "ns/op",
+            "extra": "99501068 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractSKU_DefaultKeys (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "99501068 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractSKU_DefaultKeys (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "99501068 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractSKU_CustomKeys (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping)",
+            "value": 32.47,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "36266612 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractSKU_CustomKeys (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - ns/op",
+            "value": 32.47,
+            "unit": "ns/op",
+            "extra": "36266612 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractSKU_CustomKeys (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "36266612 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractSKU_CustomKeys (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "36266612 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractRegion_DefaultKeys (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping)",
+            "value": 11.81,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "98882674 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractRegion_DefaultKeys (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - ns/op",
+            "value": 11.81,
+            "unit": "ns/op",
+            "extra": "98882674 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractRegion_DefaultKeys (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "98882674 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractRegion_DefaultKeys (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "98882674 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractRegion_CustomKeys (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping)",
+            "value": 32.68,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "36455586 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractRegion_CustomKeys (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - ns/op",
+            "value": 32.68,
+            "unit": "ns/op",
+            "extra": "36455586 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractRegion_CustomKeys (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "36455586 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractRegion_CustomKeys (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "36455586 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractFromKeys (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping)",
+            "value": 12.75,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "93671725 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractFromKeys (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - ns/op",
+            "value": 12.75,
+            "unit": "ns/op",
+            "extra": "93671725 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractFromKeys (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "93671725 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractFromKeys (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "93671725 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractFromKeys_NilMap (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping)",
+            "value": 0.625,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractFromKeys_NilMap (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - ns/op",
+            "value": 0.625,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractFromKeys_NilMap (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExtractFromKeys_NilMap (github.com/rshade/finfocus-spec/sdk/go/pluginsdk/mapping) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidBypassSeverity (github.com/rshade/finfocus-spec/sdk/go/pricing)",
+            "value": 1.873,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "642106458 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidBypassSeverity (github.com/rshade/finfocus-spec/sdk/go/pricing) - ns/op",
+            "value": 1.873,
+            "unit": "ns/op",
+            "extra": "642106458 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidBypassSeverity (github.com/rshade/finfocus-spec/sdk/go/pricing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "642106458 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidBypassSeverity (github.com/rshade/finfocus-spec/sdk/go/pricing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "642106458 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidBypassSeverity_Invalid (github.com/rshade/finfocus-spec/sdk/go/pricing)",
+            "value": 3.152,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "380578702 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidBypassSeverity_Invalid (github.com/rshade/finfocus-spec/sdk/go/pricing) - ns/op",
+            "value": 3.152,
+            "unit": "ns/op",
+            "extra": "380578702 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidBypassSeverity_Invalid (github.com/rshade/finfocus-spec/sdk/go/pricing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "380578702 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidBypassSeverity_Invalid (github.com/rshade/finfocus-spec/sdk/go/pricing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "380578702 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidBypassMechanism (github.com/rshade/finfocus-spec/sdk/go/pricing)",
+            "value": 0.9428,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidBypassMechanism (github.com/rshade/finfocus-spec/sdk/go/pricing) - ns/op",
+            "value": 0.9428,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidBypassMechanism (github.com/rshade/finfocus-spec/sdk/go/pricing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidBypassMechanism (github.com/rshade/finfocus-spec/sdk/go/pricing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidBypassMechanism_Invalid (github.com/rshade/finfocus-spec/sdk/go/pricing)",
+            "value": 3.884,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "318220828 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidBypassMechanism_Invalid (github.com/rshade/finfocus-spec/sdk/go/pricing) - ns/op",
+            "value": 3.884,
+            "unit": "ns/op",
+            "extra": "318220828 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidBypassMechanism_Invalid (github.com/rshade/finfocus-spec/sdk/go/pricing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "318220828 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidBypassMechanism_Invalid (github.com/rshade/finfocus-spec/sdk/go/pricing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "318220828 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAllBypassSeverities (github.com/rshade/finfocus-spec/sdk/go/pricing)",
+            "value": 0.3124,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAllBypassSeverities (github.com/rshade/finfocus-spec/sdk/go/pricing) - ns/op",
+            "value": 0.3124,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAllBypassSeverities (github.com/rshade/finfocus-spec/sdk/go/pricing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAllBypassSeverities (github.com/rshade/finfocus-spec/sdk/go/pricing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAllBypassMechanisms (github.com/rshade/finfocus-spec/sdk/go/pricing)",
+            "value": 0.3118,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAllBypassMechanisms (github.com/rshade/finfocus-spec/sdk/go/pricing) - ns/op",
+            "value": 0.3118,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAllBypassMechanisms (github.com/rshade/finfocus-spec/sdk/go/pricing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAllBypassMechanisms (github.com/rshade/finfocus-spec/sdk/go/pricing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkApplyLinearGrowth (github.com/rshade/finfocus-spec/sdk/go/pricing)",
+            "value": 0.312,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkApplyLinearGrowth (github.com/rshade/finfocus-spec/sdk/go/pricing) - ns/op",
+            "value": 0.312,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkApplyLinearGrowth (github.com/rshade/finfocus-spec/sdk/go/pricing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkApplyLinearGrowth (github.com/rshade/finfocus-spec/sdk/go/pricing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkApplyExponentialGrowth (github.com/rshade/finfocus-spec/sdk/go/pricing)",
+            "value": 17.52,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "68366754 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkApplyExponentialGrowth (github.com/rshade/finfocus-spec/sdk/go/pricing) - ns/op",
+            "value": 17.52,
+            "unit": "ns/op",
+            "extra": "68366754 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkApplyExponentialGrowth (github.com/rshade/finfocus-spec/sdk/go/pricing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "68366754 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkApplyExponentialGrowth (github.com/rshade/finfocus-spec/sdk/go/pricing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "68366754 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkApplyGrowth (github.com/rshade/finfocus-spec/sdk/go/pricing)",
+            "value": 18.79,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "63866343 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkApplyGrowth (github.com/rshade/finfocus-spec/sdk/go/pricing) - ns/op",
+            "value": 18.79,
+            "unit": "ns/op",
+            "extra": "63866343 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkApplyGrowth (github.com/rshade/finfocus-spec/sdk/go/pricing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "63866343 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkApplyGrowth (github.com/rshade/finfocus-spec/sdk/go/pricing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "63866343 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkResolveGrowthParams (github.com/rshade/finfocus-spec/sdk/go/pricing)",
+            "value": 0.3125,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkResolveGrowthParams (github.com/rshade/finfocus-spec/sdk/go/pricing) - ns/op",
+            "value": 0.3125,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkResolveGrowthParams (github.com/rshade/finfocus-spec/sdk/go/pricing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkResolveGrowthParams (github.com/rshade/finfocus-spec/sdk/go/pricing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGrowthParams (github.com/rshade/finfocus-spec/sdk/go/pricing)",
+            "value": 2.502,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "480965898 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGrowthParams (github.com/rshade/finfocus-spec/sdk/go/pricing) - ns/op",
+            "value": 2.502,
+            "unit": "ns/op",
+            "extra": "480965898 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGrowthParams (github.com/rshade/finfocus-spec/sdk/go/pricing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "480965898 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGrowthParams (github.com/rshade/finfocus-spec/sdk/go/pricing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "480965898 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckGrowthWarnings (github.com/rshade/finfocus-spec/sdk/go/pricing)",
+            "value": 855.2,
+            "unit": "ns/op\t     328 B/op\t       6 allocs/op",
+            "extra": "1403806 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckGrowthWarnings (github.com/rshade/finfocus-spec/sdk/go/pricing) - ns/op",
+            "value": 855.2,
+            "unit": "ns/op",
+            "extra": "1403806 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckGrowthWarnings (github.com/rshade/finfocus-spec/sdk/go/pricing) - B/op",
+            "value": 328,
+            "unit": "B/op",
+            "extra": "1403806 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckGrowthWarnings (github.com/rshade/finfocus-spec/sdk/go/pricing) - allocs/op",
+            "value": 6,
+            "unit": "allocs/op",
+            "extra": "1403806 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckGrowthWarningsNoWarnings (github.com/rshade/finfocus-spec/sdk/go/pricing)",
+            "value": 3.433,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "348784328 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckGrowthWarningsNoWarnings (github.com/rshade/finfocus-spec/sdk/go/pricing) - ns/op",
+            "value": 3.433,
+            "unit": "ns/op",
+            "extra": "348784328 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckGrowthWarningsNoWarnings (github.com/rshade/finfocus-spec/sdk/go/pricing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "348784328 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckGrowthWarningsNoWarnings (github.com/rshade/finfocus-spec/sdk/go/pricing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "348784328 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckOverflowRisk (github.com/rshade/finfocus-spec/sdk/go/pricing)",
+            "value": 26.58,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "45189052 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckOverflowRisk (github.com/rshade/finfocus-spec/sdk/go/pricing) - ns/op",
+            "value": 26.58,
+            "unit": "ns/op",
+            "extra": "45189052 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckOverflowRisk (github.com/rshade/finfocus-spec/sdk/go/pricing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "45189052 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckOverflowRisk (github.com/rshade/finfocus-spec/sdk/go/pricing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "45189052 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkProjectCostSafely (github.com/rshade/finfocus-spec/sdk/go/pricing)",
+            "value": 64.32,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "18601936 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkProjectCostSafely (github.com/rshade/finfocus-spec/sdk/go/pricing) - ns/op",
+            "value": 64.32,
+            "unit": "ns/op",
+            "extra": "18601936 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkProjectCostSafely (github.com/rshade/finfocus-spec/sdk/go/pricing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "18601936 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkProjectCostSafely (github.com/rshade/finfocus-spec/sdk/go/pricing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "18601936 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidProvider (github.com/rshade/finfocus-spec/sdk/go/registry)",
+            "value": 4.353,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "281207552 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidProvider (github.com/rshade/finfocus-spec/sdk/go/registry) - ns/op",
+            "value": 4.353,
+            "unit": "ns/op",
+            "extra": "281207552 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidProvider (github.com/rshade/finfocus-spec/sdk/go/registry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "281207552 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidProvider (github.com/rshade/finfocus-spec/sdk/go/registry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "281207552 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidDiscoverySource (github.com/rshade/finfocus-spec/sdk/go/registry)",
+            "value": 2.949,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "408183883 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidDiscoverySource (github.com/rshade/finfocus-spec/sdk/go/registry) - ns/op",
+            "value": 2.949,
+            "unit": "ns/op",
+            "extra": "408183883 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidDiscoverySource (github.com/rshade/finfocus-spec/sdk/go/registry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "408183883 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidDiscoverySource (github.com/rshade/finfocus-spec/sdk/go/registry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "408183883 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidPluginStatus (github.com/rshade/finfocus-spec/sdk/go/registry)",
+            "value": 4.271,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "280293577 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidPluginStatus (github.com/rshade/finfocus-spec/sdk/go/registry) - ns/op",
+            "value": 4.271,
+            "unit": "ns/op",
+            "extra": "280293577 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidPluginStatus (github.com/rshade/finfocus-spec/sdk/go/registry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "280293577 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidPluginStatus (github.com/rshade/finfocus-spec/sdk/go/registry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "280293577 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidSecurityLevel (github.com/rshade/finfocus-spec/sdk/go/registry)",
+            "value": 3.833,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "312747218 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidSecurityLevel (github.com/rshade/finfocus-spec/sdk/go/registry) - ns/op",
+            "value": 3.833,
+            "unit": "ns/op",
+            "extra": "312747218 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidSecurityLevel (github.com/rshade/finfocus-spec/sdk/go/registry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "312747218 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidSecurityLevel (github.com/rshade/finfocus-spec/sdk/go/registry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "312747218 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidInstallationMethod (github.com/rshade/finfocus-spec/sdk/go/registry)",
+            "value": 3.71,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "322931696 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidInstallationMethod (github.com/rshade/finfocus-spec/sdk/go/registry) - ns/op",
+            "value": 3.71,
+            "unit": "ns/op",
+            "extra": "322931696 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidInstallationMethod (github.com/rshade/finfocus-spec/sdk/go/registry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "322931696 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidInstallationMethod (github.com/rshade/finfocus-spec/sdk/go/registry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "322931696 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidPluginCapability (github.com/rshade/finfocus-spec/sdk/go/registry)",
+            "value": 5.152,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "232987281 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidPluginCapability (github.com/rshade/finfocus-spec/sdk/go/registry) - ns/op",
+            "value": 5.152,
+            "unit": "ns/op",
+            "extra": "232987281 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidPluginCapability (github.com/rshade/finfocus-spec/sdk/go/registry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "232987281 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidPluginCapability (github.com/rshade/finfocus-spec/sdk/go/registry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "232987281 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidSystemPermission (github.com/rshade/finfocus-spec/sdk/go/registry)",
+            "value": 3.837,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "313678768 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidSystemPermission (github.com/rshade/finfocus-spec/sdk/go/registry) - ns/op",
+            "value": 3.837,
+            "unit": "ns/op",
+            "extra": "313678768 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidSystemPermission (github.com/rshade/finfocus-spec/sdk/go/registry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "313678768 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidSystemPermission (github.com/rshade/finfocus-spec/sdk/go/registry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "313678768 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidAuthMethod (github.com/rshade/finfocus-spec/sdk/go/registry)",
+            "value": 4.607,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "260293408 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidAuthMethod (github.com/rshade/finfocus-spec/sdk/go/registry) - ns/op",
+            "value": 4.607,
+            "unit": "ns/op",
+            "extra": "260293408 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidAuthMethod (github.com/rshade/finfocus-spec/sdk/go/registry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "260293408 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidAuthMethod (github.com/rshade/finfocus-spec/sdk/go/registry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "260293408 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidProvider_MapBased (github.com/rshade/finfocus-spec/sdk/go/registry)",
+            "value": 12.9,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "93790417 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidProvider_MapBased (github.com/rshade/finfocus-spec/sdk/go/registry) - ns/op",
+            "value": 12.9,
+            "unit": "ns/op",
+            "extra": "93790417 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidProvider_MapBased (github.com/rshade/finfocus-spec/sdk/go/registry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "93790417 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidProvider_MapBased (github.com/rshade/finfocus-spec/sdk/go/registry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "93790417 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidPluginCapability_MapBased (github.com/rshade/finfocus-spec/sdk/go/registry)",
+            "value": 10.26,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidPluginCapability_MapBased (github.com/rshade/finfocus-spec/sdk/go/registry) - ns/op",
+            "value": 10.26,
+            "unit": "ns/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidPluginCapability_MapBased (github.com/rshade/finfocus-spec/sdk/go/registry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidPluginCapability_MapBased (github.com/rshade/finfocus-spec/sdk/go/registry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidation_4Values (github.com/rshade/finfocus-spec/sdk/go/registry)",
+            "value": 2.974,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "406686040 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidation_4Values (github.com/rshade/finfocus-spec/sdk/go/registry) - ns/op",
+            "value": 2.974,
+            "unit": "ns/op",
+            "extra": "406686040 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidation_4Values (github.com/rshade/finfocus-spec/sdk/go/registry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "406686040 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidation_4Values (github.com/rshade/finfocus-spec/sdk/go/registry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "406686040 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidation_5Values (github.com/rshade/finfocus-spec/sdk/go/registry)",
+            "value": 4.416,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "274154283 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidation_5Values (github.com/rshade/finfocus-spec/sdk/go/registry) - ns/op",
+            "value": 4.416,
+            "unit": "ns/op",
+            "extra": "274154283 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidation_5Values (github.com/rshade/finfocus-spec/sdk/go/registry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "274154283 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidation_5Values (github.com/rshade/finfocus-spec/sdk/go/registry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "274154283 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidation_6Values (github.com/rshade/finfocus-spec/sdk/go/registry)",
+            "value": 4.231,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "280683436 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidation_6Values (github.com/rshade/finfocus-spec/sdk/go/registry) - ns/op",
+            "value": 4.231,
+            "unit": "ns/op",
+            "extra": "280683436 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidation_6Values (github.com/rshade/finfocus-spec/sdk/go/registry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "280683436 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidation_6Values (github.com/rshade/finfocus-spec/sdk/go/registry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "280683436 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidation_9Values (github.com/rshade/finfocus-spec/sdk/go/registry)",
+            "value": 3.96,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "307894260 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidation_9Values (github.com/rshade/finfocus-spec/sdk/go/registry) - ns/op",
+            "value": 3.96,
+            "unit": "ns/op",
+            "extra": "307894260 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidation_9Values (github.com/rshade/finfocus-spec/sdk/go/registry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "307894260 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidation_9Values (github.com/rshade/finfocus-spec/sdk/go/registry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "307894260 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidation_32Values (github.com/rshade/finfocus-spec/sdk/go/registry)",
+            "value": 5.154,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "232882694 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidation_32Values (github.com/rshade/finfocus-spec/sdk/go/registry) - ns/op",
+            "value": 5.154,
+            "unit": "ns/op",
+            "extra": "232882694 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidation_32Values (github.com/rshade/finfocus-spec/sdk/go/registry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "232882694 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidation_32Values (github.com/rshade/finfocus-spec/sdk/go/registry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "232882694 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidServiceMethod (github.com/rshade/finfocus-spec/sdk/go/registry)",
+            "value": 6.838,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "176344674 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidServiceMethod (github.com/rshade/finfocus-spec/sdk/go/registry) - ns/op",
+            "value": 6.838,
+            "unit": "ns/op",
+            "extra": "176344674 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidServiceMethod (github.com/rshade/finfocus-spec/sdk/go/registry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "176344674 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidServiceMethod (github.com/rshade/finfocus-spec/sdk/go/registry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "176344674 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidProtoPluginCapability (github.com/rshade/finfocus-spec/sdk/go/registry)",
+            "value": 7.428,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "161427746 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidProtoPluginCapability (github.com/rshade/finfocus-spec/sdk/go/registry) - ns/op",
+            "value": 7.428,
+            "unit": "ns/op",
+            "extra": "161427746 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidProtoPluginCapability (github.com/rshade/finfocus-spec/sdk/go/registry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "161427746 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsValidProtoPluginCapability (github.com/rshade/finfocus-spec/sdk/go/registry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "161427746 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHarnessSampleResource/default (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 149.4,
+            "unit": "ns/op\t     528 B/op\t       3 allocs/op",
+            "extra": "7780426 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHarnessSampleResource/default (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 149.4,
+            "unit": "ns/op",
+            "extra": "7780426 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHarnessSampleResource/default (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 528,
+            "unit": "B/op",
+            "extra": "7780426 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHarnessSampleResource/default (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "7780426 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHarnessSampleResource/configured (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 559.2,
+            "unit": "ns/op\t     592 B/op\t       7 allocs/op",
+            "extra": "2129163 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHarnessSampleResource/configured (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 559.2,
+            "unit": "ns/op",
+            "extra": "2129163 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHarnessSampleResource/configured (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 592,
+            "unit": "B/op",
+            "extra": "2129163 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHarnessSampleResource/configured (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 7,
+            "unit": "allocs/op",
+            "extra": "2129163 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckConservation/rows=1000 (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 4732,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "236539 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckConservation/rows=1000 (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 4732,
+            "unit": "ns/op",
+            "extra": "236539 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckConservation/rows=1000 (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "236539 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckConservation/rows=1000 (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "236539 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckConservation/rows=10000 (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 54611,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "21890 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckConservation/rows=10000 (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 54611,
+            "unit": "ns/op",
+            "extra": "21890 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckConservation/rows=10000 (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "21890 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCheckConservation/rows=10000 (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "21890 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateAllocateResponse/rows=1000 (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 225710,
+            "unit": "ns/op\t   54152 B/op\t      15 allocs/op",
+            "extra": "5670 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateAllocateResponse/rows=1000 (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 225710,
+            "unit": "ns/op",
+            "extra": "5670 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateAllocateResponse/rows=1000 (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 54152,
+            "unit": "B/op",
+            "extra": "5670 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateAllocateResponse/rows=1000 (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 15,
+            "unit": "allocs/op",
+            "extra": "5670 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateAllocateResponse/rows=10000 (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 2286034,
+            "unit": "ns/op\t  436408 B/op\t      46 allocs/op",
+            "extra": "540 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateAllocateResponse/rows=10000 (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 2286034,
+            "unit": "ns/op",
+            "extra": "540 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateAllocateResponse/rows=10000 (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 436408,
+            "unit": "B/op",
+            "extra": "540 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateAllocateResponse/rows=10000 (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 46,
+            "unit": "allocs/op",
+            "extra": "540 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkName (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 43207,
+            "unit": "ns/op\t    8717 B/op\t     147 allocs/op",
+            "extra": "28795 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkName (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 43207,
+            "unit": "ns/op",
+            "extra": "28795 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkName (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 8717,
+            "unit": "B/op",
+            "extra": "28795 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkName (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 147,
+            "unit": "allocs/op",
+            "extra": "28795 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSupports (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 55258,
+            "unit": "ns/op\t   10505 B/op\t     187 allocs/op",
+            "extra": "22555 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSupports (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 55258,
+            "unit": "ns/op",
+            "extra": "22555 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSupports (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 10505,
+            "unit": "B/op",
+            "extra": "22555 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkSupports (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 187,
+            "unit": "allocs/op",
+            "extra": "22555 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCost (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 76186,
+            "unit": "ns/op\t   20432 B/op\t     299 allocs/op",
+            "extra": "15663 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCost (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 76186,
+            "unit": "ns/op",
+            "extra": "15663 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCost (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 20432,
+            "unit": "B/op",
+            "extra": "15663 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCost (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 299,
+            "unit": "allocs/op",
+            "extra": "15663 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetProjectedCost (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 55926,
+            "unit": "ns/op\t   10453 B/op\t     185 allocs/op",
+            "extra": "20966 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetProjectedCost (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 55926,
+            "unit": "ns/op",
+            "extra": "20966 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetProjectedCost (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 10453,
+            "unit": "B/op",
+            "extra": "20966 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetProjectedCost (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 185,
+            "unit": "allocs/op",
+            "extra": "20966 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetPricingSpec (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 63784,
+            "unit": "ns/op\t   13081 B/op\t     246 allocs/op",
+            "extra": "18274 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetPricingSpec (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 63784,
+            "unit": "ns/op",
+            "extra": "18274 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetPricingSpec (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 13081,
+            "unit": "B/op",
+            "extra": "18274 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetPricingSpec (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 246,
+            "unit": "allocs/op",
+            "extra": "18274 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkEstimateCost (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 44159,
+            "unit": "ns/op\t    9037 B/op\t     153 allocs/op",
+            "extra": "26287 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkEstimateCost (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 44159,
+            "unit": "ns/op",
+            "extra": "26287 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkEstimateCost (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 9037,
+            "unit": "B/op",
+            "extra": "26287 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkEstimateCost (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 153,
+            "unit": "allocs/op",
+            "extra": "26287 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAllMethods (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 365487,
+            "unit": "ns/op\t   72234 B/op\t    1221 allocs/op",
+            "extra": "3218 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAllMethods (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 365487,
+            "unit": "ns/op",
+            "extra": "3218 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAllMethods (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 72234,
+            "unit": "B/op",
+            "extra": "3218 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAllMethods (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 1221,
+            "unit": "allocs/op",
+            "extra": "3218 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkConcurrentRequests (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 23665,
+            "unit": "ns/op\t    8524 B/op\t     137 allocs/op",
+            "extra": "48640 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkConcurrentRequests (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 23665,
+            "unit": "ns/op",
+            "extra": "48640 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkConcurrentRequests (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 8524,
+            "unit": "B/op",
+            "extra": "48640 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkConcurrentRequests (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 137,
+            "unit": "allocs/op",
+            "extra": "48640 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkConcurrentEstimateCost (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 24482,
+            "unit": "ns/op\t    8864 B/op\t     143 allocs/op",
+            "extra": "47467 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkConcurrentEstimateCost (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 24482,
+            "unit": "ns/op",
+            "extra": "47467 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkConcurrentEstimateCost (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 8864,
+            "unit": "B/op",
+            "extra": "47467 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkConcurrentEstimateCost (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 143,
+            "unit": "allocs/op",
+            "extra": "47467 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkConcurrentEstimateCost50 (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 750885,
+            "unit": "ns/op\t  444621 B/op\t    7043 allocs/op",
+            "extra": "1558 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkConcurrentEstimateCost50 (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 750885,
+            "unit": "ns/op",
+            "extra": "1558 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkConcurrentEstimateCost50 (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 444621,
+            "unit": "B/op",
+            "extra": "1558 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkConcurrentEstimateCost50 (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 7043,
+            "unit": "allocs/op",
+            "extra": "1558 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkConcurrentEstimateCostLatency (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 764956,
+            "unit": "ns/op\t  445043 B/op\t    7044 allocs/op",
+            "extra": "1542 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkConcurrentEstimateCostLatency (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 764956,
+            "unit": "ns/op",
+            "extra": "1542 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkConcurrentEstimateCostLatency (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 445043,
+            "unit": "B/op",
+            "extra": "1542 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkConcurrentEstimateCostLatency (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 7044,
+            "unit": "allocs/op",
+            "extra": "1542 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostDataSizes/1Hour (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 47817,
+            "unit": "ns/op\t    9749 B/op\t     160 allocs/op",
+            "extra": "23928 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostDataSizes/1Hour (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 47817,
+            "unit": "ns/op",
+            "extra": "23928 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostDataSizes/1Hour (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 9749,
+            "unit": "B/op",
+            "extra": "23928 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostDataSizes/1Hour (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 160,
+            "unit": "allocs/op",
+            "extra": "23928 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostDataSizes/24Hours (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 77174,
+            "unit": "ns/op\t   20421 B/op\t     299 allocs/op",
+            "extra": "15396 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostDataSizes/24Hours (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 77174,
+            "unit": "ns/op",
+            "extra": "15396 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostDataSizes/24Hours (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 20421,
+            "unit": "B/op",
+            "extra": "15396 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostDataSizes/24Hours (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 299,
+            "unit": "allocs/op",
+            "extra": "15396 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostDataSizes/7Days (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 199416,
+            "unit": "ns/op\t   88418 B/op\t    1168 allocs/op",
+            "extra": "6015 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostDataSizes/7Days (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 199416,
+            "unit": "ns/op",
+            "extra": "6015 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostDataSizes/7Days (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 88418,
+            "unit": "B/op",
+            "extra": "6015 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostDataSizes/7Days (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 1168,
+            "unit": "allocs/op",
+            "extra": "6015 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostDataSizes/30Days (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 548117,
+            "unit": "ns/op\t  366485 B/op\t    4495 allocs/op",
+            "extra": "1958 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostDataSizes/30Days (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 548117,
+            "unit": "ns/op",
+            "extra": "1958 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostDataSizes/30Days (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 366485,
+            "unit": "B/op",
+            "extra": "1958 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostDataSizes/30Days (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 4495,
+            "unit": "allocs/op",
+            "extra": "1958 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDifferentProviders/AWS (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 55325,
+            "unit": "ns/op\t   10439 B/op\t     185 allocs/op",
+            "extra": "21415 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDifferentProviders/AWS (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 55325,
+            "unit": "ns/op",
+            "extra": "21415 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDifferentProviders/AWS (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 10439,
+            "unit": "B/op",
+            "extra": "21415 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDifferentProviders/AWS (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 185,
+            "unit": "allocs/op",
+            "extra": "21415 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDifferentProviders/Azure (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 55591,
+            "unit": "ns/op\t   10571 B/op\t     185 allocs/op",
+            "extra": "20828 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDifferentProviders/Azure (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 55591,
+            "unit": "ns/op",
+            "extra": "20828 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDifferentProviders/Azure (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 10571,
+            "unit": "B/op",
+            "extra": "20828 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDifferentProviders/Azure (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 185,
+            "unit": "allocs/op",
+            "extra": "20828 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDifferentProviders/GCP (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 55526,
+            "unit": "ns/op\t   10506 B/op\t     185 allocs/op",
+            "extra": "21327 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDifferentProviders/GCP (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 55526,
+            "unit": "ns/op",
+            "extra": "21327 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDifferentProviders/GCP (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 10506,
+            "unit": "B/op",
+            "extra": "21327 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDifferentProviders/GCP (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 185,
+            "unit": "allocs/op",
+            "extra": "21327 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDifferentProviders/Kubernetes (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 55534,
+            "unit": "ns/op\t   10592 B/op\t     184 allocs/op",
+            "extra": "20968 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDifferentProviders/Kubernetes (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 55534,
+            "unit": "ns/op",
+            "extra": "20968 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDifferentProviders/Kubernetes (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 10592,
+            "unit": "B/op",
+            "extra": "20968 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDifferentProviders/Kubernetes (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 184,
+            "unit": "allocs/op",
+            "extra": "20968 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetRecommendations_LargeResultSet (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 15234105,
+            "unit": "ns/op\t 7659285 B/op\t  130596 allocs/op",
+            "extra": "73 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetRecommendations_LargeResultSet (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 15234105,
+            "unit": "ns/op",
+            "extra": "73 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetRecommendations_LargeResultSet (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 7659285,
+            "unit": "B/op",
+            "extra": "73 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetRecommendations_LargeResultSet (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 130596,
+            "unit": "allocs/op",
+            "extra": "73 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetRecommendations_LargeResultSetPagination (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 27321466,
+            "unit": "ns/op\t 9144298 B/op\t  182329 allocs/op",
+            "extra": "42 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetRecommendations_LargeResultSetPagination (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 27321466,
+            "unit": "ns/op",
+            "extra": "42 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetRecommendations_LargeResultSetPagination (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 9144298,
+            "unit": "B/op",
+            "extra": "42 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetRecommendations_LargeResultSetPagination (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 182329,
+            "unit": "allocs/op",
+            "extra": "42 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallbackHintResponseCreation/WithoutHint (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 0.6243,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallbackHintResponseCreation/WithoutHint (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 0.6243,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallbackHintResponseCreation/WithoutHint (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallbackHintResponseCreation/WithoutHint (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallbackHintResponseCreation/WithFallbackHintNone (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 0.3114,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallbackHintResponseCreation/WithFallbackHintNone (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 0.3114,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallbackHintResponseCreation/WithFallbackHintNone (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallbackHintResponseCreation/WithFallbackHintNone (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallbackHintResponseCreation/WithFallbackHintRecommended (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 0.3123,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallbackHintResponseCreation/WithFallbackHintRecommended (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 0.3123,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallbackHintResponseCreation/WithFallbackHintRecommended (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallbackHintResponseCreation/WithFallbackHintRecommended (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallbackHintResponseCreation/WithFallbackHintRequired (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 0.3117,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallbackHintResponseCreation/WithFallbackHintRequired (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 0.3117,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallbackHintResponseCreation/WithFallbackHintRequired (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallbackHintResponseCreation/WithFallbackHintRequired (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCostWithFallbackHint/Unspecified (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 76846,
+            "unit": "ns/op\t   20291 B/op\t     299 allocs/op",
+            "extra": "15526 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCostWithFallbackHint/Unspecified (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 76846,
+            "unit": "ns/op",
+            "extra": "15526 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCostWithFallbackHint/Unspecified (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 20291,
+            "unit": "B/op",
+            "extra": "15526 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCostWithFallbackHint/Unspecified (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 299,
+            "unit": "allocs/op",
+            "extra": "15526 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCostWithFallbackHint/None (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 76495,
+            "unit": "ns/op\t   20295 B/op\t     299 allocs/op",
+            "extra": "15493 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCostWithFallbackHint/None (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 76495,
+            "unit": "ns/op",
+            "extra": "15493 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCostWithFallbackHint/None (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 20295,
+            "unit": "B/op",
+            "extra": "15493 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCostWithFallbackHint/None (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 299,
+            "unit": "allocs/op",
+            "extra": "15493 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCostWithFallbackHint/Recommended (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 76179,
+            "unit": "ns/op\t   20284 B/op\t     299 allocs/op",
+            "extra": "15561 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCostWithFallbackHint/Recommended (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 76179,
+            "unit": "ns/op",
+            "extra": "15561 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCostWithFallbackHint/Recommended (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 20284,
+            "unit": "B/op",
+            "extra": "15561 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCostWithFallbackHint/Recommended (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 299,
+            "unit": "allocs/op",
+            "extra": "15561 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCostWithFallbackHint/Required (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 75981,
+            "unit": "ns/op\t   20283 B/op\t     299 allocs/op",
+            "extra": "15654 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCostWithFallbackHint/Required (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 75981,
+            "unit": "ns/op",
+            "extra": "15654 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCostWithFallbackHint/Required (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 20283,
+            "unit": "B/op",
+            "extra": "15654 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCostWithFallbackHint/Required (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 299,
+            "unit": "allocs/op",
+            "extra": "15654 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostResponse/Empty (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 3.121,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "384228919 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostResponse/Empty (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 3.121,
+            "unit": "ns/op",
+            "extra": "384228919 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostResponse/Empty (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "384228919 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostResponse/Empty (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "384228919 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostResponse/1Result (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 3.746,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "319953398 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostResponse/1Result (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 3.746,
+            "unit": "ns/op",
+            "extra": "319953398 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostResponse/1Result (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "319953398 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostResponse/1Result (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "319953398 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostResponse/10Results (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 10.8,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostResponse/10Results (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 10.8,
+            "unit": "ns/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostResponse/10Results (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostResponse/10Results (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostResponse/100Results (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 90.18,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "13276543 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostResponse/100Results (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 90.18,
+            "unit": "ns/op",
+            "extra": "13276543 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostResponse/100Results (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "13276543 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostResponse/100Results (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "13276543 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostResponse/1000Results (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 1616,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "743360 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostResponse/1000Results (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 1616,
+            "unit": "ns/op",
+            "extra": "743360 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostResponse/1000Results (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "743360 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateActualCostResponse/1000Results (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "743360 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetBudgets (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 43584,
+            "unit": "ns/op\t    9110 B/op\t     153 allocs/op",
+            "extra": "26575 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetBudgets (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 43584,
+            "unit": "ns/op",
+            "extra": "26575 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetBudgets (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 9110,
+            "unit": "B/op",
+            "extra": "26575 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetBudgets (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 153,
+            "unit": "allocs/op",
+            "extra": "26575 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetBudgets_Scale/100Budgets (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 189400,
+            "unit": "ns/op\t   50954 B/op\t     959 allocs/op",
+            "extra": "6616 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetBudgets_Scale/100Budgets (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 189400,
+            "unit": "ns/op",
+            "extra": "6616 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetBudgets_Scale/100Budgets (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 50954,
+            "unit": "B/op",
+            "extra": "6616 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetBudgets_Scale/100Budgets (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 959,
+            "unit": "allocs/op",
+            "extra": "6616 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetBudgets_Scale/250Budgets (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 318047,
+            "unit": "ns/op\t  112728 B/op\t    2166 allocs/op",
+            "extra": "3384 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetBudgets_Scale/250Budgets (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 318047,
+            "unit": "ns/op",
+            "extra": "3384 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetBudgets_Scale/250Budgets (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 112728,
+            "unit": "B/op",
+            "extra": "3384 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetBudgets_Scale/250Budgets (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 2166,
+            "unit": "allocs/op",
+            "extra": "3384 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetBudgets_Scale/500Budgets (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 586738,
+            "unit": "ns/op\t  232931 B/op\t    4172 allocs/op",
+            "extra": "1879 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetBudgets_Scale/500Budgets (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 586738,
+            "unit": "ns/op",
+            "extra": "1879 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetBudgets_Scale/500Budgets (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 232931,
+            "unit": "B/op",
+            "extra": "1879 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetBudgets_Scale/500Budgets (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 4172,
+            "unit": "allocs/op",
+            "extra": "1879 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetBudgets_Scale/1000Budgets (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 1002658,
+            "unit": "ns/op\t  436116 B/op\t    8174 allocs/op",
+            "extra": "1124 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetBudgets_Scale/1000Budgets (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 1002658,
+            "unit": "ns/op",
+            "extra": "1124 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetBudgets_Scale/1000Budgets (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 436116,
+            "unit": "B/op",
+            "extra": "1124 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetBudgets_Scale/1000Budgets (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 8174,
+            "unit": "allocs/op",
+            "extra": "1124 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetBudgets_ConcurrentScale (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 243188,
+            "unit": "ns/op\t  219488 B/op\t    4157 allocs/op",
+            "extra": "4430 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetBudgets_ConcurrentScale (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 243188,
+            "unit": "ns/op",
+            "extra": "4430 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetBudgets_ConcurrentScale (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 219488,
+            "unit": "B/op",
+            "extra": "4430 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetBudgets_ConcurrentScale (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 4157,
+            "unit": "allocs/op",
+            "extra": "4430 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 84529,
+            "unit": "ns/op\t   27058 B/op\t     385 allocs/op",
+            "extra": "13861 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 84529,
+            "unit": "ns/op",
+            "extra": "13861 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 27058,
+            "unit": "B/op",
+            "extra": "13861 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 385,
+            "unit": "allocs/op",
+            "extra": "13861 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun_WithSimulationParameters (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 89965,
+            "unit": "ns/op\t   28226 B/op\t     409 allocs/op",
+            "extra": "13172 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun_WithSimulationParameters (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 89965,
+            "unit": "ns/op",
+            "extra": "13172 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun_WithSimulationParameters (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 28226,
+            "unit": "B/op",
+            "extra": "13172 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun_WithSimulationParameters (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 409,
+            "unit": "allocs/op",
+            "extra": "13172 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun_Concurrent (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 34950,
+            "unit": "ns/op\t   26861 B/op\t     376 allocs/op",
+            "extra": "34231 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun_Concurrent (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 34950,
+            "unit": "ns/op",
+            "extra": "34231 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun_Concurrent (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 26861,
+            "unit": "B/op",
+            "extra": "34231 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun_Concurrent (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 376,
+            "unit": "allocs/op",
+            "extra": "34231 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun_DifferentProviders/AWS (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 84438,
+            "unit": "ns/op\t   26951 B/op\t     384 allocs/op",
+            "extra": "13830 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun_DifferentProviders/AWS (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 84438,
+            "unit": "ns/op",
+            "extra": "13830 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun_DifferentProviders/AWS (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 26951,
+            "unit": "B/op",
+            "extra": "13830 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun_DifferentProviders/AWS (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 384,
+            "unit": "allocs/op",
+            "extra": "13830 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun_DifferentProviders/Azure (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 85366,
+            "unit": "ns/op\t   27100 B/op\t     384 allocs/op",
+            "extra": "14046 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun_DifferentProviders/Azure (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 85366,
+            "unit": "ns/op",
+            "extra": "14046 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun_DifferentProviders/Azure (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 27100,
+            "unit": "B/op",
+            "extra": "14046 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun_DifferentProviders/Azure (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 384,
+            "unit": "allocs/op",
+            "extra": "14046 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun_DifferentProviders/GCP (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 85128,
+            "unit": "ns/op\t   27125 B/op\t     384 allocs/op",
+            "extra": "13927 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun_DifferentProviders/GCP (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 85128,
+            "unit": "ns/op",
+            "extra": "13927 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun_DifferentProviders/GCP (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 27125,
+            "unit": "B/op",
+            "extra": "13927 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun_DifferentProviders/GCP (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 384,
+            "unit": "allocs/op",
+            "extra": "13927 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun_DifferentProviders/Kubernetes (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 84088,
+            "unit": "ns/op\t   27165 B/op\t     384 allocs/op",
+            "extra": "13670 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun_DifferentProviders/Kubernetes (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 84088,
+            "unit": "ns/op",
+            "extra": "13670 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun_DifferentProviders/Kubernetes (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 27165,
+            "unit": "B/op",
+            "extra": "13670 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkDryRun_DifferentProviders/Kubernetes (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 384,
+            "unit": "allocs/op",
+            "extra": "13670 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetPluginInfo (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 51096,
+            "unit": "ns/op\t    9616 B/op\t     165 allocs/op",
+            "extra": "22804 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetPluginInfo (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 51096,
+            "unit": "ns/op",
+            "extra": "22804 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetPluginInfo (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 9616,
+            "unit": "B/op",
+            "extra": "22804 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetPluginInfo (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 165,
+            "unit": "allocs/op",
+            "extra": "22804 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetPluginInfo_Concurrent (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 24190,
+            "unit": "ns/op\t    8869 B/op\t     143 allocs/op",
+            "extra": "47613 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetPluginInfo_Concurrent (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 24190,
+            "unit": "ns/op",
+            "extra": "47613 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetPluginInfo_Concurrent (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 8869,
+            "unit": "B/op",
+            "extra": "47613 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetPluginInfo_Concurrent (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 143,
+            "unit": "allocs/op",
+            "extra": "47613 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCostPaginated/SinglePage (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 199959,
+            "unit": "ns/op\t  238023 B/op\t    2359 allocs/op",
+            "extra": "5342 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCostPaginated/SinglePage (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 199959,
+            "unit": "ns/op",
+            "extra": "5342 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCostPaginated/SinglePage (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 238023,
+            "unit": "B/op",
+            "extra": "5342 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCostPaginated/SinglePage (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 2359,
+            "unit": "allocs/op",
+            "extra": "5342 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCostPaginated/FullIteration (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 2310398,
+            "unit": "ns/op\t 2511088 B/op\t   25640 allocs/op",
+            "extra": "514 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCostPaginated/FullIteration (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 2310398,
+            "unit": "ns/op",
+            "extra": "514 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCostPaginated/FullIteration (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 2511088,
+            "unit": "B/op",
+            "extra": "514 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetActualCostPaginated/FullIteration (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 25640,
+            "unit": "allocs/op",
+            "extra": "514 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/IsActualCostExpired (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 8.115,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "147978568 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/IsActualCostExpired (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 8.115,
+            "unit": "ns/op",
+            "extra": "147978568 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/IsActualCostExpired (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "147978568 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/IsActualCostExpired (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "147978568 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/ActualCostExpiresAt (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 4.994,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "240943590 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/ActualCostExpiresAt (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 4.994,
+            "unit": "ns/op",
+            "extra": "240943590 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/ActualCostExpiresAt (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "240943590 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/ActualCostExpiresAt (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "240943590 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/IsProjectedCostExpired (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 7.845,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "153985604 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/IsProjectedCostExpired (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 7.845,
+            "unit": "ns/op",
+            "extra": "153985604 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/IsProjectedCostExpired (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "153985604 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/IsProjectedCostExpired (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "153985604 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/ProjectedCostExpiresAt (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 5.302,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "225192915 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/ProjectedCostExpiresAt (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 5.302,
+            "unit": "ns/op",
+            "extra": "225192915 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/ProjectedCostExpiresAt (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "225192915 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/ProjectedCostExpiresAt (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "225192915 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/IsEstimateCostExpired (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 8.381,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "143137274 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/IsEstimateCostExpired (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 8.381,
+            "unit": "ns/op",
+            "extra": "143137274 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/IsEstimateCostExpired (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "143137274 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/IsEstimateCostExpired (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "143137274 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/EstimateCostExpiresAt (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 4.996,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "240519895 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/EstimateCostExpiresAt (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 4.996,
+            "unit": "ns/op",
+            "extra": "240519895 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/EstimateCostExpiresAt (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "240519895 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/EstimateCostExpiresAt (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "240519895 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/WithEstimateCostExpiresAt (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 98.85,
+            "unit": "ns/op\t     208 B/op\t       2 allocs/op",
+            "extra": "11357812 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/WithEstimateCostExpiresAt (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 98.85,
+            "unit": "ns/op",
+            "extra": "11357812 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/WithEstimateCostExpiresAt (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 208,
+            "unit": "B/op",
+            "extra": "11357812 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/WithEstimateCostExpiresAt (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 2,
+            "unit": "allocs/op",
+            "extra": "11357812 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/IsActualCostExpired_Nil (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 2.188,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "550414344 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/IsActualCostExpired_Nil (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 2.188,
+            "unit": "ns/op",
+            "extra": "550414344 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/IsActualCostExpired_Nil (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "550414344 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExpiresAtHelpers/IsActualCostExpired_Nil (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "550414344 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostWithExpiresAt/WithoutExpiresAt (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 54510,
+            "unit": "ns/op\t   12563 B/op\t     192 allocs/op",
+            "extra": "21597 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostWithExpiresAt/WithoutExpiresAt (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 54510,
+            "unit": "ns/op",
+            "extra": "21597 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostWithExpiresAt/WithoutExpiresAt (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 12563,
+            "unit": "B/op",
+            "extra": "21597 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostWithExpiresAt/WithoutExpiresAt (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 192,
+            "unit": "allocs/op",
+            "extra": "21597 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostWithExpiresAt/WithExpiresAt (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 57036,
+            "unit": "ns/op\t   13491 B/op\t     204 allocs/op",
+            "extra": "20722 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostWithExpiresAt/WithExpiresAt (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 57036,
+            "unit": "ns/op",
+            "extra": "20722 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostWithExpiresAt/WithExpiresAt (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 13491,
+            "unit": "B/op",
+            "extra": "20722 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkActualCostWithExpiresAt/WithExpiresAt (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 204,
+            "unit": "allocs/op",
+            "extra": "20722 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchCostEstimate/resources_10 (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 142789,
+            "unit": "ns/op\t   35639 B/op\t     885 allocs/op",
+            "extra": "8335 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchCostEstimate/resources_10 (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 142789,
+            "unit": "ns/op",
+            "extra": "8335 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchCostEstimate/resources_10 (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 35639,
+            "unit": "B/op",
+            "extra": "8335 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchCostEstimate/resources_10 (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 885,
+            "unit": "allocs/op",
+            "extra": "8335 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchCostEstimate/resources_50 (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 420499,
+            "unit": "ns/op\t  134744 B/op\t    3807 allocs/op",
+            "extra": "2616 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchCostEstimate/resources_50 (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 420499,
+            "unit": "ns/op",
+            "extra": "2616 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchCostEstimate/resources_50 (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 134744,
+            "unit": "B/op",
+            "extra": "2616 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchCostEstimate/resources_50 (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 3807,
+            "unit": "allocs/op",
+            "extra": "2616 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchCostEstimate/resources_100 (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 717520,
+            "unit": "ns/op\t  261213 B/op\t    7460 allocs/op",
+            "extra": "1603 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchCostEstimate/resources_100 (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 717520,
+            "unit": "ns/op",
+            "extra": "1603 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchCostEstimate/resources_100 (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 261213,
+            "unit": "B/op",
+            "extra": "1603 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchCostEstimate/resources_100 (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 7460,
+            "unit": "allocs/op",
+            "extra": "1603 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchCostActual (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 530116,
+            "unit": "ns/op\t  288124 B/op\t    4563 allocs/op",
+            "extra": "1995 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchCostActual (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 530116,
+            "unit": "ns/op",
+            "extra": "1995 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchCostActual (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 288124,
+            "unit": "B/op",
+            "extra": "1995 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchCostActual (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 4563,
+            "unit": "allocs/op",
+            "extra": "1995 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchCostFallback/custom_handler (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 417944,
+            "unit": "ns/op\t  134456 B/op\t    3807 allocs/op",
+            "extra": "2764 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchCostFallback/custom_handler (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 417944,
+            "unit": "ns/op",
+            "extra": "2764 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchCostFallback/custom_handler (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 134456,
+            "unit": "B/op",
+            "extra": "2764 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchCostFallback/custom_handler (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 3807,
+            "unit": "allocs/op",
+            "extra": "2764 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchCostConcurrent (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 53999,
+            "unit": "ns/op\t   35415 B/op\t     877 allocs/op",
+            "extra": "21670 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchCostConcurrent (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 53999,
+            "unit": "ns/op",
+            "extra": "21670 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchCostConcurrent (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 35415,
+            "unit": "B/op",
+            "extra": "21670 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBatchCostConcurrent (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 877,
+            "unit": "allocs/op",
+            "extra": "21670 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateResourceDescriptor (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 6.858,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "173501490 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateResourceDescriptor (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 6.858,
+            "unit": "ns/op",
+            "extra": "173501490 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateResourceDescriptor (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "173501490 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateResourceDescriptor (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "173501490 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateResourceDescriptor_WithTags (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 64.51,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "18537223 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateResourceDescriptor_WithTags (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 64.51,
+            "unit": "ns/op",
+            "extra": "18537223 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateResourceDescriptor_WithTags (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "18537223 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateResourceDescriptor_WithTags (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "18537223 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateTimeRange (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 90.06,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "13339986 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateTimeRange (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 90.06,
+            "unit": "ns/op",
+            "extra": "13339986 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateTimeRange (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "13339986 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateTimeRange (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "13339986 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateTags/0Tags (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 8.13,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "147260426 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateTags/0Tags (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 8.13,
+            "unit": "ns/op",
+            "extra": "147260426 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateTags/0Tags (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "147260426 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateTags/0Tags (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "147260426 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateTags/5Tags (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 69.91,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "17379141 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateTags/5Tags (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 69.91,
+            "unit": "ns/op",
+            "extra": "17379141 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateTags/5Tags (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "17379141 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateTags/5Tags (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "17379141 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateTags/25Tags (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 238.7,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "5024420 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateTags/25Tags (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 238.7,
+            "unit": "ns/op",
+            "extra": "5024420 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateTags/25Tags (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "5024420 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateTags/25Tags (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "5024420 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateTags/50Tags (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 464.2,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "2698100 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateTags/50Tags (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 464.2,
+            "unit": "ns/op",
+            "extra": "2698100 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateTags/50Tags (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "2698100 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateTags/50Tags (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "2698100 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetActualCostRequest (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 140.5,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "8572054 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetActualCostRequest (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 140.5,
+            "unit": "ns/op",
+            "extra": "8572054 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetActualCostRequest (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "8572054 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetActualCostRequest (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "8572054 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateEstimateCostRequest (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 510.2,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "2349934 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateEstimateCostRequest (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 510.2,
+            "unit": "ns/op",
+            "extra": "2349934 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateEstimateCostRequest (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "2349934 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateEstimateCostRequest (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "2349934 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetRecommendationsRequest (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 12.78,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "93667389 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetRecommendationsRequest (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 12.78,
+            "unit": "ns/op",
+            "extra": "93667389 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetRecommendationsRequest (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "93667389 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetRecommendationsRequest (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "93667389 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRunStandardContractTests (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 6649,
+            "unit": "ns/op\t    4224 B/op\t      39 allocs/op",
+            "extra": "175921 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRunStandardContractTests (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 6649,
+            "unit": "ns/op",
+            "extra": "175921 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRunStandardContractTests (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 4224,
+            "unit": "B/op",
+            "extra": "175921 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRunStandardContractTests (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 39,
+            "unit": "allocs/op",
+            "extra": "175921 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateSupportsRequest (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 7.166,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "167293300 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateSupportsRequest (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 7.166,
+            "unit": "ns/op",
+            "extra": "167293300 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateSupportsRequest (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "167293300 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateSupportsRequest (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "167293300 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMockGetProjectedCost_CostBreakdown/none (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 659.8,
+            "unit": "ns/op\t     440 B/op\t       8 allocs/op",
+            "extra": "1814773 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMockGetProjectedCost_CostBreakdown/none (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 659.8,
+            "unit": "ns/op",
+            "extra": "1814773 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMockGetProjectedCost_CostBreakdown/none (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 440,
+            "unit": "B/op",
+            "extra": "1814773 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMockGetProjectedCost_CostBreakdown/none (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 8,
+            "unit": "allocs/op",
+            "extra": "1814773 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMockGetProjectedCost_CostBreakdown/2_entries (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 1027,
+            "unit": "ns/op\t     696 B/op\t      10 allocs/op",
+            "extra": "1000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMockGetProjectedCost_CostBreakdown/2_entries (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 1027,
+            "unit": "ns/op",
+            "extra": "1000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMockGetProjectedCost_CostBreakdown/2_entries (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 696,
+            "unit": "B/op",
+            "extra": "1000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMockGetProjectedCost_CostBreakdown/2_entries (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 10,
+            "unit": "allocs/op",
+            "extra": "1000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMockGetProjectedCost_CostBreakdown/32_entries (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 3290,
+            "unit": "ns/op\t    2320 B/op\t      12 allocs/op",
+            "extra": "360020 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMockGetProjectedCost_CostBreakdown/32_entries (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 3290,
+            "unit": "ns/op",
+            "extra": "360020 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMockGetProjectedCost_CostBreakdown/32_entries (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 2320,
+            "unit": "B/op",
+            "extra": "360020 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMockGetProjectedCost_CostBreakdown/32_entries (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 12,
+            "unit": "allocs/op",
+            "extra": "360020 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidatePluginSettings_Empty (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 2.496,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "479343536 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidatePluginSettings_Empty (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 2.496,
+            "unit": "ns/op",
+            "extra": "479343536 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidatePluginSettings_Empty (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "479343536 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidatePluginSettings_Empty (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "479343536 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateEstimateCostResponse (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 6.245,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "192192376 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateEstimateCostResponse (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 6.245,
+            "unit": "ns/op",
+            "extra": "192192376 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateEstimateCostResponse (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "192192376 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateEstimateCostResponse (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "192192376 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkParseScorerLimits (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 366.3,
+            "unit": "ns/op\t      96 B/op\t       5 allocs/op",
+            "extra": "3264786 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkParseScorerLimits (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 366.3,
+            "unit": "ns/op",
+            "extra": "3264786 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkParseScorerLimits (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 96,
+            "unit": "B/op",
+            "extra": "3264786 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkParseScorerLimits (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "3264786 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsBatchTooLarge (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 1131,
+            "unit": "ns/op\t     640 B/op\t      12 allocs/op",
+            "extra": "1062075 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsBatchTooLarge (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 1131,
+            "unit": "ns/op",
+            "extra": "1062075 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsBatchTooLarge (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 640,
+            "unit": "B/op",
+            "extra": "1062075 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkIsBatchTooLarge (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 12,
+            "unit": "allocs/op",
+            "extra": "1062075 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateScoreRecommendationsRequest (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 86.39,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "13783636 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateScoreRecommendationsRequest (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 86.39,
+            "unit": "ns/op",
+            "extra": "13783636 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateScoreRecommendationsRequest (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "13783636 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateScoreRecommendationsRequest (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "13783636 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateScoreRecommendationsRequestOmittedFields (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 484.3,
+            "unit": "ns/op\t     224 B/op\t       1 allocs/op",
+            "extra": "2480398 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateScoreRecommendationsRequestOmittedFields (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 484.3,
+            "unit": "ns/op",
+            "extra": "2480398 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateScoreRecommendationsRequestOmittedFields (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 224,
+            "unit": "B/op",
+            "extra": "2480398 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateScoreRecommendationsRequestOmittedFields (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "2480398 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateContractCommitment (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 157.4,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "7609230 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateContractCommitment (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 157.4,
+            "unit": "ns/op",
+            "extra": "7609230 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateContractCommitment (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "7609230 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateContractCommitment (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "7609230 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetContractCommitmentsRequest (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 20.57,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "57630438 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetContractCommitmentsRequest (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 20.57,
+            "unit": "ns/op",
+            "extra": "57630438 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetContractCommitmentsRequest (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "57630438 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetContractCommitmentsRequest (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "57630438 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContractCommitmentMatchesWindow (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 21.22,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "56556738 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContractCommitmentMatchesWindow (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 21.22,
+            "unit": "ns/op",
+            "extra": "56556738 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContractCommitmentMatchesWindow (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "56556738 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkContractCommitmentMatchesWindow (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "56556738 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetContractCommitmentsResponse/page_50 (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 13904,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "86323 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetContractCommitmentsResponse/page_50 (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 13904,
+            "unit": "ns/op",
+            "extra": "86323 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetContractCommitmentsResponse/page_50 (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "86323 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetContractCommitmentsResponse/page_50 (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "86323 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetContractCommitmentsResponse/page_1000 (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 232070,
+            "unit": "ns/op\t   54608 B/op\t       5 allocs/op",
+            "extra": "5001 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetContractCommitmentsResponse/page_1000 (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 232070,
+            "unit": "ns/op",
+            "extra": "5001 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetContractCommitmentsResponse/page_1000 (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 54608,
+            "unit": "B/op",
+            "extra": "5001 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateGetContractCommitmentsResponse/page_1000 (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "5001 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPaginateContractCommitments (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 89.22,
+            "unit": "ns/op\t      12 B/op\t       3 allocs/op",
+            "extra": "13260902 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPaginateContractCommitments (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 89.22,
+            "unit": "ns/op",
+            "extra": "13260902 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPaginateContractCommitments (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 12,
+            "unit": "B/op",
+            "extra": "13260902 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkPaginateContractCommitments (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "13260902 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMockContractCommitmentSource (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 39955,
+            "unit": "ns/op\t   33512 B/op\t     354 allocs/op",
+            "extra": "29887 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMockContractCommitmentSource (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 39955,
+            "unit": "ns/op",
+            "extra": "29887 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMockContractCommitmentSource (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 33512,
+            "unit": "B/op",
+            "extra": "29887 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMockContractCommitmentSource (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 354,
+            "unit": "allocs/op",
+            "extra": "29887 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetProjectedCost_WithProfile/UNSPECIFIED (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 48861,
+            "unit": "ns/op\t    9641 B/op\t     161 allocs/op",
+            "extra": "23960 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetProjectedCost_WithProfile/UNSPECIFIED (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 48861,
+            "unit": "ns/op",
+            "extra": "23960 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetProjectedCost_WithProfile/UNSPECIFIED (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 9641,
+            "unit": "B/op",
+            "extra": "23960 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetProjectedCost_WithProfile/UNSPECIFIED (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 161,
+            "unit": "allocs/op",
+            "extra": "23960 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetProjectedCost_WithProfile/PROD (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 48747,
+            "unit": "ns/op\t    9632 B/op\t     161 allocs/op",
+            "extra": "24405 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetProjectedCost_WithProfile/PROD (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 48747,
+            "unit": "ns/op",
+            "extra": "24405 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetProjectedCost_WithProfile/PROD (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 9632,
+            "unit": "B/op",
+            "extra": "24405 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetProjectedCost_WithProfile/PROD (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 161,
+            "unit": "allocs/op",
+            "extra": "24405 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetProjectedCost_WithProfile/DEV (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 49051,
+            "unit": "ns/op\t    9655 B/op\t     161 allocs/op",
+            "extra": "24361 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetProjectedCost_WithProfile/DEV (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 49051,
+            "unit": "ns/op",
+            "extra": "24361 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetProjectedCost_WithProfile/DEV (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 9655,
+            "unit": "B/op",
+            "extra": "24361 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetProjectedCost_WithProfile/DEV (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 161,
+            "unit": "allocs/op",
+            "extra": "24361 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetProjectedCost_WithProfile/BURST (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 48602,
+            "unit": "ns/op\t    9649 B/op\t     161 allocs/op",
+            "extra": "24403 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetProjectedCost_WithProfile/BURST (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 48602,
+            "unit": "ns/op",
+            "extra": "24403 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetProjectedCost_WithProfile/BURST (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 9649,
+            "unit": "B/op",
+            "extra": "24403 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetProjectedCost_WithProfile/BURST (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 161,
+            "unit": "allocs/op",
+            "extra": "24403 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetRecommendations_WithProfile (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 93390,
+            "unit": "ns/op\t   17139 B/op\t     328 allocs/op",
+            "extra": "12514 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetRecommendations_WithProfile (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 93390,
+            "unit": "ns/op",
+            "extra": "12514 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetRecommendations_WithProfile (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 17139,
+            "unit": "B/op",
+            "extra": "12514 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkGetRecommendations_WithProfile (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 328,
+            "unit": "allocs/op",
+            "extra": "12514 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateStatsResponse (github.com/rshade/finfocus-spec/sdk/go/testing)",
+            "value": 100715,
+            "unit": "ns/op\t   50488 B/op\t     747 allocs/op",
+            "extra": "10000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateStatsResponse (github.com/rshade/finfocus-spec/sdk/go/testing) - ns/op",
+            "value": 100715,
+            "unit": "ns/op",
+            "extra": "10000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateStatsResponse (github.com/rshade/finfocus-spec/sdk/go/testing) - B/op",
+            "value": 50488,
+            "unit": "B/op",
+            "extra": "10000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkValidateStatsResponse (github.com/rshade/finfocus-spec/sdk/go/testing) - allocs/op",
+            "value": 747,
+            "unit": "allocs/op",
+            "extra": "10000 times\n4 procs"
           }
         ]
       }
