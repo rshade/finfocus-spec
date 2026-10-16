@@ -38,8 +38,14 @@ jobs:
         run: go mod download
 
       - name: Run benchmarks
-        # Run benchmarks in all subdirectories under sdk/go
-        run: go test -bench=. -benchmem ./sdk/go/... | tee benchmark_results.txt
+        # Run benchmarks in all subdirectories under sdk/go.
+        # The benchmarks emit millions of zerolog JSON lines (~800 MB), and
+        # benchmark-action reads the whole file into one string, which fails
+        # with "Invalid string length". Strip the log output before it is saved.
+        run: |
+          go test -bench=. -benchmem ./sdk/go/... \
+            | sed -E '/^\{"level"/d; s/\{"level".*$//' \
+            | tee benchmark_results.txt
 
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
