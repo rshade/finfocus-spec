@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.6](https://github.com/rshade/finfocus-spec/compare/v0.7.5...v0.7.6) (2026-10-16)
+
+
+### Added
+
+* **pluginsdk:** advertise plugin settings in GetPluginInfo ([5f8427f](https://github.com/rshade/finfocus-spec/commit/5f8427f27b41f72070e0fa30d356438771437653)), closes [#635](https://github.com/rshade/finfocus-spec/issues/635)
+
+
+### Fixed
+
+* **ci:** pin the connect-go generator to v1.21.0 ([81f6fa5](https://github.com/rshade/finfocus-spec/commit/81f6fa5a9ddc875dd032582057daa69f4c1293d4))
+* **ci:** strip log output from benchmark results ([1807487](https://github.com/rshade/finfocus-spec/commit/1807487581e4671b0a1a78f00615128f604f2fb2))
+
+
+### Documentation
+
+* renumber the handler status spec to 600 ([dbcfde3](https://github.com/rshade/finfocus-spec/commit/dbcfde328839796acaed411cd4c9019f85939d67))
+
 ## [0.7.5](https://github.com/rshade/finfocus-spec/compare/v0.7.4...v0.7.5) (2026-10-04)
 
 

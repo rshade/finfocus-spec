@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.5](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.7.4...finfocus-client-v0.7.5) (2026-10-16)
+
+
+### Features
+
+* **pluginsdk:** advertise plugin settings in GetPluginInfo ([5f8427f](https://github.com/rshade/finfocus-spec/commit/5f8427f27b41f72070e0fa30d356438771437653)), closes [#635](https://github.com/rshade/finfocus-spec/issues/635)
+
 ## [0.7.4](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.7.3...finfocus-client-v0.7.4) (2026-10-04)
 
 
