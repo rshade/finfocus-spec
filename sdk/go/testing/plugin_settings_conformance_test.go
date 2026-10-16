@@ -16,6 +16,7 @@ package testing_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	plugintesting "github.com/rshade/finfocus-spec/sdk/go/testing"
@@ -33,6 +34,7 @@ func TestPluginSettingsConformance_settings(t *testing.T) {
 		name   string
 		plugin pbc.CostSourceServiceServer
 		want   bool
+		errMsg string
 	}{
 		{name: "empty", plugin: plugintesting.NewMockPlugin(), want: true},
 		{name: "valid", plugin: valid, want: true},
@@ -40,11 +42,12 @@ func TestPluginSettingsConformance_settings(t *testing.T) {
 			name:   "duplicate key",
 			plugin: &duplicateSettingsPlugin{MockPlugin: plugintesting.NewMockPlugin()},
 			want:   false,
+			errMsg: `settings[1].key: duplicate "api_key"`,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assertPluginInfoCheck(t, tt.plugin, tt.want)
+			assertPluginInfoCheck(t, tt.plugin, tt.want, tt.errMsg)
 		})
 	}
 }
@@ -67,7 +70,7 @@ func (p *duplicateSettingsPlugin) GetPluginInfo(
 	return resp, nil
 }
 
-func assertPluginInfoCheck(t *testing.T, plugin pbc.CostSourceServiceServer, want bool) {
+func assertPluginInfoCheck(t *testing.T, plugin pbc.CostSourceServiceServer, want bool, errMsg string) {
 	t.Helper()
 	harness := plugintesting.NewTestHarness(plugin)
 	harness.Start(t)
@@ -75,5 +78,8 @@ func assertPluginInfoCheck(t *testing.T, plugin pbc.CostSourceServiceServer, wan
 	result := createGetPluginInfoValidResponseTest()(harness)
 	if result.Success != want {
 		t.Fatalf("success = %v, want %v, err = %v, details = %s", result.Success, want, result.Error, result.Details)
+	}
+	if errMsg != "" && (result.Error == nil || !strings.Contains(result.Error.Error(), errMsg)) {
+		t.Fatalf("error = %v, want it to contain %q", result.Error, errMsg)
 	}
 }
