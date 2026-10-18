@@ -196,7 +196,7 @@
                 "type": "string",
                 "enum": [
                   "Name", "Supports", "GetActualCost", "GetProjectedCost", "GetPricingSpec",
-                  "EstimateCost", "GetRecommendations", "DismissRecommendation", "GetBudgets",
+                  "EstimateCost", "GetRecommendations", "DismissRecommendation", "GetRecommendationHistory", "GetBudgets",
                   "GetPluginInfo", "DryRun", "BatchCost", "ResolveResourceTypes"
                 ]
               },

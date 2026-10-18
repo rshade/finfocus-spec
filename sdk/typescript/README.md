@@ -985,6 +985,14 @@ Dismiss a recommendation with a reason.
 
 **Validation**: Requires `recommendationId`.
 
+#### `getRecommendationHistory(req: GetRecommendationHistoryRequest): Promise<GetRecommendationHistoryResponse>`
+
+Retrieve plugin-maintained lifecycle events, including reasons, timestamps, and actor information.
+The events supplement local history and have no guaranteed order. An empty event list means no
+recorded history; plugins without server-side history return `Unimplemented`.
+
+**Validation**: Requires `recommendationId`.
+
 #### `getBudgets(req?: GetBudgetsRequest): Promise<GetBudgetsResponse>`
 
 Retrieve budget information and status.

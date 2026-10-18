@@ -631,7 +631,8 @@ func BenchmarkValidation_32Values(b *testing.B) {
 func TestServiceMethods(t *testing.T) {
 	want := []string{
 		"Name", "Supports", "GetActualCost", "GetProjectedCost", "GetPricingSpec", "EstimateCost",
-		"GetRecommendations", "DismissRecommendation", "GetBudgets", "GetPluginInfo", "DryRun",
+		"GetRecommendations", "DismissRecommendation", "GetRecommendationHistory", "GetBudgets",
+		"GetPluginInfo", "DryRun",
 		"BatchCost", "ResolveResourceTypes",
 	}
 	require.Equal(t, want, registry.AllServiceMethods())

@@ -727,6 +727,7 @@ service CostSourceService {
   // Cost Optimization
   rpc GetRecommendations(GetRecommendationsRequest) returns (GetRecommendationsResponse); // Cost optimization
   rpc DismissRecommendation(DismissRecommendationRequest) returns (DismissRecommendationResponse);
+  rpc GetRecommendationHistory(GetRecommendationHistoryRequest) returns (GetRecommendationHistoryResponse);
   rpc GetBudgets(GetBudgetsRequest) returns (GetBudgetsResponse);            // Budget tracking and alerts
 }
 ```

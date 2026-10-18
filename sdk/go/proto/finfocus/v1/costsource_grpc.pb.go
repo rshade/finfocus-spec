@@ -19,19 +19,20 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CostSourceService_Name_FullMethodName                  = "/finfocus.v1.CostSourceService/Name"
-	CostSourceService_Supports_FullMethodName              = "/finfocus.v1.CostSourceService/Supports"
-	CostSourceService_GetActualCost_FullMethodName         = "/finfocus.v1.CostSourceService/GetActualCost"
-	CostSourceService_GetProjectedCost_FullMethodName      = "/finfocus.v1.CostSourceService/GetProjectedCost"
-	CostSourceService_GetPricingSpec_FullMethodName        = "/finfocus.v1.CostSourceService/GetPricingSpec"
-	CostSourceService_EstimateCost_FullMethodName          = "/finfocus.v1.CostSourceService/EstimateCost"
-	CostSourceService_GetRecommendations_FullMethodName    = "/finfocus.v1.CostSourceService/GetRecommendations"
-	CostSourceService_DismissRecommendation_FullMethodName = "/finfocus.v1.CostSourceService/DismissRecommendation"
-	CostSourceService_GetBudgets_FullMethodName            = "/finfocus.v1.CostSourceService/GetBudgets"
-	CostSourceService_GetPluginInfo_FullMethodName         = "/finfocus.v1.CostSourceService/GetPluginInfo"
-	CostSourceService_DryRun_FullMethodName                = "/finfocus.v1.CostSourceService/DryRun"
-	CostSourceService_BatchCost_FullMethodName             = "/finfocus.v1.CostSourceService/BatchCost"
-	CostSourceService_ResolveResourceTypes_FullMethodName  = "/finfocus.v1.CostSourceService/ResolveResourceTypes"
+	CostSourceService_Name_FullMethodName                     = "/finfocus.v1.CostSourceService/Name"
+	CostSourceService_Supports_FullMethodName                 = "/finfocus.v1.CostSourceService/Supports"
+	CostSourceService_GetActualCost_FullMethodName            = "/finfocus.v1.CostSourceService/GetActualCost"
+	CostSourceService_GetProjectedCost_FullMethodName         = "/finfocus.v1.CostSourceService/GetProjectedCost"
+	CostSourceService_GetPricingSpec_FullMethodName           = "/finfocus.v1.CostSourceService/GetPricingSpec"
+	CostSourceService_EstimateCost_FullMethodName             = "/finfocus.v1.CostSourceService/EstimateCost"
+	CostSourceService_GetRecommendations_FullMethodName       = "/finfocus.v1.CostSourceService/GetRecommendations"
+	CostSourceService_DismissRecommendation_FullMethodName    = "/finfocus.v1.CostSourceService/DismissRecommendation"
+	CostSourceService_GetRecommendationHistory_FullMethodName = "/finfocus.v1.CostSourceService/GetRecommendationHistory"
+	CostSourceService_GetBudgets_FullMethodName               = "/finfocus.v1.CostSourceService/GetBudgets"
+	CostSourceService_GetPluginInfo_FullMethodName            = "/finfocus.v1.CostSourceService/GetPluginInfo"
+	CostSourceService_DryRun_FullMethodName                   = "/finfocus.v1.CostSourceService/DryRun"
+	CostSourceService_BatchCost_FullMethodName                = "/finfocus.v1.CostSourceService/BatchCost"
+	CostSourceService_ResolveResourceTypes_FullMethodName     = "/finfocus.v1.CostSourceService/ResolveResourceTypes"
 )
 
 // CostSourceServiceClient is the client API for CostSourceService service.
@@ -93,6 +94,17 @@ type CostSourceServiceClient interface {
 	//   - NotFound: Recommendation ID does not exist
 	//   - Unimplemented: Plugin does not support recommendation dismissal
 	DismissRecommendation(ctx context.Context, in *DismissRecommendationRequest, opts ...grpc.CallOption) (*DismissRecommendationResponse, error)
+	// GetRecommendationHistory retrieves plugin-maintained lifecycle history for a
+	// recommendation. Hosts may merge these events with their local history.
+	// This optional RPC returns Unimplemented when server-side history is unavailable.
+	// An empty events list means the plugin has no recorded history for the ID.
+	//
+	// Error cases:
+	//   - InvalidArgument: Empty recommendation_id
+	//   - NotFound: Recommendation ID does not exist
+	//   - Unavailable: Backend history service unavailable
+	//   - Unimplemented: Plugin does not support recommendation history
+	GetRecommendationHistory(ctx context.Context, in *GetRecommendationHistoryRequest, opts ...grpc.CallOption) (*GetRecommendationHistoryResponse, error)
 	// GetBudgets returns budget information from the cost management service.
 	// This enables unified budget visibility across cloud providers (AWS, GCP, Azure, etc.).
 	//
@@ -290,6 +302,16 @@ func (c *costSourceServiceClient) DismissRecommendation(ctx context.Context, in 
 	return out, nil
 }
 
+func (c *costSourceServiceClient) GetRecommendationHistory(ctx context.Context, in *GetRecommendationHistoryRequest, opts ...grpc.CallOption) (*GetRecommendationHistoryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetRecommendationHistoryResponse)
+	err := c.cc.Invoke(ctx, CostSourceService_GetRecommendationHistory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *costSourceServiceClient) GetBudgets(ctx context.Context, in *GetBudgetsRequest, opts ...grpc.CallOption) (*GetBudgetsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetBudgetsResponse)
@@ -399,6 +421,17 @@ type CostSourceServiceServer interface {
 	//   - NotFound: Recommendation ID does not exist
 	//   - Unimplemented: Plugin does not support recommendation dismissal
 	DismissRecommendation(context.Context, *DismissRecommendationRequest) (*DismissRecommendationResponse, error)
+	// GetRecommendationHistory retrieves plugin-maintained lifecycle history for a
+	// recommendation. Hosts may merge these events with their local history.
+	// This optional RPC returns Unimplemented when server-side history is unavailable.
+	// An empty events list means the plugin has no recorded history for the ID.
+	//
+	// Error cases:
+	//   - InvalidArgument: Empty recommendation_id
+	//   - NotFound: Recommendation ID does not exist
+	//   - Unavailable: Backend history service unavailable
+	//   - Unimplemented: Plugin does not support recommendation history
+	GetRecommendationHistory(context.Context, *GetRecommendationHistoryRequest) (*GetRecommendationHistoryResponse, error)
 	// GetBudgets returns budget information from the cost management service.
 	// This enables unified budget visibility across cloud providers (AWS, GCP, Azure, etc.).
 	//
@@ -539,6 +572,9 @@ func (UnimplementedCostSourceServiceServer) GetRecommendations(context.Context, 
 }
 func (UnimplementedCostSourceServiceServer) DismissRecommendation(context.Context, *DismissRecommendationRequest) (*DismissRecommendationResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DismissRecommendation not implemented")
+}
+func (UnimplementedCostSourceServiceServer) GetRecommendationHistory(context.Context, *GetRecommendationHistoryRequest) (*GetRecommendationHistoryResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetRecommendationHistory not implemented")
 }
 func (UnimplementedCostSourceServiceServer) GetBudgets(context.Context, *GetBudgetsRequest) (*GetBudgetsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetBudgets not implemented")
@@ -720,6 +756,24 @@ func _CostSourceService_DismissRecommendation_Handler(srv interface{}, ctx conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CostSourceService_GetRecommendationHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRecommendationHistoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CostSourceServiceServer).GetRecommendationHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CostSourceService_GetRecommendationHistory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CostSourceServiceServer).GetRecommendationHistory(ctx, req.(*GetRecommendationHistoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CostSourceService_GetBudgets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetBudgetsRequest)
 	if err := dec(in); err != nil {
@@ -848,6 +902,10 @@ var CostSourceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DismissRecommendation",
 			Handler:    _CostSourceService_DismissRecommendation_Handler,
+		},
+		{
+			MethodName: "GetRecommendationHistory",
+			Handler:    _CostSourceService_GetRecommendationHistory_Handler,
 		},
 		{
 			MethodName: "GetBudgets",

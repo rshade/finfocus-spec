@@ -58,6 +58,9 @@ const (
 	// CostSourceServiceDismissRecommendationProcedure is the fully-qualified name of the
 	// CostSourceService's DismissRecommendation RPC.
 	CostSourceServiceDismissRecommendationProcedure = "/finfocus.v1.CostSourceService/DismissRecommendation"
+	// CostSourceServiceGetRecommendationHistoryProcedure is the fully-qualified name of the
+	// CostSourceService's GetRecommendationHistory RPC.
+	CostSourceServiceGetRecommendationHistoryProcedure = "/finfocus.v1.CostSourceService/GetRecommendationHistory"
 	// CostSourceServiceGetBudgetsProcedure is the fully-qualified name of the CostSourceService's
 	// GetBudgets RPC.
 	CostSourceServiceGetBudgetsProcedure = "/finfocus.v1.CostSourceService/GetBudgets"
@@ -137,6 +140,17 @@ type CostSourceServiceClient interface {
 	//   - NotFound: Recommendation ID does not exist
 	//   - Unimplemented: Plugin does not support recommendation dismissal
 	DismissRecommendation(context.Context, *connect.Request[v1.DismissRecommendationRequest]) (*connect.Response[v1.DismissRecommendationResponse], error)
+	// GetRecommendationHistory retrieves plugin-maintained lifecycle history for a
+	// recommendation. Hosts may merge these events with their local history.
+	// This optional RPC returns Unimplemented when server-side history is unavailable.
+	// An empty events list means the plugin has no recorded history for the ID.
+	//
+	// Error cases:
+	//   - InvalidArgument: Empty recommendation_id
+	//   - NotFound: Recommendation ID does not exist
+	//   - Unavailable: Backend history service unavailable
+	//   - Unimplemented: Plugin does not support recommendation history
+	GetRecommendationHistory(context.Context, *connect.Request[v1.GetRecommendationHistoryRequest]) (*connect.Response[v1.GetRecommendationHistoryResponse], error)
 	// GetBudgets returns budget information from the cost management service.
 	// This enables unified budget visibility across cloud providers (AWS, GCP, Azure, etc.).
 	//
@@ -307,6 +321,12 @@ func NewCostSourceServiceClient(httpClient connect.HTTPClient, baseURL string, o
 			connect.WithSchema(costSourceServiceMethods.ByName("DismissRecommendation")),
 			connect.WithClientOptions(opts...),
 		),
+		getRecommendationHistory: connect.NewClient[v1.GetRecommendationHistoryRequest, v1.GetRecommendationHistoryResponse](
+			httpClient,
+			baseURL+CostSourceServiceGetRecommendationHistoryProcedure,
+			connect.WithSchema(costSourceServiceMethods.ByName("GetRecommendationHistory")),
+			connect.WithClientOptions(opts...),
+		),
 		getBudgets: connect.NewClient[v1.GetBudgetsRequest, v1.GetBudgetsResponse](
 			httpClient,
 			baseURL+CostSourceServiceGetBudgetsProcedure,
@@ -342,19 +362,20 @@ func NewCostSourceServiceClient(httpClient connect.HTTPClient, baseURL string, o
 
 // costSourceServiceClient implements CostSourceServiceClient.
 type costSourceServiceClient struct {
-	name                  *connect.Client[v1.NameRequest, v1.NameResponse]
-	supports              *connect.Client[v1.SupportsRequest, v1.SupportsResponse]
-	getActualCost         *connect.Client[v1.GetActualCostRequest, v1.GetActualCostResponse]
-	getProjectedCost      *connect.Client[v1.GetProjectedCostRequest, v1.GetProjectedCostResponse]
-	getPricingSpec        *connect.Client[v1.GetPricingSpecRequest, v1.GetPricingSpecResponse]
-	estimateCost          *connect.Client[v1.EstimateCostRequest, v1.EstimateCostResponse]
-	getRecommendations    *connect.Client[v1.GetRecommendationsRequest, v1.GetRecommendationsResponse]
-	dismissRecommendation *connect.Client[v1.DismissRecommendationRequest, v1.DismissRecommendationResponse]
-	getBudgets            *connect.Client[v1.GetBudgetsRequest, v1.GetBudgetsResponse]
-	getPluginInfo         *connect.Client[v1.GetPluginInfoRequest, v1.GetPluginInfoResponse]
-	dryRun                *connect.Client[v1.DryRunRequest, v1.DryRunResponse]
-	batchCost             *connect.Client[v1.BatchCostRequest, v1.BatchCostResponse]
-	resolveResourceTypes  *connect.Client[v1.ResolveResourceTypesRequest, v1.ResolveResourceTypesResponse]
+	name                     *connect.Client[v1.NameRequest, v1.NameResponse]
+	supports                 *connect.Client[v1.SupportsRequest, v1.SupportsResponse]
+	getActualCost            *connect.Client[v1.GetActualCostRequest, v1.GetActualCostResponse]
+	getProjectedCost         *connect.Client[v1.GetProjectedCostRequest, v1.GetProjectedCostResponse]
+	getPricingSpec           *connect.Client[v1.GetPricingSpecRequest, v1.GetPricingSpecResponse]
+	estimateCost             *connect.Client[v1.EstimateCostRequest, v1.EstimateCostResponse]
+	getRecommendations       *connect.Client[v1.GetRecommendationsRequest, v1.GetRecommendationsResponse]
+	dismissRecommendation    *connect.Client[v1.DismissRecommendationRequest, v1.DismissRecommendationResponse]
+	getRecommendationHistory *connect.Client[v1.GetRecommendationHistoryRequest, v1.GetRecommendationHistoryResponse]
+	getBudgets               *connect.Client[v1.GetBudgetsRequest, v1.GetBudgetsResponse]
+	getPluginInfo            *connect.Client[v1.GetPluginInfoRequest, v1.GetPluginInfoResponse]
+	dryRun                   *connect.Client[v1.DryRunRequest, v1.DryRunResponse]
+	batchCost                *connect.Client[v1.BatchCostRequest, v1.BatchCostResponse]
+	resolveResourceTypes     *connect.Client[v1.ResolveResourceTypesRequest, v1.ResolveResourceTypesResponse]
 }
 
 // Name calls finfocus.v1.CostSourceService.Name.
@@ -395,6 +416,11 @@ func (c *costSourceServiceClient) GetRecommendations(ctx context.Context, req *c
 // DismissRecommendation calls finfocus.v1.CostSourceService.DismissRecommendation.
 func (c *costSourceServiceClient) DismissRecommendation(ctx context.Context, req *connect.Request[v1.DismissRecommendationRequest]) (*connect.Response[v1.DismissRecommendationResponse], error) {
 	return c.dismissRecommendation.CallUnary(ctx, req)
+}
+
+// GetRecommendationHistory calls finfocus.v1.CostSourceService.GetRecommendationHistory.
+func (c *costSourceServiceClient) GetRecommendationHistory(ctx context.Context, req *connect.Request[v1.GetRecommendationHistoryRequest]) (*connect.Response[v1.GetRecommendationHistoryResponse], error) {
+	return c.getRecommendationHistory.CallUnary(ctx, req)
 }
 
 // GetBudgets calls finfocus.v1.CostSourceService.GetBudgets.
@@ -475,6 +501,17 @@ type CostSourceServiceHandler interface {
 	//   - NotFound: Recommendation ID does not exist
 	//   - Unimplemented: Plugin does not support recommendation dismissal
 	DismissRecommendation(context.Context, *connect.Request[v1.DismissRecommendationRequest]) (*connect.Response[v1.DismissRecommendationResponse], error)
+	// GetRecommendationHistory retrieves plugin-maintained lifecycle history for a
+	// recommendation. Hosts may merge these events with their local history.
+	// This optional RPC returns Unimplemented when server-side history is unavailable.
+	// An empty events list means the plugin has no recorded history for the ID.
+	//
+	// Error cases:
+	//   - InvalidArgument: Empty recommendation_id
+	//   - NotFound: Recommendation ID does not exist
+	//   - Unavailable: Backend history service unavailable
+	//   - Unimplemented: Plugin does not support recommendation history
+	GetRecommendationHistory(context.Context, *connect.Request[v1.GetRecommendationHistoryRequest]) (*connect.Response[v1.GetRecommendationHistoryResponse], error)
 	// GetBudgets returns budget information from the cost management service.
 	// This enables unified budget visibility across cloud providers (AWS, GCP, Azure, etc.).
 	//
@@ -641,6 +678,12 @@ func NewCostSourceServiceHandler(svc CostSourceServiceHandler, opts ...connect.H
 		connect.WithSchema(costSourceServiceMethods.ByName("DismissRecommendation")),
 		connect.WithHandlerOptions(opts...),
 	)
+	costSourceServiceGetRecommendationHistoryHandler := connect.NewUnaryHandler(
+		CostSourceServiceGetRecommendationHistoryProcedure,
+		svc.GetRecommendationHistory,
+		connect.WithSchema(costSourceServiceMethods.ByName("GetRecommendationHistory")),
+		connect.WithHandlerOptions(opts...),
+	)
 	costSourceServiceGetBudgetsHandler := connect.NewUnaryHandler(
 		CostSourceServiceGetBudgetsProcedure,
 		svc.GetBudgets,
@@ -689,6 +732,8 @@ func NewCostSourceServiceHandler(svc CostSourceServiceHandler, opts ...connect.H
 			costSourceServiceGetRecommendationsHandler.ServeHTTP(w, r)
 		case CostSourceServiceDismissRecommendationProcedure:
 			costSourceServiceDismissRecommendationHandler.ServeHTTP(w, r)
+		case CostSourceServiceGetRecommendationHistoryProcedure:
+			costSourceServiceGetRecommendationHistoryHandler.ServeHTTP(w, r)
 		case CostSourceServiceGetBudgetsProcedure:
 			costSourceServiceGetBudgetsHandler.ServeHTTP(w, r)
 		case CostSourceServiceGetPluginInfoProcedure:
@@ -738,6 +783,10 @@ func (UnimplementedCostSourceServiceHandler) GetRecommendations(context.Context,
 
 func (UnimplementedCostSourceServiceHandler) DismissRecommendation(context.Context, *connect.Request[v1.DismissRecommendationRequest]) (*connect.Response[v1.DismissRecommendationResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("finfocus.v1.CostSourceService.DismissRecommendation is not implemented"))
+}
+
+func (UnimplementedCostSourceServiceHandler) GetRecommendationHistory(context.Context, *connect.Request[v1.GetRecommendationHistoryRequest]) (*connect.Response[v1.GetRecommendationHistoryResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("finfocus.v1.CostSourceService.GetRecommendationHistory is not implemented"))
 }
 
 func (UnimplementedCostSourceServiceHandler) GetBudgets(context.Context, *connect.Request[v1.GetBudgetsRequest]) (*connect.Response[v1.GetBudgetsResponse], error) {

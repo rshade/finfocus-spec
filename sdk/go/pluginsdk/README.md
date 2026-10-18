@@ -478,6 +478,7 @@ client := pluginsdk.NewClient(cfg)
 | `GetPricingSpec(ctx, req)`                | Get pricing specification               |
 | `GetRecommendations(ctx, req)`            | Get cost recommendations                |
 | `DismissRecommendation(ctx, req)`         | Dismiss a recommendation                |
+| `GetRecommendationHistory(ctx, req)`      | Retrieve plugin lifecycle history       |
 | `GetBudgets(ctx, req)`                    | Get budget information                  |
 | `Inner()`                                 | Access underlying connect client        |
 
@@ -1789,10 +1790,24 @@ resource := pluginsdk.CreateTestResource(
 )
 ```
 
+### Recommendation History
+
+Implement the optional `RecommendationHistoryProvider` interface to return server-side
+lifecycle events through `GetRecommendationHistory`. The request requires a non-empty
+`recommendation_id`. Each `LifecycleEvent` carries string `action`, `reason`, `custom_reason`,
+and `actor` fields, plus `timestamp` and `expires_at` timestamps when available.
+
+Return an empty `GetRecommendationHistoryResponse` when there are no recorded events.
+Event order is unspecified; hosts can merge the events with local history and sort by timestamp.
+Plugins that do not implement the provider, including older plugins, return `Unimplemented`,
+so hosts can use local history alone. This RPC has no separate capability enum; hosts can list
+it in `specification.service_definition.methods` and handle `Unimplemented` when probing it.
+
 ### Handler Errors
 
 `Server` calls your optional handlers (`HandleDryRun`, `Supports`, `GetRecommendations`,
-`GetBudgets`, `DismissRecommendation`, `BatchCost`, `ResolveResourceTypes`, `GetPluginInfo`) and
+`GetBudgets`, `DismissRecommendation`, `GetRecommendationHistory`, `BatchCost`,
+`ResolveResourceTypes`, `GetPluginInfo`) and
 turns their errors into what the host sees, over gRPC and Connect alike:
 
 | Your handler returns | The host receives |
@@ -1828,7 +1843,7 @@ Embedding `pbc.UnimplementedCostSourceServiceServer` is safe. Its methods satisf
 interfaces and return `Unimplemented`, so the SDK answers with its defaults: the default `Supports`
 response, an empty recommendation list, its own per-resource `BatchCost`, the `TypeRegistry` or an
 empty `ResolveResourceTypes` response, your configured `PluginInfo`, and `Unimplemented` for
-`GetBudgets` and `DismissRecommendation`.
+`GetBudgets`, `DismissRecommendation`, and `GetRecommendationHistory`.
 
 ### Conformance Testing
 

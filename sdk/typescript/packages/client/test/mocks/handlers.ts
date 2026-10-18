@@ -119,6 +119,17 @@ export const handlers = [
     });
   }),
 
+  http.post('https://plugin-aws.example.com/finfocus.v1.CostSourceService/GetRecommendationHistory', async ({ request }) => {
+    const body = await request.json() as { recommendationId: string };
+    if (body.recommendationId !== 'rec-1') {
+      return HttpResponse.json({ code: 'not_found', message: 'Recommendation not found' }, { status: 404 });
+    }
+    return HttpResponse.json({ events: [{
+      action: 'dismissed', reason: 'business_constraint', customReason: 'Migration scheduled',
+      timestamp: '2026-10-18T12:00:00Z', actor: 'alice@example.com/workstation-1'
+    }] });
+  }),
+
   http.post('https://plugin-aws.example.com/finfocus.v1.CostSourceService/GetBudgets', () => {
     return HttpResponse.json({
       budgets: [

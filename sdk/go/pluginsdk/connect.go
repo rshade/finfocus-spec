@@ -125,6 +125,18 @@ func (h *ConnectHandler) DismissRecommendation(
 	return connect.NewResponse(resp), nil
 }
 
+// GetRecommendationHistory implements pbcconnect.CostSourceServiceHandler.
+func (h *ConnectHandler) GetRecommendationHistory(
+	ctx context.Context,
+	req *connect.Request[pbc.GetRecommendationHistoryRequest],
+) (*connect.Response[pbc.GetRecommendationHistoryResponse], error) {
+	resp, err := h.server.GetRecommendationHistory(ctx, req.Msg)
+	if err != nil {
+		return nil, toConnectError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
+
 // GetBudgets implements pbcconnect.CostSourceServiceHandler.
 func (h *ConnectHandler) GetBudgets(
 	ctx context.Context,
