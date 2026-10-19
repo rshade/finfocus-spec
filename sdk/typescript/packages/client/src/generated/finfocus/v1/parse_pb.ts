@@ -27,7 +27,7 @@ import type { JsonObject, Message } from "@bufbuild/protobuf";
  * Describes the file finfocus/v1/parse.proto.
  */
 export const file_finfocus_v1_parse: GenFile = /*@__PURE__*/
-  fileDesc("ChdmaW5mb2N1cy92MS9wYXJzZS5wcm90bxILZmluZm9jdXMudjEikgEKDFBhcnNlUmVxdWVzdBIOCgZmb3JtYXQYASABKAkSKgoFZmlsZXMYAiABKAsyGS5maW5mb2N1cy52MS5QYXJzZUZpbGVTZXRIABITCglyb290X3BhdGgYAyABKAlIABIoCgdvcHRpb25zGAQgASgLMhcuZ29vZ2xlLnByb3RvYnVmLlN0cnVjdEIHCgVpbnB1dCI1CgxQYXJzZUZpbGVTZXQSJQoFZmlsZXMYASADKAsyFi5maW5mb2N1cy52MS5QYXJzZUZpbGUiKgoJUGFyc2VGaWxlEgwKBHBhdGgYASABKAkSDwoHY29udGVudBgCIAEoDCKcAQoNUGFyc2VSZXNwb25zZRIuCglyZXNvdXJjZXMYASADKAsyGy5maW5mb2N1cy52MS5QYXJzZWRSZXNvdXJjZRIrCgh3YXJuaW5ncxgCIAMoCzIZLmZpbmZvY3VzLnYxLlBhcnNlV2FybmluZxIuCgpleHBpcmVzX2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJyCg5QYXJzZWRSZXNvdXJjZRIxCghyZXNvdXJjZRgBIAEoCzIfLmZpbmZvY3VzLnYxLlJlc291cmNlRGVzY3JpcHRvchIRCglzb3VyY2VfaWQYAiABKAkSGgoSdW5rbm93bl9wcm9wZXJ0aWVzGAMgAygJInUKDFBhcnNlV2FybmluZxIzCghzZXZlcml0eRgBIAEoDjIhLmZpbmZvY3VzLnYxLlBhcnNlV2FybmluZ1NldmVyaXR5EgwKBGNvZGUYAiABKAkSDwoHbWVzc2FnZRgDIAEoCRIRCglzb3VyY2VfaWQYBCABKAkqgwEKFFBhcnNlV2FybmluZ1NldmVyaXR5EiYKIlBBUlNFX1dBUk5JTkdfU0VWRVJJVFlfVU5TUEVDSUZJRUQQABIfChtQQVJTRV9XQVJOSU5HX1NFVkVSSVRZX0lORk8QARIiCh5QQVJTRV9XQVJOSU5HX1NFVkVSSVRZX1dBUk5JTkcQAjJSChBDb3N0UGFyc2VTZXJ2aWNlEj4KBVBhcnNlEhkuZmluZm9jdXMudjEuUGFyc2VSZXF1ZXN0GhouZmluZm9jdXMudjEuUGFyc2VSZXNwb25zZUKoAQoPY29tLmZpbmZvY3VzLnYxQgpQYXJzZVByb3RvUAFaPGdpdGh1Yi5jb20vcnNoYWRlL2ZpbmZvY3VzLXNwZWMvc2RrL2dvL3Byb3RvL2ZpbmZvY3VzL3YxO3BiY6ICA0ZYWKoCC0ZpbmZvY3VzLlYxygILRmluZm9jdXNcVjHiAhdGaW5mb2N1c1xWMVxHUEJNZXRhZGF0YeoCDEZpbmZvY3VzOjpWMWIGcHJvdG8z", [file_finfocus_v1_costsource, file_google_protobuf_struct, file_google_protobuf_timestamp]);
+  fileDesc("ChdmaW5mb2N1cy92MS9wYXJzZS5wcm90bxILZmluZm9jdXMudjEikgEKDFBhcnNlUmVxdWVzdBIOCgZmb3JtYXQYASABKAkSKgoFZmlsZXMYAiABKAsyGS5maW5mb2N1cy52MS5QYXJzZUZpbGVTZXRIABITCglyb290X3BhdGgYAyABKAlIABIoCgdvcHRpb25zGAQgASgLMhcuZ29vZ2xlLnByb3RvYnVmLlN0cnVjdEIHCgVpbnB1dCI1CgxQYXJzZUZpbGVTZXQSJQoFZmlsZXMYASADKAsyFi5maW5mb2N1cy52MS5QYXJzZUZpbGUiKgoJUGFyc2VGaWxlEgwKBHBhdGgYASABKAkSDwoHY29udGVudBgCIAEoDCKcAQoNUGFyc2VSZXNwb25zZRIuCglyZXNvdXJjZXMYASADKAsyGy5maW5mb2N1cy52MS5QYXJzZWRSZXNvdXJjZRIrCgh3YXJuaW5ncxgCIAMoCzIZLmZpbmZvY3VzLnYxLlBhcnNlV2FybmluZxIuCgpleHBpcmVzX2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCKcAQoOUGFyc2VkUmVzb3VyY2USMQoIcmVzb3VyY2UYASABKAsyHy5maW5mb2N1cy52MS5SZXNvdXJjZURlc2NyaXB0b3ISEQoJc291cmNlX2lkGAIgASgJEhoKEnVua25vd25fcHJvcGVydGllcxgDIAMoCRIoCgZhY3Rpb24YBCABKA4yGC5maW5mb2N1cy52MS5QYXJzZUFjdGlvbiJ1CgxQYXJzZVdhcm5pbmcSMwoIc2V2ZXJpdHkYASABKA4yIS5maW5mb2N1cy52MS5QYXJzZVdhcm5pbmdTZXZlcml0eRIMCgRjb2RlGAIgASgJEg8KB21lc3NhZ2UYAyABKAkSEQoJc291cmNlX2lkGAQgASgJKqwBCgtQYXJzZUFjdGlvbhIcChhQQVJTRV9BQ1RJT05fVU5TUEVDSUZJRUQQABIXChNQQVJTRV9BQ1RJT05fQ1JFQVRFEAESFwoTUEFSU0VfQUNUSU9OX1VQREFURRACEhcKE1BBUlNFX0FDVElPTl9ERUxFVEUQAxIYChRQQVJTRV9BQ1RJT05fUkVQTEFDRRAEEhoKFlBBUlNFX0FDVElPTl9OT19DSEFOR0UQBSqDAQoUUGFyc2VXYXJuaW5nU2V2ZXJpdHkSJgoiUEFSU0VfV0FSTklOR19TRVZFUklUWV9VTlNQRUNJRklFRBAAEh8KG1BBUlNFX1dBUk5JTkdfU0VWRVJJVFlfSU5GTxABEiIKHlBBUlNFX1dBUk5JTkdfU0VWRVJJVFlfV0FSTklORxACMlIKEENvc3RQYXJzZVNlcnZpY2USPgoFUGFyc2USGS5maW5mb2N1cy52MS5QYXJzZVJlcXVlc3QaGi5maW5mb2N1cy52MS5QYXJzZVJlc3BvbnNlQqgBCg9jb20uZmluZm9jdXMudjFCClBhcnNlUHJvdG9QAVo8Z2l0aHViLmNvbS9yc2hhZGUvZmluZm9jdXMtc3BlYy9zZGsvZ28vcHJvdG8vZmluZm9jdXMvdjE7cGJjogIDRlhYqgILRmluZm9jdXMuVjHKAgtGaW5mb2N1c1xWMeICF0ZpbmZvY3VzXFYxXEdQQk1ldGFkYXRh6gIMRmluZm9jdXM6OlYxYgZwcm90bzM", [file_finfocus_v1_costsource, file_google_protobuf_struct, file_google_protobuf_timestamp]);
 
 /**
  * ParseRequest selects exactly one input and an advertised format.
@@ -203,6 +203,17 @@ export type ParsedResource = Message<"finfocus.v1.ParsedResource"> & {
    * @generated from field: repeated string unknown_properties = 3;
    */
   unknownProperties: string[];
+
+  /**
+   * action is an optional hint for plan-style inputs that report a per-resource
+   * change. UNSPECIFIED (zero, the default) means a declared resource with no
+   * action; parsers of declared templates leave it unset and hosts must not
+   * require it. Unknown numbers are invalid. It carries no pricing meaning;
+   * how a host prices an action is the host's concern.
+   *
+   * @generated from field: finfocus.v1.ParseAction action = 4;
+   */
+  action: ParseAction;
 };
 
 /**
@@ -256,6 +267,62 @@ export const ParseWarningSchema: GenMessage<ParseWarning> = /*@__PURE__*/
   messageDesc(file_finfocus_v1_parse, 5);
 
 /**
+ * ParseAction identifies the change a plan-style input reports for a resource.
+ * Zero is valid and means no action was reported.
+ *
+ * @generated from enum finfocus.v1.ParseAction
+ */
+export enum ParseAction {
+  /**
+   * PARSE_ACTION_UNSPECIFIED reports a declared resource with no action.
+   *
+   * @generated from enum value: PARSE_ACTION_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * PARSE_ACTION_CREATE reports a resource to be created.
+   *
+   * @generated from enum value: PARSE_ACTION_CREATE = 1;
+   */
+  CREATE = 1,
+
+  /**
+   * PARSE_ACTION_UPDATE reports a resource to be updated in place.
+   *
+   * @generated from enum value: PARSE_ACTION_UPDATE = 2;
+   */
+  UPDATE = 2,
+
+  /**
+   * PARSE_ACTION_DELETE reports a resource to be deleted.
+   *
+   * @generated from enum value: PARSE_ACTION_DELETE = 3;
+   */
+  DELETE = 3,
+
+  /**
+   * PARSE_ACTION_REPLACE reports a resource to be deleted and created again.
+   *
+   * @generated from enum value: PARSE_ACTION_REPLACE = 4;
+   */
+  REPLACE = 4,
+
+  /**
+   * PARSE_ACTION_NO_CHANGE reports a resource that is unchanged.
+   *
+   * @generated from enum value: PARSE_ACTION_NO_CHANGE = 5;
+   */
+  NO_CHANGE = 5,
+}
+
+/**
+ * Describes the enum finfocus.v1.ParseAction.
+ */
+export const ParseActionSchema: GenEnum<ParseAction> = /*@__PURE__*/
+  enumDesc(file_finfocus_v1_parse, 0);
+
+/**
  * ParseWarningSeverity identifies a nonfatal diagnostic; zero is invalid.
  *
  * @generated from enum finfocus.v1.ParseWarningSeverity
@@ -287,7 +354,7 @@ export enum ParseWarningSeverity {
  * Describes the enum finfocus.v1.ParseWarningSeverity.
  */
 export const ParseWarningSeveritySchema: GenEnum<ParseWarningSeverity> = /*@__PURE__*/
-  enumDesc(file_finfocus_v1_parse, 0);
+  enumDesc(file_finfocus_v1_parse, 1);
 
 /**
  * CostParseService optionally parses cloud-native and Kubernetes inputs into

@@ -36,6 +36,72 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// ParseAction identifies the change a plan-style input reports for a resource.
+// Zero is valid and means no action was reported.
+type ParseAction int32
+
+const (
+	// PARSE_ACTION_UNSPECIFIED reports a declared resource with no action.
+	ParseAction_PARSE_ACTION_UNSPECIFIED ParseAction = 0
+	// PARSE_ACTION_CREATE reports a resource to be created.
+	ParseAction_PARSE_ACTION_CREATE ParseAction = 1
+	// PARSE_ACTION_UPDATE reports a resource to be updated in place.
+	ParseAction_PARSE_ACTION_UPDATE ParseAction = 2
+	// PARSE_ACTION_DELETE reports a resource to be deleted.
+	ParseAction_PARSE_ACTION_DELETE ParseAction = 3
+	// PARSE_ACTION_REPLACE reports a resource to be deleted and created again.
+	ParseAction_PARSE_ACTION_REPLACE ParseAction = 4
+	// PARSE_ACTION_NO_CHANGE reports a resource that is unchanged.
+	ParseAction_PARSE_ACTION_NO_CHANGE ParseAction = 5
+)
+
+// Enum value maps for ParseAction.
+var (
+	ParseAction_name = map[int32]string{
+		0: "PARSE_ACTION_UNSPECIFIED",
+		1: "PARSE_ACTION_CREATE",
+		2: "PARSE_ACTION_UPDATE",
+		3: "PARSE_ACTION_DELETE",
+		4: "PARSE_ACTION_REPLACE",
+		5: "PARSE_ACTION_NO_CHANGE",
+	}
+	ParseAction_value = map[string]int32{
+		"PARSE_ACTION_UNSPECIFIED": 0,
+		"PARSE_ACTION_CREATE":      1,
+		"PARSE_ACTION_UPDATE":      2,
+		"PARSE_ACTION_DELETE":      3,
+		"PARSE_ACTION_REPLACE":     4,
+		"PARSE_ACTION_NO_CHANGE":   5,
+	}
+)
+
+func (x ParseAction) Enum() *ParseAction {
+	p := new(ParseAction)
+	*p = x
+	return p
+}
+
+func (x ParseAction) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ParseAction) Descriptor() protoreflect.EnumDescriptor {
+	return file_finfocus_v1_parse_proto_enumTypes[0].Descriptor()
+}
+
+func (ParseAction) Type() protoreflect.EnumType {
+	return &file_finfocus_v1_parse_proto_enumTypes[0]
+}
+
+func (x ParseAction) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ParseAction.Descriptor instead.
+func (ParseAction) EnumDescriptor() ([]byte, []int) {
+	return file_finfocus_v1_parse_proto_rawDescGZIP(), []int{0}
+}
+
 // ParseWarningSeverity identifies a nonfatal diagnostic; zero is invalid.
 type ParseWarningSeverity int32
 
@@ -73,11 +139,11 @@ func (x ParseWarningSeverity) String() string {
 }
 
 func (ParseWarningSeverity) Descriptor() protoreflect.EnumDescriptor {
-	return file_finfocus_v1_parse_proto_enumTypes[0].Descriptor()
+	return file_finfocus_v1_parse_proto_enumTypes[1].Descriptor()
 }
 
 func (ParseWarningSeverity) Type() protoreflect.EnumType {
-	return &file_finfocus_v1_parse_proto_enumTypes[0]
+	return &file_finfocus_v1_parse_proto_enumTypes[1]
 }
 
 func (x ParseWarningSeverity) Number() protoreflect.EnumNumber {
@@ -86,7 +152,7 @@ func (x ParseWarningSeverity) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ParseWarningSeverity.Descriptor instead.
 func (ParseWarningSeverity) EnumDescriptor() ([]byte, []int) {
-	return file_finfocus_v1_parse_proto_rawDescGZIP(), []int{0}
+	return file_finfocus_v1_parse_proto_rawDescGZIP(), []int{1}
 }
 
 // ParseRequest selects exactly one input and an advertised format.
@@ -381,8 +447,14 @@ type ParsedResource struct {
 	// Paths are relative to attributes; dots in literal keys and list indexing
 	// are unsupported. Report an unresolved containing property in those cases.
 	UnknownProperties []string `protobuf:"bytes,3,rep,name=unknown_properties,json=unknownProperties,proto3" json:"unknown_properties,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	// action is an optional hint for plan-style inputs that report a per-resource
+	// change. UNSPECIFIED (zero, the default) means a declared resource with no
+	// action; parsers of declared templates leave it unset and hosts must not
+	// require it. Unknown numbers are invalid. It carries no pricing meaning;
+	// how a host prices an action is the host's concern.
+	Action        ParseAction `protobuf:"varint,4,opt,name=action,proto3,enum=finfocus.v1.ParseAction" json:"action,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ParsedResource) Reset() {
@@ -434,6 +506,13 @@ func (x *ParsedResource) GetUnknownProperties() []string {
 		return x.UnknownProperties
 	}
 	return nil
+}
+
+func (x *ParsedResource) GetAction() ParseAction {
+	if x != nil {
+		return x.Action
+	}
+	return ParseAction_PARSE_ACTION_UNSPECIFIED
 }
 
 // ParseWarning supplies a stable machine-readable code and human explanation.
@@ -530,16 +609,24 @@ const file_finfocus_v1_parse_proto_rawDesc = "" +
 	"\tresources\x18\x01 \x03(\v2\x1b.finfocus.v1.ParsedResourceR\tresources\x125\n" +
 	"\bwarnings\x18\x02 \x03(\v2\x19.finfocus.v1.ParseWarningR\bwarnings\x129\n" +
 	"\n" +
-	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\x99\x01\n" +
+	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\xcb\x01\n" +
 	"\x0eParsedResource\x12;\n" +
 	"\bresource\x18\x01 \x01(\v2\x1f.finfocus.v1.ResourceDescriptorR\bresource\x12\x1b\n" +
 	"\tsource_id\x18\x02 \x01(\tR\bsourceId\x12-\n" +
-	"\x12unknown_properties\x18\x03 \x03(\tR\x11unknownProperties\"\x98\x01\n" +
+	"\x12unknown_properties\x18\x03 \x03(\tR\x11unknownProperties\x120\n" +
+	"\x06action\x18\x04 \x01(\x0e2\x18.finfocus.v1.ParseActionR\x06action\"\x98\x01\n" +
 	"\fParseWarning\x12=\n" +
 	"\bseverity\x18\x01 \x01(\x0e2!.finfocus.v1.ParseWarningSeverityR\bseverity\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\tR\x04code\x12\x18\n" +
 	"\amessage\x18\x03 \x01(\tR\amessage\x12\x1b\n" +
-	"\tsource_id\x18\x04 \x01(\tR\bsourceId*\x83\x01\n" +
+	"\tsource_id\x18\x04 \x01(\tR\bsourceId*\xac\x01\n" +
+	"\vParseAction\x12\x1c\n" +
+	"\x18PARSE_ACTION_UNSPECIFIED\x10\x00\x12\x17\n" +
+	"\x13PARSE_ACTION_CREATE\x10\x01\x12\x17\n" +
+	"\x13PARSE_ACTION_UPDATE\x10\x02\x12\x17\n" +
+	"\x13PARSE_ACTION_DELETE\x10\x03\x12\x18\n" +
+	"\x14PARSE_ACTION_REPLACE\x10\x04\x12\x1a\n" +
+	"\x16PARSE_ACTION_NO_CHANGE\x10\x05*\x83\x01\n" +
 	"\x14ParseWarningSeverity\x12&\n" +
 	"\"PARSE_WARNING_SEVERITY_UNSPECIFIED\x10\x00\x12\x1f\n" +
 	"\x1bPARSE_WARNING_SEVERITY_INFO\x10\x01\x12\"\n" +
@@ -561,36 +648,38 @@ func file_finfocus_v1_parse_proto_rawDescGZIP() []byte {
 	return file_finfocus_v1_parse_proto_rawDescData
 }
 
-var file_finfocus_v1_parse_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_finfocus_v1_parse_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_finfocus_v1_parse_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_finfocus_v1_parse_proto_goTypes = []any{
-	(ParseWarningSeverity)(0),     // 0: finfocus.v1.ParseWarningSeverity
-	(*ParseRequest)(nil),          // 1: finfocus.v1.ParseRequest
-	(*ParseFileSet)(nil),          // 2: finfocus.v1.ParseFileSet
-	(*ParseFile)(nil),             // 3: finfocus.v1.ParseFile
-	(*ParseResponse)(nil),         // 4: finfocus.v1.ParseResponse
-	(*ParsedResource)(nil),        // 5: finfocus.v1.ParsedResource
-	(*ParseWarning)(nil),          // 6: finfocus.v1.ParseWarning
-	(*structpb.Struct)(nil),       // 7: google.protobuf.Struct
-	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
-	(*ResourceDescriptor)(nil),    // 9: finfocus.v1.ResourceDescriptor
+	(ParseAction)(0),              // 0: finfocus.v1.ParseAction
+	(ParseWarningSeverity)(0),     // 1: finfocus.v1.ParseWarningSeverity
+	(*ParseRequest)(nil),          // 2: finfocus.v1.ParseRequest
+	(*ParseFileSet)(nil),          // 3: finfocus.v1.ParseFileSet
+	(*ParseFile)(nil),             // 4: finfocus.v1.ParseFile
+	(*ParseResponse)(nil),         // 5: finfocus.v1.ParseResponse
+	(*ParsedResource)(nil),        // 6: finfocus.v1.ParsedResource
+	(*ParseWarning)(nil),          // 7: finfocus.v1.ParseWarning
+	(*structpb.Struct)(nil),       // 8: google.protobuf.Struct
+	(*timestamppb.Timestamp)(nil), // 9: google.protobuf.Timestamp
+	(*ResourceDescriptor)(nil),    // 10: finfocus.v1.ResourceDescriptor
 }
 var file_finfocus_v1_parse_proto_depIdxs = []int32{
-	2, // 0: finfocus.v1.ParseRequest.files:type_name -> finfocus.v1.ParseFileSet
-	7, // 1: finfocus.v1.ParseRequest.options:type_name -> google.protobuf.Struct
-	3, // 2: finfocus.v1.ParseFileSet.files:type_name -> finfocus.v1.ParseFile
-	5, // 3: finfocus.v1.ParseResponse.resources:type_name -> finfocus.v1.ParsedResource
-	6, // 4: finfocus.v1.ParseResponse.warnings:type_name -> finfocus.v1.ParseWarning
-	8, // 5: finfocus.v1.ParseResponse.expires_at:type_name -> google.protobuf.Timestamp
-	9, // 6: finfocus.v1.ParsedResource.resource:type_name -> finfocus.v1.ResourceDescriptor
-	0, // 7: finfocus.v1.ParseWarning.severity:type_name -> finfocus.v1.ParseWarningSeverity
-	1, // 8: finfocus.v1.CostParseService.Parse:input_type -> finfocus.v1.ParseRequest
-	4, // 9: finfocus.v1.CostParseService.Parse:output_type -> finfocus.v1.ParseResponse
-	9, // [9:10] is the sub-list for method output_type
-	8, // [8:9] is the sub-list for method input_type
-	8, // [8:8] is the sub-list for extension type_name
-	8, // [8:8] is the sub-list for extension extendee
-	0, // [0:8] is the sub-list for field type_name
+	3,  // 0: finfocus.v1.ParseRequest.files:type_name -> finfocus.v1.ParseFileSet
+	8,  // 1: finfocus.v1.ParseRequest.options:type_name -> google.protobuf.Struct
+	4,  // 2: finfocus.v1.ParseFileSet.files:type_name -> finfocus.v1.ParseFile
+	6,  // 3: finfocus.v1.ParseResponse.resources:type_name -> finfocus.v1.ParsedResource
+	7,  // 4: finfocus.v1.ParseResponse.warnings:type_name -> finfocus.v1.ParseWarning
+	9,  // 5: finfocus.v1.ParseResponse.expires_at:type_name -> google.protobuf.Timestamp
+	10, // 6: finfocus.v1.ParsedResource.resource:type_name -> finfocus.v1.ResourceDescriptor
+	0,  // 7: finfocus.v1.ParsedResource.action:type_name -> finfocus.v1.ParseAction
+	1,  // 8: finfocus.v1.ParseWarning.severity:type_name -> finfocus.v1.ParseWarningSeverity
+	2,  // 9: finfocus.v1.CostParseService.Parse:input_type -> finfocus.v1.ParseRequest
+	5,  // 10: finfocus.v1.CostParseService.Parse:output_type -> finfocus.v1.ParseResponse
+	10, // [10:11] is the sub-list for method output_type
+	9,  // [9:10] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_finfocus_v1_parse_proto_init() }
@@ -608,7 +697,7 @@ func file_finfocus_v1_parse_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_finfocus_v1_parse_proto_rawDesc), len(file_finfocus_v1_parse_proto_rawDesc)),
-			NumEnums:      1,
+			NumEnums:      2,
 			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,

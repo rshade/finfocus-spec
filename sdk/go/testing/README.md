@@ -1785,7 +1785,9 @@ Both advertised modes skip unsupported_input_mode; no content fixture skips path
 Checks are format_rejected, input_mode_xor, unsupported_input_mode, path_traversal_rejected, source_ids_unique,
 unknown_not_absent, descriptors_valid and deterministic. Each call has a ten-second deadline. Determinism compares
 100 responses per supplied fixture, excluding advisory expiration. Metadata is cross-checked when GetPluginInfo
-is implemented. No advertised-limit-plus-one allocation or vendor-specific template is required.
+is implemented. The descriptors_valid check also rejects a ParsedResource whose optional action is not a defined
+ParseAction value; the zero UNSPECIFIED value is valid and fixtures need not set it.
+No advertised-limit-plus-one allocation or vendor-specific template is required.
 
 Shared ValidateParseRequest performs no filesystem I/O. WithParseResource clones neutral fixture descriptors;
 WithMockParseLimits controls small boundary cases. WithParseExpiration models a changing dependency, clones its
