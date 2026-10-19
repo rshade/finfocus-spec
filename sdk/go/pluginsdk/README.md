@@ -2430,7 +2430,7 @@ region once. A response without rows validates as before, with 0 allocations.
 ## On-Demand Equivalent
 
 For a DYNAMIC spot result, `on_demand_equivalent_monthly_cost` gives the same resource's STANDARD
-on-demand monthly price in the response currency and on the same 730-hour monthly basis as the
+on-demand monthly price in the response currency and on the same monthly basis as the
 primary cost. It is present only when the plugin knows that price. An absent value means savings
 cannot be shown; a present `0.0` is a real price, so check pointer presence rather than the getter.
 The field is advisory, never summed into the primary cost, and is not cross-checked with

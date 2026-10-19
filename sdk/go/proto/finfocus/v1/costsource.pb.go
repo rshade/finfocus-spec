@@ -1802,8 +1802,8 @@ type GetProjectedCostResponse struct {
 	RegionPrices []*RegionPrice `protobuf:"bytes,17,rep,name=region_prices,json=regionPrices,proto3" json:"region_prices,omitempty"`
 	// on_demand_equivalent_monthly_cost is the STANDARD on-demand monthly cost of
 	// the same resource when this response selects DYNAMIC (spot) pricing. It uses
-	// currency and the same basis as cost_per_month (730 hours per month for
-	// hourly-billed resources). Absent means the plugin does not know the price;
+	// currency and the same monthly basis as cost_per_month, whatever hours per
+	// month that value uses. Absent means the plugin does not know the price;
 	// a present 0.0 is a real price. Consumers MUST NOT treat absence as zero.
 	//
 	// This field is meaningful only for DYNAMIC pricing. A present value on any
@@ -4343,8 +4343,8 @@ type EstimateCostResponse struct {
 	RegionPrices []*RegionPrice `protobuf:"bytes,7,rep,name=region_prices,json=regionPrices,proto3" json:"region_prices,omitempty"`
 	// on_demand_equivalent_monthly_cost is the STANDARD on-demand monthly cost
 	// of the same resource when this response selects DYNAMIC (spot) pricing.
-	// Same currency and monthly basis as cost_monthly (730 hours per month for
-	// hourly-billed resources). Absent means unknown; present 0.0 is a real
+	// Same currency and monthly basis as cost_monthly, whatever hours per month
+	// that value uses. Absent means unknown; present 0.0 is a real
 	// price, and consumers MUST NOT treat absence as zero. DYNAMIC with this
 	// field unset is valid; hosts show spot savings unavailable in that case.
 	//

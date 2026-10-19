@@ -71,8 +71,8 @@ serialization; run wire breaking analysis against the previous schema.
 ### Functional Requirements
 
 - **FR-001**: Both projected and estimate responses MUST carry an optional monthly equivalent.
-- **FR-002**: The value MUST use the response currency and the primary cost's monthly basis of
-  730 hours for hourly-billed resources.
+- **FR-002**: The value MUST use the response currency and the primary cost's monthly basis,
+  whatever hours per month that cost uses.
 - **FR-003**: Absence MUST mean unknown; present zero MUST remain distinguishable.
 - **FR-004**: A present value MUST be finite, non-negative, and attached only to DYNAMIC pricing.
 - **FR-005**: DYNAMIC responses without the value MUST remain valid, including legacy responses.

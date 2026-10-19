@@ -386,7 +386,7 @@ message GetProjectedCostResponse {
   is a real price. See [Region Prices](sdk/go/pluginsdk/README.md#region-prices-region_prices)
 - For a DYNAMIC spot result, set `on_demand_equivalent_monthly_cost` when the plugin knows the
   same resource's on-demand monthly price (field 18; field 8 on `EstimateCostResponse`). Use the
-  same currency and 730-hour monthly basis as the spot cost. Leave it unset when unknown; a
+  same currency and monthly basis as the spot cost. Leave it unset when unknown; a
   present zero is a real price. A present value on any non-DYNAMIC category fails `Validate*`.
   See [On-Demand Equivalent](sdk/go/pluginsdk/README.md#on-demand-equivalent).
 
