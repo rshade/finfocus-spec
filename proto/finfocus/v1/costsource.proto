@@ -73,6 +73,18 @@ service CostSourceService {
   //   - Unimplemented: Plugin does not support recommendation dismissal
   rpc DismissRecommendation(DismissRecommendationRequest) returns (DismissRecommendationResponse);
 
+  // GetRecommendationHistory retrieves plugin-maintained lifecycle history for a
+  // recommendation. Hosts may merge these events with their local history.
+  // This optional RPC returns Unimplemented when server-side history is unavailable.
+  // An empty events list means the plugin has no recorded history for the ID.
+  //
+  // Error cases:
+  //   - InvalidArgument: Empty recommendation_id
+  //   - NotFound: Recommendation ID does not exist
+  //   - Unavailable: Backend history service unavailable
+  //   - Unimplemented: Plugin does not support recommendation history
+  rpc GetRecommendationHistory(GetRecommendationHistoryRequest) returns (GetRecommendationHistoryResponse);
+
   // GetBudgets returns budget information from the cost management service.
   // This enables unified budget visibility across cloud providers (AWS, GCP, Azure, etc.).
   //
@@ -1971,6 +1983,40 @@ message DismissRecommendationResponse {
   optional google.protobuf.Timestamp expires_at = 4;
   // recommendation_id echoes back the dismissed recommendation ID for confirmation.
   string recommendation_id = 5;
+}
+
+// =============================================================================
+// GetRecommendationHistory RPC - Request/Response Messages
+// =============================================================================
+
+// GetRecommendationHistoryRequest identifies the recommendation whose history is requested.
+message GetRecommendationHistoryRequest {
+  // recommendation_id is the plugin's unique recommendation identifier. Required.
+  string recommendation_id = 1;
+}
+
+// GetRecommendationHistoryResponse contains the plugin's recorded lifecycle events.
+// Hosts supplement local history with these events. No event ordering is guaranteed.
+message GetRecommendationHistoryResponse {
+  // events is empty when there is no recorded history for the recommendation.
+  repeated LifecycleEvent events = 1;
+}
+
+// LifecycleEvent records a change in a recommendation's lifecycle.
+message LifecycleEvent {
+  // action describes the lifecycle change, for example "dismissed" or "undismissed".
+  string action = 1;
+  // reason is the plugin's dismissal reason, when available. Kept as a string
+  // so plugins can report their own reason codes without losing information.
+  string reason = 2;
+  // custom_reason supplements reason with user-provided free-form context.
+  string custom_reason = 3;
+  // timestamp is when the action occurred, when known.
+  google.protobuf.Timestamp timestamp = 4;
+  // expires_at is when the dismissal expires. Unset means no known expiration.
+  google.protobuf.Timestamp expires_at = 5;
+  // actor identifies who performed the action, optionally including machine context.
+  string actor = 6;
 }
 
 // =============================================================================

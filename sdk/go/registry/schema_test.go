@@ -24,6 +24,7 @@ import (
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/stretchr/testify/require"
 
+	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 	"github.com/rshade/finfocus-spec/sdk/go/registry"
 )
 
@@ -146,4 +147,60 @@ func TestExampleManifests(t *testing.T) {
 			require.NoError(t, schemaVerdict(t, schema, doc))
 		})
 	}
+}
+
+func TestCostParseCapabilitySchemas(t *testing.T) {
+	manifest := compileSchema(t, "plugin_manifest.schema.json")
+	index := compileSchema(t, "plugin_registry.schema.json")
+	for _, tc := range []struct {
+		name         string
+		capabilities []string
+		valid        bool
+	}{
+		{"parser only", []string{"cost_parse"}, true},
+		{"mixed parser and pricing", []string{"cost_parse", "projected_costs"}, true},
+		{"existing pricing", []string{"projected_costs"}, true},
+		{"legacy manifest capability", []string{"cost_retrieval"}, true},
+		{"uppercase invalid", []string{"COST_PARSE"}, false},
+		{"legacy metadata name invalid", []string{"supports_cost_parse"}, false},
+		{"unknown capability", []string{"cost_parse_future"}, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			doc := (manifestCase{field: "capabilities", value: tc.capabilities}).manifest(t)
+			sdkErr := registry.ValidatePluginManifest(doc)
+			manifestErr := schemaVerdict(t, manifest, doc)
+			entry := map[string]any{
+				"schema_version": "1.0.0",
+				"plugins": map[string]any{"parser": map[string]any{
+					"name": "parser", "description": "Parses cost resources", "repository": "example/parser",
+					"author": "Example", "supported_providers": []string{"custom"},
+					"min_spec_version": "0.1.0", "capabilities": tc.capabilities,
+				}},
+			}
+			data, err := json.Marshal(entry)
+			require.NoError(t, err)
+			indexErr := schemaVerdict(t, index, data)
+			if tc.valid {
+				require.NoError(t, sdkErr)
+				require.NoError(t, manifestErr)
+				require.NoError(t, indexErr)
+			} else {
+				require.Error(t, sdkErr)
+				require.Error(t, manifestErr)
+				require.Error(t, indexErr)
+			}
+		})
+	}
+}
+
+func TestCostParseCapabilitySchemaDrift(t *testing.T) {
+	require.Equal(t, "cost_parse", registry.ManifestCapabilityName(pbc.PluginCapability_PLUGIN_CAPABILITY_COST_PARSE))
+	require.True(t, registry.IsValidPluginCapability("cost_parse"))
+	require.Contains(t, capabilityStrings(), "cost_parse")
+	manifest := readSchemaDoc(t, "plugin_manifest.schema.json")
+	index := readSchemaDoc(t, "plugin_registry.schema.json")
+	require.Contains(t, schemaEnum(t, manifest,
+		"properties", "specification", "properties", "capabilities", "items"), "cost_parse")
+	require.Contains(t, schemaEnum(t, index,
+		"$defs", "RegistryEntry", "properties", "capabilities", "items"), "cost_parse")
 }

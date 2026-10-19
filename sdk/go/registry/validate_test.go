@@ -532,7 +532,8 @@ func supportedResourcesCases() []manifestCase {
 func methodCapabilityCases() []manifestCase {
 	allMethods := []any{
 		"Name", "Supports", "GetActualCost", "GetProjectedCost", "GetPricingSpec", "EstimateCost",
-		"GetRecommendations", "DismissRecommendation", "GetBudgets", "GetPluginInfo", "DryRun",
+		"GetRecommendations", "DismissRecommendation", "GetRecommendationHistory", "GetBudgets",
+		"GetPluginInfo", "DryRun",
 		"BatchCost", "ResolveResourceTypes",
 	}
 	protoCapabilities := []any{

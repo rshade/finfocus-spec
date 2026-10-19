@@ -985,6 +985,14 @@ Dismiss a recommendation with a reason.
 
 **Validation**: Requires `recommendationId`.
 
+#### `getRecommendationHistory(req: GetRecommendationHistoryRequest): Promise<GetRecommendationHistoryResponse>`
+
+Retrieve plugin-maintained lifecycle events, including reasons, timestamps, and actor information.
+The events supplement local history and have no guaranteed order. An empty event list means no
+recorded history; plugins without server-side history return `Unimplemented`.
+
+**Validation**: Requires `recommendationId`.
+
 #### `getBudgets(req?: GetBudgetsRequest): Promise<GetBudgetsResponse>`
 
 Retrieve budget information and status.
@@ -1075,3 +1083,39 @@ See [CONTRIBUTING.md](../../CONTRIBUTING.md) for development setup and contribut
 - Documentation: <https://github.com/rshade/finfocus-spec>
 - Issues: <https://github.com/rshade/finfocus-spec/issues>
 - Discussions: <https://github.com/rshade/finfocus-spec/discussions>
+
+## Cost parsing
+
+```typescript
+import { create } from "@bufbuild/protobuf";
+import { CostParseClient, ParseRequestSchema, parseParseLimits } from "@rshade/finfocus-client";
+
+const parser = new CostParseClient({ baseUrl: "http://localhost:8080" });
+const limits = parseParseLimits({
+  parse_formats: "cfn", parse_input_modes: "content,path", parse_max_input_bytes: "1048576",
+});
+if (limits?.inputModes.includes("content")) {
+  await parser.parse(create(ParseRequestSchema, {
+    format: "cfn",
+    input: { case: "files", value: { files: [{ path: "input.yaml", content: new Uint8Array([0, 255, 65]) }] } },
+  }));
+}
+if (limits?.inputModes.includes("path")) {
+  await parser.parse(create(ParseRequestSchema, {
+    format: "cfn", input: { case: "rootPath", value: "/host/exposed/root" },
+  }));
+}
+```
+
+Use valid input bytes for the provider's format; the sample bytes demonstrate binary transport.
+The client honors an injected transport or uses the existing JSON Connect default. ParseLimits.maxInputBytes
+is bigint and preserves positive int64 precision. Protobuf JSON maps the sample bytes to AP9B and expiresAt
+to RFC 3339 with subsecond precision.
+
+RESTGateway accepts optional costParseClient alongside costSourceClient and exposes
+POST /finfocus.v1.CostParseService/Parse only when configured. Without it the route returns 404. Connect/gRPC
+clients preserve ErrorInfo details; the existing REST envelope does not expose those details. The REST 1 MiB
+body cap and transport receive ceilings apply independently of raw input bytes; JSON base64 expands content.
+
+See [cost parsing](../../docs/cost-parse.md) for options, parser-only discovery, partial results, selection and
+caching guidance. Vendor parsing belongs to plugins; Terraform and Pulumi ingestion remain core-native.

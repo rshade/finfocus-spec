@@ -21,6 +21,8 @@ import {
   EstimateCostResponse,
   DismissRecommendationRequest,
   DismissRecommendationResponse,
+  GetRecommendationHistoryRequest,
+  GetRecommendationHistoryResponse,
   GetPluginInfoRequest,
   GetPluginInfoRequestSchema,
   GetPluginInfoResponse,
@@ -96,6 +98,11 @@ export class CostSourceClient {
   async dismissRecommendation(req: DismissRecommendationRequest): Promise<DismissRecommendationResponse> {
     if (!req.recommendationId) throw new ValidationError("Recommendation ID is required", "recommendationId");
     return this.client.dismissRecommendation(req);
+  }
+
+  async getRecommendationHistory(req: GetRecommendationHistoryRequest): Promise<GetRecommendationHistoryResponse> {
+    if (!req.recommendationId) throw new ValidationError("Recommendation ID is required", "recommendationId");
+    return this.client.getRecommendationHistory(req);
   }
 
   async getBudgets(req: GetBudgetsRequest = create(GetBudgetsRequestSchema)): Promise<GetBudgetsResponse> {

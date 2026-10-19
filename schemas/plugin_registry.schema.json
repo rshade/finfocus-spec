@@ -122,7 +122,8 @@
               "allocation",
               "contract_commitments",
               "invoice_data",
-              "recommendation_scoring"
+              "recommendation_scoring",
+            "cost_parse"
             ]
           },
           "uniqueItems": true

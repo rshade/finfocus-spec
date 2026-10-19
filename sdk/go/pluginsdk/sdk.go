@@ -21,6 +21,7 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/encoding"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -249,6 +250,13 @@ type UsageSourceProvider interface {
 // PluginInfo.Capabilities explicitly.
 type AllocatorProvider interface {
 	Allocate(ctx context.Context, req *pbc.AllocateRequest) (*pbc.AllocateResponse, error)
+}
+
+// CostParseProvider parses untrusted input into priceable descriptors. Serve
+// registers this optional service and infers COST_PARSE. Advertise valid limits
+// with WithParseLimits; parser-only plugins explicitly override capabilities.
+type CostParseProvider interface {
+	Parse(context.Context, *pbc.ParseRequest) (*pbc.ParseResponse, error)
 }
 
 // RecommendationScorerProvider is an optional interface for plugins that serve
@@ -601,6 +609,10 @@ func (s *Server) handleProviderPluginInfo(
 	} else {
 		s.logCapabilityDrift(out.GetCapabilities())
 	}
+	if parseErr := validateParseAdvertisement(out.GetMetadata(), out.GetCapabilities()); parseErr != nil {
+		s.logger.Error().Err(parseErr).Msg("GetPluginInfo returned invalid parser advertisement")
+		return nil, status.Error(codes.Internal, "plugin reported invalid parser metadata")
+	}
 	out.Metadata = s.withLegacyCapabilityMetadata(out.GetCapabilities(), out.GetMetadata(), false)
 	out.Metadata = s.applyPerRequestCredentialMetadata(out.GetMetadata())
 
@@ -631,6 +643,9 @@ func (s *Server) handleConfiguredPluginInfo() (*pbc.GetPluginInfoResponse, error
 		capabilities = append([]pbc.PluginCapability{}, s.globalCapabilities...)
 	}
 
+	if parseErr := validateParseAdvertisement(metadata, capabilities); parseErr != nil {
+		return nil, status.Error(codes.Internal, "plugin configured invalid parser metadata")
+	}
 	metadata = s.withLegacyCapabilityMetadata(capabilities, metadata, true)
 	metadata = s.applyPerRequestCredentialMetadata(metadata)
 
@@ -1434,6 +1449,11 @@ func Serve(ctx context.Context, config ServeConfig) error {
 		}
 	}
 
+	parseLimits, parseErr := configuredParseLimits(ctx, config)
+	if parseErr != nil {
+		return fmt.Errorf("invalid parser configuration: %w", parseErr)
+	}
+
 	// Validate CORS configuration early (before acquiring resources)
 	if corsErr := validateCORSConfig(config.Web); corsErr != nil {
 		return corsErr
@@ -1472,6 +1492,7 @@ func Serve(ctx context.Context, config ServeConfig) error {
 	warnInferredOnlyCapabilities(&server.logger, config.Plugin, config.PluginInfo)
 
 	services := newOptionalServices(config.Plugin)
+	services.parseLimits = parseLimits
 
 	// Choose serving mode based on WebConfig
 	if config.Web.Enabled {
@@ -1488,6 +1509,8 @@ type optionalServices struct {
 	commitments ContractCommitmentProvider
 	invoices    InvoiceDatasetProvider
 	scorer      RecommendationScorerProvider
+	parser      CostParseProvider
+	parseLimits *ParseLimits
 }
 
 func newOptionalServices(plugin Plugin) optionalServices {
@@ -1497,6 +1520,7 @@ func newOptionalServices(plugin Plugin) optionalServices {
 	services.commitments, _ = plugin.(ContractCommitmentProvider)
 	services.invoices, _ = plugin.(InvoiceDatasetProvider)
 	services.scorer, _ = plugin.(RecommendationScorerProvider)
+	services.parser, _ = plugin.(CostParseProvider)
 	return services
 }
 
@@ -1507,6 +1531,16 @@ func (s optionalServices) servesSupplemental() bool {
 // registerConnect mounts a Connect handler on mux for each optional service
 // that is non-nil.
 func (s optionalServices) registerConnect(mux *http.ServeMux, opts []connect.HandlerOption) {
+	if s.parser != nil {
+		parserOpts := append([]connect.HandlerOption{}, opts...)
+		parserOpts = append(parserOpts, connect.WithCodec(&parseConnectCodec{}))
+		mux.Handle(
+			pbcconnect.NewCostParseServiceHandler(
+				&costParseConnectHandler{provider: s.parser, limits: s.parseLimits},
+				parserOpts...),
+		)
+	}
+
 	if s.usage != nil {
 		mux.Handle(pbcconnect.NewUsageSourceServiceHandler(&usageSourceConnectHandler{provider: s.usage}, opts...))
 	}
@@ -1527,6 +1561,9 @@ func (s optionalServices) registerConnect(mux *http.ServeMux, opts []connect.Han
 // non-nil, for the Connect health checker.
 func (s optionalServices) healthServiceNames() []string {
 	names := []string{pbcconnect.CostSourceServiceName}
+	if s.parser != nil {
+		names = append(names, pbcconnect.CostParseServiceName)
+	}
 	if s.usage != nil {
 		names = append(names, pbcconnect.UsageSourceServiceName)
 	}
@@ -1557,10 +1594,21 @@ func serveGRPC(
 	interceptors = append(interceptors, config.UnaryInterceptors...)
 
 	// Create and register server with interceptor chain
-	grpcServer := grpc.NewServer(
-		grpc.ChainUnaryInterceptor(interceptors...),
-	)
+	serverOptions := []grpc.ServerOption{grpc.ChainUnaryInterceptor(interceptors...)}
+	if services.parser != nil {
+		serverOptions = append(
+			serverOptions,
+			grpc.ForceServerCodecV2(&parseGRPCCodec{CodecV2: encoding.GetCodecV2("proto")}),
+		)
+	}
+	grpcServer := grpc.NewServer(serverOptions...)
 	pbc.RegisterCostSourceServiceServer(grpcServer, server)
+	if services.parser != nil {
+		pbc.RegisterCostParseServiceServer(
+			grpcServer,
+			&costParseGRPCServer{provider: services.parser, limits: services.parseLimits},
+		)
+	}
 	if services.usage != nil {
 		pbc.RegisterUsageSourceServiceServer(grpcServer, &usageSourceGRPCServer{provider: services.usage})
 	}

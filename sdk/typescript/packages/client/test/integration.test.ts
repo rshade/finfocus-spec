@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 import { setupServer } from 'msw/node';
 import { handlers } from './mocks/handlers.js';
 import { create } from '@bufbuild/protobuf';
+import { Code, ConnectError } from '@connectrpc/connect';
 import { CostSourceClient } from '../src/clients/cost-source.js';
 import { ObservabilityClient } from '../src/clients/auxiliary.js';
 import { RegistryClient } from '../src/clients/auxiliary.js';
@@ -15,6 +16,7 @@ import {
   GetProjectedCostRequestSchema,
   GetRecommendationsRequestSchema,
   DismissRecommendationRequestSchema,
+  GetRecommendationHistoryRequestSchema,
   NameRequestSchema,
   SupportsRequestSchema,
   EstimateCostRequestSchema,
@@ -194,6 +196,30 @@ describe('CostSourceClient Integration', () => {
   it('throws ValidationError when dismissing recommendation without ID', async () => {
     const request = create(DismissRecommendationRequestSchema);
     await expect(client.dismissRecommendation(request)).rejects.toThrow(ValidationError);
+  });
+
+  it('fetches recommendation history with audit fields', async () => {
+    const request = create(GetRecommendationHistoryRequestSchema, { recommendationId: 'rec-1' });
+    const response = await client.getRecommendationHistory(request);
+    expect(response.events).toHaveLength(1);
+    expect(response.events[0].action).toBe('dismissed');
+    expect(response.events[0].reason).toBe('business_constraint');
+    expect(response.events[0].customReason).toBe('Migration scheduled');
+    expect(response.events[0].actor).toBe('alice@example.com/workstation-1');
+    expect(response.events[0].timestamp?.seconds).toBe(1792324800n);
+    expect(response.events[0].expiresAt).toBeUndefined();
+  });
+
+  it('preserves NotFound errors for unknown recommendation history', async () => {
+    const request = create(GetRecommendationHistoryRequestSchema, { recommendationId: 'unknown-rec' });
+    const result = client.getRecommendationHistory(request);
+    await expect(result).rejects.toBeInstanceOf(ConnectError);
+    await expect(result).rejects.toMatchObject({ code: Code.NotFound });
+  });
+
+  it('rejects recommendation history requests without an ID', async () => {
+    const request = create(GetRecommendationHistoryRequestSchema);
+    await expect(client.getRecommendationHistory(request)).rejects.toThrow(ValidationError);
   });
 
   it('fetches budgets', async () => {

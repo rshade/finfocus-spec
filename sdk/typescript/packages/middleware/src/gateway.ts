@@ -18,16 +18,19 @@ import { Code, ConnectError } from "@connectrpc/connect";
 import { codeToHttpStatus, codeToString } from "@connectrpc/connect/protocol-connect";
 import {
   CostSourceService,
+  CostParseService,
   ObservabilityService,
   PluginRegistryService,
   ValidationError,
   type CostSourceClient,
+  type CostParseClient,
   type ObservabilityClient,
   type RegistryClient,
 } from "@rshade/finfocus-client";
 
 export interface RESTGatewayConfig {
   costSourceClient: CostSourceClient;
+  costParseClient?: CostParseClient;
   observabilityClient?: ObservabilityClient;
   registryClient?: RegistryClient;
 }
@@ -97,6 +100,7 @@ export class RESTGateway {
   constructor(config: RESTGatewayConfig) {
     this.services = new Map<string, ServiceEntry>([
       ["CostSourceService", { service: CostSourceService, client: config.costSourceClient }],
+      ["CostParseService", { service: CostParseService, client: config.costParseClient }],
       ["ObservabilityService", { service: ObservabilityService, client: config.observabilityClient }],
       ["PluginRegistryService", { service: PluginRegistryService, client: config.registryClient }],
     ]);

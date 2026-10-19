@@ -1,0 +1,122 @@
+// Copyright 2026 The FinFocus Authors
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package finfocus.v1;
+
+import "finfocus/v1/costsource.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1;pbc";
+
+// CostParseService optionally parses cloud-native and Kubernetes inputs into
+// priceable descriptors. Terraform and Pulumi ingestion remain host-native.
+// Implementations treat inputs as untrusted and never calculate prices here.
+// INVALID_ARGUMENT: malformed request/options or unparseable content; identify
+// the field or file and line when known. FAILED_PRECONDITION: unadvertised format
+// or mode, with ErrorInfo reason UNSUPPORTED_FORMAT or UNSUPPORTED_INPUT_MODE
+// and domain finfocus.v1.CostParseService. RESOURCE_EXHAUSTED: raw input exceeds
+// advertised bytes. UNIMPLEMENTED: parsing is not implemented by this plugin.
+service CostParseService {
+  // Parse returns the full result; streaming is not supported in this version.
+  rpc Parse(ParseRequest) returns (ParseResponse);
+}
+
+// ParseRequest selects exactly one input and an advertised format.
+message ParseRequest {
+  // format is 1..32 bytes matching [a-z][a-z0-9_-]*.
+  string format = 1;
+
+  // Conflicting input members must be rejected at the decoding boundary,
+  // before standard binary oneof decoding discards all but the last member.
+  oneof input {
+    // files contains at least one uniquely named content file.
+    ParseFileSet files = 2;
+    // root_path is a non-empty host-exposed root. Implementations must not
+    // follow symlinks outside it and must count bytes consumed from files.
+    string root_path = 3;
+  }
+
+  // options occupies at most 65536 encoded protobuf bytes. The parser documents
+  // accepted keys for its format and rejects unknown keys.
+  google.protobuf.Struct options = 4;
+}
+
+// ParseFileSet carries named content files; names and encoding overhead do not
+// count toward the raw input byte limit. The set must not be empty.
+message ParseFileSet {
+  // files have unique portable relative paths; nil entries are invalid.
+  repeated ParseFile files = 1;
+}
+
+// ParseFile carries one input file, which may have empty content.
+message ParseFile {
+  // path is slash-separated, relative, non-empty, and has no empty, dot or
+  // parent segments, backslashes, colons, NUL bytes, or UNC/absolute form.
+  // Colons are excluded to prevent Windows drive and alternate-stream forms.
+  string path = 1;
+  // content is untrusted binary input; JSON uses base64 encoding.
+  bytes content = 2;
+}
+
+// ParseResponse separates usable resources from diagnostics.
+message ParseResponse {
+  // resources may be empty; every entry must have a valid descriptor and source.
+  repeated ParsedResource resources = 1;
+  // warnings may be empty. Every skipped resource has a source-linked warning.
+  repeated ParseWarning warnings = 2;
+  // expires_at is advisory under the existing freshness convention. Unset means
+  // no expiration guidance. Set only for results depending on changing data.
+  google.protobuf.Timestamp expires_at = 3;
+}
+
+// ParsedResource links a priceable resource to its input identity.
+message ParsedResource {
+  // resource passes existing descriptor validation. resource_type is the Pulumi
+  // type token required by pricing, without a ResolveResourceTypes call.
+  // attributes use the parser plugin's pricing property shape and casing.
+  ResourceDescriptor resource = 1;
+  // source_id is non-empty and response-unique: CloudFormation logical ID, or
+  // Kind/name for Helm/Kustomize. Other formats document their native identity.
+  string source_id = 2;
+  // unknown_properties contains unique dot-separated attribute-key paths.
+  // Listed values are unresolved and absent from attributes, including null.
+  // Paths are relative to attributes; dots in literal keys and list indexing
+  // are unsupported. Report an unresolved containing property in those cases.
+  repeated string unknown_properties = 3;
+}
+
+// ParseWarningSeverity identifies a nonfatal diagnostic; zero is invalid.
+enum ParseWarningSeverity {
+  // PARSE_WARNING_SEVERITY_UNSPECIFIED must not be emitted.
+  PARSE_WARNING_SEVERITY_UNSPECIFIED = 0;
+  // PARSE_WARNING_SEVERITY_INFO supplies informational context.
+  PARSE_WARNING_SEVERITY_INFO = 1;
+  // PARSE_WARNING_SEVERITY_WARNING identifies partial or skipped work.
+  PARSE_WARNING_SEVERITY_WARNING = 2;
+}
+
+// ParseWarning supplies a stable machine-readable code and human explanation.
+message ParseWarning {
+  // severity is INFO=1 or WARNING=2; UNSPECIFIED=0 and unknown numbers invalid.
+  ParseWarningSeverity severity = 1;
+  // code is stable and non-empty, such as resource_skipped.
+  string code = 2;
+  // message is a non-empty explanation; hosts do not match on its text.
+  string message = 3;
+  // source_id identifies a skipped/affected resource. Empty is permitted for
+  // document-wide warnings; it need not name a returned resource.
+  string source_id = 4;
+}

@@ -170,7 +170,8 @@
               "dry_run", "budgets", "energy", "water", "pricing_spec",
               "estimate_cost", "dismiss_recommendations", "batch_cost",
               "resolve_resource_types", "usage_stats", "allocation",
-              "contract_commitments", "invoice_data", "recommendation_scoring"
+              "contract_commitments", "invoice_data", "recommendation_scoring",
+            "cost_parse"
             ]
           },
           "uniqueItems": true,
@@ -196,7 +197,7 @@
                 "type": "string",
                 "enum": [
                   "Name", "Supports", "GetActualCost", "GetProjectedCost", "GetPricingSpec",
-                  "EstimateCost", "GetRecommendations", "DismissRecommendation", "GetBudgets",
+                  "EstimateCost", "GetRecommendations", "DismissRecommendation", "GetRecommendationHistory", "GetBudgets",
                   "GetPluginInfo", "DryRun", "BatchCost", "ResolveResourceTypes"
                 ]
               },

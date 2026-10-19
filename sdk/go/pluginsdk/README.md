@@ -478,6 +478,7 @@ client := pluginsdk.NewClient(cfg)
 | `GetPricingSpec(ctx, req)`                | Get pricing specification               |
 | `GetRecommendations(ctx, req)`            | Get cost recommendations                |
 | `DismissRecommendation(ctx, req)`         | Dismiss a recommendation                |
+| `GetRecommendationHistory(ctx, req)`      | Retrieve plugin lifecycle history       |
 | `GetBudgets(ctx, req)`                    | Get budget information                  |
 | `Inner()`                                 | Access underlying connect client        |
 
@@ -1789,10 +1790,24 @@ resource := pluginsdk.CreateTestResource(
 )
 ```
 
+### Recommendation History
+
+Implement the optional `RecommendationHistoryProvider` interface to return server-side
+lifecycle events through `GetRecommendationHistory`. The request requires a non-empty
+`recommendation_id`. Each `LifecycleEvent` carries string `action`, `reason`, `custom_reason`,
+and `actor` fields, plus `timestamp` and `expires_at` timestamps when available.
+
+Return an empty `GetRecommendationHistoryResponse` when there are no recorded events.
+Event order is unspecified; hosts can merge the events with local history and sort by timestamp.
+Plugins that do not implement the provider, including older plugins, return `Unimplemented`,
+so hosts can use local history alone. This RPC has no separate capability enum; hosts can list
+it in `specification.service_definition.methods` and handle `Unimplemented` when probing it.
+
 ### Handler Errors
 
 `Server` calls your optional handlers (`HandleDryRun`, `Supports`, `GetRecommendations`,
-`GetBudgets`, `DismissRecommendation`, `BatchCost`, `ResolveResourceTypes`, `GetPluginInfo`) and
+`GetBudgets`, `DismissRecommendation`, `GetRecommendationHistory`, `BatchCost`,
+`ResolveResourceTypes`, `GetPluginInfo`) and
 turns their errors into what the host sees, over gRPC and Connect alike:
 
 | Your handler returns | The host receives |
@@ -1828,7 +1843,7 @@ Embedding `pbc.UnimplementedCostSourceServiceServer` is safe. Its methods satisf
 interfaces and return `Unimplemented`, so the SDK answers with its defaults: the default `Supports`
 response, an empty recommendation list, its own per-resource `BatchCost`, the `TypeRegistry` or an
 empty `ResolveResourceTypes` response, your configured `PluginInfo`, and `Unimplemented` for
-`GetBudgets` and `DismissRecommendation`.
+`GetBudgets`, `DismissRecommendation`, and `GetRecommendationHistory`.
 
 ### Conformance Testing
 
@@ -4130,3 +4145,23 @@ The `pbc` alias remains the same, so no other code changes are required.
 | `RunAdvancedConformance(plugin)`                       | Run advanced conformance tests      |
 | `PrintConformanceReport(t, result)`                    | Print formatted report to test log  |
 | `PrintConformanceReportTo(result, writer)`             | Print formatted report to io.Writer |
+
+## Optional cost parsing
+
+Implement CostParseProvider.Parse(context.Context, *pbc.ParseRequest) (*pbc.ParseResponse, error).
+Serve registers the interface on gRPC and Connect and infers COST_PARSE alongside existing capabilities.
+Configure parser limits before Serve; malformed/missing limits reject startup without invoking Parse.
+
+```go
+info := pluginsdk.NewPluginInfo("my-parser", "1.0.0",
+    pluginsdk.WithParseLimits([]string{"cfn"}, []string{"content", "path"}, 1048576),
+    pluginsdk.WithCapabilities(pbc.PluginCapability_PLUGIN_CAPABILITY_COST_PARSE),
+)
+// Pass info as ServeConfig.PluginInfo and your implementation as ServeConfig.Plugin.
+```
+
+The explicit override is for parser-only operation; mixed pricing/parser plugins can retain automatic inference.
+Providers enforce format options, contained filesystem reads and consumed-byte limits. Shared request/response
+validators and separate mock/conformance tools are available in sdk/go/testing.
+See [cost parsing](../../../docs/cost-parse.md) for source-linked partial results, warnings, errors, client transport caps,
+provider selection and caching. Terraform/Pulumi ingestion remain core-native.

@@ -419,6 +419,21 @@ func (c *Client) DismissRecommendation(
 	return resp.Msg, nil
 }
 
+// GetRecommendationHistory retrieves plugin-maintained recommendation lifecycle events.
+func (c *Client) GetRecommendationHistory(
+	ctx context.Context,
+	req *pbc.GetRecommendationHistoryRequest,
+) (*pbc.GetRecommendationHistoryResponse, error) {
+	if req == nil {
+		return nil, errors.New("request cannot be nil")
+	}
+	resp, err := c.inner.GetRecommendationHistory(ctx, attachCredentialHeaders(ctx, req))
+	if err != nil {
+		return nil, wrapRPCError(ctx, "GetRecommendationHistory", err)
+	}
+	return resp.Msg, nil
+}
+
 // GetBudgets returns budget information from the cost management service.
 func (c *Client) GetBudgets(ctx context.Context, req *pbc.GetBudgetsRequest) (*pbc.GetBudgetsResponse, error) {
 	if req == nil {
