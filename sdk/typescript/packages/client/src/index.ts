@@ -12,6 +12,7 @@ export * from "./generated/finfocus/v1/usage_pb.js";
 export * from "./generated/finfocus/v1/allocation_pb.js";
 export * from "./generated/finfocus/v1/supplemental_pb.js";
 export * from "./generated/finfocus/v1/scoring_pb.js";
+export * from "./generated/finfocus/v1/parse_pb.js";
 
 // Error handling - our custom ValidationError takes precedence
 export { ValidationError } from "./errors/validation-error.js";
@@ -32,6 +33,18 @@ export {
   SCORER_ERROR_DOMAIN,
 } from "./clients/recommendation-scorer.js";
 export type { ScorerLimits } from "./clients/recommendation-scorer.js";
+
+export {
+  CostParseClient,
+  parseParseLimits,
+  PARSE_FORMATS_KEY,
+  PARSE_INPUT_MODES_KEY,
+  PARSE_MAX_INPUT_BYTES_KEY,
+  PARSE_ERROR_DOMAIN,
+  UNSUPPORTED_FORMAT_REASON,
+  UNSUPPORTED_INPUT_MODE_REASON,
+} from "./clients/cost-parse.js";
+export type { ParseLimits } from "./clients/cost-parse.js";
 
 // Builder patterns
 export { ResourceDescriptorBuilder } from "./builders/resource-descriptor.js";

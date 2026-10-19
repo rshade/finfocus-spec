@@ -198,6 +198,9 @@ enum PluginCapability {
   PLUGIN_CAPABILITY_INVOICE_DATA = 17;
   // Plugin implements RecommendationScorerService.ScoreRecommendations.
   PLUGIN_CAPABILITY_RECOMMENDATION_SCORING = 18;
+
+  // PLUGIN_CAPABILITY_COST_PARSE parses inputs into priceable resource descriptors.
+  PLUGIN_CAPABILITY_COST_PARSE = 19;
 }
 
 // UsageProfile represents the intended workload context for cost estimation.

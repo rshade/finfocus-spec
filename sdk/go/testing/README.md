@@ -1737,3 +1737,46 @@ Result:   PASS - Plugin conforms to Standard level
 
 This testing framework ensures your plugin meets the FinFocus specification requirements and
 provides a reliable, performant cost source for users.
+
+## Cost parser conformance
+
+Use a separate MockCostParser or your own ParseServer with fixtures valid for its advertised format.
+The harness performs structural checks over gRPC and never prescribes vendor resources.
+
+```go
+package parser_test
+
+import (
+    "testing"
+
+    pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
+    plugintesting "github.com/rshade/finfocus-spec/sdk/go/testing"
+)
+
+func TestParserConformance(t *testing.T) {
+    limits := plugintesting.ParseLimits{
+        Formats: []string{"fixture"}, InputModes: []string{"content"}, MaxInputBytes: 1024,
+    }
+    parser := plugintesting.NewMockCostParser(plugintesting.WithMockParseLimits(limits))
+    request := &pbc.ParseRequest{
+        Format: "fixture",
+        Input: &pbc.ParseRequest_Files{Files: &pbc.ParseFileSet{Files: []*pbc.ParseFile{
+            {Path: "input.fixture", Content: []byte("resource Example\n")},
+        }}},
+    }
+    plugintesting.RunCostParseConformance(t, parser, plugintesting.CostParseConformanceConfig{
+        Limits: limits, ValidRequest: request, ContentRequest: request,
+    })
+}
+```
+
+For path-capable providers, supply PathRequest referencing your own accessible stable temporary root.
+Both advertised modes skip unsupported_input_mode; no content fixture skips path_traversal_rejected explicitly.
+Checks are format_rejected, input_mode_xor, unsupported_input_mode, path_traversal_rejected, source_ids_unique,
+unknown_not_absent, descriptors_valid and deterministic. Each call has a ten-second deadline. Determinism compares
+100 responses per supplied fixture, excluding advisory expiration. Metadata is cross-checked when GetPluginInfo
+is implemented. No advertised-limit-plus-one allocation or vendor-specific template is required.
+
+Shared ValidateParseRequest performs no filesystem I/O. WithParseResource clones neutral fixture descriptors;
+WithMockParseLimits controls small boundary cases. WithParseExpiration models a changing dependency, clones its
+callback timestamp, and requires a concurrency-safe callback when shared. Ordinary pure-input mock results have no expiry.

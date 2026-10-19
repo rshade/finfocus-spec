@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"slices"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 	plugintesting "github.com/rshade/finfocus-spec/sdk/go/testing"
@@ -198,6 +199,14 @@ func (info *PluginInfo) Validate() error {
 		return fmt.Errorf("plugin info validation failed for plugin %q: %w", info.Name, err)
 	}
 
+	limits, parseErr := ParseParseLimits(info.Metadata)
+	if parseErr != nil {
+		return fmt.Errorf("plugin info validation failed: %w", parseErr)
+	}
+	if limits == nil && slices.Contains(info.Capabilities, pbc.PluginCapability_PLUGIN_CAPABILITY_COST_PARSE) {
+		return fmt.Errorf("%w: COST_PARSE requires parse metadata", plugintesting.ErrInvalidParseLimits)
+	}
+
 	if len(info.Settings) > 0 {
 		if err := plugintesting.ValidatePluginSettings(info.Settings); err != nil {
 			return fmt.Errorf("plugin info validation failed for plugin %q: %w", info.Name, err)
@@ -220,8 +229,8 @@ const (
 	// interfaces: RecommendationsProvider, BudgetsProvider, DismissProvider,
 	// DryRunHandler, BatchCostHandler, ResolveResourceTypesProvider,
 	// UsageSourceProvider, AllocatorProvider, ContractCommitmentProvider,
-	// InvoiceDatasetProvider, RecommendationScorerProvider.
-	optionalCapabilities = 11
+	// InvoiceDatasetProvider, RecommendationScorerProvider, CostParseProvider.
+	optionalCapabilities = 12
 
 	// maxCapabilities is the total maximum number of capabilities a plugin
 	// can have. Used for pre-allocation to minimize allocations during
@@ -231,7 +240,7 @@ const (
 	// MaxConfiguredCapabilities is the maximum number of capabilities allowed
 	// in PluginInfo.Capabilities. This limit prevents DoS attacks where malicious
 	// plugins configure excessive capabilities to exhaust memory. The limit is
-	// generous (64) compared to currently defined capabilities (18) to allow for
+	// generous (64) compared to currently defined capabilities (19) to allow for
 	// future growth while still providing protection.
 	MaxConfiguredCapabilities = 64
 
@@ -241,7 +250,7 @@ const (
 
 	// maxValidCapability is the maximum valid PluginCapability enum value.
 	// This should be updated when new capabilities are added to the proto definition.
-	maxValidCapability = pbc.PluginCapability_PLUGIN_CAPABILITY_RECOMMENDATION_SCORING // 18
+	maxValidCapability = pbc.PluginCapability_PLUGIN_CAPABILITY_COST_PARSE // 19
 )
 
 // IsValidCapability reports whether a PluginCapability value is within the
@@ -260,7 +269,7 @@ func IsValidCapability(capability pbc.PluginCapability) bool {
 // RecommendationsProvider, BudgetsProvider, DismissProvider, DryRunHandler,
 // BatchCostHandler, ResolveResourceTypesProvider, UsageSourceProvider,
 // AllocatorProvider, ContractCommitmentProvider, InvoiceDatasetProvider, or
-// RecommendationScorerProvider.
+// RecommendationScorerProvider or CostParseProvider.
 func inferCapabilities(plugin Plugin) []pbc.PluginCapability {
 	// Defensive nil check to prevent panic on type assertions.
 	// See function documentation for rationale on handling nil plugins gracefully.
@@ -268,7 +277,7 @@ func inferCapabilities(plugin Plugin) []pbc.PluginCapability {
 		return nil
 	}
 
-	// Pre-allocate for common case (4 base + 11 optional = maxCapabilities)
+	// Pre-allocate for common case (4 base + 12 optional = maxCapabilities)
 	// This reduces allocations from ~2-3 (slice growth) to 1 (initial make)
 	capabilities := make([]pbc.PluginCapability, 0, maxCapabilities)
 
@@ -315,5 +324,8 @@ func inferCapabilities(plugin Plugin) []pbc.PluginCapability {
 		capabilities = append(capabilities, pbc.PluginCapability_PLUGIN_CAPABILITY_RECOMMENDATION_SCORING)
 	}
 
+	if _, ok := plugin.(CostParseProvider); ok {
+		capabilities = append(capabilities, pbc.PluginCapability_PLUGIN_CAPABILITY_COST_PARSE)
+	}
 	return capabilities
 }

@@ -341,7 +341,7 @@ func (p PluginCapability) String() string {
 }
 
 // pluginCapabilitiesByLength groups allPluginCapabilities by string length, so a lookup scans only
-// the few values of the input's length instead of all 32.
+// the few values of the input's length instead of all 33.
 //
 //nolint:gochecknoglobals // Intentional optimization for zero-allocation validation
 var pluginCapabilitiesByLength = groupByLength(allPluginCapabilities)
