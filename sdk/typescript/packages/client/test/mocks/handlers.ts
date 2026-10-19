@@ -63,7 +63,9 @@ export const handlers = [
       unitPrice: 0.10,
       currency: "USD",
       costPerMonth: 150.0,
-      billingDetail: "On-demand pricing",
+      pricingCategory: "FOCUS_PRICING_CATEGORY_DYNAMIC",
+      onDemandEquivalentMonthlyCost: 250.0,
+      billingDetail: "Spot pricing",
       costBreakdown: { compute: 120.0, root_volume: 30.0 },
       priceOptions,
       regionPrices: [
@@ -89,6 +91,8 @@ export const handlers = [
     return HttpResponse.json({
       currency: "USD",
       costMonthly: 200.0,
+      pricingCategory: "FOCUS_PRICING_CATEGORY_DYNAMIC",
+      onDemandEquivalentMonthlyCost: 0.0,
       priceOptions
     });
   }),

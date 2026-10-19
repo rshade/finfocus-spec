@@ -26,6 +26,26 @@ import (
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
 
+// ExampleWithOnDemandEquivalent shows presence-aware spot pricing on both responses.
+func ExampleWithOnDemandEquivalent() {
+	category := pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_DYNAMIC
+	projected := pluginsdk.NewGetProjectedCostResponse(
+		pluginsdk.WithProjectedCostDetails(0.05, "USD", 36.50, "spot instance"),
+		pluginsdk.WithProjectedCostPricingCategory(category),
+		pluginsdk.WithProjectedCostOnDemandEquivalent(70.08),
+	)
+	estimate := pluginsdk.NewEstimateCostResponse(
+		pluginsdk.WithEstimateCost("USD", 36.50),
+		pluginsdk.WithPricingCategory(category),
+		pluginsdk.WithOnDemandEquivalent(0),
+	)
+	fmt.Println(pluginsdk.ValidateGetProjectedCostResponse(projected) == nil,
+		pluginsdk.ValidateEstimateCostResponse(estimate) == nil,
+		projected.OnDemandEquivalentMonthlyCost != nil,
+		estimate.OnDemandEquivalentMonthlyCost != nil)
+	// Output: true true true true
+}
+
 // ExampleWithCredentials attaches named credentials to one call context.
 // The printed line shows the count, that the value round-trips, and that String redacts it.
 func ExampleWithCredentials() {

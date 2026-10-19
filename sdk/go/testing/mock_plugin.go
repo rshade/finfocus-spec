@@ -110,7 +110,8 @@ const (
 //
 // Fields that must be set before Start() include: ShouldError* flags, *Delay durations,
 // FallbackHint, ExpiresAtDuration, ProjectedCostExpiresAtDuration, ProjectedCostBreakdown,
-// ProjectedCostPriceOptions, RegionPrices, EstimateCostExpiresAtDuration, EstimateCostPriceOptions, MockBudgets,
+// ProjectedCostPriceOptions, RegionPrices, OnDemandEquivalentMonthlyCost, EstimateCostExpiresAtDuration,
+// EstimateCostPriceOptions, MockBudgets,
 // DryRun* fields, PricingCategory/SpotRiskScore fields, and RecommendationsConfig.
 //
 // The recommended pattern is:
@@ -204,6 +205,10 @@ type MockPlugin struct {
 	// cost_per_month or cost_monthly. Nil means no rows. Dry-run responses never
 	// carry rows.
 	RegionPrices []*pbc.RegionPrice
+
+	// OnDemandEquivalentMonthlyCost is included on DYNAMIC projected and estimate
+	// responses. Nil leaves the field absent. Configure before serving requests.
+	OnDemandEquivalentMonthlyCost *float64
 
 	// EstimateCostExpiresAtDuration configures the expires_at hint for estimate
 	// cost responses. Same semantics as ExpiresAtDuration: zero means unset,
@@ -1345,6 +1350,7 @@ func (m *MockPlugin) GetProjectedCost(
 		PricingCategory:           pricingCategory,
 		SpotInterruptionRiskScore: spotRiskScore,
 	}
+	resp.OnDemandEquivalentMonthlyCost = m.onDemandEquivalentFor(pricingCategory)
 
 	// Add impact metrics if configured
 	if len(m.SupportedMetrics) > 0 {
@@ -2356,6 +2362,16 @@ func decodeMockPageToken(token string) (int, error) {
 	return offset, nil
 }
 
+// onDemandEquivalentFor returns a copy of the configured on-demand equivalent
+// for DYNAMIC responses and nil otherwise.
+func (m *MockPlugin) onDemandEquivalentFor(category pbc.FocusPricingCategory) *float64 {
+	if category != pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_DYNAMIC || m.OnDemandEquivalentMonthlyCost == nil {
+		return nil
+	}
+	value := *m.OnDemandEquivalentMonthlyCost
+	return &value
+}
+
 // EstimateCost returns mock cost estimate for a resource before deployment.
 func (m *MockPlugin) EstimateCost(
 	_ context.Context,
@@ -2446,6 +2462,7 @@ func (m *MockPlugin) EstimateCost(
 		PricingCategory:           pricingCategory,
 		SpotInterruptionRiskScore: spotRiskScore,
 	}
+	resp.OnDemandEquivalentMonthlyCost = m.onDemandEquivalentFor(pricingCategory)
 
 	// Set expires_at caching hint if configured
 	if m.EstimateCostExpiresAtDuration != 0 {

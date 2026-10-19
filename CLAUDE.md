@@ -1118,6 +1118,17 @@ parallel subtests complete.
   0.2 ns, and the change to the binary layout (proto field plus new code) shifts it about 0.45 ns even
   with the check compiled out. Build an `if false` variant to separate layout from code cost.
 
+### On-Demand Equivalent Pattern (603-on-demand-equivalent, issue 646)
+
+- `GetProjectedCostResponse.on_demand_equivalent_monthly_cost` (18) and
+  `EstimateCostResponse.on_demand_equivalent_monthly_cost` (8) are optional doubles. Pointer
+  presence distinguishes unknown from a real zero price. Only DYNAMIC results may set them.
+- `sdk/go/testing/on_demand_equivalent.go` owns the shared rule and sentinels. Both `pluginsdk`
+  validators and both conformance harness validators call it. DYNAMIC with nil remains valid;
+  `CheckOnDemandEquivalentConsistency` warns that savings cannot be shown.
+- The field is advisory and is not summed, compared to the spot cost, or cross-checked against
+  `price_options`. Core computes any savings percentage from the two plugin-supplied monthly costs.
+
 ### Scorer Omitted Fields Pattern (593-omitted-fields)
 
 - `ScoreRecommendationsRequest.omitted_fields` (field 5) names `Recommendation` paths the host cleared by
@@ -1279,6 +1290,10 @@ parallel subtests complete.
   archive `origin/main` and run `buf breaking` against that directory.
 
 ## Active Technologies
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf,
+  google.golang.org/grpc, buf v1.32.1; no new dependencies (603-on-demand-equivalent)
+- N/A (one optional double on projected cost and estimate responses) (603-on-demand-equivalent)
 
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf,
   google.golang.org/grpc, connectrpc.com/connect, buf v1.32.1; no new dependencies
@@ -1489,6 +1504,11 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+
+- 603-on-demand-equivalent: Added on_demand_equivalent_monthly_cost (optional double) on
+  GetProjectedCostResponse (18) and EstimateCostResponse (8), shared validation and sentinels,
+  pluginsdk options, CheckOnDemandEquivalentConsistency, and MockPlugin.OnDemandEquivalentMonthlyCost
+  (issue 646)
 
 - 601-plugin-info-settings: Added PluginSetting and GetPluginInfoResponse.settings (field 7)
   so a plugin can advertise the settings it reads and the environment variable a host injects.

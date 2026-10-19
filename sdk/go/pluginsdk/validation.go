@@ -75,7 +75,9 @@ var (
 	ErrSpotRiskScoreInvalidCategory = errors.New(
 		"spot_interruption_risk_score should only be non-zero when pricing_category is DYNAMIC",
 	)
-	ErrPredictionIntervalLowerMissing = errors.New(
+	ErrOnDemandEquivalentInvalidValue    = plugintesting.ErrOnDemandEquivalentInvalidValue
+	ErrOnDemandEquivalentInvalidCategory = plugintesting.ErrOnDemandEquivalentInvalidCategory
+	ErrPredictionIntervalLowerMissing    = errors.New(
 		"GetProjectedCostResponse: prediction_interval_upper is set but prediction_interval_lower is missing",
 	)
 	ErrPredictionIntervalUpperMissing = errors.New(
@@ -447,6 +449,12 @@ func validateSpotRiskScore(score float64, category pbc.FocusPricingCategory) err
 	return nil
 }
 
+// validateOnDemandEquivalent accepts absence and delegates the shared rule to
+// conformance. A present zero is distinct from absence and must be checked.
+func validateOnDemandEquivalent(value *float64, category pbc.FocusPricingCategory) error {
+	return plugintesting.ValidateOnDemandEquivalent(value, category)
+}
+
 // validateConfidenceLevel validates the confidence_level field if set.
 // Returns nil if confidence is nil (not set) or a valid value in range (0.0, 1.0].
 func validateConfidenceLevel(confidence *float64) error {
@@ -560,9 +568,10 @@ func validatePredictionInterval(
 // Validation order (fail-fast):
 //  1. Response nil check
 //  2. Spot risk score validation (structural + semantic)
-//  3. price_options validation (if set): no nil entries, finite non-negative
+//  3. On-demand equivalent validation (if present): finite, non-negative, DYNAMIC only
+//  4. price_options validation (if set): no nil entries, finite non-negative
 //     prices, finite savings_fraction. Never compared to cost_monthly.
-//  4. region_prices rows (if set): region present, finite non-negative prices, ISO 4217 currency.
+//  5. region_prices rows (if set): region present, finite non-negative prices, ISO 4217 currency.
 //     The rows are advisory and never summed into cost_monthly.
 //
 // Semantic rule enforced: spot_interruption_risk_score must only be non-zero
@@ -579,6 +588,9 @@ func ValidateEstimateCostResponse(resp *pbc.EstimateCostResponse) error {
 
 	// Return sentinel errors directly (they already contain context)
 	if err := validateSpotRiskScore(resp.GetSpotInterruptionRiskScore(), resp.GetPricingCategory()); err != nil {
+		return err
+	}
+	if err := validateOnDemandEquivalent(resp.OnDemandEquivalentMonthlyCost, resp.GetPricingCategory()); err != nil {
 		return err
 	}
 
@@ -604,13 +616,14 @@ func ValidateEstimateCostResponse(resp *pbc.EstimateCostResponse) error {
 //  3. Prediction interval consistency (if set)
 //  4. Confidence level range validation (if set)
 //  5. Spot risk score validation (structural + semantic)
-//  6. ExpiresAt timestamp validity (if set)
-//  7. Metadata map validation (if set): entry count, key length/encoding, value length/UTF-8
-//  8. cost_breakdown validation (if set): entry count, key format, finite
+//  6. On-demand equivalent validation (if present): finite, non-negative, DYNAMIC only
+//  7. ExpiresAt timestamp validity (if set)
+//  8. Metadata map validation (if set): entry count, key length/encoding, value length/UTF-8
+//  9. cost_breakdown validation (if set): entry count, key format, finite
 //     non-negative values, sum matches cost_per_month within tolerance, empty for dry-run responses
-//  9. price_options validation (if set): empty for dry-run responses, no nil entries,
+//  10. price_options validation (if set): empty for dry-run responses, no nil entries,
 //     finite non-negative prices, finite savings_fraction. Never compared to cost_per_month.
-//  10. region_prices rows (if set): empty for dry-run responses, region present, finite
+//  11. region_prices rows (if set): empty for dry-run responses, region present, finite
 //     non-negative prices, ISO 4217 currency. The rows are advisory and never summed.
 //
 // Semantic rules enforced:
@@ -654,6 +667,9 @@ func ValidateGetProjectedCostResponse(resp *pbc.GetProjectedCostResponse) error 
 
 	// Return sentinel errors directly (they already contain context)
 	if err := validateSpotRiskScore(resp.GetSpotInterruptionRiskScore(), resp.GetPricingCategory()); err != nil {
+		return err
+	}
+	if err := validateOnDemandEquivalent(resp.OnDemandEquivalentMonthlyCost, resp.GetPricingCategory()); err != nil {
 		return err
 	}
 
@@ -721,6 +737,23 @@ func CheckSpotRiskConsistency(category pbc.FocusPricingCategory, score float64) 
 	}
 
 	return warnings
+}
+
+// CheckOnDemandEquivalentConsistency returns advisory warnings about presence
+// of the on-demand equivalent. Missing data for DYNAMIC pricing remains valid.
+func CheckOnDemandEquivalentConsistency(category pbc.FocusPricingCategory, onDemandMonthlyCost *float64) []string {
+	if onDemandMonthlyCost != nil && category != pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_DYNAMIC {
+		return []string{fmt.Sprintf(
+			"on_demand_equivalent_monthly_cost is present with pricing_category %s, not DYNAMIC",
+			category.String(),
+		)}
+	}
+	if onDemandMonthlyCost == nil && category == pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_DYNAMIC {
+		return []string{
+			"pricing_category is DYNAMIC but on-demand equivalent unavailable; host cannot show spot savings",
+		}
+	}
+	return nil
 }
 
 // validateMetadataMap validates a metadata map for size and content constraints.

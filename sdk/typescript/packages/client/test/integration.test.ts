@@ -106,6 +106,8 @@ describe('CostSourceClient Integration', () => {
     const response = await client.getProjectedCost(request);
 
     expect(response.costPerMonth).toBe(150.0);
+    expect(response.onDemandEquivalentMonthlyCost).toBe(250.0);
+    expect(response.pricingCategory).toBe(FocusPricingCategory.DYNAMIC);
     expect(response.currency).toBe("USD");
     expect(response.costBreakdown.compute).toBe(120.0);
     expect(response.costBreakdown.root_volume).toBe(30.0);
@@ -141,6 +143,8 @@ describe('CostSourceClient Integration', () => {
     const response = await client.estimateCost(request);
 
     expect(response.costMonthly).toBe(200.0);
+    expect(response.onDemandEquivalentMonthlyCost).toBe(0.0);
+    expect(response.pricingCategory).toBe(FocusPricingCategory.DYNAMIC);
     expect(response.currency).toBe("USD");
     expectPriceOptions(response.priceOptions);
   });
