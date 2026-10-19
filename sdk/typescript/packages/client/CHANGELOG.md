@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.6](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.7.5...finfocus-client-v0.7.6) (2026-10-19)
+
+
+### Features
+
+* add cost parsing and recommendation history APIs ([#641](https://github.com/rshade/finfocus-spec/issues/641)) ([f486efa](https://github.com/rshade/finfocus-spec/commit/f486efae9eefe62d6791a0980f54e26f0c88725d))
+* **proto:** add on-demand equivalent monthly cost for spot results ([#647](https://github.com/rshade/finfocus-spec/issues/647)) ([5fe5c9b](https://github.com/rshade/finfocus-spec/commit/5fe5c9b65e5efe0405f0bf1eb1bc570ad1441681))
+
 ## [0.7.5](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.7.4...finfocus-client-v0.7.5) (2026-10-16)
 
 
