@@ -16,7 +16,8 @@ capabilities. Parser-only plugins use an explicit WithCapabilities(COST_PARSE) o
 Select exactly one input: a nonempty named file collection or a nonempty host-exposed root_path.
 Binary requests containing both fields are rejected before ordinary oneof decoding can discard evidence of the conflict.
 JSON also rejects conflicting members. Repeated occurrences of the same binary arm retain protobuf semantics.
-Content paths are portable slash-relative names: no absolute/UNC/drive form, backslash, empty segment, dot or parent segment.
+Content paths are portable slash-relative names: no absolute/UNC/drive form, backslash, colon, NUL byte,
+empty segment, dot or parent segment. Colons are excluded everywhere, including Windows alternate-stream forms.
 Duplicates are invalid. Empty file contents are allowed at the contract layer; format rules may reject them.
 Root paths may be absolute. Shared validation never reads the filesystem.
 

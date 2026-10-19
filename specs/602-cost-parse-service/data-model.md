@@ -33,7 +33,7 @@ with bigint for the byte limit. WithParseLimits stores the metadata; PluginInfo.
 
 The server rejects both input arms before oneof decoding loses the conflict. Typed objects expose at most one arm.
 Missing or nil input is invalid. Reject unsafe paths rather than cleaning them: absolute/UNC/drive forms, backslashes,
-empty segments, `.` and `..` segments. Root-path filesystem policy is distinct from content-file naming.
+colons, NUL bytes, empty segments, `.` and `..` segments. Root-path filesystem policy is distinct from content-file naming.
 
 Content size is the sum of file contents, accumulated without integer overflow. Path-mode size is all input bytes
 consumed while reading; plugins enforce it and root containment as reads occur. Shared validators perform no file I/O.

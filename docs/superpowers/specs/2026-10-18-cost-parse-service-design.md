@@ -1,6 +1,7 @@
 # CostParseService Design
 
-Status: design for review, 2026-10-18. Not filed as an issue, not implemented.
+Status: implemented in [PR #641](https://github.com/rshade/finfocus-spec/pull/641), spec 602.
+See [cost parsing](../../cost-parse.md) for the implemented contract.
 Source: the draft proposal in `parser.md` (outside this repository) and the
 decisions recorded below.
 
@@ -91,8 +92,8 @@ comment, not by `reserved`.
 - `format` is lowercase, 1 to 32 bytes, matching `[a-z][a-z0-9_-]*`.
 - Exactly one of `files` and `root_path` is set. Both or neither is
   `InvalidArgument`, so no field is silently ignored.
-- A `ParseFile.path` is relative, has no `..` segment, and is unique within the
-  set.
+- A `ParseFile.path` is slash-relative, has no empty, `.` or `..` segment,
+  backslash, colon or NUL byte, and is unique within the set.
 - `options` is encoded at most 65536 bytes, the same cap as
   `ResourceDescriptor.attributes` (596). Keys are documented per format and are
   not enforced by the proto: `cfn` takes `parameters`; `helm` takes
@@ -135,17 +136,16 @@ limit below.
 ## Discovery
 
 - `PLUGIN_CAPABILITY_COST_PARSE = 19`, legacy metadata name
-  `supports_cost_parse`. The next free value is 19, since 18 is
-  `RECOMMENDATION_SCORING`.
+  `supports_cost_parse`, following `RECOMMENDATION_SCORING = 18`.
 - `GetPluginInfo` metadata keys, set through `pluginsdk.WithParseLimits`:
   - `parse_formats`: comma-separated format names
   - `parse_input_modes`: `content`, `path`, or both
   - `parse_max_input_bytes`: the largest total input the plugin accepts
-- The metadata follows the scorer limits pattern (591). No proto field carries
-  these values, and response fields stay authoritative.
+- The metadata follows the scorer limits pattern (591). Advertisement is
+  authoritative; ParseResponse does not duplicate these limits.
 - `PluginInfo.Validate` rejects a malformed set through `ParseParseLimits`.
-- Capability inference adds only the base pricing capabilities, so a
-  parser-only plugin uses `WithCapabilities(PLUGIN_CAPABILITY_COST_PARSE)`.
+- Capability inference appends COST_PARSE for CostParseProvider implementations
+  alongside the base pricing capabilities, so a parser-only plugin uses `WithCapabilities(PLUGIN_CAPABILITY_COST_PARSE)`.
   `Serve` warns otherwise, as it does for usage-only plugins (051).
 - Not changed: `SourceFormat`, `ResolveResourceTypes`, and every existing
   message.
@@ -159,8 +159,9 @@ limit below.
   implements the provider. The provider is a new `parser` field on
   `optionalServices`, so `Serve` gains no parameter.
 - Handler errors go through `toConnectError` and `handlerStatus` (600). A
-  handler's `Unimplemented` takes the not-a-provider path, so a plugin that
-  embeds the generated stub is not treated as a parser.
+  handler's `Unimplemented` is preserved for that Parse call. Embedding the
+  generated stub still satisfies CostParseProvider: the plugin is registered,
+  infers COST_PARSE, requires parse metadata, and reports SERVING in Connect health.
 - Rules live in `sdk/go/testing/parse.go`, and `pluginsdk` delegates, because
   `testing` cannot import `pluginsdk`:
   - `ValidateParseRequest(req, limits)` checks the request rules above and the

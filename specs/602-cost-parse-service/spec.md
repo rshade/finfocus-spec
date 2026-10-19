@@ -109,7 +109,7 @@ input and an expiration time through every supported client transport.
 
 - Format names of 1 and 32 bytes are valid if they match the permitted pattern; empty names, 33-byte names,
   uppercase letters, and names starting with a digit are invalid.
-- Absolute file paths, any `..` path segment, and duplicate file paths are invalid. This rule applies to files
+- Absolute file paths, colons, NUL bytes, any `..` path segment, and duplicate file paths are invalid. This applies to files
   supplied as content; the filesystem root is a separate input whose location is intentionally exposed by the host.
 - Neither input selection, conflicting selections, an empty file set, or an empty filesystem root is invalid.
   A zero-byte file is left to the selected format's parsing rules.
@@ -134,9 +134,9 @@ input and an expiration time through every supported client transport.
 - **FR-003**: A request MUST identify one format and exactly one input mode: a collection of named file contents or
   a filesystem root. Invalid or conflicting input selections MUST NOT be silently ignored.
 - **FR-004**: Format names MUST be lowercase, 1 to 32 bytes, and match `[a-z][a-z0-9_-]*`.
-- **FR-005**: Each supplied content file MUST have a non-empty relative path with no `..` segment, unique within the
-  collection. Filesystem-root input MUST be non-empty. The host exposes only an intended root, and plugins MUST NOT
-  follow symlinks outside it; these filesystem-access responsibilities are documented contract obligations.
+- **FR-005**: Each supplied content file MUST have a non-empty relative path with no `..` segment, colon or NUL byte,
+  unique within the collection. Filesystem-root input MUST be non-empty. The host exposes only an intended root,
+  and plugins MUST NOT follow symlinks outside it; these filesystem-access responsibilities are documented obligations.
 - **FR-006**: Requests MAY carry structured, format-specific options. Options MUST occupy at most 65,536 bytes in the
   contract encoding, and plugins MUST reject unknown keys. Supported keys MUST be documented per format:
   `parameters` for `cfn`; `release_name`, `namespace`, and `values` for `helm`; none for `kustomize`.

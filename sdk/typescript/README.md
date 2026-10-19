@@ -1100,9 +1100,11 @@ if (limits?.inputModes.includes("content")) {
     input: { case: "files", value: { files: [{ path: "input.yaml", content: new Uint8Array([0, 255, 65]) }] } },
   }));
 }
-await parser.parse(create(ParseRequestSchema, {
-  format: "cfn", input: { case: "rootPath", value: "/host/exposed/root" },
-}));
+if (limits?.inputModes.includes("path")) {
+  await parser.parse(create(ParseRequestSchema, {
+    format: "cfn", input: { case: "rootPath", value: "/host/exposed/root" },
+  }));
+}
 ```
 
 Use valid input bytes for the provider's format; the sample bytes demonstrate binary transport.

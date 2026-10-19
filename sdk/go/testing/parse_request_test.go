@@ -120,7 +120,10 @@ func TestCostParseRequest(t *testing.T) {
 			require.True(t, proto.Equal(r, before), "mutated request")
 		})
 	}
-	for _, path := range []string{"", "/a", "//host/a", "C:/a", `a\b`, "a//b", "a/./b", "a/../b", "a/", "../a", "a\x00b"} {
+	for _, path := range []string{
+		"", "/a", "//host/a", "C:/a", "a:b", "values:prod.yaml", "charts/app:v1/x.yaml",
+		`a\b`, "a//b", "a/./b", "a/../b", "a/", "../a", "a\x00b",
+	} {
 		t.Run("path "+path, func(t *testing.T) {
 			r := parseRequest()
 			r.GetFiles().Files[0].Path = path

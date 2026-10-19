@@ -248,7 +248,8 @@ func (x *ParseFileSet) GetFiles() []*ParseFile {
 type ParseFile struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// path is slash-separated, relative, non-empty, and has no empty, dot or
-	// parent segments, backslashes, drive prefix, or UNC/absolute form.
+	// parent segments, backslashes, colons, NUL bytes, or UNC/absolute form.
+	// Colons are excluded to prevent Windows drive and alternate-stream forms.
 	Path string `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
 	// content is untrusted binary input; JSON uses base64 encoding.
 	Content       []byte `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`

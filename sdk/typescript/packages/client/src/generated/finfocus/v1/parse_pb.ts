@@ -113,7 +113,8 @@ export const ParseFileSetSchema: GenMessage<ParseFileSet> = /*@__PURE__*/
 export type ParseFile = Message<"finfocus.v1.ParseFile"> & {
   /**
    * path is slash-separated, relative, non-empty, and has no empty, dot or
-   * parent segments, backslashes, drive prefix, or UNC/absolute form.
+   * parent segments, backslashes, colons, NUL bytes, or UNC/absolute form.
+   * Colons are excluded to prevent Windows drive and alternate-stream forms.
    *
    * @generated from field: string path = 1;
    */

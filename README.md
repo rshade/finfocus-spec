@@ -706,7 +706,7 @@ See [Examples Documentation](examples/README.md) for detailed explanations.
 
 ### gRPC Service Interface
 
-The CostSourceService provides 11 RPC methods for comprehensive cost management:
+The CostSourceService provides RPC methods for comprehensive cost management, including:
 
 ```protobuf
 service CostSourceService {

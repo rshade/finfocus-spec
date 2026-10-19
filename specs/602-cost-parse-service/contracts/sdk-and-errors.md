@@ -44,6 +44,7 @@ ErrInvalidParseResponse; server adapters convert invalid provider output to Inte
 
 The shared parser dispatch path validates requests using configured limits, invokes the provider, normalizes handler
 errors, then validates successful responses. A missing provider returns Unimplemented before parsing validation.
+Content-file paths exclude colons and NUL bytes as well as traversal and absolute forms.
 Malformed configured limits fail startup, not a user request. Stub methods returning Unimplemented keep that status.
 Generated method embedding is indistinguishable from implementation at discovery; health lists registered interfaces
 and does not probe Parse or promise a successful parse for every input.

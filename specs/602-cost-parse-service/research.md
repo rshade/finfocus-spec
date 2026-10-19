@@ -74,7 +74,8 @@ and encoding overhead as content and contradicts the advertised byte definition.
 ## 5. Paths, unknown values, and descriptor reuse
 
 **Decision**: File-set paths use portable slash-separated relative names. Reject empty paths, absolute paths,
-Windows drive/UNC forms, backslashes, empty or dot segments, parent segments, and duplicate names. Root input can be
+Windows drive/UNC forms, backslashes, colons, NUL bytes, empty or dot segments, parent segments, and duplicate names.
+Root input can be
 absolute and is not subject to file-set path restrictions. Reuse testing.ValidateResourceDescriptor for every result.
 Unknown paths are unique dot-separated nonempty attribute-key segments rooted at resource.attributes, preserve casing,
 and cannot name a present value, including null. A present non-object ancestor also makes a nested unknown invalid.

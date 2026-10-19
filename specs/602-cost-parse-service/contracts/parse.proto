@@ -64,7 +64,8 @@ message ParseFileSet {
 // ParseFile carries one input file, which may have empty content.
 message ParseFile {
   // path is slash-separated, relative, non-empty, and has no empty, dot or
-  // parent segments, backslashes, drive prefix, or UNC/absolute form.
+  // parent segments, backslashes, colons, NUL bytes, or UNC/absolute form.
+  // Colons are excluded to prevent Windows drive and alternate-stream forms.
   string path = 1;
   // content is untrusted binary input; JSON uses base64 encoding.
   bytes content = 2;
