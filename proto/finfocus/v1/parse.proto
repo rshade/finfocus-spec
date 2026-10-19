@@ -96,6 +96,29 @@ message ParsedResource {
   // Paths are relative to attributes; dots in literal keys and list indexing
   // are unsupported. Report an unresolved containing property in those cases.
   repeated string unknown_properties = 3;
+  // action is an optional hint for plan-style inputs that report a per-resource
+  // change. UNSPECIFIED (zero, the default) means a declared resource with no
+  // action; parsers of declared templates leave it unset and hosts must not
+  // require it. Unknown numbers are invalid. It carries no pricing meaning;
+  // how a host prices an action is the host's concern.
+  ParseAction action = 4;
+}
+
+// ParseAction identifies the change a plan-style input reports for a resource.
+// Zero is valid and means no action was reported.
+enum ParseAction {
+  // PARSE_ACTION_UNSPECIFIED reports a declared resource with no action.
+  PARSE_ACTION_UNSPECIFIED = 0;
+  // PARSE_ACTION_CREATE reports a resource to be created.
+  PARSE_ACTION_CREATE = 1;
+  // PARSE_ACTION_UPDATE reports a resource to be updated in place.
+  PARSE_ACTION_UPDATE = 2;
+  // PARSE_ACTION_DELETE reports a resource to be deleted.
+  PARSE_ACTION_DELETE = 3;
+  // PARSE_ACTION_REPLACE reports a resource to be deleted and created again.
+  PARSE_ACTION_REPLACE = 4;
+  // PARSE_ACTION_NO_CHANGE reports a resource that is unchanged.
+  PARSE_ACTION_NO_CHANGE = 5;
 }
 
 // ParseWarningSeverity identifies a nonfatal diagnostic; zero is invalid.

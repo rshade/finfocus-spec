@@ -18,6 +18,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -45,7 +47,9 @@ func TestCostParseContract(t *testing.T) {
 		},
 		{
 			&pbc.ParsedResource{},
-			map[protoreflect.Name]protoreflect.FieldNumber{"resource": 1, "source_id": 2, "unknown_properties": 3},
+			map[protoreflect.Name]protoreflect.FieldNumber{
+				"resource": 1, "source_id": 2, "unknown_properties": 3, "action": 4,
+			},
 		},
 		{
 			&pbc.ParseWarning{},
@@ -102,5 +106,41 @@ func TestCostParseContract(t *testing.T) {
 	out := new(pbc.ParseResponse)
 	if err = proto.Unmarshal(b, out); err != nil || !proto.Equal(response, out) {
 		t.Fatalf("response round trip: %v", err)
+	}
+}
+
+func TestCostParseActionRoundTrip(t *testing.T) {
+	actions := []pbc.ParseAction{
+		pbc.ParseAction_PARSE_ACTION_UNSPECIFIED,
+		pbc.ParseAction_PARSE_ACTION_CREATE,
+		pbc.ParseAction_PARSE_ACTION_UPDATE,
+		pbc.ParseAction_PARSE_ACTION_DELETE,
+		pbc.ParseAction_PARSE_ACTION_REPLACE,
+		pbc.ParseAction_PARSE_ACTION_NO_CHANGE,
+	}
+	for _, action := range actions {
+		t.Run(action.String(), func(t *testing.T) {
+			response := &pbc.ParseResponse{Resources: []*pbc.ParsedResource{{
+				Resource: &pbc.ResourceDescriptor{Provider: "fixture", ResourceType: "fixture:compute:Instance"},
+				SourceId: "Instance",
+				Action:   action,
+			}}}
+			binary, err := proto.Marshal(response)
+			require.NoError(t, err)
+			fromBinary := new(pbc.ParseResponse)
+			require.NoError(t, proto.Unmarshal(binary, fromBinary))
+			require.True(t, proto.Equal(response, fromBinary), "binary round trip")
+
+			text, err := protojson.Marshal(response)
+			require.NoError(t, err)
+			fromJSON := new(pbc.ParseResponse)
+			require.NoError(t, protojson.Unmarshal(text, fromJSON))
+			require.True(t, proto.Equal(response, fromJSON), "JSON round trip")
+			if action == pbc.ParseAction_PARSE_ACTION_UNSPECIFIED {
+				require.NotContains(t, string(text), "action", "zero value is omitted")
+			} else {
+				require.Contains(t, string(text), action.String())
+			}
+		})
 	}
 }

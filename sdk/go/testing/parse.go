@@ -165,7 +165,7 @@ func validParseFilePath(path string) bool {
 }
 
 // ValidateParseResponse checks descriptors, source identities, absent unknown
-// attribute paths, diagnostics and advisory expiration without mutating input.
+// attribute paths, known optional actions, diagnostics and advisory expiration without mutating input.
 // Full request validation is separate because it needs advertised limits.
 func ValidateParseResponse(req *pbc.ParseRequest, resp *pbc.ParseResponse) error {
 	if req == nil || resp == nil {
@@ -188,6 +188,14 @@ func ValidateParseResponse(req *pbc.ParseRequest, resp *pbc.ParseResponse) error
 		sources[r.GetSourceId()] = struct{}{}
 		if err := validateParseUnknowns(r, i); err != nil {
 			return err
+		}
+		if _, ok := pbc.ParseAction_name[int32(r.GetAction())]; !ok {
+			return fmt.Errorf(
+				"%w: resources[%d].action %d is not a known action",
+				ErrInvalidParseResponse,
+				i,
+				r.GetAction(),
+			)
 		}
 	}
 	if err := validateParseWarnings(resp.GetWarnings()); err != nil {

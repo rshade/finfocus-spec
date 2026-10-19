@@ -38,11 +38,12 @@ import (
 const (
 	mockParseProvider        = "custom"
 	mockParseUnknown         = "unknown"
+	mockParseAction          = "action"
 	mockParseDefaultMaxBytes = 65536
 )
 
 // MockCostParser is a separate deterministic parser for synthetic fixture input.
-// Lines use "resource <source_id>". It never implements a vendor format.
+// Lines use "resource <source_id>" plus optional unknown, action, skip and notice lines. It never implements a vendor format.
 // Instances are immutable after construction and safe for concurrent use.
 type MockCostParser struct {
 	limits     ParseLimits
@@ -253,6 +254,8 @@ func (m *MockCostParser) parseFixtureLine(
 			return err
 		}
 		resource.UnknownProperties = append(resource.GetUnknownProperties(), parts[2])
+	case len(parts) == 3 && parts[0] == mockParseAction:
+		return setMockParseAction(sources[parts[1]], parts[1], parts[2])
 	case len(parts) >= 2 && parts[0] == "notice":
 		resp.Warnings = append(
 			resp.GetWarnings(),
@@ -264,9 +267,25 @@ func (m *MockCostParser) parseFixtureLine(
 		)
 	default:
 		return errors.New(
-			"expected resource <source_id>, skip <source_id>, unknown <source_id> <path> or notice <message>",
+			"expected resource <source_id>, skip <source_id>, unknown <source_id> <path>, " +
+				"action <source_id> <action> or notice <message>",
 		)
 	}
+	return nil
+}
+
+func setMockParseAction(resource *pbc.ParsedResource, id, name string) error {
+	if resource == nil {
+		return errors.New("action must reference an earlier resource source_id")
+	}
+	action, known := pbc.ParseAction_value["PARSE_ACTION_"+strings.ToUpper(name)]
+	if !known || action == int32(pbc.ParseAction_PARSE_ACTION_UNSPECIFIED) {
+		return fmt.Errorf("action %q must be create, update, delete, replace or no_change", name)
+	}
+	if resource.GetAction() != pbc.ParseAction_PARSE_ACTION_UNSPECIFIED {
+		return fmt.Errorf("duplicate action for source_id %q", id)
+	}
+	resource.Action = pbc.ParseAction(action)
 	return nil
 }
 

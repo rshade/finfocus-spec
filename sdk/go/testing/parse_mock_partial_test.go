@@ -192,3 +192,56 @@ func TestCostParseMockPartialUnknownAncestors(t *testing.T) {
 		})
 	}
 }
+
+func TestCostParseMockActions(t *testing.T) {
+	ctx := context.Background()
+	parser := pt.NewMockCostParser()
+	cases := []struct {
+		name    string
+		content string
+		want    []pbc.ParseAction
+		wantErr bool
+	}{
+		{"no action lines leave zero", "resource A\nresource B\n", []pbc.ParseAction{0, 0}, false},
+		{"create", "resource A\naction A create\n", []pbc.ParseAction{pbc.ParseAction_PARSE_ACTION_CREATE}, false},
+		{"update", "resource A\naction A update\n", []pbc.ParseAction{pbc.ParseAction_PARSE_ACTION_UPDATE}, false},
+		{"delete", "resource A\naction A delete\n", []pbc.ParseAction{pbc.ParseAction_PARSE_ACTION_DELETE}, false},
+		{"replace", "resource A\naction A replace\n", []pbc.ParseAction{pbc.ParseAction_PARSE_ACTION_REPLACE}, false},
+		{
+			"no change",
+			"resource A\naction A no_change\n",
+			[]pbc.ParseAction{pbc.ParseAction_PARSE_ACTION_NO_CHANGE},
+			false,
+		},
+		{
+			"mixed",
+			"resource A\nresource B\naction B delete\n",
+			[]pbc.ParseAction{pbc.ParseAction_PARSE_ACTION_UNSPECIFIED, pbc.ParseAction_PARSE_ACTION_DELETE},
+			false,
+		},
+		{"unknown name", "resource A\naction A explode\n", nil, true},
+		{"unspecified name", "resource A\naction A unspecified\n", nil, true},
+		{"unknown source", "action A create\n", nil, true},
+		{"skipped source", "skip A\naction A create\n", nil, true},
+		{"duplicate action", "resource A\naction A create\naction A delete\n", nil, true},
+		{"missing action name", "resource A\naction A\n", nil, true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			req := costParsePartialRequest(c.content)
+			resp, err := parser.Parse(ctx, req)
+			if c.wantErr {
+				require.Error(t, err)
+				require.Equal(t, codes.InvalidArgument, status.Code(err))
+				return
+			}
+			require.NoError(t, err)
+			require.NoError(t, pt.ValidateParseResponse(req, resp))
+			got := make([]pbc.ParseAction, len(resp.GetResources()))
+			for i, r := range resp.GetResources() {
+				got[i] = r.GetAction()
+			}
+			require.Equal(t, c.want, got)
+		})
+	}
+}

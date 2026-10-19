@@ -56,8 +56,9 @@ stub can therefore be registered while returning Unimplemented.
 ## Synthetic fixtures
 
 MockCostParser is a separate neutral fixture provider. It advertises fixture format and both modes.
-Each nonempty line is `resource <source_id>`; path mode reads .fixture files in lexical walk order beneath a
-caller-owned root. Default descriptors use provider custom and type custom:compute:Instance.
+Each nonempty line is `resource <source_id>` (other line kinds are listed below);
+path mode reads .fixture files in lexical walk order beneath a caller-owned root.
+Default descriptors use provider custom and type custom:compute:Instance.
 WithParseResource clones a caller-supplied descriptor. Existing MockPlugin capabilities are unchanged.
 
 ## Partial results and source identity
@@ -82,6 +83,24 @@ Empty resource collections and all-skipped results are successful responses when
 The synthetic mock adds `unknown <earlier_source_id> <attribute.path>`, `skip <source_id>` and
 `notice <message>` fixture lines. Unknown paths remove values from cloned fixture descriptors. Repeated sources,
 including skipped sources, and repeated unknown paths are rejected with the fixture file and physical line.
+
+## Optional action hint
+
+ParsedResource.action (field 4, enum ParseAction) is an optional hint for plan-style inputs that report a change per
+resource: CREATE, UPDATE, DELETE, REPLACE or NO_CHANGE. UNSPECIFIED (zero, the default) means the parser reports a
+declared resource with no action. Parsers of declared templates, such as CloudFormation templates, Helm and
+Kustomize, leave it unset. A future plugin that parses a plan-like artifact, for example a change set, can report it.
+A host-side parser for plan-style inputs can use the same result shape.
+
+Hosts must not require the field. Unlike warning severity, zero is valid here, but unknown numbers are invalid in the
+same way: shared response validation rejects a ParsedResource whose action is not one of the six defined values.
+The field carries no pricing meaning by itself. Parsing still never calculates prices, and how a host prices a
+DELETE, REPLACE or NO_CHANGE resource is the host's concern. Existing consumers are unaffected: the field and enum
+are additive, and an absent field decodes as UNSPECIFIED.
+
+The synthetic mock adds `action <earlier_source_id> <name>` where name is create, update, delete, replace or
+no_change. It must reference an earlier returned resource and may appear once per resource. Fixtures without action
+lines return UNSPECIFIED.
 
 ## Provider selection and caching
 

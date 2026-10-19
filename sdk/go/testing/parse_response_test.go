@@ -104,6 +104,38 @@ func TestCostParseResponse(t *testing.T) {
 			func(r *pbc.ParseResponse) { r.Warnings = []*pbc.ParseWarning{{Severity: 1, Code: "notice"}} },
 			false,
 		},
+		{
+			"action zero",
+			func(r *pbc.ParseResponse) { r.Resources[0].Action = pbc.ParseAction_PARSE_ACTION_UNSPECIFIED },
+			true,
+		},
+		{
+			"action create",
+			func(r *pbc.ParseResponse) { r.Resources[0].Action = pbc.ParseAction_PARSE_ACTION_CREATE },
+			true,
+		},
+		{
+			"action update",
+			func(r *pbc.ParseResponse) { r.Resources[0].Action = pbc.ParseAction_PARSE_ACTION_UPDATE },
+			true,
+		},
+		{
+			"action delete",
+			func(r *pbc.ParseResponse) { r.Resources[0].Action = pbc.ParseAction_PARSE_ACTION_DELETE },
+			true,
+		},
+		{
+			"action replace",
+			func(r *pbc.ParseResponse) { r.Resources[0].Action = pbc.ParseAction_PARSE_ACTION_REPLACE },
+			true,
+		},
+		{
+			"action no change",
+			func(r *pbc.ParseResponse) { r.Resources[0].Action = pbc.ParseAction_PARSE_ACTION_NO_CHANGE },
+			true,
+		},
+		{"action unknown number", func(r *pbc.ParseResponse) { r.Resources[0].Action = pbc.ParseAction(6) }, false},
+		{"action negative number", func(r *pbc.ParseResponse) { r.Resources[0].Action = pbc.ParseAction(-1) }, false},
 		{"expired", func(r *pbc.ParseResponse) { r.ExpiresAt = &timestamppb.Timestamp{Seconds: 1} }, true},
 		{"invalid timestamp", func(r *pbc.ParseResponse) { r.ExpiresAt = &timestamppb.Timestamp{Nanos: -1} }, false},
 	}
