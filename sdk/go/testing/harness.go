@@ -290,9 +290,16 @@ func ValidateActualCostResult(result *pbc.ActualCostResult) error {
 }
 
 // ValidateProjectedCostResponse validates a GetProjectedCost RPC response.
+//
+//nolint:protogetter // The optional field must be read as a pointer to distinguish absent from zero.
 func ValidateProjectedCostResponse(response *pbc.GetProjectedCostResponse) error {
 	if response == nil {
 		return errors.New("response is nil")
+	}
+	if err := ValidateOnDemandEquivalent(
+		response.OnDemandEquivalentMonthlyCost, response.GetPricingCategory(),
+	); err != nil {
+		return err
 	}
 
 	if response.GetUnitPrice() < 0 {
@@ -373,9 +380,16 @@ func ValidatePricingSpec(spec *pbc.PricingSpec) error {
 }
 
 // ValidateEstimateCostResponse validates an EstimateCost RPC response.
+//
+//nolint:protogetter // The optional field must be read as a pointer to distinguish absent from zero.
 func ValidateEstimateCostResponse(response *pbc.EstimateCostResponse) error {
 	if response == nil {
 		return errors.New("response is nil")
+	}
+	if err := ValidateOnDemandEquivalent(
+		response.OnDemandEquivalentMonthlyCost, response.GetPricingCategory(),
+	); err != nil {
+		return err
 	}
 
 	if response.GetCurrency() == "" {

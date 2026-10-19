@@ -2427,6 +2427,33 @@ response that carries rows fails with `ErrRegionPricesWithDryRun`. Omit a region
 price instead of sending a zero row. Validation does not reject duplicate regions, but list each
 region once. A response without rows validates as before, with 0 allocations.
 
+## On-Demand Equivalent
+
+For a DYNAMIC spot result, `on_demand_equivalent_monthly_cost` gives the same resource's STANDARD
+on-demand monthly price in the response currency and on the same monthly basis as the
+primary cost. It is present only when the plugin knows that price. An absent value means savings
+cannot be shown; a present `0.0` is a real price, so check pointer presence rather than the getter.
+The field is advisory, never summed into the primary cost, and is not cross-checked with
+`price_options`. It should agree with a STANDARD option describing the same equivalent. No rule
+requires the on-demand price to exceed the spot price.
+
+```go
+resp := pluginsdk.NewGetProjectedCostResponse(
+    pluginsdk.WithProjectedCostDetails(0.05, "USD", 36.50, "spot instance"),
+    pluginsdk.WithProjectedCostPricingCategory(pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_DYNAMIC),
+    pluginsdk.WithProjectedCostOnDemandEquivalent(70.08),
+)
+if err := pluginsdk.ValidateGetProjectedCostResponse(resp); err != nil {
+    return nil, err
+}
+```
+
+For estimates, use `WithOnDemandEquivalent` and `ValidateEstimateCostResponse`. The options do not
+validate or panic; validation rejects NaN, infinity, negative values, and a present value on any
+non-DYNAMIC category with `ErrOnDemandEquivalentInvalidValue` or
+`ErrOnDemandEquivalentInvalidCategory`. DYNAMIC with the field unset remains valid for legacy
+plugins. `CheckOnDemandEquivalentConsistency` warns when a DYNAMIC response lacks the field.
+
 ## Pagination Helpers
 
 The SDK provides pagination helpers for both `GetRecommendations` and `GetActualCost` RPCs.

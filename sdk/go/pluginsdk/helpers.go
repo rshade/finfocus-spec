@@ -1346,6 +1346,15 @@ func WithPricingCategory(category pbc.FocusPricingCategory) EstimateCostResponse
 	}
 }
 
+// WithOnDemandEquivalent sets the presence-tracked on-demand monthly price.
+// It does not validate; call ValidateEstimateCostResponse on the result.
+func WithOnDemandEquivalent(monthlyCost float64) EstimateCostResponseOption {
+	return func(resp *pbc.EstimateCostResponse) {
+		value := monthlyCost
+		resp.OnDemandEquivalentMonthlyCost = &value
+	}
+}
+
 // WithSpotRisk sets the spot_interruption_risk_score field for EstimateCostResponse.
 // The score must be between 0.0 and 1.0.
 //
@@ -1464,6 +1473,15 @@ type GetProjectedCostResponseOption func(*pbc.GetProjectedCostResponse)
 func WithProjectedCostPricingCategory(category pbc.FocusPricingCategory) GetProjectedCostResponseOption {
 	return func(resp *pbc.GetProjectedCostResponse) {
 		resp.PricingCategory = category
+	}
+}
+
+// WithProjectedCostOnDemandEquivalent sets the presence-tracked on-demand
+// monthly price. It does not validate; call ValidateGetProjectedCostResponse.
+func WithProjectedCostOnDemandEquivalent(monthlyCost float64) GetProjectedCostResponseOption {
+	return func(resp *pbc.GetProjectedCostResponse) {
+		value := monthlyCost
+		resp.OnDemandEquivalentMonthlyCost = &value
 	}
 }
 

@@ -319,6 +319,16 @@ plugin.RegionPrices = []*pbc.RegionPrice{
 `ErrRegionPricesWithDryRun` for rows on a dry-run response. `pluginsdk` uses the same function and
 sentinels, so plugin self-validation and the conformance suite agree.
 
+### On-Demand Equivalent
+
+Set `MockPlugin.OnDemandEquivalentMonthlyCost` to a `*float64` to add the on-demand monthly
+equivalent to DYNAMIC projected and estimate responses. Nil leaves it absent, and present zero is
+preserved. Non-DYNAMIC and dry-run mock responses leave it absent. The shared
+`ValidateOnDemandEquivalent` rule rejects present NaN, infinity, negative values, or a category
+other than DYNAMIC. The projected and estimate harness validators apply this rule and return the
+same `ErrOnDemandEquivalentInvalidValue` and `ErrOnDemandEquivalentInvalidCategory` sentinels as
+`pluginsdk`.
+
 ### Batch Cost Testing
 
 `MockPlugin` includes batch RPC controls for conformance and integration tests:

@@ -1799,9 +1799,27 @@ type GetProjectedCostResponse struct {
 	// unit_price, and currency stay the requested region's price. Empty means the
 	// plugin supplied no other regions. A region with no price is omitted, never
 	// sent as a zero row. Must be empty when dry_run_result is set.
-	RegionPrices  []*RegionPrice `protobuf:"bytes,17,rep,name=region_prices,json=regionPrices,proto3" json:"region_prices,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	RegionPrices []*RegionPrice `protobuf:"bytes,17,rep,name=region_prices,json=regionPrices,proto3" json:"region_prices,omitempty"`
+	// on_demand_equivalent_monthly_cost is the STANDARD on-demand monthly cost of
+	// the same resource when this response selects DYNAMIC (spot) pricing. It uses
+	// currency and the same monthly basis as cost_per_month, whatever hours per
+	// month that value uses. Absent means the plugin does not know the price;
+	// a present 0.0 is a real price. Consumers MUST NOT treat absence as zero.
+	//
+	// This field is meaningful only for DYNAMIC pricing. A present value on any
+	// other category fails validation. A present value MUST be finite and
+	// non-negative. There is no upper bound or required ordering against the
+	// spot cost: spot may temporarily cost more than on-demand.
+	//
+	// This field is advisory and is never summed into the selected cost. If a
+	// STANDARD price_options entry describes the same equivalent, they SHOULD
+	// agree; the SDK does not cross-check them. Legacy plugins leave this unset;
+	// DYNAMIC with the field unset is valid and hosts show spot savings unavailable.
+	// Use pluginsdk.ValidateGetProjectedCostResponse() for validation and
+	// CheckOnDemandEquivalentConsistency() for advisory warnings.
+	OnDemandEquivalentMonthlyCost *float64 `protobuf:"fixed64,18,opt,name=on_demand_equivalent_monthly_cost,json=onDemandEquivalentMonthlyCost,proto3,oneof" json:"on_demand_equivalent_monthly_cost,omitempty"`
+	unknownFields                 protoimpl.UnknownFields
+	sizeCache                     protoimpl.SizeCache
 }
 
 func (x *GetProjectedCostResponse) Reset() {
@@ -1951,6 +1969,13 @@ func (x *GetProjectedCostResponse) GetRegionPrices() []*RegionPrice {
 		return x.RegionPrices
 	}
 	return nil
+}
+
+func (x *GetProjectedCostResponse) GetOnDemandEquivalentMonthlyCost() float64 {
+	if x != nil && x.OnDemandEquivalentMonthlyCost != nil {
+		return *x.OnDemandEquivalentMonthlyCost
+	}
+	return 0
 }
 
 // PriceOption is one alternative retail price for the resource on the parent
@@ -4256,7 +4281,8 @@ func (x *EstimateCostRequest) GetAttributes() *structpb.Struct {
 // Future versions may add an optional cost breakdown (e.g., compute vs storage).
 // It MUST follow the rules of GetProjectedCostResponse.cost_breakdown
 // (key format, non-negative values, sum tolerance) for consistency, and it
-// MUST use field 8 or later: field 6 is price_options and field 7 is held.
+// MUST use field 9 or later: field 6 is price_options, field 7 is
+// region_prices, and field 8 is on_demand_equivalent_monthly_cost.
 // A cost breakdown splits cost_monthly into components; price_options lists
 // other prices. They are different fields.
 type EstimateCostResponse struct {
@@ -4314,9 +4340,24 @@ type EstimateCostResponse struct {
 	// Advisory: it is never summed into cost_monthly, which stays the requested
 	// configuration's price. Empty means the plugin supplied no other regions. A
 	// region with no price is omitted, never sent as a zero row.
-	RegionPrices  []*RegionPrice `protobuf:"bytes,7,rep,name=region_prices,json=regionPrices,proto3" json:"region_prices,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	RegionPrices []*RegionPrice `protobuf:"bytes,7,rep,name=region_prices,json=regionPrices,proto3" json:"region_prices,omitempty"`
+	// on_demand_equivalent_monthly_cost is the STANDARD on-demand monthly cost
+	// of the same resource when this response selects DYNAMIC (spot) pricing.
+	// Same currency and monthly basis as cost_monthly, whatever hours per month
+	// that value uses. Absent means unknown; present 0.0 is a real
+	// price, and consumers MUST NOT treat absence as zero. DYNAMIC with this
+	// field unset is valid; hosts show spot savings unavailable in that case.
+	//
+	// A present value on any non-DYNAMIC category fails validation. It MUST be
+	// finite and non-negative, with no upper bound or required ordering against
+	// the spot cost. It is advisory, never summed into cost_monthly, and SHOULD
+	// agree with any STANDARD price_options entry for the same equivalent; the
+	// SDK does not cross-check them. Legacy plugins leave this field unset.
+	// Use pluginsdk.ValidateEstimateCostResponse() for validation and
+	// CheckOnDemandEquivalentConsistency() for advisory warnings.
+	OnDemandEquivalentMonthlyCost *float64 `protobuf:"fixed64,8,opt,name=on_demand_equivalent_monthly_cost,json=onDemandEquivalentMonthlyCost,proto3,oneof" json:"on_demand_equivalent_monthly_cost,omitempty"`
+	unknownFields                 protoimpl.UnknownFields
+	sizeCache                     protoimpl.SizeCache
 }
 
 func (x *EstimateCostResponse) Reset() {
@@ -4396,6 +4437,13 @@ func (x *EstimateCostResponse) GetRegionPrices() []*RegionPrice {
 		return x.RegionPrices
 	}
 	return nil
+}
+
+func (x *EstimateCostResponse) GetOnDemandEquivalentMonthlyCost() float64 {
+	if x != nil && x.OnDemandEquivalentMonthlyCost != nil {
+		return *x.OnDemandEquivalentMonthlyCost
+	}
+	return 0
 }
 
 // GetRecommendationsRequest contains parameters for retrieving recommendations.
@@ -7616,7 +7664,8 @@ const file_finfocus_v1_costsource_proto_rawDesc = "" +
 	"growthRate\x88\x01\x01\x12\x17\n" +
 	"\adry_run\x18\x05 \x01(\bR\x06dryRun\x12>\n" +
 	"\rusage_profile\x18\x06 \x01(\x0e2\x19.finfocus.v1.UsageProfileR\fusageProfileB\x0e\n" +
-	"\f_growth_rate\"\xdd\t\n" +
+	"\f_growth_rate\"\xd2\n" +
+	"\n" +
 	"\x18GetProjectedCostResponse\x12\x1d\n" +
 	"\n" +
 	"unit_price\x18\x01 \x01(\x01R\tunitPrice\x12\x1a\n" +
@@ -7638,7 +7687,8 @@ const file_finfocus_v1_costsource_proto_rawDesc = "" +
 	"\bmetadata\x18\x0e \x03(\v23.finfocus.v1.GetProjectedCostResponse.MetadataEntryR\bmetadata\x12_\n" +
 	"\x0ecost_breakdown\x18\x0f \x03(\v28.finfocus.v1.GetProjectedCostResponse.CostBreakdownEntryR\rcostBreakdown\x12=\n" +
 	"\rprice_options\x18\x10 \x03(\v2\x18.finfocus.v1.PriceOptionR\fpriceOptions\x12=\n" +
-	"\rregion_prices\x18\x11 \x03(\v2\x18.finfocus.v1.RegionPriceR\fregionPrices\x1a;\n" +
+	"\rregion_prices\x18\x11 \x03(\v2\x18.finfocus.v1.RegionPriceR\fregionPrices\x12M\n" +
+	"!on_demand_equivalent_monthly_cost\x18\x12 \x01(\x01H\x03R\x1donDemandEquivalentMonthlyCost\x88\x01\x01\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a@\n" +
@@ -7647,7 +7697,8 @@ const file_finfocus_v1_costsource_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\x01R\x05value:\x028\x01B\x1c\n" +
 	"\x1a_prediction_interval_lowerB\x1c\n" +
 	"\x1a_prediction_interval_upperB\x13\n" +
-	"\x11_confidence_level\"\x86\x02\n" +
+	"\x11_confidence_levelB$\n" +
+	"\"_on_demand_equivalent_monthly_cost\"\x86\x02\n" +
 	"\vPriceOption\x12=\n" +
 	"\bcategory\x18\x01 \x01(\x0e2!.finfocus.v1.FocusPricingCategoryR\bcategory\x12\x14\n" +
 	"\x05model\x18\x02 \x01(\tR\x05model\x12\x12\n" +
@@ -7830,7 +7881,7 @@ const file_finfocus_v1_costsource_proto_rawDesc = "" +
 	"\rresource_type\x18\x01 \x01(\tR\fresourceType\x127\n" +
 	"\n" +
 	"attributes\x18\x02 \x01(\v2\x17.google.protobuf.StructR\n" +
-	"attributes\"\x9d\x03\n" +
+	"attributes\"\x92\x04\n" +
 	"\x14EstimateCostResponse\x12\x1a\n" +
 	"\bcurrency\x18\x01 \x01(\tR\bcurrency\x12!\n" +
 	"\fcost_monthly\x18\x02 \x01(\x01R\vcostMonthly\x12L\n" +
@@ -7839,7 +7890,9 @@ const file_finfocus_v1_costsource_proto_rawDesc = "" +
 	"\n" +
 	"expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12=\n" +
 	"\rprice_options\x18\x06 \x03(\v2\x18.finfocus.v1.PriceOptionR\fpriceOptions\x12=\n" +
-	"\rregion_prices\x18\a \x03(\v2\x18.finfocus.v1.RegionPriceR\fregionPrices\"\xb8\x03\n" +
+	"\rregion_prices\x18\a \x03(\v2\x18.finfocus.v1.RegionPriceR\fregionPrices\x12M\n" +
+	"!on_demand_equivalent_monthly_cost\x18\b \x01(\x01H\x00R\x1donDemandEquivalentMonthlyCost\x88\x01\x01B$\n" +
+	"\"_on_demand_equivalent_monthly_cost\"\xb8\x03\n" +
 	"\x19GetRecommendationsRequest\x129\n" +
 	"\x06filter\x18\x01 \x01(\v2!.finfocus.v1.RecommendationFilterR\x06filter\x12+\n" +
 	"\x11projection_period\x18\x02 \x01(\tR\x10projectionPeriod\x12\x1b\n" +
@@ -8583,6 +8636,7 @@ func file_finfocus_v1_costsource_proto_init() {
 	file_finfocus_v1_costsource_proto_msgTypes[8].OneofWrappers = []any{}
 	file_finfocus_v1_costsource_proto_msgTypes[14].OneofWrappers = []any{}
 	file_finfocus_v1_costsource_proto_msgTypes[19].OneofWrappers = []any{}
+	file_finfocus_v1_costsource_proto_msgTypes[34].OneofWrappers = []any{}
 	file_finfocus_v1_costsource_proto_msgTypes[38].OneofWrappers = []any{
 		(*Recommendation_Rightsize)(nil),
 		(*Recommendation_Terminate)(nil),

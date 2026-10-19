@@ -624,6 +624,25 @@ message GetProjectedCostResponse {
   // plugin supplied no other regions. A region with no price is omitted, never
   // sent as a zero row. Must be empty when dry_run_result is set.
   repeated RegionPrice region_prices = 17;
+
+  // on_demand_equivalent_monthly_cost is the STANDARD on-demand monthly cost of
+  // the same resource when this response selects DYNAMIC (spot) pricing. It uses
+  // currency and the same monthly basis as cost_per_month, whatever hours per
+  // month that value uses. Absent means the plugin does not know the price;
+  // a present 0.0 is a real price. Consumers MUST NOT treat absence as zero.
+  //
+  // This field is meaningful only for DYNAMIC pricing. A present value on any
+  // other category fails validation. A present value MUST be finite and
+  // non-negative. There is no upper bound or required ordering against the
+  // spot cost: spot may temporarily cost more than on-demand.
+  //
+  // This field is advisory and is never summed into the selected cost. If a
+  // STANDARD price_options entry describes the same equivalent, they SHOULD
+  // agree; the SDK does not cross-check them. Legacy plugins leave this unset;
+  // DYNAMIC with the field unset is valid and hosts show spot savings unavailable.
+  // Use pluginsdk.ValidateGetProjectedCostResponse() for validation and
+  // CheckOnDemandEquivalentConsistency() for advisory warnings.
+  optional double on_demand_equivalent_monthly_cost = 18;
 }
 
 // PriceOption is one alternative retail price for the resource on the parent
@@ -1403,7 +1422,8 @@ message EstimateCostRequest {
 // Future versions may add an optional cost breakdown (e.g., compute vs storage).
 // It MUST follow the rules of GetProjectedCostResponse.cost_breakdown
 // (key format, non-negative values, sum tolerance) for consistency, and it
-// MUST use field 8 or later: field 6 is price_options and field 7 is held.
+// MUST use field 9 or later: field 6 is price_options, field 7 is
+// region_prices, and field 8 is on_demand_equivalent_monthly_cost.
 // A cost breakdown splits cost_monthly into components; price_options lists
 // other prices. They are different fields.
 message EstimateCostResponse {
@@ -1467,6 +1487,22 @@ message EstimateCostResponse {
   // configuration's price. Empty means the plugin supplied no other regions. A
   // region with no price is omitted, never sent as a zero row.
   repeated RegionPrice region_prices = 7;
+
+  // on_demand_equivalent_monthly_cost is the STANDARD on-demand monthly cost
+  // of the same resource when this response selects DYNAMIC (spot) pricing.
+  // Same currency and monthly basis as cost_monthly, whatever hours per month
+  // that value uses. Absent means unknown; present 0.0 is a real
+  // price, and consumers MUST NOT treat absence as zero. DYNAMIC with this
+  // field unset is valid; hosts show spot savings unavailable in that case.
+  //
+  // A present value on any non-DYNAMIC category fails validation. It MUST be
+  // finite and non-negative, with no upper bound or required ordering against
+  // the spot cost. It is advisory, never summed into cost_monthly, and SHOULD
+  // agree with any STANDARD price_options entry for the same equivalent; the
+  // SDK does not cross-check them. Legacy plugins leave this field unset.
+  // Use pluginsdk.ValidateEstimateCostResponse() for validation and
+  // CheckOnDemandEquivalentConsistency() for advisory warnings.
+  optional double on_demand_equivalent_monthly_cost = 8;
 }
 
 // =============================================================================
