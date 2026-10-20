@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.7](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.7.6...finfocus-client-v0.7.7) (2026-10-19)
+
+
+### Features
+
+* **proto:** add optional action hint to ParsedResource ([#650](https://github.com/rshade/finfocus-spec/issues/650)) ([3c1b667](https://github.com/rshade/finfocus-spec/commit/3c1b667c1ebe6b95be7eac76ad684b981d12b9ff))
+
 ## [0.7.6](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.7.5...finfocus-client-v0.7.6) (2026-10-19)
 
 

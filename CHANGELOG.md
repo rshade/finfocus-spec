@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.8](https://github.com/rshade/finfocus-spec/compare/v0.7.7...v0.7.8) (2026-10-19)
+
+
+### Added
+
+* **proto:** add optional action hint to ParsedResource ([#650](https://github.com/rshade/finfocus-spec/issues/650)) ([3c1b667](https://github.com/rshade/finfocus-spec/commit/3c1b667c1ebe6b95be7eac76ad684b981d12b9ff))
+
 ## [0.7.7](https://github.com/rshade/finfocus-spec/compare/v0.7.6...v0.7.7) (2026-10-19)
 
 
