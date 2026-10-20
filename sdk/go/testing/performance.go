@@ -220,21 +220,27 @@ func PerformanceTests() []ConformanceSuiteTest {
 			Description: "Validates GetProjectedCost RPC latency within thresholds",
 			Category:    CategoryPerformance,
 			MinLevel:    ConformanceLevelStandard,
-			TestFunc:    createGetProjectedCostLatencyTest(),
+			TestFunc: withCapability(
+				pbc.PluginCapability_PLUGIN_CAPABILITY_PROJECTED_COSTS,
+				createGetProjectedCostLatencyTest(),
+			),
 		},
 		{
 			Name:        "Performance_GetPricingSpecLatency",
 			Description: "Validates GetPricingSpec RPC latency within thresholds",
 			Category:    CategoryPerformance,
 			MinLevel:    ConformanceLevelStandard,
-			TestFunc:    createGetPricingSpecLatencyTest(),
+			TestFunc: withCapability(
+				pbc.PluginCapability_PLUGIN_CAPABILITY_PRICING_SPEC,
+				createGetPricingSpecLatencyTest(),
+			),
 		},
 		{
 			Name:        "Performance_GetBudgetsLatency",
 			Description: "Validates GetBudgets RPC latency within thresholds (<5s)",
 			Category:    CategoryPerformance,
 			MinLevel:    ConformanceLevelStandard,
-			TestFunc:    createGetBudgetsLatencyTest(),
+			TestFunc:    withCapability(pbc.PluginCapability_PLUGIN_CAPABILITY_BUDGETS, createGetBudgetsLatencyTest()),
 		},
 		{
 			Name:        "Performance_BaselineVariance",
@@ -309,46 +315,77 @@ func createGetPluginInfoLatencyTest() func(*TestHarness) TestResult {
 }
 func createGetProjectedCostLatencyTest() func(*TestHarness) TestResult {
 	return func(harness *TestHarness) TestResult {
-		baseline := GetBaseline(MethodGetProjectedCost)
 		resource := harness.SampleResource()
-		result := measureLatency(MethodGetProjectedCost, LatencyTestIterations, func() error {
-			_, callErr := harness.Client().GetProjectedCost(context.Background(),
-				&pbc.GetProjectedCostRequest{Resource: resource})
-			return callErr
-		})
-		compareToBaseline(result, baseline)
-		return buildLatencyTestResult(MethodGetProjectedCost, result, baseline)
+		return measureCapabilityLatency(
+			harness,
+			pbc.PluginCapability_PLUGIN_CAPABILITY_PROJECTED_COSTS,
+			MethodGetProjectedCost,
+			func() error {
+				_, callErr := harness.Client().GetProjectedCost(context.Background(),
+					&pbc.GetProjectedCostRequest{Resource: resource})
+				return callErr
+			},
+		)
 	}
 }
 
 func createGetPricingSpecLatencyTest() func(*TestHarness) TestResult {
 	return func(harness *TestHarness) TestResult {
-		baseline := GetBaseline(MethodGetPricingSpec)
 		resource := harness.SampleResource()
-		result := measureLatency(MethodGetPricingSpec, LatencyTestIterations, func() error {
-			_, callErr := harness.Client().GetPricingSpec(context.Background(),
-				&pbc.GetPricingSpecRequest{Resource: resource})
-			return callErr
-		})
-		compareToBaseline(result, baseline)
-		return buildLatencyTestResult(MethodGetPricingSpec, result, baseline)
+		return measureCapabilityLatency(
+			harness,
+			pbc.PluginCapability_PLUGIN_CAPABILITY_PRICING_SPEC,
+			MethodGetPricingSpec,
+			func() error {
+				_, callErr := harness.Client().GetPricingSpec(context.Background(),
+					&pbc.GetPricingSpecRequest{Resource: resource})
+				return callErr
+			},
+		)
 	}
 }
 
 func createGetBudgetsLatencyTest() func(*TestHarness) TestResult {
 	return func(harness *TestHarness) TestResult {
-		baseline := GetBaseline(MethodGetBudgets)
-		result := measureLatency(MethodGetBudgets, LatencyTestIterations, func() error {
-			_, callErr := harness.Client().GetBudgets(context.Background(),
-				&pbc.GetBudgetsRequest{
-					Filter:        &pbc.BudgetFilter{},
-					IncludeStatus: false, // Faster without status
-				})
-			return callErr
-		})
-		compareToBaseline(result, baseline)
-		return buildLatencyTestResult(MethodGetBudgets, result, baseline)
+		return measureCapabilityLatency(
+			harness,
+			pbc.PluginCapability_PLUGIN_CAPABILITY_BUDGETS,
+			MethodGetBudgets,
+			func() error {
+				_, callErr := harness.Client().GetBudgets(context.Background(),
+					&pbc.GetBudgetsRequest{
+						Filter:        &pbc.BudgetFilter{},
+						IncludeStatus: false, // Faster without status
+					})
+				return callErr
+			},
+		)
 	}
+}
+
+// measureCapabilityLatency requires advertised RPCs to succeed as well as respond
+// promptly. Empty capability metadata retains legacy benchmark behavior.
+func measureCapabilityLatency(
+	harness *TestHarness,
+	capability pbc.PluginCapability,
+	method string,
+	call func() error,
+) TestResult {
+	var rpcErr error
+	result := measureLatency(method, LatencyTestIterations, func() error {
+		err := call()
+		if rpcErr == nil {
+			rpcErr = err
+		}
+		return err
+	})
+	if harness.capabilities.declares(capability) && rpcErr != nil {
+		return TestResult{Method: method, Category: CategoryPerformance, Error: rpcErr,
+			Duration: result.AvgLatency, Details: "Advertised RPC failed during latency validation"}
+	}
+	baseline := GetBaseline(method)
+	compareToBaseline(result, baseline)
+	return buildLatencyTestResult(method, result, baseline)
 }
 
 // createBaselineVarianceTest validates SC-003: benchmark variance within 10%.

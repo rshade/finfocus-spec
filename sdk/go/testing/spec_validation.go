@@ -237,21 +237,30 @@ func SpecValidationTests() []ConformanceSuiteTest {
 			Description: "Validates that GetPricingSpec returns a schema-compliant response",
 			Category:    CategorySpecValidation,
 			MinLevel:    ConformanceLevelBasic,
-			TestFunc:    createSpecValidationValidTest(),
+			TestFunc: withCapability(
+				pbc.PluginCapability_PLUGIN_CAPABILITY_PRICING_SPEC,
+				createSpecValidationValidTest(),
+			),
 		},
 		{
 			Name:        "SpecValidation_BillingModeEnum",
 			Description: "Validates that billing_mode is a valid enum value",
 			Category:    CategorySpecValidation,
 			MinLevel:    ConformanceLevelBasic,
-			TestFunc:    createBillingModeEnumTest(),
+			TestFunc: withCapability(
+				pbc.PluginCapability_PLUGIN_CAPABILITY_PRICING_SPEC,
+				createBillingModeEnumTest(),
+			),
 		},
 		{
 			Name:        "SpecValidation_RequiredFields",
 			Description: "Validates that all required fields are present",
 			Category:    CategorySpecValidation,
 			MinLevel:    ConformanceLevelBasic,
-			TestFunc:    createRequiredFieldsTest(),
+			TestFunc: withCapability(
+				pbc.PluginCapability_PLUGIN_CAPABILITY_PRICING_SPEC,
+				createRequiredFieldsTest(),
+			),
 		},
 	}
 }

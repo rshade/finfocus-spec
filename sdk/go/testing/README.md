@@ -1701,6 +1701,26 @@ func BenchmarkMyPlugin(b *testing.B) {
 }
 ```
 
+## Capability-aware conformance
+
+The built-in suite reads `GetPluginInfo.capabilities` once per run. A nonempty
+list is authoritative for actual costs, projected costs, pricing specs, and
+budgets. Advertised capabilities run the existing response validation checks.
+For each unadvertised capability, the suite sends a valid request and requires
+`Unimplemented`. These are executed protocol checks, not skipped tests. Pricing
+spec support is independent of projected-cost support.
+
+An empty list or an `Unimplemented` discovery RPC preserves the legacy contract:
+pricing and actual-cost checks remain mandatory at their existing levels, and
+budgets remain optional. Other discovery errors fail capability-dependent checks.
+An advertised budgets capability must succeed; it cannot use the legacy optional
+RPC exception. Unknown capabilities do not disable checks for known capabilities.
+
+Use `RunConformance` with `ConformanceLevelStandard` to include the positive
+actual-cost checks. Supply `WithSampleResource` when the default descriptor is
+not suitable for the plugin. Always check both the returned error and
+`result.Passed()`; validation failures are recorded in the result.
+
 ## Conformance Report Example
 
 Running conformance tests produces a detailed report:

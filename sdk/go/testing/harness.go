@@ -99,6 +99,7 @@ type TestHarness struct {
 	bufconnHarness[pbc.CostSourceServiceClient]
 
 	sampleResource *pbc.ResourceDescriptor
+	capabilities   capabilityProfile
 }
 
 // NewTestHarness creates a new test harness for the given CostSource implementation.

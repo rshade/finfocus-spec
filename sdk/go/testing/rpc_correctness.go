@@ -464,7 +464,8 @@ func testGetBudgetsRPC(harness *TestHarness) TestResult {
 	if err != nil {
 		// Check if it's the expected Unimplemented error for plugins that don't support budgets
 		st, ok := status.FromError(err)
-		if ok && st.Code() == codes.Unimplemented {
+		if ok && st.Code() == codes.Unimplemented &&
+			!harness.capabilities.declares(pbc.PluginCapability_PLUGIN_CAPABILITY_BUDGETS) {
 			return TestResult{
 				Method:   MethodGetBudgets,
 				Category: CategoryRPCCorrectness,
@@ -594,6 +595,15 @@ func testInvalidTimeRangeHandling(harness *TestHarness) TestResult {
 		}
 	}
 
+	if harness.capabilities.declares(pbc.PluginCapability_PLUGIN_CAPABILITY_ACTUAL_COSTS) {
+		return TestResult{
+			Method:   MethodGetActualCost,
+			Category: CategoryRPCCorrectness,
+			Error:    err,
+			Duration: duration,
+			Details:  "Advertised actual costs must reject invalid time ranges with InvalidArgument",
+		}
+	}
 	return TestResult{
 		Method:   MethodGetActualCost,
 		Category: CategoryRPCCorrectness,
@@ -632,56 +642,77 @@ func RPCCorrectnessTests() []ConformanceSuiteTest {
 			Description: "Validates GetActualCost rejects an end before start for the sample resource (sent as resource)",
 			Category:    CategoryRPCCorrectness,
 			MinLevel:    ConformanceLevelBasic,
-			TestFunc:    createInvalidTimeRangeTest(),
+			TestFunc: withCapability(
+				pbc.PluginCapability_PLUGIN_CAPABILITY_ACTUAL_COSTS,
+				createInvalidTimeRangeTest(),
+			),
 		},
 		{
 			Name:        "RPCCorrectness_GetActualCostRPC",
 			Description: "Validates GetActualCost for the sample resource (sent as resource); requests without one are not checked",
 			Category:    CategoryRPCCorrectness,
 			MinLevel:    ConformanceLevelStandard,
-			TestFunc:    createGetActualCostRPCTest(),
+			TestFunc: withCapability(
+				pbc.PluginCapability_PLUGIN_CAPABILITY_ACTUAL_COSTS,
+				createGetActualCostRPCTest(),
+			),
 		},
 		{
 			Name:        "RPCCorrectness_GetActualCostBillingAccount",
 			Description: "Validates FOCUS records echo billing_account_id for the sample resource (sent as resource)",
 			Category:    CategoryRPCCorrectness,
 			MinLevel:    ConformanceLevelStandard,
-			TestFunc:    createGetActualCostBillingAccountRPCTest(),
+			TestFunc: withCapability(
+				pbc.PluginCapability_PLUGIN_CAPABILITY_ACTUAL_COSTS,
+				createGetActualCostBillingAccountRPCTest(),
+			),
 		},
 		{
 			Name:        "RPCCorrectness_GetActualCostWithResource",
 			Description: "Validates GetActualCost accepts a resource descriptor with nested attributes",
 			Category:    CategoryRPCCorrectness,
 			MinLevel:    ConformanceLevelStandard,
-			TestFunc:    createGetActualCostWithResourceRPCTest(),
+			TestFunc: withCapability(
+				pbc.PluginCapability_PLUGIN_CAPABILITY_ACTUAL_COSTS,
+				createGetActualCostWithResourceRPCTest(),
+			),
 		},
 		{
 			Name:        "RPCCorrectness_GetProjectedCostRPC",
 			Description: "Validates GetProjectedCost RPC returns valid response",
 			Category:    CategoryRPCCorrectness,
 			MinLevel:    ConformanceLevelBasic,
-			TestFunc:    createGetProjectedCostRPCTest(),
+			TestFunc: withCapability(
+				pbc.PluginCapability_PLUGIN_CAPABILITY_PROJECTED_COSTS,
+				createGetProjectedCostRPCTest(),
+			),
 		},
 		{
 			Name:        "RPCCorrectness_GetProjectedCostWithAttributes",
 			Description: "Validates GetProjectedCost accepts a descriptor with nested attributes",
 			Category:    CategoryRPCCorrectness,
 			MinLevel:    ConformanceLevelBasic,
-			TestFunc:    createGetProjectedCostWithAttributesRPCTest(),
+			TestFunc: withCapability(
+				pbc.PluginCapability_PLUGIN_CAPABILITY_PROJECTED_COSTS,
+				createGetProjectedCostWithAttributesRPCTest(),
+			),
 		},
 		{
 			Name:        "RPCCorrectness_GetPricingSpecRPC",
 			Description: "Validates GetPricingSpec RPC returns valid response",
 			Category:    CategoryRPCCorrectness,
 			MinLevel:    ConformanceLevelBasic,
-			TestFunc:    createGetPricingSpecRPCTest(),
+			TestFunc: withCapability(
+				pbc.PluginCapability_PLUGIN_CAPABILITY_PRICING_SPEC,
+				createGetPricingSpecRPCTest(),
+			),
 		},
 		{
 			Name:        "RPCCorrectness_GetBudgetsRPC",
 			Description: "Validates GetBudgets RPC returns valid response or Unimplemented",
 			Category:    CategoryRPCCorrectness,
 			MinLevel:    ConformanceLevelBasic,
-			TestFunc:    createGetBudgetsRPCTest(),
+			TestFunc:    withCapability(pbc.PluginCapability_PLUGIN_CAPABILITY_BUDGETS, createGetBudgetsRPCTest()),
 		},
 	}
 }
