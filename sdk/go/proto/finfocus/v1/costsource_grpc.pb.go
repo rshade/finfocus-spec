@@ -19,6 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	CostSourceService_GetCarbonEmissions_FullMethodName       = "/finfocus.v1.CostSourceService/GetCarbonEmissions"
 	CostSourceService_Name_FullMethodName                     = "/finfocus.v1.CostSourceService/Name"
 	CostSourceService_Supports_FullMethodName                 = "/finfocus.v1.CostSourceService/Supports"
 	CostSourceService_GetActualCost_FullMethodName            = "/finfocus.v1.CostSourceService/GetActualCost"
@@ -43,6 +44,9 @@ const (
 // This service defines the contract for retrieving actual costs, projected costs,
 // and pricing specifications from various cost data sources.
 type CostSourceServiceClient interface {
+	// GetCarbonEmissions returns optional historical monthly inventory data.
+	// Plugins without a historical provider return UNIMPLEMENTED.
+	GetCarbonEmissions(ctx context.Context, in *GetCarbonEmissionsRequest, opts ...grpc.CallOption) (*GetCarbonEmissionsResponse, error)
 	// Name returns the display name of the cost source plugin.
 	Name(ctx context.Context, in *NameRequest, opts ...grpc.CallOption) (*NameResponse, error)
 	// Supports checks if the cost source supports pricing for a given resource type.
@@ -222,6 +226,16 @@ func NewCostSourceServiceClient(cc grpc.ClientConnInterface) CostSourceServiceCl
 	return &costSourceServiceClient{cc}
 }
 
+func (c *costSourceServiceClient) GetCarbonEmissions(ctx context.Context, in *GetCarbonEmissionsRequest, opts ...grpc.CallOption) (*GetCarbonEmissionsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetCarbonEmissionsResponse)
+	err := c.cc.Invoke(ctx, CostSourceService_GetCarbonEmissions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *costSourceServiceClient) Name(ctx context.Context, in *NameRequest, opts ...grpc.CallOption) (*NameResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(NameResponse)
@@ -370,6 +384,9 @@ func (c *costSourceServiceClient) ResolveResourceTypes(ctx context.Context, in *
 // This service defines the contract for retrieving actual costs, projected costs,
 // and pricing specifications from various cost data sources.
 type CostSourceServiceServer interface {
+	// GetCarbonEmissions returns optional historical monthly inventory data.
+	// Plugins without a historical provider return UNIMPLEMENTED.
+	GetCarbonEmissions(context.Context, *GetCarbonEmissionsRequest) (*GetCarbonEmissionsResponse, error)
 	// Name returns the display name of the cost source plugin.
 	Name(context.Context, *NameRequest) (*NameResponse, error)
 	// Supports checks if the cost source supports pricing for a given resource type.
@@ -549,6 +566,9 @@ type CostSourceServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedCostSourceServiceServer struct{}
 
+func (UnimplementedCostSourceServiceServer) GetCarbonEmissions(context.Context, *GetCarbonEmissionsRequest) (*GetCarbonEmissionsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetCarbonEmissions not implemented")
+}
 func (UnimplementedCostSourceServiceServer) Name(context.Context, *NameRequest) (*NameResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Name not implemented")
 }
@@ -610,6 +630,24 @@ func RegisterCostSourceServiceServer(s grpc.ServiceRegistrar, srv CostSourceServ
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&CostSourceService_ServiceDesc, srv)
+}
+
+func _CostSourceService_GetCarbonEmissions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCarbonEmissionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CostSourceServiceServer).GetCarbonEmissions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CostSourceService_GetCarbonEmissions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CostSourceServiceServer).GetCarbonEmissions(ctx, req.(*GetCarbonEmissionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _CostSourceService_Name_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -871,6 +909,10 @@ var CostSourceService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "finfocus.v1.CostSourceService",
 	HandlerType: (*CostSourceServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetCarbonEmissions",
+			Handler:    _CostSourceService_GetCarbonEmissions_Handler,
+		},
 		{
 			MethodName: "Name",
 			Handler:    _CostSourceService_Name_Handler,

@@ -4,6 +4,7 @@ export { create } from "@bufbuild/protobuf";
 // Generated proto types and services
 // In Connect-ES v2, services are generated directly in *_pb.ts files
 export * from "./generated/finfocus/v1/enums_pb.js";
+export * from "./generated/finfocus/v1/carbon_pb.js";
 export * from "./generated/finfocus/v1/budget_pb.js";
 export * from "./generated/finfocus/v1/costsource_pb.js";
 export * from "./generated/finfocus/v1/focus_pb.js";

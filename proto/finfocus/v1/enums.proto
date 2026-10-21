@@ -201,6 +201,9 @@ enum PluginCapability {
 
   // PLUGIN_CAPABILITY_COST_PARSE parses inputs into priceable resource descriptors.
   PLUGIN_CAPABILITY_COST_PARSE = 19;
+  // Plugin implements historical inventory reporting via GetCarbonEmissions.
+  // Independent of projected CARBON impact metrics.
+  PLUGIN_CAPABILITY_HISTORICAL_CARBON = 20;
 }
 
 // UsageProfile represents the intended workload context for cost estimation.

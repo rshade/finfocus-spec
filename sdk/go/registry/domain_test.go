@@ -420,7 +420,7 @@ func TestAllFunctions(t *testing.T) {
 		{"registry.AllPluginStatuses", 6, func() int { return len(registry.AllPluginStatuses()) }},
 		{"registry.AllSecurityLevels", 4, func() int { return len(registry.AllSecurityLevels()) }},
 		{"registry.AllInstallationMethods", 4, func() int { return len(registry.AllInstallationMethods()) }},
-		{"registry.AllPluginCapabilities", 33, func() int { return len(registry.AllPluginCapabilities()) }},
+		{"registry.AllPluginCapabilities", 34, func() int { return len(registry.AllPluginCapabilities()) }},
 		{"registry.AllSystemPermissions", 9, func() int { return len(registry.AllSystemPermissions()) }},
 		{"registry.AllAuthMethods", 6, func() int { return len(registry.AllAuthMethods()) }},
 	}
@@ -630,7 +630,7 @@ func BenchmarkValidation_32Values(b *testing.B) {
 
 func TestServiceMethods(t *testing.T) {
 	want := []string{
-		"Name", "Supports", "GetActualCost", "GetProjectedCost", "GetPricingSpec", "EstimateCost",
+		"GetCarbonEmissions", "Name", "Supports", "GetActualCost", "GetProjectedCost", "GetPricingSpec", "EstimateCost",
 		"GetRecommendations", "DismissRecommendation", "GetRecommendationHistory", "GetBudgets",
 		"GetPluginInfo", "DryRun",
 		"BatchCost", "ResolveResourceTypes",

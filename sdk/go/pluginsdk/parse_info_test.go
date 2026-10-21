@@ -190,7 +190,7 @@ func TestCostParseCapabilityBoundsAndLegacy(t *testing.T) {
 		{pbc.PluginCapability_PLUGIN_CAPABILITY_PROJECTED_COSTS, true},
 		{pbc.PluginCapability_PLUGIN_CAPABILITY_RECOMMENDATION_SCORING, true},
 		{pbc.PluginCapability_PLUGIN_CAPABILITY_COST_PARSE, true},
-		{pbc.PluginCapability(20), false},
+		{pbc.PluginCapability(21), false},
 	} {
 		t.Run(tc.capability.String(), func(t *testing.T) {
 			require.Equal(t, tc.valid, pluginsdk.IsValidCapability(tc.capability))

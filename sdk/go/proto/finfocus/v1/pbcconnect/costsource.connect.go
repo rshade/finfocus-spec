@@ -35,6 +35,9 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// CostSourceServiceGetCarbonEmissionsProcedure is the fully-qualified name of the
+	// CostSourceService's GetCarbonEmissions RPC.
+	CostSourceServiceGetCarbonEmissionsProcedure = "/finfocus.v1.CostSourceService/GetCarbonEmissions"
 	// CostSourceServiceNameProcedure is the fully-qualified name of the CostSourceService's Name RPC.
 	CostSourceServiceNameProcedure = "/finfocus.v1.CostSourceService/Name"
 	// CostSourceServiceSupportsProcedure is the fully-qualified name of the CostSourceService's
@@ -89,6 +92,9 @@ const (
 
 // CostSourceServiceClient is a client for the finfocus.v1.CostSourceService service.
 type CostSourceServiceClient interface {
+	// GetCarbonEmissions returns optional historical monthly inventory data.
+	// Plugins without a historical provider return UNIMPLEMENTED.
+	GetCarbonEmissions(context.Context, *connect.Request[v1.GetCarbonEmissionsRequest]) (*connect.Response[v1.GetCarbonEmissionsResponse], error)
 	// Name returns the display name of the cost source plugin.
 	Name(context.Context, *connect.Request[v1.NameRequest]) (*connect.Response[v1.NameResponse], error)
 	// Supports checks if the cost source supports pricing for a given resource type.
@@ -273,6 +279,12 @@ func NewCostSourceServiceClient(httpClient connect.HTTPClient, baseURL string, o
 	baseURL = strings.TrimRight(baseURL, "/")
 	costSourceServiceMethods := v1.File_finfocus_v1_costsource_proto.Services().ByName("CostSourceService").Methods()
 	return &costSourceServiceClient{
+		getCarbonEmissions: connect.NewClient[v1.GetCarbonEmissionsRequest, v1.GetCarbonEmissionsResponse](
+			httpClient,
+			baseURL+CostSourceServiceGetCarbonEmissionsProcedure,
+			connect.WithSchema(costSourceServiceMethods.ByName("GetCarbonEmissions")),
+			connect.WithClientOptions(opts...),
+		),
 		name: connect.NewClient[v1.NameRequest, v1.NameResponse](
 			httpClient,
 			baseURL+CostSourceServiceNameProcedure,
@@ -362,6 +374,7 @@ func NewCostSourceServiceClient(httpClient connect.HTTPClient, baseURL string, o
 
 // costSourceServiceClient implements CostSourceServiceClient.
 type costSourceServiceClient struct {
+	getCarbonEmissions       *connect.Client[v1.GetCarbonEmissionsRequest, v1.GetCarbonEmissionsResponse]
 	name                     *connect.Client[v1.NameRequest, v1.NameResponse]
 	supports                 *connect.Client[v1.SupportsRequest, v1.SupportsResponse]
 	getActualCost            *connect.Client[v1.GetActualCostRequest, v1.GetActualCostResponse]
@@ -376,6 +389,11 @@ type costSourceServiceClient struct {
 	dryRun                   *connect.Client[v1.DryRunRequest, v1.DryRunResponse]
 	batchCost                *connect.Client[v1.BatchCostRequest, v1.BatchCostResponse]
 	resolveResourceTypes     *connect.Client[v1.ResolveResourceTypesRequest, v1.ResolveResourceTypesResponse]
+}
+
+// GetCarbonEmissions calls finfocus.v1.CostSourceService.GetCarbonEmissions.
+func (c *costSourceServiceClient) GetCarbonEmissions(ctx context.Context, req *connect.Request[v1.GetCarbonEmissionsRequest]) (*connect.Response[v1.GetCarbonEmissionsResponse], error) {
+	return c.getCarbonEmissions.CallUnary(ctx, req)
 }
 
 // Name calls finfocus.v1.CostSourceService.Name.
@@ -450,6 +468,9 @@ func (c *costSourceServiceClient) ResolveResourceTypes(ctx context.Context, req 
 
 // CostSourceServiceHandler is an implementation of the finfocus.v1.CostSourceService service.
 type CostSourceServiceHandler interface {
+	// GetCarbonEmissions returns optional historical monthly inventory data.
+	// Plugins without a historical provider return UNIMPLEMENTED.
+	GetCarbonEmissions(context.Context, *connect.Request[v1.GetCarbonEmissionsRequest]) (*connect.Response[v1.GetCarbonEmissionsResponse], error)
 	// Name returns the display name of the cost source plugin.
 	Name(context.Context, *connect.Request[v1.NameRequest]) (*connect.Response[v1.NameResponse], error)
 	// Supports checks if the cost source supports pricing for a given resource type.
@@ -630,6 +651,12 @@ type CostSourceServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewCostSourceServiceHandler(svc CostSourceServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	costSourceServiceMethods := v1.File_finfocus_v1_costsource_proto.Services().ByName("CostSourceService").Methods()
+	costSourceServiceGetCarbonEmissionsHandler := connect.NewUnaryHandler(
+		CostSourceServiceGetCarbonEmissionsProcedure,
+		svc.GetCarbonEmissions,
+		connect.WithSchema(costSourceServiceMethods.ByName("GetCarbonEmissions")),
+		connect.WithHandlerOptions(opts...),
+	)
 	costSourceServiceNameHandler := connect.NewUnaryHandler(
 		CostSourceServiceNameProcedure,
 		svc.Name,
@@ -716,6 +743,8 @@ func NewCostSourceServiceHandler(svc CostSourceServiceHandler, opts ...connect.H
 	)
 	return "/finfocus.v1.CostSourceService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case CostSourceServiceGetCarbonEmissionsProcedure:
+			costSourceServiceGetCarbonEmissionsHandler.ServeHTTP(w, r)
 		case CostSourceServiceNameProcedure:
 			costSourceServiceNameHandler.ServeHTTP(w, r)
 		case CostSourceServiceSupportsProcedure:
@@ -752,6 +781,10 @@ func NewCostSourceServiceHandler(svc CostSourceServiceHandler, opts ...connect.H
 
 // UnimplementedCostSourceServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedCostSourceServiceHandler struct{}
+
+func (UnimplementedCostSourceServiceHandler) GetCarbonEmissions(context.Context, *connect.Request[v1.GetCarbonEmissionsRequest]) (*connect.Response[v1.GetCarbonEmissionsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("finfocus.v1.CostSourceService.GetCarbonEmissions is not implemented"))
+}
 
 func (UnimplementedCostSourceServiceHandler) Name(context.Context, *connect.Request[v1.NameRequest]) (*connect.Response[v1.NameResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("finfocus.v1.CostSourceService.Name is not implemented"))

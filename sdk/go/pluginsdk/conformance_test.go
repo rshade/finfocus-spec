@@ -842,7 +842,7 @@ func TestIsValidCapability(t *testing.T) {
 		{"UNSPECIFIED (0)", pbc.PluginCapability_PLUGIN_CAPABILITY_UNSPECIFIED, false},
 		{"negative value (-1)", pbc.PluginCapability(-1), false},
 		{"out of range (999)", pbc.PluginCapability(999), false},
-		{"just above max (20)", pbc.PluginCapability(20), false},
+		{"just above max (21)", pbc.PluginCapability(21), false},
 		{"very large value", pbc.PluginCapability(1000000), false},
 	}
 

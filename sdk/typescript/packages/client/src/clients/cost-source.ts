@@ -44,6 +44,7 @@ import {
   GetBudgetsRequestSchema,
   GetBudgetsResponse
 } from "../generated/finfocus/v1/budget_pb.js";
+import { GetCarbonEmissionsRequest, GetCarbonEmissionsResponse } from "../generated/finfocus/v1/carbon_pb.js";
 import { ValidationError } from "../errors/validation-error.js";
 import { MAX_BATCH_SIZE, MAX_SOURCE_TYPES } from "../utils/batch.js";
 
@@ -69,6 +70,11 @@ export class CostSourceClient {
 
   async supports(req: SupportsRequest = create(SupportsRequestSchema)): Promise<SupportsResponse> {
     return this.client.supports(req);
+  }
+
+  /** Queries monthly historical emissions; independent of projected carbon metrics. */
+  async getCarbonEmissions(req: GetCarbonEmissionsRequest): Promise<GetCarbonEmissionsResponse> {
+    return this.client.getCarbonEmissions(req);
   }
 
   async getActualCost(req: GetActualCostRequest): Promise<GetActualCostResponse> {

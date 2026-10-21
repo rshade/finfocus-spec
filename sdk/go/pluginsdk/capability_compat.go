@@ -13,7 +13,7 @@ const capabilityTrue = "true"
 // Exhaustive Nolint Rationale:
 // This map intentionally excludes PLUGIN_CAPABILITY_UNSPECIFIED (value 0) because
 // it is the protobuf default sentinel value, not a real capability. All other
-// PluginCapability values (1-19) MUST be included in this map.
+// PluginCapability values (1-20) MUST be included in this map.
 //
 // When adding new capabilities to the proto definition:
 // 1. Add a corresponding entry to this map with a "supports_" prefix
@@ -22,6 +22,7 @@ const capabilityTrue = "true"
 //
 //nolint:exhaustive,gochecknoglobals // UNSPECIFIED intentionally excluded (protobuf default)
 var legacyCapabilityNames = map[pbc.PluginCapability]string{
+	pbc.PluginCapability_PLUGIN_CAPABILITY_HISTORICAL_CARBON:       "supports_historical_carbon",
 	pbc.PluginCapability_PLUGIN_CAPABILITY_RECOMMENDATIONS:         "supports_recommendations",
 	pbc.PluginCapability_PLUGIN_CAPABILITY_DRY_RUN:                 "supports_dry_run",
 	pbc.PluginCapability_PLUGIN_CAPABILITY_BUDGETS:                 "supports_budgets",

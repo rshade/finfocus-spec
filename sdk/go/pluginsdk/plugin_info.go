@@ -40,6 +40,8 @@ type PluginInfo struct {
 	// When set, these are returned in GetPluginInfoResponse.capabilities.
 	// When nil or empty, capabilities are auto-discovered from implemented interfaces.
 	// This allows plugins to override auto-discovery if needed.
+	// HISTORICAL_CARBON always requires explicit advertisement; generated
+	// unimplemented server embeddings also satisfy HistoricalCarbonProvider.
 	Capabilities []pbc.PluginCapability
 
 	// Settings lists the values this plugin reads from its process environment.
@@ -240,7 +242,7 @@ const (
 	// MaxConfiguredCapabilities is the maximum number of capabilities allowed
 	// in PluginInfo.Capabilities. This limit prevents DoS attacks where malicious
 	// plugins configure excessive capabilities to exhaust memory. The limit is
-	// generous (64) compared to currently defined capabilities (19) to allow for
+	// generous (64) compared to currently defined capabilities (20) to allow for
 	// future growth while still providing protection.
 	MaxConfiguredCapabilities = 64
 
@@ -250,7 +252,7 @@ const (
 
 	// maxValidCapability is the maximum valid PluginCapability enum value.
 	// This should be updated when new capabilities are added to the proto definition.
-	maxValidCapability = pbc.PluginCapability_PLUGIN_CAPABILITY_COST_PARSE // 19
+	maxValidCapability = pbc.PluginCapability_PLUGIN_CAPABILITY_HISTORICAL_CARBON // 20
 )
 
 // IsValidCapability reports whether a PluginCapability value is within the

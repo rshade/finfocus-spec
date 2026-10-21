@@ -4,6 +4,7 @@ package finfocus.v1;
 
 option go_package = "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1;pbc";
 
+import "finfocus/v1/carbon.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
 import "finfocus/v1/focus.proto";
@@ -14,6 +15,10 @@ import "finfocus/v1/enums.proto";
 // This service defines the contract for retrieving actual costs, projected costs,
 // and pricing specifications from various cost data sources.
 service CostSourceService {
+  // GetCarbonEmissions returns optional historical monthly inventory data.
+  // Plugins without a historical provider return UNIMPLEMENTED.
+  rpc GetCarbonEmissions(GetCarbonEmissionsRequest) returns (GetCarbonEmissionsResponse);
+
   // Name returns the display name of the cost source plugin.
   rpc Name(NameRequest) returns (NameResponse);
   

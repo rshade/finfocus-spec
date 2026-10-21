@@ -123,7 +123,8 @@
               "contract_commitments",
               "invoice_data",
               "recommendation_scoring",
-            "cost_parse"
+            "cost_parse",
+            "historical_carbon"
             ]
           },
           "uniqueItems": true

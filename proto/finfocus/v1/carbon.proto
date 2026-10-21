@@ -1,0 +1,75 @@
+// Copyright 2026 The FinFocus Authors
+// Licensed under the Apache License, Version 2.0.
+syntax = "proto3";
+package finfocus.v1;
+option go_package = "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1;pbc";
+import "google/protobuf/timestamp.proto";
+
+// CarbonAccountingMethod selects the emissions accounting methodology.
+enum CarbonAccountingMethod {
+  CARBON_ACCOUNTING_METHOD_UNSPECIFIED = 0;
+  CARBON_ACCOUNTING_METHOD_MARKET_BASED = 1;
+  CARBON_ACCOUNTING_METHOD_LOCATION_BASED = 2;
+}
+
+// CarbonEmissionsScope selects one non-overlapping inventory scope.
+enum CarbonEmissionsScope {
+  CARBON_EMISSIONS_SCOPE_UNSPECIFIED = 0;
+  CARBON_EMISSIONS_SCOPE_TOTAL = 1;
+  CARBON_EMISSIONS_SCOPE_SCOPE_1 = 2;
+  CARBON_EMISSIONS_SCOPE_SCOPE_2 = 3;
+  CARBON_EMISSIONS_SCOPE_SCOPE_3 = 4;
+}
+
+// GetCarbonEmissionsRequest queries provider-reported monthly aggregates.
+// Dimensions use OR within each dimension and AND across dimensions.
+message GetCarbonEmissionsRequest {
+  // Inclusive month boundary at midnight UTC.
+  google.protobuf.Timestamp start = 1;
+  // Exclusive month boundary at midnight UTC, after start.
+  google.protobuf.Timestamp end = 2;
+  repeated string account_ids = 3;
+  repeated string regions = 4;
+  repeated string services = 5;
+  // Unspecified defaults to market-based.
+  CarbonAccountingMethod method = 6;
+  // Unspecified defaults to total.
+  CarbonEmissionsScope scope = 7;
+  // Zero defaults to 50; valid explicit range is 1..1000.
+  int32 page_size = 8;
+  // Opaque continuation token bound to the normalized query and credentials.
+  string page_token = 9;
+}
+
+// CarbonEmissionRecord retains a provider's monthly inventory and provenance.
+// These aggregates must not be attributed to resource cost rows or combined
+// across accounting methods or overlapping scopes. Zero requires an explicit
+// provider-reported zero; absent data must not be synthesized.
+message CarbonEmissionRecord {
+  // Stable identity excludes model_version so revisions are not additive rows.
+  string id = 1;
+  string provider = 2;
+  string source = 3;
+  string account_id = 4;
+  string region = 5;
+  string service = 6;
+  google.protobuf.Timestamp start = 7;
+  google.protobuf.Timestamp end = 8;
+  // Always resolved, never unspecified.
+  CarbonAccountingMethod method = 9;
+  // Always resolved, never unspecified.
+  CarbonEmissionsScope scope = 10;
+  string model_version = 11;
+  // Finite, nonnegative emissions in gCO2e, including explicit zero.
+  double value = 12;
+  // Must be gCO2e.
+  string unit = 13;
+  google.protobuf.Timestamp retrieved_at = 14;
+}
+
+// GetCarbonEmissionsResponse is one page. Empty records mean no available data,
+// without asserting a reason or implying zero emissions.
+message GetCarbonEmissionsResponse {
+  repeated CarbonEmissionRecord records = 1;
+  string next_page_token = 2;
+}
