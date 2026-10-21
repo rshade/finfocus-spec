@@ -26,7 +26,9 @@ account, region, service, original monthly period, resolved method and scope,
 model version, normalized finite nonnegative `gCO2e` value, and retrieval time.
 Stable identity excludes model version: revised estimates must not become new
 additive rows. Empty pages indicate no available data without asserting why.
-Explicit zero is valid; providers must never invent zeros for missing data.
+The optional `value` field must be present, including for explicit zero. Go
+producers can use `proto.Float64(value)`; `GetValue()` remains available for
+readers after validation. Providers must never invent zeros for missing data.
 Hosts must avoid mixing accounting methods or overlapping scopes and must not
 allocate monthly inventory to resource cost rows without supporting evidence.
 

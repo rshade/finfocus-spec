@@ -2,6 +2,7 @@ package pluginsdk_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
 	"net"
@@ -19,6 +20,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
@@ -45,7 +48,7 @@ func carbonRecord() *pbc.CarbonEmissionRecord {
 		Method:       pbc.CarbonAccountingMethod_CARBON_ACCOUNTING_METHOD_MARKET_BASED,
 		Scope:        pbc.CarbonEmissionsScope_CARBON_EMISSIONS_SCOPE_TOTAL,
 		ModelVersion: "v1",
-		Value:        0,
+		Value:        proto.Float64(0),
 		Unit:         "gCO2e",
 		RetrievedAt:  timestamppb.Now(),
 	}
@@ -85,9 +88,9 @@ func TestHistoricalCarbonRecord(t *testing.T) {
 	)
 	require.NoError(t, pluginsdk.ValidateGetCarbonEmissionsResponse(&pbc.GetCarbonEmissionsResponse{}))
 	cases := map[string]func(*pbc.CarbonEmissionRecord){
-		"nan":             func(r *pbc.CarbonEmissionRecord) { r.Value = math.NaN() },
-		"inf":             func(r *pbc.CarbonEmissionRecord) { r.Value = math.Inf(1) },
-		"negative":        func(r *pbc.CarbonEmissionRecord) { r.Value = -1 },
+		"nan":             func(r *pbc.CarbonEmissionRecord) { r.Value = proto.Float64(math.NaN()) },
+		"inf":             func(r *pbc.CarbonEmissionRecord) { r.Value = proto.Float64(math.Inf(1)) },
+		"negative":        func(r *pbc.CarbonEmissionRecord) { r.Value = proto.Float64(-1) },
 		"unit":            func(r *pbc.CarbonEmissionRecord) { r.Unit = "MTCO2e" },
 		"model":           func(r *pbc.CarbonEmissionRecord) { r.ModelVersion = "" },
 		"account":         func(r *pbc.CarbonEmissionRecord) { r.AccountId = "" },
@@ -237,10 +240,33 @@ func TestHistoricalCarbonRoundTrip(t *testing.T) {
 				require.Len(t, resp.GetRecords(), 1)
 				require.Equal(t, "opaque", resp.GetNextPageToken())
 				require.Zero(t, resp.GetRecords()[0].GetValue())
+				require.NotNil(
+					t,
+					resp.GetRecords()[0].Value,
+					"explicit zero presence must survive transport",
+				)
 				require.Equal(t, "aws-sustainability", resp.GetRecords()[0].GetSource())
 				require.Equal(t, "v1", resp.GetRecords()[0].GetModelVersion())
 				require.Zero(t, req.GetPageSize(), "SDK must not mutate caller request")
 			})
 		}
 	}
+}
+
+func TestHistoricalCarbonRequiresExplicitValue(t *testing.T) {
+	record := carbonRecord()
+	encoded, err := protojson.Marshal(record)
+	require.NoError(t, err)
+	var omitted map[string]json.RawMessage
+	require.NoError(t, json.Unmarshal(encoded, &omitted))
+	delete(omitted, "value")
+	encoded, err = json.Marshal(omitted)
+	require.NoError(t, err)
+	decoded := new(pbc.CarbonEmissionRecord)
+	require.NoError(t, protojson.Unmarshal(encoded, decoded))
+	require.Error(
+		t,
+		pluginsdk.ValidateCarbonEmissionRecord(decoded),
+		"missing emissions must not become an explicit zero",
+	)
 }

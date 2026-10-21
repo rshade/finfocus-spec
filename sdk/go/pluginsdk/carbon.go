@@ -118,6 +118,9 @@ func ValidateCarbonEmissionRecord(record *pbc.CarbonEmissionRecord) error {
 		record.GetScope() > pbc.CarbonEmissionsScope_CARBON_EMISSIONS_SCOPE_SCOPE_3 {
 		return errors.New("carbon record requires resolved emissions scope")
 	}
+	if record.Value == nil {
+		return errors.New("carbon record requires explicit emissions value")
+	}
 	if record.GetUnit() != CarbonEmissionsUnit || math.IsNaN(record.GetValue()) || math.IsInf(record.GetValue(), 0) ||
 		record.GetValue() < 0 {
 		return errors.New("carbon record requires finite nonnegative gCO2e")

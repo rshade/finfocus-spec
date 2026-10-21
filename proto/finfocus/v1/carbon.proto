@@ -61,7 +61,7 @@ message CarbonEmissionRecord {
   CarbonEmissionsScope scope = 10;
   string model_version = 11;
   // Finite, nonnegative emissions in gCO2e, including explicit zero.
-  double value = 12;
+  optional double value = 12;
   // Must be gCO2e.
   string unit = 13;
   google.protobuf.Timestamp retrieved_at = 14;

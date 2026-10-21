@@ -268,7 +268,7 @@ type CarbonEmissionRecord struct {
 	Scope        CarbonEmissionsScope `protobuf:"varint,10,opt,name=scope,proto3,enum=finfocus.v1.CarbonEmissionsScope" json:"scope,omitempty"`
 	ModelVersion string               `protobuf:"bytes,11,opt,name=model_version,json=modelVersion,proto3" json:"model_version,omitempty"`
 	// Finite, nonnegative emissions in gCO2e, including explicit zero.
-	Value float64 `protobuf:"fixed64,12,opt,name=value,proto3" json:"value,omitempty"`
+	Value *float64 `protobuf:"fixed64,12,opt,name=value,proto3,oneof" json:"value,omitempty"`
 	// Must be gCO2e.
 	Unit          string                 `protobuf:"bytes,13,opt,name=unit,proto3" json:"unit,omitempty"`
 	RetrievedAt   *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=retrieved_at,json=retrievedAt,proto3" json:"retrieved_at,omitempty"`
@@ -384,8 +384,8 @@ func (x *CarbonEmissionRecord) GetModelVersion() string {
 }
 
 func (x *CarbonEmissionRecord) GetValue() float64 {
-	if x != nil {
-		return x.Value
+	if x != nil && x.Value != nil {
+		return *x.Value
 	}
 	return 0
 }
@@ -474,7 +474,7 @@ const file_finfocus_v1_carbon_proto_rawDesc = "" +
 	"\x05scope\x18\a \x01(\x0e2!.finfocus.v1.CarbonEmissionsScopeR\x05scope\x12\x1b\n" +
 	"\tpage_size\x18\b \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\t \x01(\tR\tpageToken\"\x8f\x04\n" +
+	"page_token\x18\t \x01(\tR\tpageToken\"\x9e\x04\n" +
 	"\x14CarbonEmissionRecord\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
 	"\bprovider\x18\x02 \x01(\tR\bprovider\x12\x16\n" +
@@ -488,10 +488,11 @@ const file_finfocus_v1_carbon_proto_rawDesc = "" +
 	"\x06method\x18\t \x01(\x0e2#.finfocus.v1.CarbonAccountingMethodR\x06method\x127\n" +
 	"\x05scope\x18\n" +
 	" \x01(\x0e2!.finfocus.v1.CarbonEmissionsScopeR\x05scope\x12#\n" +
-	"\rmodel_version\x18\v \x01(\tR\fmodelVersion\x12\x14\n" +
-	"\x05value\x18\f \x01(\x01R\x05value\x12\x12\n" +
+	"\rmodel_version\x18\v \x01(\tR\fmodelVersion\x12\x19\n" +
+	"\x05value\x18\f \x01(\x01H\x00R\x05value\x88\x01\x01\x12\x12\n" +
 	"\x04unit\x18\r \x01(\tR\x04unit\x12=\n" +
-	"\fretrieved_at\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\vretrievedAt\"\x81\x01\n" +
+	"\fretrieved_at\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\vretrievedAtB\b\n" +
+	"\x06_value\"\x81\x01\n" +
 	"\x1aGetCarbonEmissionsResponse\x12;\n" +
 	"\arecords\x18\x01 \x03(\v2!.finfocus.v1.CarbonEmissionRecordR\arecords\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken*\x9a\x01\n" +
@@ -552,6 +553,7 @@ func file_finfocus_v1_carbon_proto_init() {
 	if File_finfocus_v1_carbon_proto != nil {
 		return
 	}
+	file_finfocus_v1_carbon_proto_msgTypes[1].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

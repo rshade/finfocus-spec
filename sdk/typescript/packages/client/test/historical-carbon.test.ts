@@ -1,9 +1,9 @@
 import { afterAll, afterEach, beforeAll, expect, it } from "vitest";
 import { setupServer } from "msw/node";
 import { http, HttpResponse } from "msw";
-import { create } from "@bufbuild/protobuf";
+import { create, fromJson, toJson } from "@bufbuild/protobuf";
 import { CostSourceClient } from "../src/clients/cost-source.js";
-import { GetCarbonEmissionsRequestSchema, CarbonAccountingMethod, CarbonEmissionsScope, PluginCapability } from "../src/index.js";
+import { CarbonEmissionRecordSchema, GetCarbonEmissionsRequestSchema, CarbonAccountingMethod, CarbonEmissionsScope, PluginCapability } from "../src/index.js";
 
 const baseUrl = "https://carbon.example.com";
 const server = setupServer(http.post(`${baseUrl}/finfocus.v1.CostSourceService/GetCarbonEmissions`, async ({ request }) => {
@@ -19,5 +19,15 @@ it("exposes historical capability and preserves monthly zero and provenance", as
   const client = new CostSourceClient({ baseUrl });
   const response = await client.getCarbonEmissions(create(GetCarbonEmissionsRequestSchema, { accountIds: ["123"], pageToken: "opaque" }));
   expect(response.nextPageToken).toBe("next");
+  expect(response.records[0].value).toBe(0);
   expect(response.records[0]).toMatchObject({ id: "stable", value: 0, unit: "gCO2e", source: "aws-sustainability", modelVersion: "v1", method: CarbonAccountingMethod.MARKET_BASED, scope: CarbonEmissionsScope.TOTAL });
+});
+
+it("distinguishes omitted emissions from explicit zero in protobuf JSON", () => {
+  const omitted = fromJson(CarbonEmissionRecordSchema, {});
+  const zero = fromJson(CarbonEmissionRecordSchema, { value: 0 });
+  expect(omitted.value).toBeUndefined();
+  expect(zero.value).toBe(0);
+  expect(toJson(CarbonEmissionRecordSchema, omitted)).not.toHaveProperty("value");
+  expect(toJson(CarbonEmissionRecordSchema, zero)).toHaveProperty("value", 0);
 });
