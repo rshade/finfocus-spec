@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.8](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.7.7...finfocus-client-v0.7.8) (2026-10-22)
+
+
+### Features
+
+* add opt-in historical carbon reporting contract ([#655](https://github.com/rshade/finfocus-spec/issues/655)) ([64416e6](https://github.com/rshade/finfocus-spec/commit/64416e69c22483c63aa66ac37738acbc991cd8b5))
+
 ## [0.7.7](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.7.6...finfocus-client-v0.7.7) (2026-10-19)
 
 
