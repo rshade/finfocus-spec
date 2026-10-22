@@ -7613,7 +7613,7 @@ var File_finfocus_v1_costsource_proto protoreflect.FileDescriptor
 
 const file_finfocus_v1_costsource_proto_rawDesc = "" +
 	"\n" +
-	"\x1cfinfocus/v1/costsource.proto\x12\vfinfocus.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x17finfocus/v1/focus.proto\x1a\x18finfocus/v1/budget.proto\x1a\x17finfocus/v1/enums.proto\"\r\n" +
+	"\x1cfinfocus/v1/costsource.proto\x12\vfinfocus.v1\x1a\x18finfocus/v1/carbon.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x17finfocus/v1/focus.proto\x1a\x18finfocus/v1/budget.proto\x1a\x17finfocus/v1/enums.proto\"\r\n" +
 	"\vNameRequest\"\"\n" +
 	"\fNameResponse\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"e\n" +
@@ -8280,8 +8280,10 @@ const file_finfocus_v1_costsource_proto_rawDesc = "" +
 	"\x18PLUGIN_SETTING_TYPE_BOOL\x10\x03\x12\x1c\n" +
 	"\x18PLUGIN_SETTING_TYPE_ENUM\x10\x04\x12\x1b\n" +
 	"\x17PLUGIN_SETTING_TYPE_URL\x10\x05\x12 \n" +
-	"\x1cPLUGIN_SETTING_TYPE_DURATION\x10\x062\xf5\t\n" +
-	"\x11CostSourceService\x12;\n" +
+	"\x1cPLUGIN_SETTING_TYPE_DURATION\x10\x062\xdc\n" +
+	"\n" +
+	"\x11CostSourceService\x12e\n" +
+	"\x12GetCarbonEmissions\x12&.finfocus.v1.GetCarbonEmissionsRequest\x1a'.finfocus.v1.GetCarbonEmissionsResponse\x12;\n" +
 	"\x04Name\x12\x18.finfocus.v1.NameRequest\x1a\x19.finfocus.v1.NameResponse\x12G\n" +
 	"\bSupports\x12\x1c.finfocus.v1.SupportsRequest\x1a\x1d.finfocus.v1.SupportsResponse\x12V\n" +
 	"\rGetActualCost\x12!.finfocus.v1.GetActualCostRequest\x1a\".finfocus.v1.GetActualCostResponse\x12_\n" +
@@ -8438,8 +8440,10 @@ var file_finfocus_v1_costsource_proto_goTypes = []any{
 	(FieldSupportStatus)(0),                   // 116: finfocus.v1.FieldSupportStatus
 	(CostQueryType)(0),                        // 117: finfocus.v1.CostQueryType
 	(SourceFormat)(0),                         // 118: finfocus.v1.SourceFormat
-	(*GetBudgetsRequest)(nil),                 // 119: finfocus.v1.GetBudgetsRequest
-	(*GetBudgetsResponse)(nil),                // 120: finfocus.v1.GetBudgetsResponse
+	(*GetCarbonEmissionsRequest)(nil),         // 119: finfocus.v1.GetCarbonEmissionsRequest
+	(*GetBudgetsRequest)(nil),                 // 120: finfocus.v1.GetBudgetsRequest
+	(*GetCarbonEmissionsResponse)(nil),        // 121: finfocus.v1.GetCarbonEmissionsResponse
+	(*GetBudgetsResponse)(nil),                // 122: finfocus.v1.GetBudgetsResponse
 }
 var file_finfocus_v1_costsource_proto_depIdxs = []int32{
 	0,   // 0: finfocus.v1.ImpactMetric.kind:type_name -> finfocus.v1.MetricKind
@@ -8583,42 +8587,44 @@ var file_finfocus_v1_costsource_proto_depIdxs = []int32{
 	108, // 138: finfocus.v1.ResolveResourceTypesResponse.expires_at:type_name -> google.protobuf.Timestamp
 	106, // 139: finfocus.v1.ResourceTypeMapping.property_mappings:type_name -> finfocus.v1.ResourceTypeMapping.PropertyMappingsEntry
 	82,  // 140: finfocus.v1.ResolveResourceTypesResponse.MappingsEntry.value:type_name -> finfocus.v1.ResourceTypeMapping
-	14,  // 141: finfocus.v1.CostSourceService.Name:input_type -> finfocus.v1.NameRequest
-	17,  // 142: finfocus.v1.CostSourceService.Supports:input_type -> finfocus.v1.SupportsRequest
-	19,  // 143: finfocus.v1.CostSourceService.GetActualCost:input_type -> finfocus.v1.GetActualCostRequest
-	21,  // 144: finfocus.v1.CostSourceService.GetProjectedCost:input_type -> finfocus.v1.GetProjectedCostRequest
-	25,  // 145: finfocus.v1.CostSourceService.GetPricingSpec:input_type -> finfocus.v1.GetPricingSpecRequest
-	47,  // 146: finfocus.v1.CostSourceService.EstimateCost:input_type -> finfocus.v1.EstimateCostRequest
-	49,  // 147: finfocus.v1.CostSourceService.GetRecommendations:input_type -> finfocus.v1.GetRecommendationsRequest
-	63,  // 148: finfocus.v1.CostSourceService.DismissRecommendation:input_type -> finfocus.v1.DismissRecommendationRequest
-	65,  // 149: finfocus.v1.CostSourceService.GetRecommendationHistory:input_type -> finfocus.v1.GetRecommendationHistoryRequest
-	119, // 150: finfocus.v1.CostSourceService.GetBudgets:input_type -> finfocus.v1.GetBudgetsRequest
-	68,  // 151: finfocus.v1.CostSourceService.GetPluginInfo:input_type -> finfocus.v1.GetPluginInfoRequest
-	72,  // 152: finfocus.v1.CostSourceService.DryRun:input_type -> finfocus.v1.DryRunRequest
-	74,  // 153: finfocus.v1.CostSourceService.BatchCost:input_type -> finfocus.v1.BatchCostRequest
-	80,  // 154: finfocus.v1.CostSourceService.ResolveResourceTypes:input_type -> finfocus.v1.ResolveResourceTypesRequest
-	34,  // 155: finfocus.v1.ObservabilityService.HealthCheck:input_type -> finfocus.v1.HealthCheckRequest
-	36,  // 156: finfocus.v1.ObservabilityService.GetMetrics:input_type -> finfocus.v1.GetMetricsRequest
-	40,  // 157: finfocus.v1.ObservabilityService.GetServiceLevelIndicators:input_type -> finfocus.v1.GetServiceLevelIndicatorsRequest
-	15,  // 158: finfocus.v1.CostSourceService.Name:output_type -> finfocus.v1.NameResponse
-	18,  // 159: finfocus.v1.CostSourceService.Supports:output_type -> finfocus.v1.SupportsResponse
-	20,  // 160: finfocus.v1.CostSourceService.GetActualCost:output_type -> finfocus.v1.GetActualCostResponse
-	22,  // 161: finfocus.v1.CostSourceService.GetProjectedCost:output_type -> finfocus.v1.GetProjectedCostResponse
-	26,  // 162: finfocus.v1.CostSourceService.GetPricingSpec:output_type -> finfocus.v1.GetPricingSpecResponse
-	48,  // 163: finfocus.v1.CostSourceService.EstimateCost:output_type -> finfocus.v1.EstimateCostResponse
-	50,  // 164: finfocus.v1.CostSourceService.GetRecommendations:output_type -> finfocus.v1.GetRecommendationsResponse
-	64,  // 165: finfocus.v1.CostSourceService.DismissRecommendation:output_type -> finfocus.v1.DismissRecommendationResponse
-	66,  // 166: finfocus.v1.CostSourceService.GetRecommendationHistory:output_type -> finfocus.v1.GetRecommendationHistoryResponse
-	120, // 167: finfocus.v1.CostSourceService.GetBudgets:output_type -> finfocus.v1.GetBudgetsResponse
-	70,  // 168: finfocus.v1.CostSourceService.GetPluginInfo:output_type -> finfocus.v1.GetPluginInfoResponse
-	73,  // 169: finfocus.v1.CostSourceService.DryRun:output_type -> finfocus.v1.DryRunResponse
-	75,  // 170: finfocus.v1.CostSourceService.BatchCost:output_type -> finfocus.v1.BatchCostResponse
-	81,  // 171: finfocus.v1.CostSourceService.ResolveResourceTypes:output_type -> finfocus.v1.ResolveResourceTypesResponse
-	35,  // 172: finfocus.v1.ObservabilityService.HealthCheck:output_type -> finfocus.v1.HealthCheckResponse
-	37,  // 173: finfocus.v1.ObservabilityService.GetMetrics:output_type -> finfocus.v1.GetMetricsResponse
-	41,  // 174: finfocus.v1.ObservabilityService.GetServiceLevelIndicators:output_type -> finfocus.v1.GetServiceLevelIndicatorsResponse
-	158, // [158:175] is the sub-list for method output_type
-	141, // [141:158] is the sub-list for method input_type
+	119, // 141: finfocus.v1.CostSourceService.GetCarbonEmissions:input_type -> finfocus.v1.GetCarbonEmissionsRequest
+	14,  // 142: finfocus.v1.CostSourceService.Name:input_type -> finfocus.v1.NameRequest
+	17,  // 143: finfocus.v1.CostSourceService.Supports:input_type -> finfocus.v1.SupportsRequest
+	19,  // 144: finfocus.v1.CostSourceService.GetActualCost:input_type -> finfocus.v1.GetActualCostRequest
+	21,  // 145: finfocus.v1.CostSourceService.GetProjectedCost:input_type -> finfocus.v1.GetProjectedCostRequest
+	25,  // 146: finfocus.v1.CostSourceService.GetPricingSpec:input_type -> finfocus.v1.GetPricingSpecRequest
+	47,  // 147: finfocus.v1.CostSourceService.EstimateCost:input_type -> finfocus.v1.EstimateCostRequest
+	49,  // 148: finfocus.v1.CostSourceService.GetRecommendations:input_type -> finfocus.v1.GetRecommendationsRequest
+	63,  // 149: finfocus.v1.CostSourceService.DismissRecommendation:input_type -> finfocus.v1.DismissRecommendationRequest
+	65,  // 150: finfocus.v1.CostSourceService.GetRecommendationHistory:input_type -> finfocus.v1.GetRecommendationHistoryRequest
+	120, // 151: finfocus.v1.CostSourceService.GetBudgets:input_type -> finfocus.v1.GetBudgetsRequest
+	68,  // 152: finfocus.v1.CostSourceService.GetPluginInfo:input_type -> finfocus.v1.GetPluginInfoRequest
+	72,  // 153: finfocus.v1.CostSourceService.DryRun:input_type -> finfocus.v1.DryRunRequest
+	74,  // 154: finfocus.v1.CostSourceService.BatchCost:input_type -> finfocus.v1.BatchCostRequest
+	80,  // 155: finfocus.v1.CostSourceService.ResolveResourceTypes:input_type -> finfocus.v1.ResolveResourceTypesRequest
+	34,  // 156: finfocus.v1.ObservabilityService.HealthCheck:input_type -> finfocus.v1.HealthCheckRequest
+	36,  // 157: finfocus.v1.ObservabilityService.GetMetrics:input_type -> finfocus.v1.GetMetricsRequest
+	40,  // 158: finfocus.v1.ObservabilityService.GetServiceLevelIndicators:input_type -> finfocus.v1.GetServiceLevelIndicatorsRequest
+	121, // 159: finfocus.v1.CostSourceService.GetCarbonEmissions:output_type -> finfocus.v1.GetCarbonEmissionsResponse
+	15,  // 160: finfocus.v1.CostSourceService.Name:output_type -> finfocus.v1.NameResponse
+	18,  // 161: finfocus.v1.CostSourceService.Supports:output_type -> finfocus.v1.SupportsResponse
+	20,  // 162: finfocus.v1.CostSourceService.GetActualCost:output_type -> finfocus.v1.GetActualCostResponse
+	22,  // 163: finfocus.v1.CostSourceService.GetProjectedCost:output_type -> finfocus.v1.GetProjectedCostResponse
+	26,  // 164: finfocus.v1.CostSourceService.GetPricingSpec:output_type -> finfocus.v1.GetPricingSpecResponse
+	48,  // 165: finfocus.v1.CostSourceService.EstimateCost:output_type -> finfocus.v1.EstimateCostResponse
+	50,  // 166: finfocus.v1.CostSourceService.GetRecommendations:output_type -> finfocus.v1.GetRecommendationsResponse
+	64,  // 167: finfocus.v1.CostSourceService.DismissRecommendation:output_type -> finfocus.v1.DismissRecommendationResponse
+	66,  // 168: finfocus.v1.CostSourceService.GetRecommendationHistory:output_type -> finfocus.v1.GetRecommendationHistoryResponse
+	122, // 169: finfocus.v1.CostSourceService.GetBudgets:output_type -> finfocus.v1.GetBudgetsResponse
+	70,  // 170: finfocus.v1.CostSourceService.GetPluginInfo:output_type -> finfocus.v1.GetPluginInfoResponse
+	73,  // 171: finfocus.v1.CostSourceService.DryRun:output_type -> finfocus.v1.DryRunResponse
+	75,  // 172: finfocus.v1.CostSourceService.BatchCost:output_type -> finfocus.v1.BatchCostResponse
+	81,  // 173: finfocus.v1.CostSourceService.ResolveResourceTypes:output_type -> finfocus.v1.ResolveResourceTypesResponse
+	35,  // 174: finfocus.v1.ObservabilityService.HealthCheck:output_type -> finfocus.v1.HealthCheckResponse
+	37,  // 175: finfocus.v1.ObservabilityService.GetMetrics:output_type -> finfocus.v1.GetMetricsResponse
+	41,  // 176: finfocus.v1.ObservabilityService.GetServiceLevelIndicators:output_type -> finfocus.v1.GetServiceLevelIndicatorsResponse
+	159, // [159:177] is the sub-list for method output_type
+	141, // [141:159] is the sub-list for method input_type
 	141, // [141:141] is the sub-list for extension type_name
 	141, // [141:141] is the sub-list for extension extendee
 	0,   // [0:141] is the sub-list for field type_name
@@ -8629,6 +8635,7 @@ func file_finfocus_v1_costsource_proto_init() {
 	if File_finfocus_v1_costsource_proto != nil {
 		return
 	}
+	file_finfocus_v1_carbon_proto_init()
 	file_finfocus_v1_focus_proto_init()
 	file_finfocus_v1_budget_proto_init()
 	file_finfocus_v1_enums_proto_init()

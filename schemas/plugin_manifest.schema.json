@@ -171,7 +171,8 @@
               "estimate_cost", "dismiss_recommendations", "batch_cost",
               "resolve_resource_types", "usage_stats", "allocation",
               "contract_commitments", "invoice_data", "recommendation_scoring",
-            "cost_parse"
+            "cost_parse",
+            "historical_carbon"
             ]
           },
           "uniqueItems": true,
@@ -197,7 +198,7 @@
                 "type": "string",
                 "enum": [
                   "Name", "Supports", "GetActualCost", "GetProjectedCost", "GetPricingSpec",
-                  "EstimateCost", "GetRecommendations", "DismissRecommendation", "GetRecommendationHistory", "GetBudgets",
+                  "EstimateCost", "GetRecommendations", "DismissRecommendation", "GetRecommendationHistory", "GetBudgets", "GetCarbonEmissions",
                   "GetPluginInfo", "DryRun", "BatchCost", "ResolveResourceTypes"
                 ]
               },

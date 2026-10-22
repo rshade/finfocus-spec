@@ -196,3 +196,15 @@ func (h *ConnectHandler) ResolveResourceTypes(
 	}
 	return connect.NewResponse(resp), nil
 }
+
+// GetCarbonEmissions implements pbcconnect.CostSourceServiceHandler.
+func (h *ConnectHandler) GetCarbonEmissions(
+	ctx context.Context,
+	req *connect.Request[pbc.GetCarbonEmissionsRequest],
+) (*connect.Response[pbc.GetCarbonEmissionsResponse], error) {
+	resp, err := h.server.GetCarbonEmissions(ctx, req.Msg)
+	if err != nil {
+		return nil, toConnectError(err)
+	}
+	return connect.NewResponse(resp), nil
+}
