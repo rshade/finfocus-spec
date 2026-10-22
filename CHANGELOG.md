@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.10](https://github.com/rshade/finfocus-spec/compare/v0.7.9...v0.7.10) (2026-10-22)
+
+
+### Added
+
+* add opt-in historical carbon reporting contract ([#655](https://github.com/rshade/finfocus-spec/issues/655)) ([64416e6](https://github.com/rshade/finfocus-spec/commit/64416e69c22483c63aa66ac37738acbc991cd8b5))
+
 ## [0.7.9](https://github.com/rshade/finfocus-spec/compare/v0.7.8...v0.7.9) (2026-10-20)
 
 
