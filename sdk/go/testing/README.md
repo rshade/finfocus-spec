@@ -473,6 +473,20 @@ func TestMyUsageSource(t *testing.T) {
 }
 ```
 
+### Spot Recommendation Helpers
+
+`ValidateRecommendationSpot(category, score)` is the shared rule behind `pluginsdk.ValidateRecommendation`
+and the `RPCCorrectness_GetRecommendationsSpot` check. It returns `ErrRecommendationSpotInvalidValue` or
+`ErrRecommendationSpotInvalidCategory` and does not allocate on valid input. `NewSpotRecommendation(id, risk)`
+builds a valid `DYNAMIC` recommendation for tests; a risk of `0` means unknown.
+
+```go
+plugin := plugintesting.NewMockPlugin()
+plugin.SetRecommendationsConfig(plugintesting.RecommendationsConfig{
+    Recommendations: []*pbc.Recommendation{plugintesting.NewSpotRecommendation("rec-1", 0.12)},
+})
+```
+
 ### Recommendation Scorer Testing
 
 Helpers for plugins that implement `RecommendationScorerService.ScoreRecommendations` (see
@@ -853,6 +867,10 @@ The conformance suite provides multi-level validation across four test categorie
   passes, a plugin that rejects it fails)
 - `RPCCorrectness_GetProjectedCostWithAttributes` - GetProjectedCost accepts a descriptor carrying nested
   `attributes` (Basic; a plugin that ignores the field passes)
+- `RPCCorrectness_GetRecommendationsSpot` - Every returned recommendation pairs a non-zero
+  `spot_interruption_risk_score` with `DYNAMIC` pricing and keeps it within 0.0 to 1.0 (Standard; plugins
+  that never set the fields, return no recommendations, answer `Unimplemented`, or declare capabilities
+  without recommendations pass)
 - `RPCCorrectness_GetRecommendations_Pagination` - Pagination token handling
 - `RPCCorrectness_GetRecommendations_Filtering` - Filter criteria validation
 - `RPCCorrectness_GetRecommendations_ActionDetails` - Action type details
@@ -1022,6 +1040,8 @@ func ValidateNameResponse(response *pbc.NameResponse) error
 - Recommendations MUST include valid category, action_type, and resource info
 - Impact MUST include estimated_savings and currency
 - Summary MUST accurately reflect aggregated statistics
+- A non-zero `spot_interruption_risk_score` MUST come with `pricing_category` `DYNAMIC` and stay within
+  0.0 to 1.0 (checked at Standard level by `RPCCorrectness_GetRecommendationsSpot`)
 
 **Standard Requirements:**
 

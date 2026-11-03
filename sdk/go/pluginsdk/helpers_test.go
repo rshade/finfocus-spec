@@ -15,6 +15,7 @@ import (
 
 	"github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
+	plugintesting "github.com/rshade/finfocus-spec/sdk/go/testing"
 )
 
 func TestResourceMatcher(t *testing.T) {
@@ -3013,5 +3014,107 @@ func BenchmarkWithProjectedCostPriceOptions(b *testing.B) {
 				_ = pluginsdk.NewGetProjectedCostResponse(pluginsdk.WithProjectedCostPriceOptions(tc.options...))
 			}
 		})
+	}
+}
+
+func BenchmarkValidateRecommendation(b *testing.B) {
+	rec := &pbc.Recommendation{
+		Id:         "rec-001",
+		Category:   pbc.RecommendationCategory_RECOMMENDATION_CATEGORY_COST,
+		ActionType: pbc.RecommendationActionType_RECOMMENDATION_ACTION_TYPE_RIGHTSIZE,
+		Resource:   &pbc.ResourceRecommendationInfo{Id: "i-12345", Provider: "aws"},
+		Impact:     &pbc.RecommendationImpact{EstimatedSavings: 100.0, Currency: "USD"},
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		if err := pluginsdk.ValidateRecommendation(rec); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func TestValidateRecommendationSpotValid(t *testing.T) {
+	for _, risk := range []float64{0.12, 0} {
+		rec := &pbc.Recommendation{
+			Id:         "rec-spot",
+			Category:   pbc.RecommendationCategory_RECOMMENDATION_CATEGORY_COST,
+			ActionType: pbc.RecommendationActionType_RECOMMENDATION_ACTION_TYPE_MODIFY,
+			Resource:   &pbc.ResourceRecommendationInfo{Id: "i-12345", Provider: "aws"},
+			Impact:     &pbc.RecommendationImpact{EstimatedSavings: 62, Currency: "USD"},
+
+			PricingCategory:           pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_DYNAMIC,
+			SpotInterruptionRiskScore: risk,
+		}
+		require.NoError(t, pluginsdk.ValidateRecommendation(rec), "risk %v", risk)
+	}
+}
+
+func TestValidateRecommendationSpotInvalid(t *testing.T) {
+	const (
+		unspecified = pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_UNSPECIFIED
+		standard    = pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_STANDARD
+		dynamic     = pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_DYNAMIC
+	)
+	tests := []struct {
+		name     string
+		category pbc.FocusPricingCategory
+		score    float64
+		wantErr  error
+	}{
+		{"unspecified with risk", unspecified, 0.3, pluginsdk.ErrRecommendationSpotInvalidCategory},
+		{"standard with risk", standard, 0.3, pluginsdk.ErrRecommendationSpotInvalidCategory},
+		{"dynamic NaN", dynamic, math.NaN(), pluginsdk.ErrRecommendationSpotInvalidValue},
+		{"dynamic infinite", dynamic, math.Inf(1), pluginsdk.ErrRecommendationSpotInvalidValue},
+		{"dynamic negative", dynamic, -0.2, pluginsdk.ErrRecommendationSpotInvalidValue},
+		{"dynamic above one", dynamic, 1.5, pluginsdk.ErrRecommendationSpotInvalidValue},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rec := plugintesting.NewSpotRecommendation("rec-spot", tt.score)
+			rec.PricingCategory = tt.category
+			err := pluginsdk.ValidateRecommendation(rec)
+			require.ErrorIs(t, err, tt.wantErr)
+			assert.Contains(t, err.Error(), "spot_interruption_risk_score")
+			assert.Contains(t, err.Error(), `recommendation "rec-spot"`, "the wrap names the recommendation")
+		})
+	}
+}
+
+func TestValidateRecommendationSpotDefaultsAndOrdering(t *testing.T) {
+	require.ErrorContains(t, pluginsdk.ValidateRecommendation(nil), "recommendation cannot be nil")
+
+	legacy := plugintesting.NewSpotRecommendation("rec-legacy", 0)
+	legacy.PricingCategory = pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_UNSPECIFIED
+	require.NoError(t, pluginsdk.ValidateRecommendation(legacy))
+
+	broken := plugintesting.NewSpotRecommendation("", 0.5)
+	broken.PricingCategory = pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_STANDARD
+	err := pluginsdk.ValidateRecommendation(broken)
+	require.ErrorContains(t, err, "recommendation.id is required", "required fields are checked before the spot pair")
+}
+
+func TestRecommendationSpotEpsilonMatchesCostResponses(t *testing.T) {
+	const (
+		standard = pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_STANDARD
+		dynamic  = pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_DYNAMIC
+	)
+	require.NoError(t, plugintesting.ValidateRecommendationSpot(dynamic, 9e-10))
+	require.NoError(t, plugintesting.ValidateRecommendationSpot(standard, 9e-10))
+	require.ErrorIs(t, plugintesting.ValidateRecommendationSpot(standard, 1.1e-9),
+		pluginsdk.ErrRecommendationSpotInvalidCategory)
+	require.ErrorIs(t, plugintesting.ValidateRecommendationSpot(dynamic, -1.1e-9),
+		pluginsdk.ErrRecommendationSpotInvalidValue)
+
+	for _, score := range []float64{9e-10, -9e-10, 1.1e-9, -1.1e-9} {
+		for _, category := range []pbc.FocusPricingCategory{standard, dynamic} {
+			resp := &pbc.GetProjectedCostResponse{
+				Currency: "USD", CostPerMonth: 1, UnitPrice: 1, BillingDetail: "x",
+				PricingCategory: category, SpotInterruptionRiskScore: score,
+			}
+			costErr := pluginsdk.ValidateGetProjectedCostResponse(resp)
+			recErr := plugintesting.ValidateRecommendationSpot(category, score)
+			assert.Equal(t, costErr == nil, recErr == nil, "category=%v score=%v", category, score)
+		}
 	}
 }

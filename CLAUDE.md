@@ -1129,6 +1129,29 @@ parallel subtests complete.
 - The field is advisory and is not summed, compared to the spot cost, or cross-checked against
   `price_options`. Core computes any savings percentage from the two plugin-supplied monthly costs.
 
+### Recommendation Spot Fields Pattern (604-recommendation-spot-category, issue 663)
+
+- `Recommendation.pricing_category` (20) and `spot_interruption_risk_score` (21) mean what the same-named
+  fields mean on `GetProjectedCostResponse`: DYNAMIC is the spot signal, 0.0 is unknown, a non-zero score
+  needs DYNAMIC, tolerance 1e-9 at zero, strict upper bound 1.0. There is no spot `RecommendationActionType`;
+  `action_type` stays `MODIFY` or `MIGRATE`. Savings stay in `impact`; hosts annotate and never reorder by risk.
+- The rule is `plugintesting.ValidateRecommendationSpot` (`sdk/go/testing/recommendation_spot.go`) with
+  `ErrRecommendationSpotInvalidValue` and `ErrRecommendationSpotInvalidCategory`; `pluginsdk` aliases the
+  sentinels. It cannot reuse `validateSpotRiskScore` (in `pluginsdk`, unreachable from `testing`).
+  `TestRecommendationSpotEpsilonMatchesCostResponses` pins it to the cost-response validator.
+- `ValidateRecommendation` calls `validateRecommendationSpot` only when the category is not UNSPECIFIED or the
+  score is non-zero, and keeps the `fmt.Errorf` wrap in that helper. `BenchmarkValidateRecommendation` is the
+  A/B guard (about 7.5 ns/op, 0 allocs/op on the unset path).
+- `RPCCorrectness_GetRecommendationsSpot` (Standard) does not use `withCapability`: that wrapper probes an
+  undeclared capability with an RPC, recommendations have no probe, and it would fail plugins that declare
+  capabilities without recommendations. The check skips such plugins and passes on `Unimplemented`.
+  It follows `next_page_token` (capped at 100 pages, stops on a repeated token) so later pages are checked too.
+- The scorer request validator deliberately does not apply the rule (`TestScoreRequestIgnoresSpotPair`).
+- `NewSpotRecommendation(id, risk)` builds a valid DYNAMIC recommendation; `GenerateSampleRecommendations` is
+  unchanged so its count and rotation tests hold. `SpecVersion` is bumped by release-please, never by hand.
+- `buf breaking` against a `git archive origin/main` of `proto` and `buf.yaml` passes; `make generate` changed
+  only the proto and the two generated bindings.
+
 ### Scorer Omitted Fields Pattern (593-omitted-fields)
 
 - `ScoreRecommendationsRequest.omitted_fields` (field 5) names `Recommendation` paths the host cleared by
@@ -1504,6 +1527,12 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+
+- 604-recommendation-spot-category: Added Recommendation pricing_category (20) and
+  spot_interruption_risk_score (21), plugintesting.ValidateRecommendationSpot with
+  ErrRecommendationSpotInvalidValue and ErrRecommendationSpotInvalidCategory, the rule inside
+  pluginsdk.ValidateRecommendation, NewSpotRecommendation, and the Standard conformance check
+  RPCCorrectness_GetRecommendationsSpot; the scorer request validator is unchanged (issue 663)
 
 - 603-on-demand-equivalent: Added on_demand_equivalent_monthly_cost (optional double) on
   GetProjectedCostResponse (18) and EstimateCostResponse (8), shared validation and sentinels,

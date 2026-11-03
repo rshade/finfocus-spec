@@ -17,6 +17,7 @@ import (
 
 	"github.com/rshade/finfocus-spec/sdk/go/currency"
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
+	plugintesting "github.com/rshade/finfocus-spec/sdk/go/testing"
 )
 
 // HoursPerMonth is the standard number of hours used for monthly cost calculations.
@@ -590,8 +591,26 @@ func ValidateRecommendation(rec *pbc.Recommendation) error {
 			return fmt.Errorf("recommendation.confidence_score: %w", err)
 		}
 	}
+	//nolint:protogetter // hot path: direct reads measured 3-4% faster than getters (specs/604 plan.md)
+	if rec.PricingCategory != pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_UNSPECIFIED ||
+		rec.SpotInterruptionRiskScore != 0 {
+		if err := validateRecommendationSpot(rec); err != nil {
+			return err
+		}
+	}
 	if err := validateMetadataMap(rec.GetMetadata()); err != nil {
 		return fmt.Errorf("recommendation: %w", err)
+	}
+	return nil
+}
+
+// validateRecommendationSpot applies the spot pricing rules to a recommendation. It is kept out of
+// ValidateRecommendation so recommendations without the fields never pay for the error wrap.
+func validateRecommendationSpot(rec *pbc.Recommendation) error {
+	if err := plugintesting.ValidateRecommendationSpot(
+		rec.GetPricingCategory(), rec.GetSpotInterruptionRiskScore(),
+	); err != nil {
+		return fmt.Errorf("recommendation %q: %w", rec.GetId(), err)
 	}
 	return nil
 }

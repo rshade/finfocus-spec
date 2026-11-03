@@ -130,6 +130,15 @@ var (
 	ErrRegionPricesWithDryRun = plugintesting.ErrRegionPricesWithDryRun
 )
 
+var (
+	// ErrRecommendationSpotInvalidValue is returned when Recommendation.spot_interruption_risk_score is
+	// NaN, infinite, negative, or above 1.0.
+	ErrRecommendationSpotInvalidValue = plugintesting.ErrRecommendationSpotInvalidValue
+	// ErrRecommendationSpotInvalidCategory is returned when Recommendation.spot_interruption_risk_score is
+	// non-zero and pricing_category is not DYNAMIC.
+	ErrRecommendationSpotInvalidCategory = plugintesting.ErrRecommendationSpotInvalidCategory
+)
+
 // spotRiskEpsilon is used for float comparison to handle floating-point representation errors.
 // This small value (1e-9) is chosen to be well below the precision typically meaningful
 // for risk scores while being large enough to catch representation errors.

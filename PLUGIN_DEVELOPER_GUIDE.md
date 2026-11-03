@@ -973,6 +973,55 @@ req = &pbc.GetRecommendationsRequest{
 }
 ```
 
+#### Spot Recommendations
+
+A recommendation can say that its recommended target is spot capacity and how risky that is. Two optional
+fields on `Recommendation` carry the facts, and they mean the same as the fields of the same name on
+`GetProjectedCostResponse`:
+
+| Field                          | Number | Meaning                                                                    |
+| ------------------------------ | ------ | -------------------------------------------------------------------------- |
+| `pricing_category`             | 20     | Pricing model of the recommended target state. `DYNAMIC` means spot.       |
+| `spot_interruption_risk_score` | 21     | Interruption probability of the recommended spot target, 0.0 to 1.0.       |
+
+Rules:
+
+- `UNSPECIFIED` (the default) means the recommendation says nothing about its pricing model.
+- A risk of `0.0` means unknown and is valid for every category. A value within 1e-9 of zero counts as `0.0`.
+- A non-zero risk requires `pricing_category` `DYNAMIC`, must be finite, and must not exceed 1.0.
+- `action_type` is not constrained. Keep using `MODIFY` or `MIGRATE`; there is no spot action type.
+- Savings stay in `impact`. Hosts annotate a recommendation with the risk and never reorder by it.
+- The category describes the recommended target state, not the current one.
+
+```go
+rec := &pbc.Recommendation{
+    Id:         "rec-1",
+    Category:   pbc.RecommendationCategory_RECOMMENDATION_CATEGORY_COST,
+    ActionType: pbc.RecommendationActionType_RECOMMENDATION_ACTION_TYPE_MODIFY,
+    Resource:   &pbc.ResourceRecommendationInfo{Id: "resource-1", Provider: "custom"},
+    Impact:     &pbc.RecommendationImpact{EstimatedSavings: 62, Currency: "USD"},
+
+    PricingCategory:           pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_DYNAMIC,
+    SpotInterruptionRiskScore: 0.12,
+}
+if err := pluginsdk.ValidateRecommendation(rec); err != nil {
+    if errors.Is(err, pluginsdk.ErrRecommendationSpotInvalidCategory) {
+        // a non-zero risk was set without DYNAMIC pricing
+    }
+    return nil, err
+}
+```
+
+`ValidateRecommendation` returns `ErrRecommendationSpotInvalidValue` for a NaN, infinite, negative, or
+above-one risk and `ErrRecommendationSpotInvalidCategory` for a non-zero risk without `DYNAMIC`. The
+Standard conformance check `RPCCorrectness_GetRecommendationsSpot` applies the same rule to every
+returned recommendation. The scorer request validator does not apply it: a scorer receives the fields
+as sent and handles its own data.
+
+**Upgrading**: the change is additive and ships in a minor release. Plugins that leave both fields unset
+stay valid, and hosts that do not know the fields ignore them. A host reads the two typed values instead
+of parsing `metadata` keys; a plugin sets them in place of any spot-specific `metadata` convention.
+
 #### DismissRecommendation RPC
 
 Dismisses a recommendation so it stays out of later GetRecommendations responses
