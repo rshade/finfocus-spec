@@ -506,6 +506,80 @@ func testGetBudgetsRPC(harness *TestHarness) TestResult {
 	}
 }
 
+// maxSpotCheckPages bounds how many pages testGetRecommendationsSpot follows.
+const maxSpotCheckPages = 100
+
+// testGetRecommendationsSpot checks the spot pricing fields of the recommendations it reads, following
+// page tokens until the last page, a repeated token, or maxSpotCheckPages. When the page cap leaves a
+// next page unvisited, the result still passes but its details say the later pages were not checked.
+// It does not use withCapability: that wrapper probes an undeclared capability with an RPC, and
+// recommendations have no probe. A plugin that declares capabilities without recommendations is
+// skipped, and a plugin that answers Unimplemented has no recommendations to check.
+func testGetRecommendationsSpot(harness *TestHarness) TestResult {
+	start := time.Now()
+	harness.discoverCapabilities()
+	if harness.capabilities.err != nil {
+		return TestResult{Method: MethodGetPluginInfo, Category: CategoryRPCCorrectness,
+			Error: harness.capabilities.err, Details: "Capability discovery failed"}
+	}
+	profile := &harness.capabilities
+	if len(profile.values) > 0 && !profile.declares(pbc.PluginCapability_PLUGIN_CAPABILITY_RECOMMENDATIONS) {
+		return TestResult{
+			Method: MethodGetRecommendations, Category: CategoryRPCCorrectness, Success: true,
+			Duration: time.Since(start), Details: "Plugin does not declare recommendations; check skipped",
+		}
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultTestTimeoutSeconds*time.Second)
+	defer cancel()
+
+	checked := 0
+	token := ""
+	seen := map[string]struct{}{}
+	truncated := false
+	for page := range maxSpotCheckPages {
+		resp, err := harness.Client().GetRecommendations(ctx, &pbc.GetRecommendationsRequest{PageToken: token})
+		if status.Code(err) == codes.Unimplemented && page == 0 {
+			return TestResult{
+				Method: MethodGetRecommendations, Category: CategoryRPCCorrectness, Success: true,
+				Duration: time.Since(start), Details: "Plugin does not serve recommendations; check skipped",
+			}
+		}
+		if err != nil {
+			return TestResult{
+				Method: MethodGetRecommendations, Category: CategoryRPCCorrectness, Error: err,
+				Duration: time.Since(start), Details: MethodGetRecommendations + " RPC failed with unexpected error",
+			}
+		}
+		for _, rec := range resp.GetRecommendations() {
+			valErr := ValidateRecommendationSpot(rec.GetPricingCategory(), rec.GetSpotInterruptionRiskScore())
+			if valErr != nil {
+				return TestResult{
+					Method: MethodGetRecommendations, Category: CategoryRPCCorrectness, Duration: time.Since(start),
+					Error:   valErr,
+					Details: fmt.Sprintf("Recommendation %q has an invalid spot pricing pair", rec.GetId()),
+				}
+			}
+			checked++
+		}
+		token = resp.GetNextPageToken()
+		if _, repeated := seen[token]; token == "" || repeated {
+			break
+		}
+		seen[token] = struct{}{}
+		truncated = page == maxSpotCheckPages-1
+	}
+	details := fmt.Sprintf("Checked spot fields on %d recommendations", checked)
+	if truncated {
+		details = fmt.Sprintf("Checked spot fields on %d recommendations; stopped at %d pages, later pages not checked",
+			checked, maxSpotCheckPages)
+	}
+	return TestResult{
+		Method: MethodGetRecommendations, Category: CategoryRPCCorrectness, Success: true, Duration: time.Since(start),
+		Details: details,
+	}
+}
+
 // testCrossProviderBudgetMapping is implemented as an integration test
 // due to the need for custom mock plugin configuration.
 // See TestCrossProviderBudgetMapping in integration_test.go
@@ -615,6 +689,22 @@ func testInvalidTimeRangeHandling(harness *TestHarness) TestResult {
 
 // RPCCorrectnessTests returns the RPC correctness conformance tests.
 func RPCCorrectnessTests() []ConformanceSuiteTest {
+	return append(coreRPCCorrectnessTests(), recommendationsSpotTest())
+}
+
+// recommendationsSpotTest returns the Standard check for the spot pricing fields on recommendations.
+func recommendationsSpotTest() ConformanceSuiteTest {
+	return ConformanceSuiteTest{
+		Name: "RPCCorrectness_GetRecommendationsSpot",
+		Description: "Validates that each recommendation it reads pairs a non-zero " +
+			"spot_interruption_risk_score with DYNAMIC pricing and keeps the score within 0.0 to 1.0",
+		Category: CategoryRPCCorrectness,
+		MinLevel: ConformanceLevelStandard,
+		TestFunc: testGetRecommendationsSpot,
+	}
+}
+
+func coreRPCCorrectnessTests() []ConformanceSuiteTest {
 	return []ConformanceSuiteTest{
 		{
 			Name:        "RPCCorrectness_NameRPC",

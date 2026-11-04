@@ -1799,6 +1799,35 @@ message Recommendation {
 
   // secondary_reasons are contributing factors for the recommendation.
   repeated RecommendationReason secondary_reasons = 19;
+
+  // pricing_category is the pricing model of the recommended target state.
+  // DYNAMIC means the recommendation moves the resource to spot capacity.
+  // UNSPECIFIED (default) means the recommendation says nothing about it.
+  //
+  // The category describes the target state only. This message has no field for the
+  // current pricing model; impact carries cost values only.
+  // action_type is not constrained by this field and stays MODIFY or MIGRATE as the plugin
+  // sees fit. No spot-specific action type exists on purpose.
+  FocusPricingCategory pricing_category = 20;
+
+  // spot_interruption_risk_score is the interruption probability, 0.0 to 1.0,
+  // of the recommended spot target. 0.0 means unknown, exactly as on
+  // GetProjectedCostResponse. Non-zero only when pricing_category is DYNAMIC.
+  //
+  // Value constraints:
+  //  - MUST NOT be NaN or Inf
+  //  - MUST be between 0.0 and 1.0 (inclusive); a tolerance of 1e-9 applies at zero
+  //    (values within it are treated as 0.0), and the upper bound of 1.0 is strict
+  //  - A non-zero value (> 1e-9) MUST only appear when pricing_category is DYNAMIC
+  //  - 0.0 is valid for every category, including UNSPECIFIED, which keeps plugins
+  //    that predate this field valid
+  //
+  // Hosts annotate a recommendation with this value and MUST NOT reorder
+  // recommendations by it. Savings stay in impact and are never compared with
+  // this score.
+  //
+  // Validation: Use pluginsdk.ValidateRecommendation() to verify all constraints.
+  double spot_interruption_risk_score = 21;
 }
 
 // =============================================================================

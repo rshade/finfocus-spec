@@ -14,16 +14,17 @@ import (
 
 // RPC method name constants for concurrency tests.
 const (
-	MethodName             = "Name"
-	MethodSupports         = "Supports"
-	MethodGetActualCost    = "GetActualCost"
-	MethodGetProjectedCost = "GetProjectedCost"
-	MethodGetPricingSpec   = "GetPricingSpec"
-	MethodGetBudgets       = "GetBudgets"
-	MethodGetPluginInfo    = "GetPluginInfo"
-	MethodConcurrency      = "Concurrency"
-	testResourceID         = "test-resource"
-	performanceLevel       = "Performance"
+	MethodName               = "Name"
+	MethodSupports           = "Supports"
+	MethodGetActualCost      = "GetActualCost"
+	MethodGetProjectedCost   = "GetProjectedCost"
+	MethodGetPricingSpec     = "GetPricingSpec"
+	MethodGetBudgets         = "GetBudgets"
+	MethodGetRecommendations = "GetRecommendations"
+	MethodGetPluginInfo      = "GetPluginInfo"
+	MethodConcurrency        = "Concurrency"
+	testResourceID           = "test-resource"
+	performanceLevel         = "Performance"
 
 	// Other constants.
 	providerAzure      = "azure"

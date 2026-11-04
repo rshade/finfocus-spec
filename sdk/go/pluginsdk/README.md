@@ -1422,6 +1422,22 @@ type RecommendationsProvider interface {
 }
 ```
 
+`ValidateRecommendation` checks a recommendation before it is returned. It also enforces the spot pricing
+fields: `spot_interruption_risk_score` must be finite and between 0.0 and 1.0, and a non-zero value needs
+`pricing_category` `DYNAMIC`. Match the failures with `errors.Is`:
+
+```go
+if err := pluginsdk.ValidateRecommendation(rec); err != nil {
+    switch {
+    case errors.Is(err, pluginsdk.ErrRecommendationSpotInvalidCategory):
+        // non-zero risk without DYNAMIC pricing
+    case errors.Is(err, pluginsdk.ErrRecommendationSpotInvalidValue):
+        // NaN, infinite, negative, or above 1.0
+    }
+    return nil, err
+}
+```
+
 **AllocatorProvider** - Serves `AllocatorService.Allocate`; see
 [Allocation-Only Plugins](#allocation-only-plugins).
 

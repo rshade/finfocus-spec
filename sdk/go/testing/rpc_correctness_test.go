@@ -3,6 +3,8 @@ package testing_test
 import (
 	"context"
 	"errors"
+	"strconv"
+	"strings"
 	"testing"
 
 	"google.golang.org/grpc/codes"
@@ -326,5 +328,212 @@ func TestRPCCorrectness_GetActualCostWithResource(t *testing.T) {
 					result.Success, tc.wantSuccess, result.Error, result.Details)
 			}
 		})
+	}
+}
+
+type spotRecommendationsPlugin struct {
+	*plugintesting.MockPlugin
+
+	recommendations []*pbc.Recommendation
+	pages           [][]*pbc.Recommendation
+	capabilities    []pbc.PluginCapability
+}
+
+func (p *spotRecommendationsPlugin) GetRecommendations(
+	_ context.Context,
+	req *pbc.GetRecommendationsRequest,
+) (*pbc.GetRecommendationsResponse, error) {
+	if len(p.pages) == 0 {
+		return &pbc.GetRecommendationsResponse{Recommendations: p.recommendations}, nil
+	}
+	index := 0
+	if token := req.GetPageToken(); token != "" {
+		index, _ = strconv.Atoi(token)
+	}
+	resp := &pbc.GetRecommendationsResponse{Recommendations: p.pages[index]}
+	if index+1 < len(p.pages) {
+		resp.NextPageToken = strconv.Itoa(index + 1)
+	}
+	return resp, nil
+}
+
+func (p *spotRecommendationsPlugin) GetPluginInfo(
+	ctx context.Context,
+	req *pbc.GetPluginInfoRequest,
+) (*pbc.GetPluginInfoResponse, error) {
+	resp, err := p.MockPlugin.GetPluginInfo(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	resp.Capabilities = p.capabilities
+	return resp, nil
+}
+
+type unimplementedRecommendationsPlugin struct {
+	*plugintesting.MockPlugin
+}
+
+func (p *unimplementedRecommendationsPlugin) GetRecommendations(
+	context.Context,
+	*pbc.GetRecommendationsRequest,
+) (*pbc.GetRecommendationsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "no recommendations")
+}
+
+// TestRPCCorrectness_GetRecommendationsSpot checks that returned recommendations obey the spot
+// pricing rule, and that plugins which never set the fields or never serve recommendations pass.
+func TestRPCCorrectness_GetRecommendationsSpot(t *testing.T) {
+	var test plugintesting.ConformanceSuiteTest
+	for _, candidate := range plugintesting.RPCCorrectnessTests() {
+		if candidate.Name == "RPCCorrectness_GetRecommendationsSpot" {
+			test = candidate
+		}
+	}
+	if test.TestFunc == nil {
+		t.Fatal("RPCCorrectness_GetRecommendationsSpot is not registered")
+	}
+	if test.MinLevel != plugintesting.ConformanceLevelStandard {
+		t.Errorf("MinLevel = %v, want Standard", test.MinLevel)
+	}
+	if test.Category != plugintesting.CategoryRPCCorrectness {
+		t.Errorf("Category = %v, want %v", test.Category, plugintesting.CategoryRPCCorrectness)
+	}
+
+	invalid := plugintesting.NewSpotRecommendation("rec-bad", 0.5)
+	invalid.PricingCategory = pbc.FocusPricingCategory_FOCUS_PRICING_CATEGORY_STANDARD
+	declared := []pbc.PluginCapability{pbc.PluginCapability_PLUGIN_CAPABILITY_RECOMMENDATIONS}
+
+	cases := []struct {
+		name        string
+		plugin      pbc.CostSourceServiceServer
+		wantSuccess bool
+		wantInError string
+	}{
+		{
+			name:        "default mock never setting the fields passes",
+			plugin:      plugintesting.NewMockPlugin(),
+			wantSuccess: true,
+		},
+		{
+			name: "valid spot recommendation passes",
+			plugin: &spotRecommendationsPlugin{
+				MockPlugin:      plugintesting.NewMockPlugin(),
+				recommendations: []*pbc.Recommendation{plugintesting.NewSpotRecommendation("rec-1", 0.2)},
+				capabilities:    declared,
+			},
+			wantSuccess: true,
+		},
+		{
+			name: "empty list passes",
+			plugin: &spotRecommendationsPlugin{
+				MockPlugin: plugintesting.NewMockPlugin(), capabilities: declared,
+			},
+			wantSuccess: true,
+		},
+		{
+			name: "non-zero risk without DYNAMIC fails and names the rule",
+			plugin: &spotRecommendationsPlugin{
+				MockPlugin:      plugintesting.NewMockPlugin(),
+				recommendations: []*pbc.Recommendation{invalid},
+				capabilities:    declared,
+			},
+			wantInError: "spot_interruption_risk_score",
+		},
+		{
+			name: "invalid pair on a later page fails",
+			plugin: &spotRecommendationsPlugin{
+				MockPlugin: plugintesting.NewMockPlugin(),
+				pages: [][]*pbc.Recommendation{
+					{plugintesting.NewSpotRecommendation("rec-1", 0.2)},
+					{plugintesting.NewSpotRecommendation("rec-2", 0.3)},
+					{invalid},
+				},
+				capabilities: declared,
+			},
+			wantInError: "spot_interruption_risk_score",
+		},
+		{
+			name: "valid pages all pass",
+			plugin: &spotRecommendationsPlugin{
+				MockPlugin: plugintesting.NewMockPlugin(),
+				pages: [][]*pbc.Recommendation{
+					{plugintesting.NewSpotRecommendation("rec-1", 0.2)},
+					{plugintesting.NewSpotRecommendation("rec-2", 0.3)},
+				},
+				capabilities: declared,
+			},
+			wantSuccess: true,
+		},
+		{
+			name: "plugin declaring capabilities without recommendations is skipped",
+			plugin: &spotRecommendationsPlugin{
+				MockPlugin:      plugintesting.NewMockPlugin(),
+				recommendations: []*pbc.Recommendation{invalid},
+				capabilities:    []pbc.PluginCapability{pbc.PluginCapability_PLUGIN_CAPABILITY_PROJECTED_COSTS},
+			},
+			wantSuccess: true,
+		},
+		{
+			name:        "legacy plugin answering Unimplemented passes",
+			plugin:      &unimplementedRecommendationsPlugin{MockPlugin: plugintesting.NewMockPlugin()},
+			wantSuccess: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			harness := plugintesting.NewTestHarness(tc.plugin)
+			harness.Start(t)
+			defer harness.Stop()
+
+			result := test.TestFunc(harness)
+			if result.Success != tc.wantSuccess {
+				t.Fatalf("Success = %v, want %v (error: %v, details: %s)",
+					result.Success, tc.wantSuccess, result.Error, result.Details)
+			}
+			if tc.wantInError == "" {
+				return
+			}
+			if result.Error == nil || !strings.Contains(result.Error.Error(), tc.wantInError) {
+				t.Errorf("Error = %v, want it to contain %q", result.Error, tc.wantInError)
+			}
+		})
+	}
+}
+
+func TestRPCCorrectness_GetRecommendationsSpot_PageCapReported(t *testing.T) {
+	var test plugintesting.ConformanceSuiteTest
+	for _, candidate := range plugintesting.RPCCorrectnessTests() {
+		if candidate.Name == "RPCCorrectness_GetRecommendationsSpot" {
+			test = candidate
+		}
+	}
+	if test.TestFunc == nil {
+		t.Fatal("RPCCorrectness_GetRecommendationsSpot is not registered")
+	}
+
+	const total = 101
+	run := func(pageCount int) plugintesting.TestResult {
+		pages := make([][]*pbc.Recommendation, pageCount)
+		for i := range pages {
+			pages[i] = []*pbc.Recommendation{plugintesting.NewSpotRecommendation("rec-"+strconv.Itoa(i), 0.2)}
+		}
+		harness := plugintesting.NewTestHarness(&spotRecommendationsPlugin{
+			MockPlugin: plugintesting.NewMockPlugin(),
+			pages:      pages,
+		})
+		harness.Start(t)
+		defer harness.Stop()
+		return test.TestFunc(harness)
+	}
+
+	capped := run(total)
+	if !capped.Success || !strings.Contains(capped.Details, "later pages not checked") {
+		t.Errorf("capped run: Success = %v, details = %q", capped.Success, capped.Details)
+	}
+
+	complete := run(total - 1)
+	if !complete.Success || strings.Contains(complete.Details, "not checked") {
+		t.Errorf("complete run: Success = %v, details = %q", complete.Success, complete.Details)
 	}
 }
