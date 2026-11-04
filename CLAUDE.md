@@ -792,6 +792,12 @@ cd schemas && /init            # JSON Schema validation
   every `*.connect.go` file. Generate, lint, and the benchmark checkout then fail.
   Solution: Keep `buf.build/connectrpc/go:v1.21.0` in `buf.gen.yaml`. Do not commit the v2 rewrite.
 
+- `pluginsdk` handler-error log level: `handlerLogLevel(err)` (`log_level.go`) is the one rule. A decline
+  (`InvalidArgument`, `Unimplemented`, `NotFound`, `FailedPrecondition`) logs at debug, anything else at ERROR.
+  The interceptor and the nine `handlerStatus` wrappers all call it; a new wrapped RPC must log with
+  `s.logger.WithLevel(handlerLogLevel(clientErr))`, never `s.logger.Error()`. Wrapper tests reuse
+  `errorHandlerPlugin` with `loggedErrorServer`.
+
 ### Workflow Optimizations (Updated)
 
 - For CodeRabbit fixes: Always verify `git log` and file content first; reviews may reference older
@@ -1314,6 +1320,10 @@ parallel subtests complete.
 
 ## Active Technologies
 
+- Go 1.27.1 (per go.mod) + google.golang.org/grpc (`status.Code`), zerolog; no new dependencies
+  (605-sdk-decline-log-level)
+- N/A (log level chosen from the gRPC code; no proto change) (605-sdk-decline-log-level)
+
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf,
   google.golang.org/grpc, buf v1.32.1; no new dependencies (603-on-demand-equivalent)
 - N/A (one optional double on projected cost and estimate responses) (603-on-demand-equivalent)
@@ -1527,6 +1537,10 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+
+- 605-sdk-decline-log-level: The interceptor ("rpc failed") and the nine handlerStatus wrappers log
+  InvalidArgument, Unimplemented, NotFound, and FailedPrecondition at debug instead of ERROR; faults
+  stay at ERROR. Plugins must rebuild to pick it up (issue 664)
 
 - 604-recommendation-spot-category: Added Recommendation pricing_category (20) and
   spot_interruption_risk_score (21), plugintesting.ValidateRecommendationSpot with
