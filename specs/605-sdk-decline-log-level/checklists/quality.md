@@ -13,48 +13,51 @@ mean implementation work is complete.
 
 ## Code-Set Coverage
 
-- [ ] CHK001 Is every one of the 16 non-OK gRPC codes assigned to exactly one class (decline or fault)? [Completeness,
+- [x] CHK001 Is every one of the 16 non-OK gRPC codes assigned to exactly one class (decline or fault)? [Completeness,
   Spec §FR-001, §FR-002, §FR-003]
-- [ ] CHK002 Is the rule for codes outside both named lists stated as a requirement rather than only an assumption?
+- [x] CHK002 Is the rule for codes outside both named lists stated as a requirement rather than only an assumption?
   [Clarity, Spec §FR-003]
-- [ ] CHK003 Is the rationale for demoting `NotFound` and `FailedPrecondition` recorded where a maintainer wanting a
+- [x] CHK003 Is the rationale for demoting `NotFound` and `FailedPrecondition` recorded where a maintainer wanting a
   narrower set will find it? [Traceability, Spec Assumptions]
-- [ ] CHK004 Is the treatment of an error that carries no status defined without conflict between the spec and the
+- [x] CHK004 Is the treatment of an error that carries no status defined without conflict between the spec and the
   data model? [Consistency, Spec §FR-002, Edge Cases]
-- [ ] CHK005 Is "debug" fixed as the demoted level in a requirement, not only in Assumptions? [Gap, Spec Assumptions]
+- [x] CHK005 Is "debug" fixed as the demoted level in a requirement, not only in Assumptions? [Gap, Spec Assumptions]
 
 ## Wrapper Coverage
 
-- [ ] CHK006 Does FR-004 name every wrapper that logs a handler error, and does the list match the plan's call-site
+- [x] CHK006 Does FR-004 name every wrapper that logs a handler error, and does the list match the plan's call-site
   count? [Consistency, Spec §FR-004, Plan Summary]
-- [ ] CHK007 Is it stated why `Unimplemented` needs no change in the wrappers, so the table rows for it are not read
+- [x] CHK007 Is it stated why `Unimplemented` needs no change in the wrappers, so the table rows for it are not read
   as new behavior? [Clarity, Spec Edge Cases]
-- [ ] CHK008 Are requirements defined for the case where the interceptor and a wrapper disagree on a code? [Coverage,
+- [x] CHK008 Are requirements defined for the case where the interceptor and a wrapper disagree on a code? [Coverage,
   Spec §FR-005]
-- [ ] CHK009 Is the interceptor's existing trace-id condition addressed as in or out of scope? [Gap, Plan Research §5]
+- [x] CHK009 Is the interceptor's existing trace-id condition addressed as in or out of scope? [Gap, Plan Research §5]
 
 ## Wire Behavior Unchanged
 
-- [ ] CHK010 Is "unchanged" defined for both the status code and the message the host receives? [Clarity, Spec
+- [x] CHK010 Is "unchanged" defined for both the status code and the message the host receives? [Clarity, Spec
   §FR-006, §SC-004]
-- [ ] CHK011 Are the demoted entry's retained fields enumerated, so "keeps its fields" is checkable? [Measurability,
+- [x] CHK011 Are the demoted entry's retained fields enumerated, so "keeps its fields" is checkable? [Measurability,
   Spec §FR-007]
-- [ ] CHK012 Is it stated that no proto, schema, or exported identifier changes? [Completeness, Spec Assumptions]
+- [x] CHK012 Is it stated that no proto, schema, or exported identifier changes? [Completeness, Spec Assumptions]
 
 ## Release Note and Compatibility
 
-- [ ] CHK013 Does FR-009 say where the rebuild note is written, given CHANGELOG.md is generated? [Gap, Spec §FR-009]
-- [ ] CHK014 Is the behavior of a plugin built on an older SDK stated? [Coverage, Spec Edge Cases]
+- [x] CHK013 Does FR-009 say where the rebuild note is written, given CHANGELOG.md is generated? [Gap, Spec §FR-009]
+- [x] CHK014 Is the behavior of a plugin built on an older SDK stated? [Coverage, Spec Edge Cases]
 
 ## Performance and Measurability
 
-- [ ] CHK015 Is the error-path cost requirement quantified rather than "no regression"? [Ambiguity, Plan Technical
+- [x] CHK015 Is the error-path cost requirement quantified rather than "no regression"? [Ambiguity, Plan Technical
   Context]
-- [ ] CHK016 Can SC-001 (zero ERROR lines for declines) be checked from captured log output? [Measurability, Spec
+- [x] CHK016 Can SC-001 (zero ERROR lines for declines) be checked from captured log output? [Measurability, Spec
   §SC-001]
-- [ ] CHK017 Do the success criteria cover every requirement, including FR-005 (one shared rule)? [Coverage, Spec §SC]
+- [x] CHK017 Do the success criteria cover every requirement, including FR-005 (one shared rule)? [Coverage, Spec §SC]
 
 ## Notes
 
 - Check items off as reviewed. `/speckit-implement` reads checklist state but does not modify markers.
-- CHK001 caught a count error (17 vs 16 non-OK codes) in SC-003 and the plan; fixed.
+- CHK001 caught a count error (17 vs 16 non-OK codes) in SC-003 and the plan; fixed in the original PR.
+- Reviewed against the merged spec on 2026-11-04. CHK011, CHK012, and CHK017 needed spec edits first:
+  FR-007 now names the wrapper fields, the assumption now says "no schema change", and SC-006 and SC-007
+  cover FR-005 and FR-010.
