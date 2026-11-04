@@ -3698,6 +3698,16 @@ This section documents thread safety guarantees for SDK components.
 | **ResourceMatcher**    | ❌ NO       | Configure before Serve(), then read-only               |
 | **FocusRecordBuilder** | ❌ NO       | Single-threaded builder pattern                        |
 
+### Client Errors and gRPC Status
+
+Errors from `Client` methods report the failed call's gRPC status through `GRPCStatus()`, so
+`status.Code(err)` returns the code the child plugin sent. A routing plugin can return the client's error from
+its own handler and the host sees `InvalidArgument`, `NotFound`, and the other codes unchanged instead of
+`Unknown`. The status message is the child's own message; the error text keeps the
+`<Operation> RPC failed:` prefix, and `errors.As` still finds the underlying `*connect.Error`.
+
+Plugins must rebuild on this SDK version to pick up the change.
+
 ### Client Thread Safety
 
 The `Client` struct wraps `http.Client` which is explicitly designed for concurrent use.

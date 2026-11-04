@@ -173,15 +173,18 @@ func attachCredentialHeaders[T any](ctx context.Context, msg *T) *connect.Reques
 // It distinguishes context cancellation/timeout from other errors for better debugging.
 // When the context error is available, it is included using errors.Join to preserve
 // both the context error type (DeadlineExceeded vs Canceled) and the original error.
+//
+// The returned error also reports the gRPC status of a failed call through GRPCStatus, so a plugin
+// that returns it from a gRPC handler keeps the child's code instead of becoming codes.Unknown.
 func wrapRPCError(ctx context.Context, operation string, err error) error {
 	if ctxErr := ctx.Err(); ctxErr != nil {
-		return errors.Join(
+		return withGRPCStatus(errors.Join(
 			fmt.Errorf("%s RPC cancelled or timed out", operation),
 			ctxErr,
 			err,
-		)
+		))
 	}
-	return fmt.Errorf("%s RPC failed: %w", operation, err)
+	return withGRPCStatus(fmt.Errorf("%s RPC failed: %w", operation, err))
 }
 
 // NewClient creates a new FinFocus client with the given configuration.

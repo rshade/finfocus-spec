@@ -798,6 +798,11 @@ cd schemas && /init            # JSON Schema validation
   `s.logger.WithLevel(handlerLogLevel(clientErr))`, never `s.logger.Error()`. Wrapper tests reuse
   `errorHandlerPlugin` with `loggedErrorServer`.
 
+- `pluginsdk.Client` errors (`wrapRPCError`) carry `GRPCStatus()` through `withGRPCStatus` (`client_status.go`).
+  The connect-go client returns a `*connect.Error` for every wire protocol, and a gRPC server turns any error
+  without `GRPCStatus` into `Unknown`, so a router plugin forwarding a child's error lost the code. The status
+  message is the connect error's own message; `Error()` text and the `errors.As` chain are unchanged.
+
 ### Workflow Optimizations (Updated)
 
 - For CodeRabbit fixes: Always verify `git log` and file content first; reviews may reference older
