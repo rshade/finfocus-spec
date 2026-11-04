@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.9](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.7.8...finfocus-client-v0.7.9) (2026-11-04)
+
+
+### Features
+
+* **proto:** add spot category and interruption risk to Recommendation ([#665](https://github.com/rshade/finfocus-spec/issues/665)) ([48e49ec](https://github.com/rshade/finfocus-spec/commit/48e49ecdebec81a2910bfd5aff453debb4736a5f))
+
 ## [0.7.8](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.7.7...finfocus-client-v0.7.8) (2026-10-22)
 
 
