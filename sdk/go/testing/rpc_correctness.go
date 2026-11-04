@@ -509,8 +509,9 @@ func testGetBudgetsRPC(harness *TestHarness) TestResult {
 // maxSpotCheckPages bounds how many pages testGetRecommendationsSpot follows.
 const maxSpotCheckPages = 100
 
-// testGetRecommendationsSpot checks the spot pricing fields of every returned recommendation, following
-// page tokens until the last page, a repeated token, or maxSpotCheckPages.
+// testGetRecommendationsSpot checks the spot pricing fields of the recommendations it reads, following
+// page tokens until the last page, a repeated token, or maxSpotCheckPages. When the page cap leaves a
+// next page unvisited, the result still passes but its details say the later pages were not checked.
 // It does not use withCapability: that wrapper probes an undeclared capability with an RPC, and
 // recommendations have no probe. A plugin that declares capabilities without recommendations is
 // skipped, and a plugin that answers Unimplemented has no recommendations to check.
@@ -535,6 +536,7 @@ func testGetRecommendationsSpot(harness *TestHarness) TestResult {
 	checked := 0
 	token := ""
 	seen := map[string]struct{}{}
+	truncated := false
 	for page := range maxSpotCheckPages {
 		resp, err := harness.Client().GetRecommendations(ctx, &pbc.GetRecommendationsRequest{PageToken: token})
 		if status.Code(err) == codes.Unimplemented && page == 0 {
@@ -565,10 +567,16 @@ func testGetRecommendationsSpot(harness *TestHarness) TestResult {
 			break
 		}
 		seen[token] = struct{}{}
+		truncated = page == maxSpotCheckPages-1
+	}
+	details := fmt.Sprintf("Checked spot fields on %d recommendations", checked)
+	if truncated {
+		details = fmt.Sprintf("Checked spot fields on %d recommendations; stopped at %d pages, later pages not checked",
+			checked, maxSpotCheckPages)
 	}
 	return TestResult{
 		Method: MethodGetRecommendations, Category: CategoryRPCCorrectness, Success: true, Duration: time.Since(start),
-		Details: fmt.Sprintf("Checked spot fields on %d recommendations", checked),
+		Details: details,
 	}
 }
 
@@ -688,7 +696,7 @@ func RPCCorrectnessTests() []ConformanceSuiteTest {
 func recommendationsSpotTest() ConformanceSuiteTest {
 	return ConformanceSuiteTest{
 		Name: "RPCCorrectness_GetRecommendationsSpot",
-		Description: "Validates that every returned recommendation pairs a non-zero " +
+		Description: "Validates that each recommendation it reads pairs a non-zero " +
 			"spot_interruption_risk_score with DYNAMIC pricing and keeps the score within 0.0 to 1.0",
 		Category: CategoryRPCCorrectness,
 		MinLevel: ConformanceLevelStandard,

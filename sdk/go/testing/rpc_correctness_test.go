@@ -500,3 +500,40 @@ func TestRPCCorrectness_GetRecommendationsSpot(t *testing.T) {
 		})
 	}
 }
+
+func TestRPCCorrectness_GetRecommendationsSpot_PageCapReported(t *testing.T) {
+	var test plugintesting.ConformanceSuiteTest
+	for _, candidate := range plugintesting.RPCCorrectnessTests() {
+		if candidate.Name == "RPCCorrectness_GetRecommendationsSpot" {
+			test = candidate
+		}
+	}
+	if test.TestFunc == nil {
+		t.Fatal("RPCCorrectness_GetRecommendationsSpot is not registered")
+	}
+
+	const total = 101
+	run := func(pageCount int) plugintesting.TestResult {
+		pages := make([][]*pbc.Recommendation, pageCount)
+		for i := range pages {
+			pages[i] = []*pbc.Recommendation{plugintesting.NewSpotRecommendation("rec-"+strconv.Itoa(i), 0.2)}
+		}
+		harness := plugintesting.NewTestHarness(&spotRecommendationsPlugin{
+			MockPlugin: plugintesting.NewMockPlugin(),
+			pages:      pages,
+		})
+		harness.Start(t)
+		defer harness.Stop()
+		return test.TestFunc(harness)
+	}
+
+	capped := run(total)
+	if !capped.Success || !strings.Contains(capped.Details, "later pages not checked") {
+		t.Errorf("capped run: Success = %v, details = %q", capped.Success, capped.Details)
+	}
+
+	complete := run(total - 1)
+	if !complete.Success || strings.Contains(complete.Details, "not checked") {
+		t.Errorf("complete run: Success = %v, details = %q", complete.Success, complete.Details)
+	}
+}

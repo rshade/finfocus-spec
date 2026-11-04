@@ -867,7 +867,7 @@ The conformance suite provides multi-level validation across four test categorie
   passes, a plugin that rejects it fails)
 - `RPCCorrectness_GetProjectedCostWithAttributes` - GetProjectedCost accepts a descriptor carrying nested
   `attributes` (Basic; a plugin that ignores the field passes)
-- `RPCCorrectness_GetRecommendationsSpot` - Every returned recommendation pairs a non-zero
+- `RPCCorrectness_GetRecommendationsSpot` - Every recommendation it reads (up to 100 pages) pairs a non-zero
   `spot_interruption_risk_score` with `DYNAMIC` pricing and keeps it within 0.0 to 1.0 (Standard; plugins
   that never set the fields, return no recommendations, answer `Unimplemented`, or declare capabilities
   without recommendations pass)

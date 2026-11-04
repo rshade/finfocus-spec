@@ -1012,10 +1012,12 @@ if err := pluginsdk.ValidateRecommendation(rec); err != nil {
 }
 ```
 
-`ValidateRecommendation` returns `ErrRecommendationSpotInvalidValue` for a NaN, infinite, negative, or
-above-one risk and `ErrRecommendationSpotInvalidCategory` for a non-zero risk without `DYNAMIC`. The
-Standard conformance check `RPCCorrectness_GetRecommendationsSpot` applies the same rule to every
-returned recommendation. The scorer request validator does not apply it: a scorer receives the fields
+`ValidateRecommendation` returns `ErrRecommendationSpotInvalidValue` for a NaN, infinite, negative (below the
+-1e-9 tolerance), or above-one risk and `ErrRecommendationSpotInvalidCategory` for a non-zero risk without
+`DYNAMIC`. The Standard conformance check `RPCCorrectness_GetRecommendationsSpot` applies the same rule to
+the recommendations it reads, up to 100 pages. It skips plugins that declare capabilities without
+`PLUGIN_CAPABILITY_RECOMMENDATIONS` and plugins whose first page returns `Unimplemented`; plugins that
+declare no capabilities are checked. The scorer request validator does not apply it: a scorer receives the fields
 as sent and handles its own data.
 
 **Upgrading**: the change is additive and ships in a minor release. Plugins that leave both fields unset

@@ -4919,7 +4919,8 @@ type Recommendation struct {
 	// DYNAMIC means the recommendation moves the resource to spot capacity.
 	// UNSPECIFIED (default) means the recommendation says nothing about it.
 	//
-	// The category describes the target state only; the current state is carried by impact.
+	// The category describes the target state only. This message has no field for the
+	// current pricing model; impact carries cost values only.
 	// action_type is not constrained by this field and stays MODIFY or MIGRATE as the plugin
 	// sees fit. No spot-specific action type exists on purpose.
 	PricingCategory FocusPricingCategory `protobuf:"varint,20,opt,name=pricing_category,json=pricingCategory,proto3,enum=finfocus.v1.FocusPricingCategory" json:"pricing_category,omitempty"`

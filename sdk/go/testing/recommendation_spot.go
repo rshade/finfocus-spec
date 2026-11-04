@@ -30,7 +30,7 @@ const recommendationSpotEpsilon = 1e-9
 const spotRecommendationSavings = 62
 
 var (
-	// ErrRecommendationSpotInvalidValue reports a risk score that is NaN, infinite, negative, or above 1.0.
+	// ErrRecommendationSpotInvalidValue reports a risk score that is NaN, infinite, below -1e-9, or above 1.0.
 	ErrRecommendationSpotInvalidValue = errors.New(
 		"recommendation.spot_interruption_risk_score must be finite and between 0.0 and 1.0")
 	// ErrRecommendationSpotInvalidCategory reports a non-zero risk score without DYNAMIC pricing.

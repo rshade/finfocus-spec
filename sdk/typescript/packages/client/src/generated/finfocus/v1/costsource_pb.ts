@@ -2871,7 +2871,8 @@ export type Recommendation = Message<"finfocus.v1.Recommendation"> & {
    * DYNAMIC means the recommendation moves the resource to spot capacity.
    * UNSPECIFIED (default) means the recommendation says nothing about it.
    *
-   * The category describes the target state only; the current state is carried by impact.
+   * The category describes the target state only. This message has no field for the
+   * current pricing model; impact carries cost values only.
    * action_type is not constrained by this field and stays MODIFY or MIGRATE as the plugin
    * sees fit. No spot-specific action type exists on purpose.
    *
