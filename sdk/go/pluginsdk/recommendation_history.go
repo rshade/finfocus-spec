@@ -37,7 +37,7 @@ func (s *Server) GetRecommendationHistory(
 			s.logHandlerFallback("GetRecommendationHistory")
 			return nil, recommendationHistoryUnsupported()
 		}
-		s.logger.Error().Err(err).Msg("GetRecommendationHistory handler error")
+		s.logger.WithLevel(handlerLogLevel(clientErr)).Err(err).Msg("GetRecommendationHistory handler error")
 		return nil, clientErr
 	}
 	if resp == nil {

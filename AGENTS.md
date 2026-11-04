@@ -30,6 +30,10 @@
 
 ## Active Technologies
 
+- Go 1.27.1 (per go.mod) + google.golang.org/grpc (`status.Code`), zerolog; no new dependencies
+  (605-sdk-decline-log-level)
+- N/A (log level chosen from the gRPC code; no proto change) (605-sdk-decline-log-level)
+
 - Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf,
   google.golang.org/grpc, connectrpc.com/connect, buf v1.32.1; no new dependencies
   (601-plugin-info-settings)
@@ -77,6 +81,10 @@
 - JSON Schema (Draft 2020-12) for PricingSpec and BudgetSpec validation (001-get-budgets-rpc)
 
 ## Recent Changes
+
+- 605-sdk-decline-log-level: The interceptor ("rpc failed") and the nine handlerStatus wrappers log
+  InvalidArgument, Unimplemented, NotFound, and FailedPrecondition at debug instead of ERROR; faults
+  stay at ERROR. Plugins must rebuild to pick it up (issue 664)
 
 - 601-plugin-info-settings: Added PluginSetting and GetPluginInfoResponse.settings (field 7)
   so a plugin can advertise the settings it reads and the environment variable a host injects.

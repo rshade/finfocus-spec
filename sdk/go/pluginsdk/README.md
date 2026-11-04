@@ -1627,6 +1627,25 @@ handler returns `*ValidationError` with an empty `TraceID`, appends
 | `FieldAdapter`       | `adapter`        | Adapter name             |
 | `FieldErrorCode`     | `error_code`     | Error code               |
 
+### Log Levels for Handler Errors
+
+When a handler fails, the SDK logs the failure once in the RPC wrapper (`<RPC> handler error`) and once in
+the tracing interceptor (`rpc failed`). The level follows the gRPC code the handler returned:
+
+| Handler returns                                                  | Host sees                  | SDK log level |
+| ---------------------------------------------------------------- | -------------------------- | ------------- |
+| `InvalidArgument`, `NotFound`, `FailedPrecondition`              | The handler's status       | debug         |
+| `Unimplemented`                                                  | The SDK default answer     | debug         |
+| `Internal`, `Unavailable`, `DataLoss`, any other status          | The handler's status       | ERROR         |
+| `Unknown`, or an error that carries no status                    | `Internal`, generic text   | ERROR         |
+
+A decline is an answer the contract allows, such as a plugin rejecting a resource from a provider it does
+not serve. It keeps its trace ID, operation, and error fields at debug level, and no longer fills the
+ERROR log. The status and message the host receives do not change.
+
+Plugins must rebuild on this SDK version to pick up the new levels. A binary built on an earlier
+version keeps logging these declines at ERROR.
+
 ### Trace ID Propagation
 
 The SDK includes a gRPC interceptor for trace ID propagation:

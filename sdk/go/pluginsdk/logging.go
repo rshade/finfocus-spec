@@ -310,7 +310,7 @@ func TracingUnaryServerInterceptorWithLogger(logger zerolog.Logger) grpc.UnarySe
 			if info != nil {
 				method = info.FullMethod
 			}
-			logger.Error().
+			logger.WithLevel(handlerLogLevel(err)).
 				Str(FieldTraceID, traceID).
 				Str(FieldOperation, method).
 				Err(err).

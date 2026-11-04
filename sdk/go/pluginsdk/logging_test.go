@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
@@ -13,7 +14,9 @@ import (
 
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 
 	"github.com/rshade/finfocus-spec/sdk/go/pluginsdk"
 )
@@ -1111,5 +1114,102 @@ func BenchmarkGetLogFilePermissions_Configured(b *testing.B) {
 	b.ReportAllocs()
 	for b.Loop() {
 		pluginsdk.GetLogFilePermissions()
+	}
+}
+
+// logLines decodes the JSON log lines in buf.
+func logLines(t *testing.T, buf *bytes.Buffer) []map[string]any {
+	t.Helper()
+	var lines []map[string]any
+	for _, raw := range bytes.Split(bytes.TrimSpace(buf.Bytes()), []byte("\n")) {
+		if len(raw) == 0 {
+			continue
+		}
+		var line map[string]any
+		if err := json.Unmarshal(raw, &line); err != nil {
+			t.Fatalf("log line is not JSON: %q: %v", raw, err)
+		}
+		lines = append(lines, line)
+	}
+	return lines
+}
+
+func runInterceptorWithError(t *testing.T, handlerErr error) (*bytes.Buffer, error) {
+	t.Helper()
+	var buf bytes.Buffer
+	logger := zerolog.New(&buf).Level(zerolog.DebugLevel)
+	interceptor := pluginsdk.TracingUnaryServerInterceptorWithLogger(logger)
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.New(map[string]string{
+		pluginsdk.TraceIDMetadataKey: "abcdef1234567890abcdef1234567890",
+	}))
+	info := &grpc.UnaryServerInfo{FullMethod: "/finfocus.v1.CostSourceService/Supports"}
+	_, err := interceptor(ctx, nil, info, func(context.Context, interface{}) (interface{}, error) {
+		return nil, handlerErr
+	})
+	return &buf, err
+}
+
+func assertDeclineEntry(t *testing.T, buf *bytes.Buffer) {
+	t.Helper()
+	lines := logLines(t, buf)
+	if len(lines) != 1 {
+		t.Fatalf("want 1 log line, got %d: %s", len(lines), buf.String())
+	}
+	line := lines[0]
+	if line["level"] != "debug" {
+		t.Errorf("level = %v, want debug", line["level"])
+	}
+	if line["message"] != "rpc failed" {
+		t.Errorf("message = %v, want rpc failed", line["message"])
+	}
+	for _, field := range []string{pluginsdk.FieldTraceID, pluginsdk.FieldOperation, "error"} {
+		if _, ok := line[field]; !ok {
+			t.Errorf("debug entry is missing field %q: %v", field, line)
+		}
+	}
+}
+
+func isDecline(code codes.Code) bool {
+	switch code { //nolint:exhaustive // Every other code is a fault.
+	case codes.InvalidArgument, codes.Unimplemented, codes.NotFound, codes.FailedPrecondition:
+		return true
+	default:
+		return false
+	}
+}
+
+func TestTracingUnaryServerInterceptor_DeclineLevel(t *testing.T) {
+	for code := codes.Canceled; code <= codes.Unauthenticated; code++ {
+		if !isDecline(code) {
+			continue
+		}
+		t.Run(code.String(), func(t *testing.T) {
+			buf, err := runInterceptorWithError(t, status.Error(code, "declined"))
+			if status.Code(err) != code {
+				t.Fatalf("interceptor changed the status: got %v, want %v", err, code)
+			}
+			assertDeclineEntry(t, buf)
+		})
+	}
+}
+
+func TestTracingUnaryServerInterceptor_FaultLevel(t *testing.T) {
+	faults := map[string]error{
+		"wrapped Internal": fmt.Errorf("wrap: %w", status.Error(codes.Internal, "x")),
+		"plain error":      errors.New("boom"),
+	}
+	for code := codes.Canceled; code <= codes.Unauthenticated; code++ {
+		if !isDecline(code) {
+			faults[code.String()] = status.Error(code, "x")
+		}
+	}
+	for name, handlerErr := range faults {
+		t.Run(name, func(t *testing.T) {
+			buf, _ := runInterceptorWithError(t, handlerErr)
+			lines := logLines(t, buf)
+			if len(lines) != 1 || lines[0]["level"] != "error" || lines[0]["message"] != "rpc failed" {
+				t.Fatalf("want one error-level rpc failed line, got: %s", buf.String())
+			}
+		})
 	}
 }

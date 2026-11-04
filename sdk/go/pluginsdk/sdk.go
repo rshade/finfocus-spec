@@ -575,7 +575,7 @@ func (s *Server) handleProviderPluginInfo(
 			s.logHandlerFallback("GetPluginInfo")
 			return s.pluginInfoDefault()
 		}
-		s.logger.Error().Err(err).Msg("GetPluginInfo handler error")
+		s.logger.WithLevel(handlerLogLevel(clientErr)).Err(err).Msg("GetPluginInfo handler error")
 		return nil, clientErr
 	}
 
@@ -777,7 +777,7 @@ func (s *Server) DryRun(ctx context.Context, req *pbc.DryRunRequest) (*pbc.DryRu
 			s.logHandlerFallback("DryRun")
 			return nil, dryRunUnsupported()
 		}
-		s.logger.Error().
+		s.logger.WithLevel(handlerLogLevel(clientErr)).
 			Err(err).
 			Str(FieldResourceType, req.GetResource().GetResourceType()).
 			Msg("DryRun handler error")
@@ -879,7 +879,7 @@ func (s *Server) Supports(ctx context.Context, req *pbc.SupportsRequest) (*pbc.S
 			useDefault, clientErr := handlerStatus(err, "plugin failed to execute")
 			if !useDefault {
 				// Log the detailed error server-side for debugging
-				s.logger.Error().
+				s.logger.WithLevel(handlerLogLevel(clientErr)).
 					Str(FieldResourceType, resource.GetResourceType()).
 					Str(FieldProvider, provider).
 					Str(FieldRegion, region).
@@ -965,7 +965,7 @@ func (s *Server) GetRecommendations(
 			s.logHandlerFallback("GetRecommendations")
 			return s.recommendationsDefault(req), nil
 		}
-		s.logger.Error().
+		s.logger.WithLevel(handlerLogLevel(clientErr)).
 			Str(FieldFilterCategory, filter.GetCategory().String()).
 			Str(FieldFilterActionType, filter.GetActionType().String()).
 			Err(err).
@@ -1044,7 +1044,7 @@ func (s *Server) GetBudgets(
 			s.logHandlerFallback("GetBudgets")
 			return nil, budgetsUnsupported()
 		}
-		s.logger.Error().
+		s.logger.WithLevel(handlerLogLevel(clientErr)).
 			Err(err).
 			Msg("GetBudgets handler error")
 		return nil, clientErr
@@ -1104,7 +1104,7 @@ func (s *Server) DismissRecommendation(
 			s.logHandlerFallback("DismissRecommendation")
 			return nil, dismissUnsupported()
 		}
-		s.logger.Error().
+		s.logger.WithLevel(handlerLogLevel(clientErr)).
 			Str("recommendation_id", req.GetRecommendationId()).
 			Err(err).
 			Msg("DismissRecommendation handler error")
@@ -1176,7 +1176,7 @@ func (s *Server) BatchCost(
 		}
 		useDefault, clientErr := handlerStatus(batchErr, "plugin failed to execute BatchCost")
 		if !useDefault {
-			s.logger.Error().Err(batchErr).Msg("BatchCost handler error")
+			s.logger.WithLevel(handlerLogLevel(clientErr)).Err(batchErr).Msg("BatchCost handler error")
 			return nil, clientErr
 		}
 		s.logHandlerFallback("BatchCost")
@@ -1236,7 +1236,7 @@ func (s *Server) ResolveResourceTypes(
 			s.logHandlerFallback("ResolveResourceTypes")
 			return s.resolveDefault(req), nil
 		}
-		s.logger.Error().
+		s.logger.WithLevel(handlerLogLevel(clientErr)).
 			Err(err).
 			Str("source_format", req.GetSourceFormat().String()).
 			Msg("ResolveResourceTypes handler error")

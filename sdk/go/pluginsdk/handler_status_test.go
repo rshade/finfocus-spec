@@ -16,12 +16,15 @@
 package pluginsdk
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"testing"
 
 	"connectrpc.com/connect"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -71,6 +74,12 @@ func (p *errorHandlerPlugin) BatchCost(context.Context, *pbc.BatchCostRequest) (
 func (p *errorHandlerPlugin) ResolveResourceTypes(
 	context.Context, *pbc.ResolveResourceTypesRequest,
 ) (*pbc.ResolveResourceTypesResponse, error) {
+	return nil, p.err
+}
+
+func (p *errorHandlerPlugin) GetRecommendationHistory(
+	context.Context, *pbc.GetRecommendationHistoryRequest,
+) (*pbc.GetRecommendationHistoryResponse, error) {
 	return nil, p.err
 }
 
@@ -152,6 +161,7 @@ func wrappedRPCs() []wrappedRPC {
 		SourceTypes:  []string{"custom_instance"},
 	}
 	info := &pbc.GetPluginInfoRequest{}
+	history := &pbc.GetRecommendationHistoryRequest{RecommendationId: "rec-1"}
 
 	return []wrappedRPC{
 		{
@@ -195,6 +205,16 @@ func wrappedRPCs() []wrappedRPC {
 			},
 			connect: func(ctx context.Context, h *ConnectHandler) error {
 				_, err := h.DismissRecommendation(ctx, connect.NewRequest(dismiss))
+				return err
+			},
+		},
+		{
+			name: "GetRecommendationHistory", internalMsg: "plugin failed to execute GetRecommendationHistory",
+			call: func(ctx context.Context, s *Server) (proto.Message, error) {
+				return s.GetRecommendationHistory(ctx, history)
+			},
+			connect: func(ctx context.Context, h *ConnectHandler) error {
+				_, err := h.GetRecommendationHistory(ctx, connect.NewRequest(history))
 				return err
 			},
 		},
@@ -410,4 +430,101 @@ func TestStubEmbeddingPassesBudgetsConformance(t *testing.T) {
 		}
 	}
 	assert.Equal(t, 1, budgets)
+}
+
+// loggedErrorServer returns a Server whose handlers fail with err and whose log lines,
+// debug and above, land in the returned buffer.
+func loggedErrorServer(err error) (*Server, *bytes.Buffer) {
+	var buf bytes.Buffer
+	logger := zerolog.New(&buf).Level(zerolog.DebugLevel)
+	plugin := &errorHandlerPlugin{mockPlugin: mockPlugin{name: "neutral"}, err: err}
+	return NewServerWithOptions(plugin, nil, &logger, nil), &buf
+}
+
+func logEntries(t *testing.T, buf *bytes.Buffer) []map[string]any {
+	t.Helper()
+	var entries []map[string]any
+	for _, raw := range bytes.Split(bytes.TrimSpace(buf.Bytes()), []byte("\n")) {
+		if len(raw) == 0 {
+			continue
+		}
+		var entry map[string]any
+		require.NoError(t, json.Unmarshal(raw, &entry), "log line %q", raw)
+		entries = append(entries, entry)
+	}
+	return entries
+}
+
+func entriesAtLevel(entries []map[string]any, level string) []map[string]any {
+	var matched []map[string]any
+	for _, entry := range entries {
+		if entry["level"] == level {
+			matched = append(matched, entry)
+		}
+	}
+	return matched
+}
+
+func TestWrapperDeclineLevel(t *testing.T) {
+	for _, rpc := range wrappedRPCs() {
+		for _, code := range allNonOKCodes() {
+			if !isDeclineCode(code) {
+				continue
+			}
+			declines := []error{
+				status.Error(code, "declined"),
+				fmt.Errorf("wrapped: %w", status.Error(code, "declined")),
+			}
+			for i, declined := range declines {
+				t.Run(fmt.Sprintf("%s/%s/%d", rpc.name, code, i), func(t *testing.T) {
+					server, buf := loggedErrorServer(declined)
+					_, err := rpc.call(context.Background(), server)
+					if code != codes.Unimplemented {
+						require.Error(t, err, "the host still receives the handler's status")
+					}
+					assert.Empty(t, entriesAtLevel(logEntries(t, buf), "error"),
+						"a decline must not log at error: %s", buf.String())
+				})
+			}
+		}
+	}
+}
+
+func TestWrapperDeclineKeepsDebugEntry(t *testing.T) {
+	server, buf := loggedErrorServer(status.Error(codes.InvalidArgument, "region is required"))
+	_, err := server.Supports(context.Background(), &pbc.SupportsRequest{Resource: neutralResource()})
+	require.Error(t, err)
+
+	debug := entriesAtLevel(logEntries(t, buf), "debug")
+	require.Len(t, debug, 1)
+	assert.Equal(t, "Supports handler error", debug[0]["message"])
+	for _, field := range []string{FieldResourceType, FieldProvider, FieldRegion, "error"} {
+		assert.Contains(t, debug[0], field)
+	}
+}
+
+func TestWrapperFaultLevel(t *testing.T) {
+	var faults []error
+	for _, code := range allNonOKCodes() {
+		if !isDeclineCode(code) {
+			faults = append(faults, status.Error(code, "x"))
+		}
+	}
+	faults = append(faults,
+		fmt.Errorf("wrapped: %w", status.Error(codes.Internal, "x")),
+		errors.New("db password is hunter2"),
+	)
+	for _, rpc := range wrappedRPCs() {
+		for i, fault := range faults {
+			t.Run(fmt.Sprintf("%s/%d", rpc.name, i), func(t *testing.T) {
+				server, buf := loggedErrorServer(fault)
+				_, err := rpc.call(context.Background(), server)
+				require.Error(t, err)
+
+				errs := entriesAtLevel(logEntries(t, buf), "error")
+				require.Len(t, errs, 1, "a fault logs one error entry: %s", buf.String())
+				assert.Equal(t, rpc.name+" handler error", errs[0]["message"])
+			})
+		}
+	}
 }
