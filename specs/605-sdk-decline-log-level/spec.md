@@ -106,8 +106,9 @@ same fields the ERROR entry carries today.
 - **FR-005**: The classification MUST read the code through error wrapping, and MUST use a single
   shared rule so the handler and the interceptor cannot disagree.
 - **FR-006**: The status and message returned to the host MUST NOT change for any code.
-- **FR-007**: A demoted entry MUST keep the trace id, operation, and error fields its ERROR
-  form carries.
+- **FR-007**: A demoted entry MUST keep every field its ERROR form carries. The interceptor entry keeps
+  `trace_id`, `operation`, and `error`. A wrapper entry keeps `error` and its own context fields (for
+  `Supports`: `resource_type`, `provider`, and `region`).
 - **FR-008**: Tests MUST cover every gRPC code in a table for the classifier, the interceptor, and each of
   the nine wrappers named in FR-004.
 - **FR-009**: The release note MUST state that plugins must rebuild on the new SDK to pick up
@@ -133,6 +134,9 @@ same fields the ERROR entry carries today.
 - **SC-004**: No wire-level difference: status code and message seen by the host are
   identical before and after.
 - **SC-005**: The release note names the rebuild requirement.
+- **SC-006**: For every one of the 16 codes, the interceptor and each of the nine wrappers log at the same
+  class of level (debug for a decline, ERROR for a fault), checked by the table tests.
+- **SC-007**: The classifier reports 0 allocs/op in its benchmark.
 
 ## Assumptions
 
@@ -146,7 +150,7 @@ same fields the ERROR entry carries today.
 - **Other codes stay ERROR**: `Canceled`, `DeadlineExceeded`, `PermissionDenied`,
   `Unauthenticated`, `ResourceExhausted`, `Aborted`, `AlreadyExists`, `OutOfRange` are not in
   the proposal and may signal real faults; demoting them is out of scope.
-- No proto, wire, or exported-API change; the change is in log output only.
+- No proto, schema, wire, or exported-API change; the change is in log output only.
 - The related symptom in the issue (code `Unknown` seen through a router) was not traced to
   the SDK and is out of scope. Core-side work is tracked in rshade/finfocus#2011.
 
