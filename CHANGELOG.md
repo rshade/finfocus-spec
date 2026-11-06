@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.12](https://github.com/rshade/finfocus-spec/compare/v0.7.11...v0.7.12) (2026-11-06)
+
+
+### Fixed
+
+* **pluginsdk:** keep the gRPC status of errors returned by Client ([#671](https://github.com/rshade/finfocus-spec/issues/671)) ([3e93f0f](https://github.com/rshade/finfocus-spec/commit/3e93f0f05a845ab9a33ed5d7db8de39d97a4e889))
+
+
+### Documentation
+
+* review the 605 quality checklist and fix wording gaps ([#670](https://github.com/rshade/finfocus-spec/issues/670)) ([9613a7f](https://github.com/rshade/finfocus-spec/commit/9613a7fd5c701b5ec04c7b0a805a846813a77827))
+
 ## [0.7.11](https://github.com/rshade/finfocus-spec/compare/v0.7.10...v0.7.11) (2026-11-04)
 
 
