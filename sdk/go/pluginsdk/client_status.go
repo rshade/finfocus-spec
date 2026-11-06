@@ -20,8 +20,11 @@ import (
 	"connectrpc.com/connect"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/protoadapt"
+	"google.golang.org/protobuf/types/known/anypb"
 )
+
+// anyTypeURLPrefix is the prefix protobuf puts before a message name in an Any type URL.
+const anyTypeURLPrefix = "type.googleapis.com/"
 
 // rpcStatusError carries the gRPC status of a failed Client call. The connect-go client reports
 // every failure, over any wire protocol, as a *connect.Error, which has no GRPCStatus method.
@@ -53,14 +56,21 @@ func withGRPCStatus(err error) error {
 		return err
 	}
 	st := status.New(codes.Code(connectErr.Code()), connectErr.Message())
+	statusProto := st.Proto()
 	for _, detail := range connectErr.Details() {
-		msg, valueErr := detail.Value()
-		if valueErr != nil {
-			continue
-		}
-		if withDetails, detailErr := st.WithDetails(protoadapt.MessageV1Of(msg)); detailErr == nil {
-			st = withDetails
+		statusProto.Details = append(statusProto.Details, forwardedDetail(detail))
+	}
+	st = status.FromProto(statusProto)
+	return &rpcStatusError{error: err, status: st}
+}
+
+// forwardedDetail returns detail as an Any. A message type the router has not linked cannot be
+// decoded, so it is sent on as the raw type name and bytes the child produced.
+func forwardedDetail(detail *connect.ErrorDetail) *anypb.Any {
+	if msg, err := detail.Value(); err == nil {
+		if packed, packErr := anypb.New(msg); packErr == nil {
+			return packed
 		}
 	}
-	return &rpcStatusError{error: err, status: st}
+	return &anypb.Any{TypeUrl: anyTypeURLPrefix + detail.Type(), Value: detail.Bytes()}
 }

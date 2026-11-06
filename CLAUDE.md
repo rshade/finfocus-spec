@@ -802,6 +802,7 @@ cd schemas && /init            # JSON Schema validation
   The connect-go client returns a `*connect.Error` for every wire protocol, and a gRPC server turns any error
   without `GRPCStatus` into `Unknown`, so a router plugin forwarding a child's error lost the code. The status
   message is the connect error's own message; `Error()` text and the `errors.As` chain are unchanged.
+  Details the router cannot decode are forwarded as raw `Any`, in their original order.
 
 ### Workflow Optimizations (Updated)
 

@@ -26,6 +26,12 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protodesc"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/descriptorpb"
+	"google.golang.org/protobuf/types/dynamicpb"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 func TestWrapRPCErrorReportsConnectCodeAsGRPCStatus(t *testing.T) {
@@ -77,4 +83,57 @@ func TestWithGRPCStatusLeavesOtherErrorsAlone(t *testing.T) {
 
 	withStatus := status.Error(codes.NotFound, "x")
 	assert.Equal(t, withStatus, withGRPCStatus(withStatus), "an error that already has a status is not wrapped")
+}
+
+// unregisteredDetail builds a detail whose message type is not in the global registry, as
+// the child's own detail types are not linked into a router.
+func unregisteredDetail(t *testing.T, value string) (*connect.ErrorDetail, protoreflect.FullName) {
+	t.Helper()
+	file, err := protodesc.NewFile(&descriptorpb.FileDescriptorProto{
+		Name:    proto.String("child_detail_test.proto"),
+		Package: proto.String("childtest"),
+		Syntax:  proto.String("proto3"),
+		MessageType: []*descriptorpb.DescriptorProto{{
+			Name: proto.String("ChildDetail"),
+			Field: []*descriptorpb.FieldDescriptorProto{{
+				Name:     proto.String("note"),
+				Number:   proto.Int32(1),
+				Label:    descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
+				Type:     descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
+				JsonName: proto.String("note"),
+			}},
+		}},
+	}, nil)
+	require.NoError(t, err)
+
+	descriptor := file.Messages().Get(0)
+	msg := dynamicpb.NewMessage(descriptor)
+	msg.Set(descriptor.Fields().Get(0), protoreflect.ValueOfString(value))
+	// Only the *anypb.Any is kept, as for a detail read off the wire, so Value must decode it.
+	packed, err := anypb.New(msg)
+	require.NoError(t, err)
+	detail, err := connect.NewErrorDetail(packed)
+	require.NoError(t, err)
+	return detail, descriptor.FullName()
+}
+
+func TestWrapRPCErrorKeepsUndecodableDetailsInOrder(t *testing.T) {
+	first, err := connect.NewErrorDetail(&errdetails.ErrorInfo{Reason: "FIRST"})
+	require.NoError(t, err)
+	unknown, unknownName := unregisteredDetail(t, "from the child")
+	last, err := connect.NewErrorDetail(&errdetails.ErrorInfo{Reason: "LAST"})
+	require.NoError(t, err)
+
+	connectErr := connect.NewError(connect.CodeFailedPrecondition, errors.New("not configured"))
+	connectErr.AddDetail(first)
+	connectErr.AddDetail(unknown)
+	connectErr.AddDetail(last)
+
+	got := status.Convert(wrapRPCError(context.Background(), "Supports", connectErr)).Proto().GetDetails()
+	require.Len(t, got, 3, "a detail the router cannot decode is forwarded, not dropped")
+
+	assert.Equal(t, "type.googleapis.com/google.rpc.ErrorInfo", got[0].GetTypeUrl())
+	assert.Equal(t, "type.googleapis.com/"+string(unknownName), got[1].GetTypeUrl())
+	assert.Equal(t, unknown.Bytes(), got[1].GetValue(), "the raw bytes are untouched")
+	assert.Equal(t, "type.googleapis.com/google.rpc.ErrorInfo", got[2].GetTypeUrl())
 }
