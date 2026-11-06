@@ -3698,6 +3698,29 @@ This section documents thread safety guarantees for SDK components.
 | **ResourceMatcher**    | ❌ NO       | Configure before Serve(), then read-only               |
 | **FocusRecordBuilder** | ❌ NO       | Single-threaded builder pattern                        |
 
+### Client Errors and gRPC Status
+
+When a `Client` method's RPC reaches the child and fails, the error reports the call's gRPC status through
+`GRPCStatus()`, so `status.Code(err)` returns the code the child plugin sent. Errors raised locally before
+the call, such as a nil request or a missing resource type, are plain errors with no status. The status
+carries the child's own message and details. A detail whose message type your plugin has not linked is
+forwarded as its raw type name and bytes.
+
+A routing plugin can return the client's error from its own handler:
+
+- For an RPC the plugin implements directly (the cost RPCs), the host sees `InvalidArgument`, `NotFound`, and
+  the other codes unchanged instead of `Unknown`.
+- For an RPC the SDK wraps with a provider interface (`Supports`, `GetBudgets`, and the others), the existing
+  handler rules still apply after the status is read: `Unimplemented` takes the SDK default answer, and
+  `Unknown` becomes `Internal` with a generic message.
+
+The error text depends on the call. A failed call reads `<Operation> RPC failed: <child error>`. When the
+context is already cancelled or timed out, the text is the `<Operation> RPC cancelled or timed out` line
+followed by the context error and the child error. In both cases `errors.As` still finds the underlying
+`*connect.Error`; in the cancelled case `errors.Is` also finds the context error.
+
+Plugins must rebuild on this SDK version to pick up the change.
+
 ### Client Thread Safety
 
 The `Client` struct wraps `http.Client` which is explicitly designed for concurrent use.
