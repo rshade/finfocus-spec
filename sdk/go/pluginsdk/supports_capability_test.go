@@ -145,30 +145,69 @@ func TestRequestedCapability(t *testing.T) {
 	}
 }
 
-func TestRequestedCapabilityWarnsOncePerValue(t *testing.T) {
-	unknownCapabilitiesSeen.Clear()
+// captureUnknownCapabilityLog resets the process-wide dedup state and routes the
+// global logger to a buffer for the rest of the test.
+func captureUnknownCapabilityLog(t *testing.T) *bytes.Buffer {
+	t.Helper()
+	reset := func() {
+		unknownCapabilitiesSeen.Clear()
+		unknownCapabilitiesTracked.Store(0)
+	}
+	reset()
 	var buf bytes.Buffer
 	previous := log.Logger
 	log.Logger = zerolog.New(&buf) //nolint:reassign // zerolog's global logger has no setter; restored below.
 	t.Cleanup(func() {
 		log.Logger = previous //nolint:reassign // restores the global logger replaced above.
-		unknownCapabilitiesSeen.Clear()
+		reset()
 	})
+	return &buf
+}
+
+func logLinesContaining(buf *bytes.Buffer, text string) []string {
+	var lines []string
+	for _, line := range strings.Split(buf.String(), "\n") {
+		if strings.Contains(line, text) {
+			lines = append(lines, line)
+		}
+	}
+	return lines
+}
+
+func TestRequestedCapabilityWarnsOncePerValue(t *testing.T) {
+	buf := captureUnknownCapabilityLog(t)
 
 	for _, raw := range []int32{997, 997, 998} {
 		RequestedCapability(&pbc.SupportsRequest{Capability: pbc.PluginCapability(raw)})
 	}
 
-	var warnings []string
-	for _, line := range strings.Split(buf.String(), "\n") {
-		if strings.Contains(line, "Unknown Supports capability") {
-			warnings = append(warnings, line)
-		}
-	}
+	warnings := logLinesContaining(buf, "Unknown Supports capability")
 	require.Len(t, warnings, 2, buf.String())
 	assert.Contains(t, warnings[0], `"capability":997`)
 	assert.Contains(t, warnings[1], `"capability":998`)
 	assert.Contains(t, warnings[0], `"level":"warn"`)
+}
+
+// TestRequestedCapabilityBoundsTrackedValues checks that a caller sending many distinct
+// unknown values cannot grow the dedup set without limit.
+func TestRequestedCapabilityBoundsTrackedValues(t *testing.T) {
+	buf := captureUnknownCapabilityLog(t)
+
+	first := int32(maxValidCapability) + 1
+	for i := range int32(maxUnknownCapabilitiesTracked + 10) {
+		req := &pbc.SupportsRequest{Capability: pbc.PluginCapability(first + i)}
+		assert.Equal(t, pbc.PluginCapability_PLUGIN_CAPABILITY_UNSPECIFIED, RequestedCapability(req))
+	}
+	RequestedCapability(&pbc.SupportsRequest{Capability: pbc.PluginCapability(first)})
+
+	tracked := 0
+	unknownCapabilitiesSeen.Range(func(_, _ any) bool {
+		tracked++
+		return true
+	})
+	assert.Equal(t, maxUnknownCapabilitiesTracked, tracked)
+	assert.Len(t, logLinesContaining(buf, "Unknown Supports capability, treating"), maxUnknownCapabilitiesTracked)
+	assert.Len(t, logLinesContaining(buf, "Too many unknown Supports capabilities"), 1, buf.String())
 }
 
 func BenchmarkRequestedCapability(b *testing.B) {

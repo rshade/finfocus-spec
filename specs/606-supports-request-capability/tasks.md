@@ -348,3 +348,9 @@ Docs after T018:
   once the new check added a third copy of "Capability discovery failed", and the T026 lint gate needs 0
   issues. Confirm the detail text is unchanged at all three sites (`capabilities.go`, `rpc_correctness.go`,
   `supports_capability.go`) per plan: Project Structure (unrequested)
+
+## Phase 9: Post-Commit Security Review
+
+- [X] T031 Bound the unknown-capability dedup set in `sdk/go/pluginsdk/supports_capability.go` at 64 values
+  (`maxUnknownCapabilitiesTracked`, counted by an `atomic.Int32`), logging one "no longer logging" warning at
+  the bound. Test first: `TestRequestedCapabilityBoundsTrackedValues` per FR-005 (partial)

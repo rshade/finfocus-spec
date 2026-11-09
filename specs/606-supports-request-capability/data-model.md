@@ -12,7 +12,8 @@ Validation:
 - Every `capability` value is accepted on the wire and by `plugintesting.ValidateSupportsRequest`, including
   values the receiver does not define (research R5).
 - `pluginsdk.RequestedCapability` maps any value outside `IsValidCapability` other than `UNSPECIFIED` to
-  `UNSPECIFIED`, and logs a warning once per distinct value per process (research R2).
+  `UNSPECIFIED`, and logs a warning once per distinct value per process, for at most 64 distinct values
+  (research R2).
 
 Wire compatibility:
 

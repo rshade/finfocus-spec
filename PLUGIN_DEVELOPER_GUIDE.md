@@ -275,7 +275,7 @@ The rules:
 
 Read the capability with `pluginsdk.RequestedCapability`. It returns known values unchanged and returns
 `PLUGIN_CAPABILITY_UNSPECIFIED` for a value your SDK version does not define, so a newer host keeps getting your
-"any capability" answer. It logs that value as a warning the first time it is seen.
+"any capability" answer. It logs that value as a warning the first time it is seen, for up to 64 distinct values.
 
 ```go
 func (p *MyPlugin) Supports(ctx context.Context, req *pbc.SupportsRequest) (*pbc.SupportsResponse, error) {
