@@ -37,6 +37,10 @@ func (h *TestHarness) discoverCapabilities() {
 	})
 }
 
+// detailsCapabilityDiscoveryFailed is the result detail of a check whose capability
+// discovery RPC failed.
+const detailsCapabilityDiscoveryFailed = "Capability discovery failed"
+
 func (p *capabilityProfile) declares(capability pbc.PluginCapability) bool {
 	return slices.Contains(p.values, capability)
 }
@@ -52,7 +56,7 @@ func withCapability(
 		h.discoverCapabilities()
 		if h.capabilities.err != nil {
 			return TestResult{Method: MethodGetPluginInfo, Error: h.capabilities.err,
-				Details: "Capability discovery failed"}
+				Details: detailsCapabilityDiscoveryFailed}
 		}
 		if len(h.capabilities.values) == 0 || h.capabilities.declares(capability) {
 			return check(h)

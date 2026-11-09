@@ -1325,7 +1325,40 @@ parallel subtests complete.
   In a worktree, `buf breaking --against '.git#branch=main'` can fail to read the git object;
   archive `origin/main` and run `buf breaking` against that directory.
 
+### Capability-Scoped Supports Pattern (606-supports-request-capability)
+
+- `SupportsRequest.capability` (field 2, `PluginCapability`) names the operation the host is about to call.
+  `UNSPECIFIED` means any capability: the answer is exactly what it was before the field existed, and hosts treat
+  it as covering every capability. An old plugin ignores the field, so it gives its "any" answer to a specific
+  request.
+- Plugins read it with `pluginsdk.RequestedCapability(req)`. Unknown values, including negative ones, come back
+  as `UNSPECIFIED`. Each distinct value is warned about once per process through a package `sync.Map`.
+  `NormalizeUsageProfile` warns on every call, but Supports runs on every routing decision, so that pattern
+  would flood logs here. The known and unspecified paths cost 0 allocs at about 1 ns; the unknown path is exempt,
+  because an `int32` boxed as a `sync.Map` key allocates for values of 256 and above.
+- `TestRequestedCapabilityWarnsOncePerValue` swaps zerolog's global `log.Logger` (with `nolint:reassign`, since
+  it has no setter) and calls `unknownCapabilitiesSeen.Clear()` first, or it fails under `-count=2`.
+- Hosts use `Client.SupportsFor(ctx, resource, capability)`, and `Supports` delegates with `UNSPECIFIED`. A
+  variadic option on `Supports` was rejected, because it would break callers that store the method as a typed
+  func value (the 598 reason). The client sends the value unchanged; it does not normalize.
+- The SDK never answers per capability for a plugin: the default answer, registry rejection, and error mapping
+  are unchanged. The capability appears only in the "Supports handler error" log (`FieldCapability`).
+- `RPCCorrectness_SupportsCapability` (Standard, `sdk/go/testing/supports_capability.go`) sends an unspecified
+  request, then each declared capability in the private `resourceScopedCapabilities` list. That list is mirrored
+  in the guide's "Answering per capability" section; update both together. A plugin with no declared
+  capabilities, or an unimplemented `GetPluginInfo`, is asked projected and actual cost. Answers are never judged.
+- `MockPlugin.UnsupportedCapabilities` answers false only after the provider and resource checks pass. External
+  tests run one check provider-neutrally through `SetSampleResourceForTest` (`export_test.go`). It is test-only
+  (an `_test.go` file, never in the exported API) because the harness sample is unexported.
+- `"Capability discovery failed"` is now the constant `detailsCapabilityDiscoveryFailed` (`capabilities.go`).
+  A third copy tripped goconst.
+
 ## Active Technologies
+
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf,
+  google.golang.org/grpc, connectrpc.com/connect, zerolog, buf v1.32.1; no new dependencies
+  (606-supports-request-capability)
+- N/A (one PluginCapability field on SupportsRequest) (606-supports-request-capability)
 
 - Go 1.27.1 (per go.mod) + google.golang.org/grpc (`status.Code`), zerolog; no new dependencies
   (605-sdk-decline-log-level)
@@ -1544,6 +1577,11 @@ A comprehensive migration guide is available in [MIGRATION.md](./MIGRATION.md) f
 See [sdk/go/CLAUDE.md](./sdk/go/CLAUDE.md) for detailed environment variable documentation.
 
 ## Recent Changes
+
+- 606-supports-request-capability: Added SupportsRequest.capability (field 2, PluginCapability;
+  UNSPECIFIED means any capability), pluginsdk.RequestedCapability, Client.SupportsFor, the capability
+  in the Supports handler-error log, MockPlugin.UnsupportedCapabilities, and the Standard conformance
+  check RPCCorrectness_SupportsCapability (issue 675)
 
 - 605-sdk-decline-log-level: The interceptor ("rpc failed") and the nine handlerStatus wrappers log
   InvalidArgument, Unimplemented, NotFound, and FailedPrecondition at debug instead of ERROR; faults

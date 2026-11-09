@@ -252,6 +252,9 @@ plugin := plugintesting.NewMockPlugin()
 plugin.SupportedProviders = []string{"aws", "azure"}
 plugin.SupportedResources["aws"] = []string{"ec2", "s3"}
 
+// Answer "not supported" when Supports asks about these capabilities (nil ignores the capability)
+plugin.UnsupportedCapabilities = []pbc.PluginCapability{pbc.PluginCapability_PLUGIN_CAPABILITY_PROJECTED_COSTS}
+
 // Configure error behavior
 plugin.ShouldErrorOnName = true
 
@@ -872,6 +875,11 @@ The conformance suite provides multi-level validation across four test categorie
   that never set the fields, return no recommendations, or declare capabilities without recommendations
   pass, and so do plugins that declare no capabilities and answer `Unimplemented`; a plugin that declares
   `PLUGIN_CAPABILITY_RECOMMENDATIONS` and answers `Unimplemented` fails)
+- `RPCCorrectness_SupportsCapability` - Supports answers an unspecified request, then one request per declared
+  resource-scoped capability (`PROJECTED_COSTS`, `ACTUAL_COSTS`, `CARBON`, `RECOMMENDATIONS`, `ENERGY`, `WATER`,
+  `PRICING_SPEC`, `ESTIMATE_COST`, `BATCH_COST`, `HISTORICAL_CARBON`), or projected and actual cost when the
+  plugin declares none (Standard). Each answer must be a valid response, and a failure names the capability.
+  Answer values are never judged, so a plugin that ignores the field passes.
 - `RPCCorrectness_GetRecommendations_Pagination` - Pagination token handling
 - `RPCCorrectness_GetRecommendations_Filtering` - Filter criteria validation
 - `RPCCorrectness_GetRecommendations_ActionDetails` - Action type details

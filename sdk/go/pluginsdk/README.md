@@ -471,6 +471,7 @@ client := pluginsdk.NewClient(cfg)
 | ----------------------------------------- | --------------------------------------- |
 | `Name(ctx)`                               | Get plugin name                         |
 | `Supports(ctx, resource)`                 | Check resource support                  |
+| `SupportsFor(ctx, resource, capability)`  | Check support for one capability        |
 | `SupportsResourceType(ctx, resourceType)` | Convenience for checking by type string |
 | `EstimateCost(ctx, req)`                  | Estimate monthly cost                   |
 | `GetActualCost(ctx, req)`                 | Get historical cost data                |
@@ -1411,6 +1412,22 @@ Plugins can optionally implement these interfaces to provide advanced capabiliti
 ```go
 type SupportsProvider interface {
     Supports(ctx context.Context, req *pbc.SupportsRequest) (*pbc.SupportsResponse, error)
+}
+```
+
+A host can say which capability it is about to call through `SupportsRequest.capability`. Read it with
+`RequestedCapability(req)`. It returns `PLUGIN_CAPABILITY_UNSPECIFIED` ("any capability", the default) for a
+request without one, and also for a value this SDK version does not define, logging that value as a warning the
+first time it is seen. Answer an unspecified request as before; answer a specific capability for that operation
+only. Hosts send one with `Client.SupportsFor(ctx, resource, capability)`. See
+[Answering per capability](../../../PLUGIN_DEVELOPER_GUIDE.md#answering-per-capability).
+
+```go
+func (p *MyPlugin) Supports(ctx context.Context, req *pbc.SupportsRequest) (*pbc.SupportsResponse, error) {
+    if pluginsdk.RequestedCapability(req) == pbc.PluginCapability_PLUGIN_CAPABILITY_PROJECTED_COSTS {
+        return &pbc.SupportsResponse{Supported: false, Reason: "projected cost is not priced"}, nil
+    }
+    return &pbc.SupportsResponse{Supported: true}, nil
 }
 ```
 
@@ -4207,6 +4224,7 @@ The `pbc` alias remains the same, so no other code changes are required.
 | `NewServer(plugin)`                                    | Create server with default registry |
 | `NewServerWithRegistry(plugin, registry)`              | Create server with custom registry  |
 | `NewServerWithOptions(plugin, registry, logger, info)` | Create server with all options      |
+| `RequestedCapability(req)`                             | Capability asked by Supports        |
 | `Run(config)`                                          | Plugin CLI entry (ax-go + Serve)    |
 | `Serve(ctx, config)`                                   | Start gRPC server                   |
 | `NewLogWriter()`                                       | Get log writer respecting env var   |

@@ -53,6 +53,11 @@ tools to create a robust ecosystem of cost-estimation plugins.
 
 ## Active Technologies
 
+- Go 1.27.1 (per go.mod) + Protocol Buffers v3, TypeScript (SDK) + google.golang.org/protobuf,
+  google.golang.org/grpc, connectrpc.com/connect, zerolog, buf v1.32.1; no new dependencies
+  (606-supports-request-capability)
+- N/A (one PluginCapability field on SupportsRequest) (606-supports-request-capability)
+
 - Go 1.27.1 (per go.mod) + google.golang.org/grpc (`status.Code`), zerolog; no new dependencies
   (605-sdk-decline-log-level)
 - N/A (log level chosen from the gRPC code; no proto change) (605-sdk-decline-log-level)
@@ -104,6 +109,11 @@ tools to create a robust ecosystem of cost-estimation plugins.
 - JSON Schema (Draft 2020-12) for PricingSpec and BudgetSpec validation (001-get-budgets-rpc)
 
 ## Recent Changes
+
+- 606-supports-request-capability: Added SupportsRequest.capability (field 2, PluginCapability;
+  UNSPECIFIED means any capability), pluginsdk.RequestedCapability, Client.SupportsFor, the capability
+  in the Supports handler-error log, MockPlugin.UnsupportedCapabilities, and the Standard conformance
+  check RPCCorrectness_SupportsCapability (issue 675)
 
 - 605-sdk-decline-log-level: The interceptor ("rpc failed") and the nine handlerStatus wrappers log
   InvalidArgument, Unimplemented, NotFound, and FailedPrecondition at debug instead of ERROR; faults

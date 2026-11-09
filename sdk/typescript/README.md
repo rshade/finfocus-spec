@@ -166,6 +166,29 @@ try {
 }
 ```
 
+To ask about the one capability you are about to call, set `capability` on the request. An unset capability
+(`PluginCapability.UNSPECIFIED`) means any capability. A plugin can then report actual cost for a resource it
+cannot price, and a plugin built before the field existed ignores it and answers for any capability:
+
+```typescript
+import {
+  CostSourceClient,
+  create,
+  PluginCapability,
+  SupportsRequestSchema,
+} from "@rshade/finfocus-client";
+
+const client = new CostSourceClient({ baseUrl: "https://plugin.example.com" });
+
+const projected = await client.supports(create(SupportsRequestSchema, {
+  resource: { provider: "custom", resourceType: "custom:compute:Instance" },
+  capability: PluginCapability.PROJECTED_COSTS,
+}));
+if (!projected.supported) {
+  console.log(`Projected cost not available: ${projected.reason}`);
+}
+```
+
 ### UsageSourceClient
 
 Calls plugins that serve `UsageSourceService`, which reports per-workload and per-node CPU and

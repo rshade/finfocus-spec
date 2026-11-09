@@ -298,7 +298,21 @@ func (c *Client) Name(ctx context.Context) (string, error) {
 }
 
 // Supports checks if the cost source supports pricing for a given resource.
+// It asks about any capability (PLUGIN_CAPABILITY_UNSPECIFIED); use SupportsFor
+// to ask about the one capability the host is about to call.
 func (c *Client) Supports(ctx context.Context, resource *pbc.ResourceDescriptor) (*pbc.SupportsResponse, error) {
+	return c.SupportsFor(ctx, resource, pbc.PluginCapability_PLUGIN_CAPABILITY_UNSPECIFIED)
+}
+
+// SupportsFor checks if the cost source supports a resource for one capability,
+// such as PLUGIN_CAPABILITY_PROJECTED_COSTS. It applies the same input checks as
+// Supports and sends capability unchanged. A plugin built before the field existed
+// ignores it and answers for any capability.
+func (c *Client) SupportsFor(
+	ctx context.Context,
+	resource *pbc.ResourceDescriptor,
+	capability pbc.PluginCapability,
+) (*pbc.SupportsResponse, error) {
 	if resource == nil {
 		return nil, errors.New("resource descriptor cannot be nil")
 	}
@@ -306,7 +320,8 @@ func (c *Client) Supports(ctx context.Context, resource *pbc.ResourceDescriptor)
 		return nil, errors.New("resource type is required")
 	}
 	resp, err := c.inner.Supports(ctx, attachCredentialHeaders(ctx, &pbc.SupportsRequest{
-		Resource: resource,
+		Resource:   resource,
+		Capability: capability,
 	}))
 	if err != nil {
 		return nil, wrapRPCError(ctx, "Supports", err)

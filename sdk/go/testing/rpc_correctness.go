@@ -538,7 +538,7 @@ func testGetRecommendationsSpot(harness *TestHarness) TestResult {
 	harness.discoverCapabilities()
 	if harness.capabilities.err != nil {
 		return TestResult{Method: MethodGetPluginInfo, Category: CategoryRPCCorrectness,
-			Error: harness.capabilities.err, Details: "Capability discovery failed"}
+			Error: harness.capabilities.err, Details: detailsCapabilityDiscoveryFailed}
 	}
 	profile := &harness.capabilities
 	if len(profile.values) > 0 && !profile.declares(pbc.PluginCapability_PLUGIN_CAPABILITY_RECOMMENDATIONS) {
@@ -704,7 +704,7 @@ func testInvalidTimeRangeHandling(harness *TestHarness) TestResult {
 
 // RPCCorrectnessTests returns the RPC correctness conformance tests.
 func RPCCorrectnessTests() []ConformanceSuiteTest {
-	return append(coreRPCCorrectnessTests(), recommendationsSpotTest())
+	return append(coreRPCCorrectnessTests(), recommendationsSpotTest(), supportsCapabilityTest())
 }
 
 // recommendationsSpotTest returns the Standard check for the spot pricing fields on recommendations.

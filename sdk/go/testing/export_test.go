@@ -79,3 +79,9 @@ const PairwiseDuplicateLimitForTest = pairwiseDuplicateLimit
 //
 //nolint:gochecknoglobals // Test-only export of an unexported function.
 var BillingPeriodIdentityForTest = billingPeriodIdentity
+
+// SetSampleResourceForTest sets the descriptor a harness hands to checks, as
+// ConformanceSuite does, so external tests can run one check provider-neutrally.
+func SetSampleResourceForTest(h *TestHarness, resource *pbc.ResourceDescriptor) {
+	h.sampleResource = resource
+}

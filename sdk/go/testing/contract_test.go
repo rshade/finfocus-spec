@@ -1182,3 +1182,17 @@ func TestValidateResourceDescriptorAttributesAndTagBounds(t *testing.T) {
 		require.ErrorIs(t, err, plugintesting.ErrTagValueTooLong)
 	})
 }
+
+// TestValidateSupportsRequestAcceptsAnyCapability pins that request validation never
+// rejects a capability value, so a newer host is not refused by an older plugin.
+func TestValidateSupportsRequestAcceptsAnyCapability(t *testing.T) {
+	resource := plugintesting.CreateResourceDescriptor("custom", "instance", "standard", "region-1")
+	values := []pbc.PluginCapability{pbc.PluginCapability(999), pbc.PluginCapability(-1)}
+	for v := range pbc.PluginCapability_name {
+		values = append(values, pbc.PluginCapability(v))
+	}
+	for _, capability := range values {
+		req := &pbc.SupportsRequest{Resource: resource, Capability: capability}
+		require.NoError(t, plugintesting.ValidateSupportsRequest(req), "capability %d", capability)
+	}
+}
