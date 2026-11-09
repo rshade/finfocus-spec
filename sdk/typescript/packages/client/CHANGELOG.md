@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.10](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.7.9...finfocus-client-v0.7.10) (2026-11-09)
+
+
+### Features
+
+* **proto:** tell Supports which capability the host is asking about ([8351595](https://github.com/rshade/finfocus-spec/commit/8351595568bfe21c9a6c3d86356e56d910bf147e)), closes [#675](https://github.com/rshade/finfocus-spec/issues/675)
+
 ## [0.7.9](https://github.com/rshade/finfocus-spec/compare/finfocus-client-v0.7.8...finfocus-client-v0.7.9) (2026-11-04)
 
 
