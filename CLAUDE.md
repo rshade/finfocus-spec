@@ -925,8 +925,11 @@ parallel subtests complete.
   (import cycle, same as #427 metadata); only the `pluginsdk` validator does.
 - The TS client `tsconfig.json` excludes `test/`, so `tsc --noEmit` cannot show a failing TS test;
   use `npx vitest run`.
-- `TestUsageSourceNotRegistered/connect` (`usage_source_test.go:79`, "server did not shut down in
-  time") flakes under full `make test` load (about 1 in 8 runs); it passes in isolation.
+- "server did not shut down in time" in a Connect-mode test: `http.Server.Shutdown` waits 5s before it
+  closes a connection still in `StateNew`. Go's client transport can leave one behind: when a second RPC
+  dials while the first connection is still returning to the pool, the unused dial is pooled. Serve
+  cleanups call `http.DefaultClient.CloseIdleConnections()` before `cancel()`; a new Connect-mode helper
+  needs the same, or it flakes at exactly 5s.
 
 ### Price Options Pattern (557-price-options)
 
@@ -1287,8 +1290,6 @@ parallel subtests complete.
   no vendor resource types, SKUs, or regions beyond the kept default.
 - The mock's `GetPricingSpec` answers `billing_mode: not_implemented` for resource types it does not know;
   a test plugin with its own resource type answers `GetPricingSpec` itself.
-- `TestAllocatorServe_NotRegisteredWithoutProvider/connect` ("server did not shut down in time") flakes on
-  `main` too (about 1 in 20 in isolation).
 
 ### Handler Status Pattern (600-handler-status-codes)
 

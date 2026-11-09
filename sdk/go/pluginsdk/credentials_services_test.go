@@ -203,6 +203,8 @@ func startCredentialServicesServer(t *testing.T, web bool) (string, *credentialS
 		})
 	}()
 	t.Cleanup(func() {
+		// Shutdown waits 5s on a pooled connection that never sent a request.
+		http.DefaultClient.CloseIdleConnections()
 		cancel()
 		select {
 		case <-errCh:

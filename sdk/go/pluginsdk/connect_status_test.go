@@ -54,6 +54,8 @@ func serveConnectForTest(t *testing.T, plugin pluginsdk.Plugin) pbcconnect.CostS
 		})
 	}()
 	t.Cleanup(func() {
+		// Shutdown waits 5s on a pooled connection that never sent a request.
+		http.DefaultClient.CloseIdleConnections()
 		cancel()
 		select {
 		case <-errCh:
