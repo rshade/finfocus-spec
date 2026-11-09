@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.12](https://github.com/rshade/finfocus-spec/compare/v0.7.11...v0.7.12) (2026-11-09)
+
+
+### Added
+
+* **proto:** tell Supports which capability the host is asking about ([8351595](https://github.com/rshade/finfocus-spec/commit/8351595568bfe21c9a6c3d86356e56d910bf147e)), closes [#675](https://github.com/rshade/finfocus-spec/issues/675)
+
+
+### Fixed
+
+* **pluginsdk:** bound the unknown Supports capability warning set ([41157cb](https://github.com/rshade/finfocus-spec/commit/41157cb5451ec27791c6ba206e816b33f7827d5a))
+* **pluginsdk:** keep the gRPC status of errors returned by Client ([#671](https://github.com/rshade/finfocus-spec/issues/671)) ([3e93f0f](https://github.com/rshade/finfocus-spec/commit/3e93f0f05a845ab9a33ed5d7db8de39d97a4e889))
+* **testing:** fail spot check for declared, unserved recommendations ([0bee342](https://github.com/rshade/finfocus-spec/commit/0bee342a419c7cf970582a91c10f583f062422ba)), closes [#668](https://github.com/rshade/finfocus-spec/issues/668)
+
+
+### Documentation
+
+* review the 605 quality checklist and fix wording gaps ([#670](https://github.com/rshade/finfocus-spec/issues/670)) ([9613a7f](https://github.com/rshade/finfocus-spec/commit/9613a7fd5c701b5ec04c7b0a805a846813a77827))
+
 ## [0.7.11](https://github.com/rshade/finfocus-spec/compare/v0.7.10...v0.7.11) (2026-11-04)
 
 
