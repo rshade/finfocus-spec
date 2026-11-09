@@ -19,8 +19,9 @@ import (
 func waitForServer(t *testing.T, addr string) {
 	t.Helper()
 	for range 50 { // 500ms total
-		_, err := http.Get("http://" + addr + "/healthz")
+		resp, err := http.Get("http://" + addr + "/healthz")
 		if err == nil {
+			_ = resp.Body.Close()
 			return
 		}
 		time.Sleep(10 * time.Millisecond)

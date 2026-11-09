@@ -925,11 +925,12 @@ parallel subtests complete.
   (import cycle, same as #427 metadata); only the `pluginsdk` validator does.
 - The TS client `tsconfig.json` excludes `test/`, so `tsc --noEmit` cannot show a failing TS test;
   use `npx vitest run`.
-- "server did not shut down in time" in a Connect-mode test: `http.Server.Shutdown` waits 5s before it
-  closes a connection still in `StateNew`. Go's client transport can leave one behind: when a second RPC
-  dials while the first connection is still returning to the pool, the unused dial is pooled. Serve
-  cleanups call `http.DefaultClient.CloseIdleConnections()` before `cancel()`; a new Connect-mode helper
-  needs the same, or it flakes at exactly 5s.
+- "server did not shut down in time" in a Connect-mode test: `http.Server.Shutdown` closes a connection
+  still in `StateNew` only once it is 5s old, and the Serve test helpers' cleanup deadline is also 5s, so
+  one such connection makes shutdown overrun the deadline. Go's client transport can leave one behind:
+  when a second RPC dials while the first connection is still returning to the pool, the unused dial is
+  pooled. Serve cleanups call `http.DefaultClient.CloseIdleConnections()` before `cancel()`; a new
+  Connect-mode helper needs the same, or it flakes at about 5s.
 
 ### Price Options Pattern (557-price-options)
 
