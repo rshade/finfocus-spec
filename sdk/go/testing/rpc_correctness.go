@@ -506,6 +506,23 @@ func testGetBudgetsRPC(harness *TestHarness) TestResult {
 	}
 }
 
+// unimplementedRecommendationsResult judges a first-page Unimplemented answer: a pass for a legacy
+// plugin, and a failure for a plugin that declared PLUGIN_CAPABILITY_RECOMMENDATIONS.
+func unimplementedRecommendationsResult(profile *capabilityProfile, start time.Time) TestResult {
+	if profile.declares(pbc.PluginCapability_PLUGIN_CAPABILITY_RECOMMENDATIONS) {
+		return TestResult{
+			Method: MethodGetRecommendations, Category: CategoryRPCCorrectness, Duration: time.Since(start),
+			Error: fmt.Errorf("declared %s but %s returned Unimplemented",
+				pbc.PluginCapability_PLUGIN_CAPABILITY_RECOMMENDATIONS, MethodGetRecommendations),
+			Details: "Declared capability returned Unimplemented",
+		}
+	}
+	return TestResult{
+		Method: MethodGetRecommendations, Category: CategoryRPCCorrectness, Success: true,
+		Duration: time.Since(start), Details: "Plugin does not serve recommendations; check skipped",
+	}
+}
+
 // maxSpotCheckPages bounds how many pages testGetRecommendationsSpot follows.
 const maxSpotCheckPages = 100
 
@@ -514,7 +531,8 @@ const maxSpotCheckPages = 100
 // next page unvisited, the result still passes but its details say the later pages were not checked.
 // It does not use withCapability: that wrapper probes an undeclared capability with an RPC, and
 // recommendations have no probe. A plugin that declares capabilities without recommendations is
-// skipped, and a plugin that answers Unimplemented has no recommendations to check.
+// skipped, and a plugin that declares no capabilities and answers Unimplemented passes. A plugin that
+// declares recommendations and answers Unimplemented fails: its declaration contradicts its answer.
 func testGetRecommendationsSpot(harness *TestHarness) TestResult {
 	start := time.Now()
 	harness.discoverCapabilities()
@@ -540,10 +558,7 @@ func testGetRecommendationsSpot(harness *TestHarness) TestResult {
 	for page := range maxSpotCheckPages {
 		resp, err := harness.Client().GetRecommendations(ctx, &pbc.GetRecommendationsRequest{PageToken: token})
 		if status.Code(err) == codes.Unimplemented && page == 0 {
-			return TestResult{
-				Method: MethodGetRecommendations, Category: CategoryRPCCorrectness, Success: true,
-				Duration: time.Since(start), Details: "Plugin does not serve recommendations; check skipped",
-			}
+			return unimplementedRecommendationsResult(profile, start)
 		}
 		if err != nil {
 			return TestResult{
