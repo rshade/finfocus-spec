@@ -198,6 +198,8 @@ func TestServeConnect_WithHealthEndpoint(t *testing.T) {
 	assert.Equal(t, "ok", string(body))
 
 	// Cleanup
+	// Shutdown waits 5s on a pooled connection that never sent a request.
+	http.DefaultClient.CloseIdleConnections()
 	cancel()
 	select {
 	case <-errCh:
@@ -248,6 +250,8 @@ func TestServeConnect_ConnectProtocol(t *testing.T) {
 	assert.Equal(t, "connect-test-plugin", result["name"])
 
 	// Cleanup
+	// Shutdown waits 5s on a pooled connection that never sent a request.
+	http.DefaultClient.CloseIdleConnections()
 	cancel()
 	select {
 	case <-errCh:
@@ -301,6 +305,8 @@ func TestServeConnect_ConnectClient(t *testing.T) {
 	assert.InDelta(t, 100.0, estimateResp.Msg.GetCostMonthly(), 0.01)
 
 	// Cleanup
+	// Shutdown waits 5s on a pooled connection that never sent a request.
+	http.DefaultClient.CloseIdleConnections()
 	cancel()
 	select {
 	case <-errCh:
@@ -439,6 +445,8 @@ func TestServeConnect_CORS(t *testing.T) {
 	})
 
 	// Cleanup
+	// Shutdown waits 5s on a pooled connection that never sent a request.
+	http.DefaultClient.CloseIdleConnections()
 	cancel()
 	select {
 	case <-errCh:
@@ -484,6 +492,8 @@ func TestServeGRPC_LegacyMode(t *testing.T) {
 	require.Error(t, err, "HTTP/1.1 request to gRPC server should fail")
 
 	// Cleanup
+	// Shutdown waits 5s on a pooled connection that never sent a request.
+	http.DefaultClient.CloseIdleConnections()
 	cancel()
 	select {
 	case <-errCh:
@@ -935,6 +945,8 @@ func BenchmarkCORSMiddleware(b *testing.B) {
 		}
 	})
 
+	// Shutdown waits 5s on a pooled connection that never sent a request.
+	http.DefaultClient.CloseIdleConnections()
 	cancel()
 	select {
 	case <-errCh:

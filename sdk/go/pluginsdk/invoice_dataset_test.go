@@ -119,6 +119,8 @@ func startInvoiceServer(t *testing.T, plugin Plugin, web bool, info ...*PluginIn
 		errCh <- Serve(ctx, cfg)
 	}()
 	t.Cleanup(func() {
+		// Shutdown waits 5s on a pooled connection that never sent a request.
+		http.DefaultClient.CloseIdleConnections()
 		cancel()
 		select {
 		case <-errCh:
