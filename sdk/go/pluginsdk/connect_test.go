@@ -164,6 +164,7 @@ func (p *blockingEstimatePlugin) EstimateCost(
 	}
 }
 
+// TestServeConnect_WithHealthEndpoint checks that Connect mode serves the /healthz endpoint when enabled.
 func TestServeConnect_WithHealthEndpoint(t *testing.T) {
 	// Create a listener on a random port
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
@@ -208,6 +209,7 @@ func TestServeConnect_WithHealthEndpoint(t *testing.T) {
 	}
 }
 
+// TestServeConnect_ConnectProtocol checks that Connect mode answers a raw Connect protocol request.
 func TestServeConnect_ConnectProtocol(t *testing.T) {
 	// Create a listener on a random port
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
@@ -260,6 +262,7 @@ func TestServeConnect_ConnectProtocol(t *testing.T) {
 	}
 }
 
+// TestServeConnect_ConnectClient checks that the generated Connect client can call a Connect-mode server.
 func TestServeConnect_ConnectClient(t *testing.T) {
 	// Create a listener on a random port
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
@@ -369,6 +372,7 @@ func TestWebConfig_WithMethods(t *testing.T) {
 	assert.True(t, config.EnableHealthEndpoint)
 }
 
+// TestServeConnect_CORS checks the CORS headers Connect mode sends for an allowed origin.
 func TestServeConnect_CORS(t *testing.T) {
 	// Create a listener on a random port
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
@@ -455,6 +459,7 @@ func TestServeConnect_CORS(t *testing.T) {
 	}
 }
 
+// TestServeGRPC_LegacyMode checks that Serve without Web.Enabled serves plain gRPC.
 func TestServeGRPC_LegacyMode(t *testing.T) {
 	// Create a listener on a random port
 	listener, err := net.Listen("tcp", "127.0.0.1:0")

@@ -39,6 +39,8 @@ func (p *optionalRPCConnectPlugin) ResolveResourceTypes(
 	return &pbc.ResolveResourceTypesResponse{Mappings: mappings}, nil
 }
 
+// serveConnectForTest serves plugin in Connect mode on a loopback listener, waits for /healthz, and
+// returns a CostSourceService client. Cleanup stops the server and fails the test if it does not stop.
 func serveConnectForTest(t *testing.T, plugin pluginsdk.Plugin) pbcconnect.CostSourceServiceClient {
 	t.Helper()
 	listener, err := net.Listen("tcp", "127.0.0.1:0")

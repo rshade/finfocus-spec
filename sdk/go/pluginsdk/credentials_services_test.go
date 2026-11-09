@@ -184,6 +184,8 @@ var optionalServiceCalls = []optionalServiceCall{
 	},
 }
 
+// startCredentialServicesServer serves a plugin with the optional services on a loopback listener,
+// over Connect when web is set and gRPC otherwise, and returns its address and the plugin.
 func startCredentialServicesServer(t *testing.T, web bool) (string, *credentialServicesPlugin) {
 	t.Helper()
 	listener, err := net.Listen("tcp", "127.0.0.1:0")

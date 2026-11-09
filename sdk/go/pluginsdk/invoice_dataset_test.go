@@ -104,6 +104,8 @@ func (p *invoiceTestPlugin) GetInvoiceDetails(
 	return p.source.GetInvoiceDetails(ctx, req)
 }
 
+// startInvoiceServer serves plugin on a loopback listener, over Connect when web is set and gRPC
+// otherwise, with the optional PluginInfo, and returns its address and invoice RPC callers.
 func startInvoiceServer(t *testing.T, plugin Plugin, web bool, info ...*PluginInfo) (string, invoiceCalls) {
 	t.Helper()
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
