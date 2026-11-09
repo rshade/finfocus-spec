@@ -1,8 +1,12 @@
 package testing_test
 
 import (
+	"context"
 	"math"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 	pktesting "github.com/rshade/finfocus-spec/sdk/go/testing"
@@ -695,4 +699,38 @@ func TestGetSimpleResourceKeyExtraction(t *testing.T) {
 	if resp.GetSpotInterruptionRiskScore() != 0.75 {
 		t.Errorf("Expected spot risk score 0.75, got %f", resp.GetSpotInterruptionRiskScore())
 	}
+}
+
+func TestMockPluginUnsupportedCapabilities(t *testing.T) {
+	newMock := func(unsupported ...pbc.PluginCapability) *pktesting.MockPlugin {
+		mock := pktesting.NewMockPlugin()
+		mock.SupportedProviders = []string{"custom"}
+		mock.SupportedResources = map[string][]string{"custom": {"instance"}}
+		mock.UnsupportedCapabilities = unsupported
+		return mock
+	}
+	ask := func(mock *pktesting.MockPlugin, provider string, capability pbc.PluginCapability) *pbc.SupportsResponse {
+		resp, err := mock.Supports(context.Background(), &pbc.SupportsRequest{
+			Resource:   pktesting.CreateResourceDescriptor(provider, "instance", "standard", "region-1"),
+			Capability: capability,
+		})
+		require.NoError(t, err)
+		return resp
+	}
+	projected := pbc.PluginCapability_PLUGIN_CAPABILITY_PROJECTED_COSTS
+	mock := newMock(projected)
+
+	resp := ask(mock, "custom", projected)
+	assert.False(t, resp.GetSupported())
+	assert.Contains(t, resp.GetReason(), "PLUGIN_CAPABILITY_PROJECTED_COSTS")
+	assert.Contains(t, resp.GetReason(), "instance")
+
+	assert.True(t, ask(mock, "custom", pbc.PluginCapability_PLUGIN_CAPABILITY_ACTUAL_COSTS).GetSupported())
+	assert.True(t, ask(mock, "custom", pbc.PluginCapability_PLUGIN_CAPABILITY_UNSPECIFIED).GetSupported())
+
+	other := ask(mock, "elsewhere", projected)
+	assert.False(t, other.GetSupported())
+	assert.Contains(t, other.GetReason(), "provider elsewhere is not supported")
+
+	assert.True(t, ask(newMock(), "custom", projected).GetSupported())
 }

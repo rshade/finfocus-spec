@@ -76,6 +76,11 @@ const (
 	FieldBudgetsWarning  = "budgets_warning"
 	FieldBudgetsCritical = "budgets_critical"
 	FieldBudgetsExceeded = "budgets_exceeded"
+
+	// Supports-specific fields.
+
+	// FieldCapability is the PluginCapability a Supports request asked about.
+	FieldCapability = "capability"
 )
 
 //nolint:gochecknoglobals // Intentional singleton for log file handle reuse (process lifetime)

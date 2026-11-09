@@ -883,6 +883,7 @@ func (s *Server) Supports(ctx context.Context, req *pbc.SupportsRequest) (*pbc.S
 					Str(FieldResourceType, resource.GetResourceType()).
 					Str(FieldProvider, provider).
 					Str(FieldRegion, region).
+					Str(FieldCapability, req.GetCapability().String()).
 					Err(err).
 					Msg("Supports handler error")
 				// Internal errors carry a generic message (details not exposed)

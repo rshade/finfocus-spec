@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"slices"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -129,6 +130,10 @@ type MockPlugin struct {
 	PluginName         string
 	SupportedProviders []string
 	SupportedResources map[string][]string // provider -> resource types
+
+	// UnsupportedCapabilities lists capabilities Supports answers "not supported" for,
+	// once the provider and resource type are supported. Nil ignores the capability.
+	UnsupportedCapabilities []pbc.PluginCapability
 
 	// Behavior configuration
 	ShouldErrorOnName          bool
@@ -1037,6 +1042,13 @@ func (m *MockPlugin) Supports(_ context.Context, req *pbc.SupportsRequest) (*pbc
 
 	for _, supportedResource := range supportedResources {
 		if resourceType == supportedResource {
+			if slices.Contains(m.UnsupportedCapabilities, req.GetCapability()) {
+				return &pbc.SupportsResponse{
+					Supported: false,
+					Reason: fmt.Sprintf("capability %s is not supported for %s",
+						req.GetCapability(), resourceType),
+				}, nil
+			}
 			return &pbc.SupportsResponse{
 				Supported:        true,
 				Reason:           "",

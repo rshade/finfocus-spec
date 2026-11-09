@@ -153,6 +153,10 @@ on a per-resource basis.
 **Automatic Detection**: The SDK automatically populates `SupportsResponse.capabilities_enum`
 using the same interface-based introspection used in `GetPluginInfo`.
 
+**Per-capability answers**: A host can also say which capability it is about to call for the resource, so a
+plugin can, for example, report actual cost for a resource it cannot price. See
+[Answering per capability](#answering-per-capability).
+
 **Implementation Example**:
 
 ```go
@@ -226,6 +230,7 @@ Checks if your plugin can provide cost data for a specific resource type.
 ```protobuf
 message SupportsRequest {
   ResourceDescriptor resource = 1;
+  PluginCapability capability = 2; // UNSPECIFIED (the default) means any capability
 }
 ```
 
@@ -246,6 +251,55 @@ message SupportsResponse {
   both (see [Provider Is the Cloud, Not the Package](docs/PROPERTY_MAPPING.md#provider-is-the-cloud-not-the-package))
 - Return `false` with a descriptive reason for unsupported resources
 - Consider SKU-specific support (some plugins may only support certain instance types)
+
+##### Answering per capability
+
+`capability` names the operation the host is about to call for this resource. It lets a plugin give an honest
+answer when it supports one operation but not another. A typical case is a plugin that reports actual cost for
+a resource type but cannot price its projected cost. Before this field existed, such a plugin had to answer
+`true`, which made the host call `GetProjectedCost` and show an error. Answering `false` instead made the host
+stop asking it for actual cost too.
+
+The rules:
+
+- `PLUGIN_CAPABILITY_UNSPECIFIED`, the default, means **any capability**. Answer exactly as you did before the
+  field existed. Hosts treat an answer to an unspecified request as covering every capability.
+- For a specific capability, answer for that operation only. A `false` answer needs a `reason`, as always.
+- Keep the answers consistent: if you answer `true` for any specific capability of a resource, also answer `true`
+  to the unspecified request for it.
+- A plugin built before the field existed ignores it. Hosts receive its "any capability" answer even for a
+  capability-specific request.
+- The capabilities hosts are expected to send are the resource-scoped ones: `PROJECTED_COSTS`, `ACTUAL_COSTS`,
+  `CARBON`, `RECOMMENDATIONS`, `ENERGY`, `WATER`, `PRICING_SPEC`, `ESTIMATE_COST`, `BATCH_COST`, and
+  `HISTORICAL_CARBON`. Any other value is still a valid request, and your plugin decides how to answer it.
+
+Read the capability with `pluginsdk.RequestedCapability`. It returns known values unchanged and returns
+`PLUGIN_CAPABILITY_UNSPECIFIED` for a value your SDK version does not define, so a newer host keeps getting your
+"any capability" answer. It logs that value as a warning the first time it is seen.
+
+```go
+func (p *MyPlugin) Supports(ctx context.Context, req *pbc.SupportsRequest) (*pbc.SupportsResponse, error) {
+    if !p.knowsType(req.GetResource().GetResourceType()) {
+        return &pbc.SupportsResponse{Supported: false, Reason: "unknown resource type"}, nil
+    }
+    if pluginsdk.RequestedCapability(req) == pbc.PluginCapability_PLUGIN_CAPABILITY_PROJECTED_COSTS &&
+        !p.canPrice(req.GetResource()) {
+        return &pbc.SupportsResponse{Supported: false, Reason: "projected cost is not priced for this type"}, nil
+    }
+    return &pbc.SupportsResponse{Supported: true}, nil
+}
+```
+
+Hosts send the capability with `Client.SupportsFor`. `Client.Supports` and `Client.SupportsResourceType` keep
+their signatures and send `PLUGIN_CAPABILITY_UNSPECIFIED`:
+
+```go
+resp, err := client.SupportsFor(ctx, resource, pbc.PluginCapability_PLUGIN_CAPABILITY_PROJECTED_COSTS)
+```
+
+The Standard conformance check `RPCCorrectness_SupportsCapability` sends an unspecified request, then one request
+for each resource-scoped capability the plugin declares. It never judges the answers, only that each is a valid
+response, so a plugin that ignores the field passes.
 
 #### GetActualCost RPC
 
