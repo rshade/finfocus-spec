@@ -1156,7 +1156,8 @@ parallel subtests complete.
   A/B guard (about 7.5 ns/op, 0 allocs/op on the unset path).
 - `RPCCorrectness_GetRecommendationsSpot` (Standard) does not use `withCapability`: that wrapper probes an
   undeclared capability with an RPC, recommendations have no probe, and it would fail plugins that declare
-  capabilities without recommendations. The check skips such plugins and passes on `Unimplemented`.
+  capabilities without recommendations. The check skips such plugins. It passes `Unimplemented` only when no
+  capabilities are declared; declaring recommendations and answering `Unimplemented` fails (issue 668).
   It follows `next_page_token` (capped at 100 pages, stops on a repeated token) so later pages are checked too.
 - The scorer request validator deliberately does not apply the rule (`TestScoreRequestIgnoresSpotPair`).
 - `NewSpotRecommendation(id, risk)` builds a valid DYNAMIC recommendation; `GenerateSampleRecommendations` is

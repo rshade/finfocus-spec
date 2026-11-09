@@ -371,6 +371,8 @@ func (p *spotRecommendationsPlugin) GetPluginInfo(
 
 type unimplementedRecommendationsPlugin struct {
 	*plugintesting.MockPlugin
+
+	capabilities []pbc.PluginCapability
 }
 
 func (p *unimplementedRecommendationsPlugin) GetRecommendations(
@@ -380,8 +382,21 @@ func (p *unimplementedRecommendationsPlugin) GetRecommendations(
 	return nil, status.Error(codes.Unimplemented, "no recommendations")
 }
 
+func (p *unimplementedRecommendationsPlugin) GetPluginInfo(
+	ctx context.Context,
+	req *pbc.GetPluginInfoRequest,
+) (*pbc.GetPluginInfoResponse, error) {
+	resp, err := p.MockPlugin.GetPluginInfo(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	resp.Capabilities = p.capabilities
+	return resp, nil
+}
+
 // TestRPCCorrectness_GetRecommendationsSpot checks that returned recommendations obey the spot
-// pricing rule, and that plugins which never set the fields or never serve recommendations pass.
+// pricing rule, that plugins which never set the fields pass, and that a plugin answering
+// Unimplemented passes only when it does not declare recommendations.
 func TestRPCCorrectness_GetRecommendationsSpot(t *testing.T) {
 	var test plugintesting.ConformanceSuiteTest
 	for _, candidate := range plugintesting.RPCCorrectnessTests() {
@@ -474,9 +489,16 @@ func TestRPCCorrectness_GetRecommendationsSpot(t *testing.T) {
 			wantSuccess: true,
 		},
 		{
-			name:        "legacy plugin answering Unimplemented passes",
+			name:        "legacy plugin declaring no capabilities and answering Unimplemented passes",
 			plugin:      &unimplementedRecommendationsPlugin{MockPlugin: plugintesting.NewMockPlugin()},
 			wantSuccess: true,
+		},
+		{
+			name: "plugin declaring recommendations but answering Unimplemented fails",
+			plugin: &unimplementedRecommendationsPlugin{
+				MockPlugin: plugintesting.NewMockPlugin(), capabilities: declared,
+			},
+			wantInError: "PLUGIN_CAPABILITY_RECOMMENDATIONS",
 		},
 	}
 
