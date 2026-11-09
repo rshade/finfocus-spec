@@ -23,7 +23,8 @@ the spec left to planning.
   - `UNSPECIFIED` returns `UNSPECIFIED` with no log.
   - Any other value (unknown, negative, or out of range) returns `UNSPECIFIED`. The first time each distinct
     value is seen, it logs one warning with the raw `int32` through the zerolog global logger. A package-level
-    `sync.Map` (`LoadOrStore`) records which values have been seen.
+    `sync.Map` (`LoadOrStore`) records which values have been seen. An `atomic.Int32` counts entries and stops
+    recording at 64, so the set cannot grow without limit (raised by a post-commit security review).
   - A nil request returns `UNSPECIFIED`, because `GetCapability` is nil-safe.
 - **Rationale**: `SupportsProvider.Supports(ctx, *SupportsRequest)` already receives the whole request, so no
   interface changes (FR-004). The normalization follows `NormalizeUsageProfile` (FR-005), but the logging is

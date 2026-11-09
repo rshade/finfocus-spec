@@ -164,7 +164,9 @@ answers per capability, and the host call that sends a capability.
   to status codes are all unchanged.
 - **FR-005**: The SDK's read helper MUST report "unspecified" for any value other than "unspecified" that the
   SDK version does not define, including negative values. Such a value MUST be logged as a warning at most once
-  per distinct value per process, so a host that asks on every routing decision cannot flood plugin logs.
+  per distinct value per process, so a host that asks on every routing decision cannot flood plugin logs. The
+  set of values tracked for this MUST be bounded (64), so a caller sending many distinct values cannot grow
+  plugin memory without limit; past the bound, one further warning says new values are no longer logged.
 - **FR-006**: Reading the requested capability MUST NOT allocate memory for a known value or for "unspecified".
   Unknown values are exempt: they are rare, and deduplicating their warning needs a lookup keyed by the value.
 - **FR-007**: The Go SDK client MUST let hosts ask about a resource for a named capability. The existing support

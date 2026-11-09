@@ -1332,7 +1332,9 @@ parallel subtests complete.
   it as covering every capability. An old plugin ignores the field, so it gives its "any" answer to a specific
   request.
 - Plugins read it with `pluginsdk.RequestedCapability(req)`. Unknown values, including negative ones, come back
-  as `UNSPECIFIED`. Each distinct value is warned about once per process through a package `sync.Map`.
+  as `UNSPECIFIED`. Each distinct value is warned about once per process through a package `sync.Map`, capped
+  at `maxUnknownCapabilitiesTracked` (64) by an `atomic.Int32` so callers cannot grow it without limit.
+  Tests that touch it reset both through `captureUnknownCapabilityLog`.
   `NormalizeUsageProfile` warns on every call, but Supports runs on every routing decision, so that pattern
   would flood logs here. The known and unspecified paths cost 0 allocs at about 1 ns; the unknown path is exempt,
   because an `int32` boxed as a `sync.Map` key allocates for values of 256 and above.
