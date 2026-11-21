@@ -13,12 +13,15 @@ import (
 	pbc "github.com/rshade/finfocus-spec/sdk/go/proto/finfocus/v1"
 )
 
-// capabilityProfile snapshots discovery once per harness. An empty capability
-// list or an Unimplemented discovery RPC retains the legacy suite contract.
+// capabilityProfile snapshots the GetPluginInfo answer once per harness. An empty
+// capability list or an Unimplemented discovery RPC retains the legacy suite contract.
+// infoProvided is false when the plugin answered Unimplemented.
 type capabilityProfile struct {
-	once   sync.Once
-	values []pbc.PluginCapability
-	err    error
+	once         sync.Once
+	values       []pbc.PluginCapability
+	infoName     string
+	infoProvided bool
+	err          error
 }
 
 func (h *TestHarness) discoverCapabilities() {
@@ -34,6 +37,8 @@ func (h *TestHarness) discoverCapabilities() {
 			return
 		}
 		h.capabilities.values = slices.Clone(info.GetCapabilities())
+		h.capabilities.infoName = info.GetName()
+		h.capabilities.infoProvided = true
 	})
 }
 

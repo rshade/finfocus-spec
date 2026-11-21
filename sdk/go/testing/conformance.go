@@ -104,6 +104,12 @@ type SuiteConfig struct {
 	// ValidateResourceDescriptor; the suite uses its own copy.
 	// Default: nil, meaning DefaultSampleResource().
 	SampleResource *pbc.ResourceDescriptor
+
+	// ExpectedName is the name the plugin is installed under. When set,
+	// RegisterRPCCorrectnessTests adds two Basic checks: the Name RPC must return it,
+	// and GetPluginInfo must report the same name as the Name RPC.
+	// Default: "", meaning neither check is registered.
+	ExpectedName string
 }
 
 // DefaultSampleResource returns a new copy of the descriptor the suite sends when
@@ -126,6 +132,16 @@ func WithSampleResource(r *pbc.ResourceDescriptor) ConformanceOption {
 	}
 	return func(c *SuiteConfig) {
 		c.SampleResource = sample
+	}
+}
+
+// WithExpectedName turns on the name checks: the Name RPC must return name, the name
+// the plugin is installed under (the plugin directory a host discovers it in), and
+// GetPluginInfo must report the same name. An empty name restores the default, in
+// which neither check runs.
+func WithExpectedName(name string) ConformanceOption {
+	return func(c *SuiteConfig) {
+		c.ExpectedName = name
 	}
 }
 
@@ -318,6 +334,7 @@ func (s *ConformanceSuite) Run(impl pbc.CostSourceServiceServer) (*ConformanceRe
 
 	harness := NewTestHarness(impl)
 	harness.sampleResource = sample
+	harness.expectedName = s.config.ExpectedName
 	defer harness.Stop()
 
 	conn, err := harness.createClientConnection()
@@ -404,6 +421,7 @@ func (s *ConformanceSuite) RunCategory(
 
 	harness := NewTestHarness(impl)
 	harness.sampleResource = sample
+	harness.expectedName = s.config.ExpectedName
 	defer harness.Stop()
 
 	conn, err := harness.createClientConnection()

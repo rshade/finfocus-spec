@@ -1963,6 +1963,36 @@ actual-cost request without one. An invalid sample resource or an unknown level 
 before any check runs. See the
 [testing README](../testing/README.md#sample-resource) for the full rules.
 
+**Plugin Name**:
+
+A plugin reports one name, its install name (the plugin directory a host installs it under), from
+both `Name()` and its plugin info. The name checks are opt-in: pass your install name with
+`WithExpectedName` and every level adds two Basic checks. Without the option neither check runs, so
+results and counts stay as they were.
+
+- `RPCCorrectness_NameMatchesExpected` fails when `Name()` differs from the name you pass.
+- `RPCCorrectness_NameMatchesPluginInfo` fails when the plugin info name differs from `Name()`. A
+  plugin with no plugin info (`GetPluginInfo` answers `Unimplemented`) passes without a comparison.
+
+A failed name check is an ordinary failed check: its error wraps `plugintesting.ErrPluginNameMismatch`
+and names both values.
+
+```go
+result, err := pluginsdk.RunConformance(NewMyPlugin(), pluginsdk.ConformanceLevelBasic,
+    pluginsdk.WithExpectedName("my-plugin"))
+```
+
+`RunConformance(plugin, ...)` builds its server with `NewServer`, so the only plugin info it sees comes
+from a `PluginInfoProvider`. To check the `PluginInfo` you pass in `ServeConfig`, give the suite the
+same server `Serve` builds:
+
+```go
+info := pluginsdk.NewPluginInfo("my-plugin", "v1.0.0")
+server := pluginsdk.NewServerWithOptions(NewMyPlugin(), nil, nil, info)
+result, err := plugintesting.RunConformance(server, plugintesting.ConformanceLevelBasic,
+    plugintesting.WithExpectedName("my-plugin"))
+```
+
 **Type Aliases**:
 
 The package re-exports key types from `sdk/go/testing` for convenience:
@@ -1973,6 +2003,7 @@ var level pluginsdk.ConformanceLevel = pluginsdk.ConformanceLevelStandard
 var result *pluginsdk.ConformanceResult
 var summary pluginsdk.ResultSummary
 var option pluginsdk.ConformanceOption = pluginsdk.WithSampleResource(nil) // nil keeps the default
+var nameOption pluginsdk.ConformanceOption = pluginsdk.WithExpectedName("my-plugin")
 ```
 
 **Complete Example**:

@@ -867,9 +867,16 @@ func createGetBudgetsRPCTest() func(*TestHarness) TestResult {
 }
 
 // RegisterRPCCorrectnessTests registers RPC correctness tests with a conformance suite.
+// The name checks are registered only when the suite's ExpectedName is set, so set it
+// before registering.
 func RegisterRPCCorrectnessTests(suite *ConformanceSuite) {
 	for _, test := range RPCCorrectnessTests() {
 		suite.AddTest(test)
+	}
+	if suite.config.ExpectedName != "" {
+		for _, test := range nameConsistencyTests() {
+			suite.AddTest(test)
+		}
 	}
 }
 

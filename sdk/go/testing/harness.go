@@ -99,6 +99,7 @@ type TestHarness struct {
 	bufconnHarness[pbc.CostSourceServiceClient]
 
 	sampleResource *pbc.ResourceDescriptor
+	expectedName   string
 	capabilities   capabilityProfile
 }
 
