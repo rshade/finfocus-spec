@@ -152,6 +152,28 @@ func TestPluginConformanceWithSample(t *testing.T) {
   `RunConformance` with no options. The standalone runners (`RunSpecValidation`,
   `RunRPCCorrectness`, `RunPerformanceBenchmarks`, `RunConcurrencyTests`) use the default.
 
+### Plugin Name
+
+A plugin reports one name, its install name (the plugin directory a host installs it under), from
+both the `Name` RPC and `GetPluginInfo`. The name checks are opt-in: set the install name with
+`WithExpectedName` (or `SuiteConfig.ExpectedName`) and every level adds two Basic checks. Without it
+neither check is registered, so results and counts stay as they were.
+
+- `RPCCorrectness_NameMatchesExpected` compares the `Name` answer with the install name.
+- `RPCCorrectness_NameMatchesPluginInfo` compares the `GetPluginInfo` name with the `Name` answer. A
+  plugin whose `GetPluginInfo` answers `Unimplemented` passes without a comparison.
+
+`RegisterRPCCorrectnessTests` reads `ExpectedName` when it registers, so a suite built with
+`NewConformanceSuiteWithConfig` must set it in that configuration, not with a later `SetConfig`.
+
+```go
+result, err := plugintesting.RunConformance(plugin, plugintesting.ConformanceLevelBasic,
+    plugintesting.WithExpectedName("my-plugin"))
+```
+
+A failed name check is reported like any other failed check. Its error wraps
+`ErrPluginNameMismatch` and quotes both names, so `errors.Is` finds it in the results.
+
 ### Performance Testing
 
 ```go
@@ -859,6 +881,11 @@ The conformance suite provides multi-level validation across four test categorie
 **RPC Correctness Tests:**
 
 - `RPCCorrectness_NameResponse` - Valid Name response format
+- `RPCCorrectness_NameMatchesPluginInfo` - The `GetPluginInfo` name equals the `Name` answer (Basic, only
+  with `WithExpectedName`; a plugin whose `GetPluginInfo` answers `Unimplemented` passes). See
+  [Plugin Name](#plugin-name)
+- `RPCCorrectness_NameMatchesExpected` - The `Name` answer equals the install name set with
+  `WithExpectedName` (Basic, only with that option)
 - `RPCCorrectness_SupportsValidation` - Supports validation behavior
 - `RPCCorrectness_ErrorHandling` - Proper gRPC error codes
 - `RPCCorrectness_TimeRangeValidation` - Time range validation

@@ -62,6 +62,13 @@ func WithSampleResource(r *pbc.ResourceDescriptor) ConformanceOption {
 	return plugintesting.WithSampleResource(r)
 }
 
+// WithExpectedName turns on the name checks at every level: Name() must return name,
+// the name the plugin is installed under, and a PluginInfoProvider must report the
+// same name as Name(). An empty name restores the default, in which neither check runs.
+func WithExpectedName(name string) ConformanceOption {
+	return plugintesting.WithExpectedName(name)
+}
+
 // RunConformance runs the checks for level against a Plugin implementation, adjusted
 // by opts. It returns ErrNilPlugin for a nil plugin, and an error for an unknown level
 // or an invalid sample resource.

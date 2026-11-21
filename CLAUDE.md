@@ -1291,6 +1291,12 @@ parallel subtests complete.
   no vendor resource types, SKUs, or regions beyond the kept default.
 - The mock's `GetPricingSpec` answers `billing_mode: not_implemented` for resource types it does not know;
   a test plugin with its own resource type answers `GetPricingSpec` itself.
+- Name checks (`testing/name_consistency.go`): `RPCCorrectness_NameMatchesPluginInfo` and
+  `RPCCorrectness_NameMatchesExpected` (Basic) are opt-in: `RegisterRPCCorrectnessTests` adds them only when
+  `SuiteConfig.ExpectedName` is set (`WithExpectedName`), so an SDK bump changes no existing result or
+  count. They are not in `RPCCorrectnessTests()`. A mismatch fails with `ErrPluginNameMismatch`. The plugin info name comes
+  from the harness's one `GetPluginInfo` snapshot (`capabilityProfile`), so no extra RPC. `pluginsdk.RunConformance`
+  uses `NewServer`, which has no configured `PluginInfo`; only a `PluginInfoProvider` is compared there.
 
 ### Handler Status Pattern (600-handler-status-codes)
 

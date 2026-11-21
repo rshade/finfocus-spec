@@ -2560,6 +2560,11 @@ The `GetActualCost` checks send the sample in `GetActualCostRequest.resource`, t
 its pricing inputs. No check sends an actual-cost request without a resource. See
 [sdk/go/testing/README.md](sdk/go/testing/README.md#sample-resource) for the full rules.
 
+Report one name, your install name, from both `Name()` and your plugin info. The name checks are
+opt-in: pass `pluginsdk.WithExpectedName("my-plugin")` and the suite fails a `Name()` that differs
+from the install name, and plugin info whose name differs from `Name()`. See
+[sdk/go/testing/README.md](sdk/go/testing/README.md#plugin-name).
+
 ### Load Testing
 
 Test your plugin under realistic load conditions.
